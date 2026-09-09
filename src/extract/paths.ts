@@ -1,7 +1,7 @@
 import type { Claim, Source } from '../core/types.ts'
 import type { ParsedDoc } from '../parse/markdown.ts'
-import { discardReason } from './discard.ts'
 import { rangeFor, type LineTable } from '../parse/positions.ts'
+import { discardReason, normalizePathText, type DiscardReason } from './discard.ts'
 
 /**
  * Extensiones que cuentan como "archivo" para la regla de forma de SPEC.md § 3
@@ -90,31 +90,43 @@ function extensionOf(segment: string): string | undefined {
 }
 
 /**
- * Las tres reglas de forma de SPEC.md § 3: alcanza con cumplir una.
- * Decidir *que es una ruta* es distinto de decidir *si esa ruta existe*; las
- * reglas de descarte viven aparte, en `discard.ts`.
+ * Las tres reglas de forma de SPEC.md § 3: alcanza con cumplir una. Las tres
+ * exigen una barra, o terminar en una (ADR-0003).
  */
 export function looksLikePath(text: string): boolean {
   if (text.length === 0) return false
 
   // Termina en '/': es un directorio.
   if (text.endsWith('/')) return true
+  if (!text.includes('/')) return false
 
-  const hasSlash = text.includes('/')
+  // Empieza con un marcador de ruta relativa o absoluta.
+  if (text.startsWith('./') || text.startsWith('../') || text.startsWith('/')) return true
 
-  // Empieza con un marcador de ruta relativa o absoluta, y tiene estructura.
-  if ((text.startsWith('./') || text.startsWith('../') || text.startsWith('/')) && hasSlash) {
-    return true
-  }
+  // El ultimo segmento tiene una extension conocida.
+  const last = text.slice(text.lastIndexOf('/') + 1)
+  const ext = extensionOf(last)
+  return ext !== undefined && KNOWN_EXTENSIONS.has(ext)
+}
 
-  // Contiene '/' y el ultimo segmento tiene una extension conocida.
-  if (hasSlash) {
-    const last = text.slice(text.lastIndexOf('/') + 1)
-    const ext = extensionOf(last)
-    return ext !== undefined && KNOWN_EXTENSIONS.has(ext)
-  }
+export type PathEvaluation =
+  { kind: 'path'; text: string } | { kind: 'discarded'; reason: DiscardReason }
 
-  return false
+/**
+ * El algoritmo completo de ARCHITECTURE.md § "Extraccion de rutas", pasos 1 a 5:
+ * descartar, normalizar, y recien entonces decidir si tiene forma de ruta. Los
+ * pasos 6 y 7 (resolver contra el baseDir y consultar el indice) son del check.
+ */
+export function evaluatePathText(raw: string): PathEvaluation {
+  const reason = discardReason(raw)
+  if (reason !== undefined) return { kind: 'discarded', reason }
+
+  const text = normalizePathText(raw)
+  // La normalizacion puede dejar algo que ya no tiene forma de ruta: un
+  // sufijo comido, o una cadena vacia.
+  if (!looksLikePath(text)) return { kind: 'discarded', reason: 'sin-forma-de-ruta' }
+
+  return { kind: 'path', text }
 }
 
 export type ExtractContext = {
@@ -126,19 +138,21 @@ export type ExtractContext = {
 /**
  * Claims de tipo path desde codigo inline. Los links de Markdown y el
  * frontmatter son las otras dos fuentes, y llegan en su propio ticket.
+ *
+ * El cuerpo de los bloques de codigo no se escanea a proposito: una ruta dentro
+ * de un ejemplo de shell es parte del ejemplo, no una afirmacion sobre el repo.
  */
 export function extractPathClaims({ source, doc, table }: ExtractContext): Claim[] {
   const claims: Claim[] = []
 
   for (const span of doc.inlineCode) {
-    const raw = span.value
-    if (discardReason(raw) !== undefined) continue
-    if (!looksLikePath(raw)) continue
+    const evaluated = evaluatePathText(span.value)
+    if (evaluated.kind === 'discarded') continue
     claims.push({
       kind: 'path',
       source,
-      text: raw,
-      raw,
+      text: evaluated.text,
+      raw: span.value,
       range: rangeFor(table, span.offset[0], span.offset[1]),
       offset: span.offset,
       context: 'inline-code',

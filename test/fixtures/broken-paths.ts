@@ -34,7 +34,8 @@ export const brokenPaths: Fixture = {
       file: 'CLAUDE.md',
       line: 7,
       column: 26,
-      text: './scripts/release.sh',
+      // El `./` se recorta en la normalizacion (regla 5).
+      text: 'scripts/release.sh',
       message: 'ruta no existe',
     },
     {

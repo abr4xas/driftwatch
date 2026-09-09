@@ -159,7 +159,7 @@ Este es el algoritmo con más matiz del proyecto. Orden de las reglas:
 
 1. Descartar si parsea como URL con protocolo.
 2. Descartar si contiene caracteres de glob o placeholder: `* ? { } < > $ [ ]`.
-3. Descartar si es una sola palabra sin `/` y sin extensión conocida (`foo` no es una ruta, `foo.ts` sí, `src/foo` sí).
+3. Descartar si es una sola palabra sin `/` (`foo` no es una ruta, `foo.ts` tampoco, `src/foo` sí). El paréntesis original decía que `foo.ts` sí lo era, contradiciendo a `SPEC.md` § 3; ver ADR-0003.
 4. Descartar extensiones no-archivo comunes que confunden: `1.0`, `v2.1`, `node.js` cuando no hay `/` (lista negra de palabras: `node.js`, `next.js`, `nuxt.js`, `vue.js`, `d.ts` suelto).
 5. Normalizar: quitar `./` inicial, quitar `:línea` final, quitar backticks residuales, quitar puntuación final (`.`, `,`, `)`).
 6. Resolver contra `source.baseDir`.
