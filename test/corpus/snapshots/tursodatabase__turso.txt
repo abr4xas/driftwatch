@@ -1,0 +1,29 @@
+# tursodatabase/turso
+
+fuentes: 15
+errores: 4
+avisos: 0
+corregibles: 0
+
+## fuentes
+skill  .claude/skills/async-io-model/SKILL.md
+skill  .claude/skills/cdc/SKILL.md
+skill  .claude/skills/code-quality/SKILL.md
+skill  .claude/skills/debugging/SKILL.md
+skill  .claude/skills/differential-fuzzer/SKILL.md
+skill  .claude/skills/index-knowledge/SKILL.md
+skill  .claude/skills/memory-benchmark/SKILL.md
+skill  .claude/skills/mvcc/SKILL.md
+skill  .claude/skills/pr-workflow/SKILL.md
+skill  .claude/skills/storage-format/SKILL.md
+skill  .claude/skills/testing/SKILL.md
+skill  .claude/skills/transaction-correctness/SKILL.md
+skill  .claude/skills/yield-injections/SKILL.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+.claude/skills/cdc/SKILL.md:158:24  [path/missing] inline-code  core/translate/emitter.rs
+.claude/skills/cdc/SKILL.md:242:15  [path/missing] inline-code  core/translate/emitter.rs
+.claude/skills/cdc/SKILL.md:246:15  [path/missing] inline-code  core/translate/emitter.rs
+.claude/skills/memory-benchmark/SKILL.md:290:12  [path/missing] inline-code  perf/memory/src/profile/your_profile.rs

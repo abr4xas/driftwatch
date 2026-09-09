@@ -1,0 +1,33 @@
+# BerriAI/litellm
+
+fuentes: 22
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+agents-md  litellm-rust/AGENTS.md
+claude-md  litellm-rust/CLAUDE.md
+agents-md  litellm-rust/crates/ai-gateway/AGENTS.md
+agents-md  litellm-rust/crates/ai-gateway/src/routes/AGENTS.md
+agents-md  litellm-rust/crates/core/AGENTS.md
+claude-md  litellm-rust/crates/core/CLAUDE.md
+agents-md  litellm-rust/crates/python-bridge/AGENTS.md
+claude-md  litellm-rust/crates/python-bridge/CLAUDE.md
+agents-md  litellm-rust/crates/python-interop/AGENTS.md
+agents-md  litellm/proxy/_experimental/mcp_server/AGENTS.md
+claude-md  litellm/proxy/_experimental/mcp_server/CLAUDE.md
+claude-md  tests/e2e/CLAUDE.md
+agents-md  tests/rust-python-harness/AGENTS.md
+agents-md  tests/rust-python-harness/strategies/e2e_parity/AGENTS.md
+agents-md  tests/rust-python-harness/strategies/trace_parity/AGENTS.md
+agents-md  tests/rust-python-harness/strategies/unit_tests_mapping/AGENTS.md
+agents-md  tests/rust-python-harness/strategies/unit_tests_parity/AGENTS.md
+agents-md  tests/rust-python-harness/strategies/unit_tests_rust/AGENTS.md
+claude-md  ui/litellm-dashboard/CLAUDE.md
+agents-md  ui/litellm-dashboard/src/components/chat/AGENTS.md
+
+## findings
+(ninguno)

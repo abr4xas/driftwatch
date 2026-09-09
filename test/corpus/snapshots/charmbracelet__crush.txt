@@ -1,0 +1,15 @@
+# charmbracelet/crush
+
+fuentes: 4
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+agents-md  internal/cmd/stats/AGENTS.md
+agents-md  internal/oauth/callback/AGENTS.md
+agents-md  internal/ui/AGENTS.md
+
+## findings
+(ninguno)

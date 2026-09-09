@@ -1,0 +1,21 @@
+# cloudflare/workers-sdk
+
+fuentes: 10
+errores: 1
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+agents-md  packages/auto-triage-bot/AGENTS.md
+agents-md  packages/create-cloudflare/AGENTS.md
+agents-md  packages/miniflare/AGENTS.md
+agents-md  packages/vite-plugin-cloudflare/AGENTS.md
+agents-md  packages/vitest-plugin/AGENTS.md
+agents-md  packages/workers-auth/AGENTS.md
+agents-md  packages/workers-utils/AGENTS.md
+agents-md  packages/wrangler/AGENTS.md
+
+## findings
+AGENTS.md:140:8  [path/missing] inline-code  .github/PULL_REQUEST_TEMPLATE.md

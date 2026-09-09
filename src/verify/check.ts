@@ -3,6 +3,8 @@ import type { RepoIndex } from './repo-index.ts'
 
 export type CheckContext = {
   index: RepoIndex
+  /** Rutas que git ignora. Ver `gitIgnoredPaths`. */
+  ignoredByGit: ReadonlySet<string>
 }
 
 /**

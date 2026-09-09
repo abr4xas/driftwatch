@@ -1,0 +1,15 @@
+# openai/codex
+
+fuentes: 2
+errores: 3
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+agents-md  codex-rs/tui/src/bottom_pane/AGENTS.md
+
+## findings
+AGENTS.md:35:51  [path/missing] inline-code  codex-rs/codex-mcp/src/mcp_connection_manager.rs
+AGENTS.md:265:4  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs
+AGENTS.md:275:133  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs

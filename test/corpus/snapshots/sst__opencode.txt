@@ -1,0 +1,29 @@
+# sst/opencode
+
+fuentes: 18
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+agents-md  packages/app/AGENTS.md
+agents-md  packages/app/e2e/AGENTS.md
+agents-md  packages/app/e2e/performance/AGENTS.md
+agents-md  packages/codemode/AGENTS.md
+agents-md  packages/core/src/tool/AGENTS.md
+agents-md  packages/desktop/AGENTS.md
+agents-md  packages/effect-drizzle-sqlite/AGENTS.md
+agents-md  packages/llm/AGENTS.md
+agents-md  packages/opencode/AGENTS.md
+agents-md  packages/opencode/src/server/routes/instance/httpapi/AGENTS.md
+agents-md  packages/opencode/src/session/llm/AGENTS.md
+agents-md  packages/opencode/test/AGENTS.md
+agents-md  packages/opencode/test/server/AGENTS.md
+agents-md  packages/schema/AGENTS.md
+agents-md  packages/session-ui/AGENTS.md
+agents-md  packages/stats/AGENTS.md
+agents-md  packages/ui/AGENTS.md
+
+## findings
+(ninguno)

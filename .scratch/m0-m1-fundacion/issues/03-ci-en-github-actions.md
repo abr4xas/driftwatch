@@ -22,3 +22,7 @@ Dos detalles que no eran obvios:
 - `timeout-minutes: 5` y `concurrency` con `cancel-in-progress`, para que una rama con varios pushes no acumule jobs.
 
 El criterio de "menos de dos minutos" no se puede medir sin correrlo en remoto. Queda pendiente de la primera corrida real.
+
+### Nota posterior, al cerrar el ticket 10
+
+El paso "driftwatch sobre driftwatch" pasó a ser bloqueante. Había quedado como `continue-on-error` porque este repo mencionaba `scripts/corpus.ts` antes de que existiera; el ticket 10 lo creó, la corrida quedó limpia (`✓ 1 archivo · sin drift`), y desde ahora cualquier ruta que se rompa en `AGENTS.md` o en `docs/` tumba el CI.

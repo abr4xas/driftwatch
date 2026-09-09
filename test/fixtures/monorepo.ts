@@ -1,12 +1,16 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * El escenario que define si la herramienta sirve en un monorepo: la **misma
- * cadena** es cierta en un paquete y falsa en el otro, porque cada fuente
- * habla de su propio directorio.
+ * Resolución en un monorepo, con `CLAUDE.md` anidados.
  *
- * Sin resolucion contra el baseDir, un monorepo genera una avalancha de falsos
- * positivos: cada `src/algo.ts` de cada paquete se buscaria contra la raiz.
+ * Este fixture cambió al cerrar el ticket 10. La versión original probaba que
+ * la **misma cadena** (`src/db.ts`) se reportara en `packages/web` y no en
+ * `packages/api`. Eso dejó de ser el comportamiento: ADR-0005 decidió que una
+ * ruta cuya forma existe en algún lugar del repo no se reporta, porque sobre 13
+ * repos reales esa era la última clase grande de falso positivo.
+ *
+ * El caso perdido sigue escrito abajo, sin finding esperado, para que quede
+ * registrado qué se dejó de detectar y no parezca un olvido.
  */
 export const monorepo: Fixture = {
   name: 'monorepo',
@@ -30,13 +34,19 @@ export const monorepo: Fixture = {
       '',
       'Mis notas locales: `/Users/alguien/notas.md`.', // 11: idem
       '',
+      'La cache vive en `src/cache/redis.ts`.', // 13: no existe en ninguna forma
+      '',
     ].join('\n'),
     'packages/web/CLAUDE.md': [
       '# web',
       '',
-      'La base de datos es `src/db.ts`.', // 3: NO existe en packages/web
+      // ADR-0005: `packages/api/src/db.ts` termina con `/src/db.ts`, asi que
+      // esta linea NO produce finding. Es el caso que se dejo de detectar: un
+      // archivo que se movio de paquete. No se puede distinguir de un
+      // documento que habla en relativo del otro paquete.
+      'La base de datos es `src/db.ts`.', // 7
       '',
-      'La app es `app.ts` y vive al lado.', // 5: palabra suelta, se descarta
+      'La app es `app.ts` y vive al lado.', // 9: palabra suelta, se descarta
       '',
     ].join('\n'),
     'src/index.ts': '',
@@ -47,15 +57,12 @@ export const monorepo: Fixture = {
     {
       check: 'path/missing',
       severity: 'error',
-      file: 'packages/web/CLAUDE.md',
-      line: 3,
-      column: 22,
-      text: 'src/db.ts',
+      file: 'packages/api/CLAUDE.md',
+      line: 13,
+      column: 19,
+      text: 'src/cache/redis.ts',
       message: 'ruta no existe',
-      // El homonimo esta en el otro paquete. Se sugiere, pero la confianza no
-      // alcanza para corregir solo: reescribir el doc de `web` apuntando a un
-      // archivo de `api` seria un autofix equivocado.
-      suggestion: { value: 'packages/api/src/db.ts', confidence: 0.6, fixable: false },
+      // Sin sugerencia: no hay ningun `redis.ts` en el repo.
     },
   ],
 }

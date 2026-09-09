@@ -1,0 +1,16 @@
+# block/goose
+
+fuentes: 5
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+copilot  .github/copilot-instructions.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+agents-md  documentation/AGENTS.md
+claude-md  documentation/CLAUDE.md
+
+## findings
+(ninguno)

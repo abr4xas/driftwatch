@@ -1,0 +1,12 @@
+# microsoft/playwright-mcp
+
+fuentes: 1
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+claude-md  CLAUDE.md
+
+## findings
+(ninguno)

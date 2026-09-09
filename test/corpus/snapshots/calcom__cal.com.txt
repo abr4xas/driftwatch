@@ -1,0 +1,19 @@
+# calcom/cal.com
+
+fuentes: 7
+errores: 2
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  .opencode/skill/vercel-react-best-practices/AGENTS.md
+agents-md  AGENTS.md
+agents-md  agents/skills/vercel-react-best-practices/AGENTS.md
+claude-md  CLAUDE.md
+agents-md  specs/_templates/AGENTS.md
+claude-md  specs/_templates/CLAUDE.md
+claude-md  specs/cancellation-reason-requirement/CLAUDE.md
+
+## findings
+AGENTS.md:130:24  [path/missing] inline-code  packages/features/ee/workflows/lib/constants.ts  -> packages/app-store/constants.ts (0.3)
+CLAUDE.md:130:24  [path/missing] inline-code  packages/features/ee/workflows/lib/constants.ts  -> packages/app-store/constants.ts (0.3)

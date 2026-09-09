@@ -1,6 +1,7 @@
 import { suggestPath } from '../../fix/suggest.ts'
 import type { Check, CheckContext } from '../check.ts'
-import { hasDir, hasFile } from '../repo-index.ts'
+import { passesThroughGenerated } from '../generated.ts'
+import { hasDir, hasFile, someEntryEndsWith } from '../repo-index.ts'
 import { resolveInRepo } from '../resolve.ts'
 
 /**
@@ -19,6 +20,19 @@ function pointsOutsideRepo(ctx: CheckContext, text: string, rel: string): boolea
   return !(hasDir(ctx.index, first) || hasFile(ctx.index, first))
 }
 
+function exists(ctx: CheckContext, rel: string): boolean {
+  return hasFile(ctx.index, rel) || hasDir(ctx.index, rel)
+}
+
+/**
+ * Si git ignora la ruta, o ignoraria lo que haya dentro de ella. Lo segundo es
+ * lo que detecta un directorio de salida generada, porque un `.gitignore` suele
+ * escribir `salida/*` y no `salida/`.
+ */
+function ignoredByGit(ctx: CheckContext, rel: string): boolean {
+  return ctx.ignoredByGit.has(rel) || ctx.ignoredByGit.has(`${rel}/__driftwatch_probe__`)
+}
+
 export const pathMissing: Check = {
   id: 'path/missing',
   tier: 1,
@@ -26,14 +40,60 @@ export const pathMissing: Check = {
   claimKinds: ['path'],
 
   run(claim, ctx) {
-    const rel = resolveInRepo(claim.source.baseDir, claim.text)
+    const { baseDir } = claim.source
+
+    const local = resolveInRepo(baseDir, claim.text)
     // Una ruta que se escapa por arriba de la raiz no es nuestra para verificar.
-    if (rel === undefined || rel === '') return null
-    if (pointsOutsideRepo(ctx, claim.text, rel)) return null
+    if (local === undefined || local === '') return null
+    if (pointsOutsideRepo(ctx, claim.text, local)) return null
 
-    if (hasFile(ctx.index, rel) || hasDir(ctx.index, rel)) return null
+    // Un artefacto generado no esta trackeado, asi que desde el indice es
+    // indistinguible de una ruta inexistente. Se deja pasar. La lista fija es
+    // el respaldo para cuando no hay git; `ignoredByGit` es la senal buena.
+    if (passesThroughGenerated(local) || ignoredByGit(ctx, local)) return null
 
-    const suggestion = suggestPath(ctx.index, rel)
+    if (exists(ctx, local)) return null
+
+    /**
+     * SPEC.md § 2 dice que una fuente anidada resuelve sus rutas contra su
+     * propio directorio, y es cierto la mitad de las veces. El corpus de repos
+     * reales muestra que la otra mitad escribe rutas desde la raiz del repo:
+     * un `packages/llm/AGENTS.md` que dice `packages/opencode/src/x.ts`, o un
+     * `tests/e2e/CLAUDE.md` que dice `tests/e2e/`.
+     *
+     * Las dos formas conviven en el mismo documento, y no hay senal sintactica
+     * que las separe. Asi que se aceptan las dos: se reporta solo si la ruta no
+     * existe ni contra el baseDir ni contra la raiz. Fue la correccion de
+     * precision mas grande de todo el proyecto.
+     */
+    if (baseDir !== '') {
+      const fromRoot = resolveInRepo('', claim.text)
+      if (fromRoot !== undefined && fromRoot !== '') {
+        if (passesThroughGenerated(fromRoot) || ignoredByGit(ctx, fromRoot)) return null
+        if (exists(ctx, fromRoot)) return null
+      }
+    }
+
+    /**
+     * Ultima red antes de reportar: que alguna ruta del repo termine con la
+     * ruta afirmada. Cubre el patron mas comun de los documentos reales, donde
+     * la prosa nombra un directorio ("dentro de `packages/next`") y las rutas
+     * que siguen son relativas a el.
+     *
+     * El corpus lo mostro sin ambiguedad: cada uno de esos findings ya traia
+     * una sugerencia cuyo destino terminaba exactamente con el texto afirmado.
+     * Si la ruta esta ahi, con esos mismos segmentos y en ese mismo orden, el
+     * documento no esta mintiendo: esta hablando en relativo.
+     */
+    // El sufijo que se busca es el **texto afirmado**, normalizado, no la ruta
+    // ya resuelta contra el baseDir: lo que se pregunta es si esa secuencia de
+    // segmentos aparece en algun lugar del repo.
+    const asWritten = resolveInRepo('', claim.text)
+    if (asWritten !== undefined && asWritten !== '' && someEntryEndsWith(ctx.index, asWritten)) {
+      return null
+    }
+
+    const suggestion = suggestPath(ctx.index, local)
     return {
       check: pathMissing.id,
       severity: pathMissing.defaultSeverity,

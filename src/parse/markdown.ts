@@ -29,6 +29,11 @@ export type ParsedDoc = {
   links: readonly LinkSpan[]
 }
 
+/** Si una url apunta afuera del repo. */
+function isExternal(url: string): boolean {
+  return /^[a-z][a-z0-9+.-]*:\/\//iu.test(url) || url.startsWith('//')
+}
+
 const processor = unified().use(remarkParse)
 
 /**
@@ -56,6 +61,8 @@ export function parseMarkdown(content: string): ParsedDoc {
   const inlineCode: Span[] = []
   const fences: FenceSpan[] = []
   const links: LinkSpan[] = []
+  /** Rangos de inlineCode que son etiqueta de un link externo. */
+  const externalLabels: Array<[number, number]> = []
 
   visit(tree, (node) => {
     const start = node.position?.start.offset
@@ -86,8 +93,32 @@ export function parseMarkdown(content: string): ParsedDoc {
         .map((child) => ('value' in child && typeof child.value === 'string' ? child.value : ''))
         .join('')
       links.push({ value: node.url, label, offset })
+
+      /**
+       * Un `inlineCode` que es la etiqueta de un link describe el **destino**
+       * del link. Si el destino es externo, la ruta no es de este repo.
+       *
+       * Caso real (prisma/prisma):
+       * `` [`docs/drive/`](https://github.com/prisma/ignite/tree/main/docs/drive) ``
+       * afirma que `docs/drive/` existe en *prisma/ignite*, no aca.
+       */
+      if (isExternal(node.url)) {
+        for (const child of node.children) {
+          if (child.type !== 'inlineCode') continue
+          const from = child.position?.start.offset
+          const to = child.position?.end.offset
+          if (from !== undefined && to !== undefined) externalLabels.push([from, to])
+        }
+      }
     }
   })
 
-  return { inlineCode, fences, links }
+  const isExternalLabel = ([from, to]: [number, number]): boolean =>
+    externalLabels.some(([a, b]) => from >= a && to <= b)
+
+  return {
+    inlineCode: inlineCode.filter((span) => !isExternalLabel(span.offset)),
+    fences,
+    links,
+  }
 }

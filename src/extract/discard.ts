@@ -10,7 +10,14 @@
 
 /** Por que se descarto un texto. Los tests fijan cada regla por su razon. */
 export type DiscardReason =
-  'url' | 'glob-o-placeholder' | 'palabra-suelta' | 'no-es-un-archivo' | 'sin-forma-de-ruta'
+  | 'url'
+  | 'tiene-espacios'
+  | 'glob-o-placeholder'
+  | 'palabra-suelta'
+  | 'no-es-un-archivo'
+  | 'directorio-suelto'
+  | 'metasintactico'
+  | 'sin-forma-de-ruta'
 
 /**
  * Regla 1. Un texto con protocolo apunta afuera del repo.
@@ -56,6 +63,31 @@ const NO_SON_ARCHIVOS = new Set([
 
 const VERSION = /^v?\d+(\.\d+)+$/u
 
+/**
+ * Nombres que en escritura tecnica son huecos, no cosas.
+ * Evita: `foo/index.ts` en sst/opencode, donde el documento dice "if the module
+ * is `foo/index.ts`" para explicar una convencion de reexport. `foo` no es un
+ * directorio del repo, es la letra x de un enunciado.
+ */
+const METASINTACTICOS = new Set(['foo', 'bar', 'baz', 'qux', 'quux', 'fulano', 'ejemplo'])
+
+/**
+ * La otra convencion de placeholder: una letra repetida en mayusculas, que se
+ * lee como "poné el numero acá".
+ * Evita: `../NNNN/results.md` en colinhacks/zod, donde `NNNN` es el numero de
+ * issue. Tambien `XXXX`, `YYYY`, `NN`, `ID`.
+ */
+const PLACEHOLDER_MAYUSCULAS = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
+
+function tieneSegmentoMetasintactico(text: string): boolean {
+  return text
+    .split('/')
+    .some(
+      (segment) =>
+        METASINTACTICOS.has(segment.toLowerCase()) || PLACEHOLDER_MAYUSCULAS.test(segment),
+    )
+}
+
 function noEsUnArchivo(text: string): boolean {
   const last = text.slice(text.lastIndexOf('/') + 1).toLowerCase()
   return NO_SON_ARCHIVOS.has(last) || VERSION.test(last) || NO_SON_ARCHIVOS.has(text.toLowerCase())
@@ -79,14 +111,53 @@ export function normalizePathText(text: string): string {
 }
 
 /**
- * Las reglas 1 a 4, sobre el texto crudo. La normalizacion viene despues, para
- * que un recorte no pueda convertir en ruta algo que ya se habia descartado.
+ * Regla 6. Un fragmento con espacios dentro de codigo inline es, casi siempre,
+ * un comando entero y no una ruta.
+ * Evita: `node scripts/sync.mjs`, `pnpm test test/e2e/app/x.test.ts`,
+ * `prisma/ignite docs/drive/`, que un extractor ingenuo lee como una sola ruta
+ * porque terminan con una extension conocida.
+ *
+ * El costo es no verificar una ruta que de verdad tiene un espacio en el
+ * nombre. Por eso la regla **no** aplica a los destinos de link, donde el texto
+ * es una URL por construccion y no puede ser un comando.
  */
-export function discardReason(text: string): DiscardReason | undefined {
+function tieneEspacios(text: string): boolean {
+  return /\s/u.test(text.trim())
+}
+
+/**
+ * Regla 7. Un directorio de un solo segmento no fija una ubicacion.
+ * Evita: `feat/` y `fix/` (prefijos de rama), `embeddings/` y `security/`
+ * (categorias de test), `ppr/` (un modo), `partners/` (un paquete que vive mas
+ * profundo). Es la extension natural de ADR-0003 a los directorios; ver
+ * ADR-0004.
+ */
+function esDirectorioSuelto(text: string): boolean {
+  if (!text.endsWith('/')) return false
+  return !text.slice(0, -1).includes('/')
+}
+
+export type DiscardOptions = {
+  /** Si el texto puede ser un comando. Falso para destinos de link. */
+  couldBeCommand: boolean
+}
+
+/**
+ * Las reglas de descarte sobre el texto crudo. La normalizacion viene despues,
+ * para que un recorte no pueda convertir en ruta algo que ya se habia
+ * descartado.
+ */
+export function discardReason(
+  text: string,
+  options: DiscardOptions = { couldBeCommand: true },
+): DiscardReason | undefined {
   if (text.length === 0) return 'sin-forma-de-ruta'
   if (isUrl(text)) return 'url'
+  if (options.couldBeCommand && tieneEspacios(text)) return 'tiene-espacios'
   if (GLOB_O_PLACEHOLDER.test(text)) return 'glob-o-placeholder'
   if (isPalabraSuelta(text)) return 'palabra-suelta'
   if (noEsUnArchivo(text)) return 'no-es-un-archivo'
+  if (esDirectorioSuelto(text)) return 'directorio-suelto'
+  if (tieneSegmentoMetasintactico(text)) return 'metasintactico'
   return undefined
 }

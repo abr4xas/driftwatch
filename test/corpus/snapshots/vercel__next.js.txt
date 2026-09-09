@@ -1,0 +1,19 @@
+# vercel/next.js
+
+fuentes: 8
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  .github/AGENTS.md
+claude-md  .github/CLAUDE.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+agents-md  packages/next/AGENTS.md
+agents-md  test/AGENTS.md
+agents-md  turbopack/AGENTS.md
+claude-md  turbopack/CLAUDE.md
+
+## findings
+(ninguno)

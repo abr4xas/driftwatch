@@ -1,8 +1,14 @@
 import type { Claim, Source } from '../core/types.ts'
 import type { Frontmatter } from '../parse/frontmatter.ts'
+import { lineAround, proseDisclaims } from './context-prose.ts'
 import type { ParsedDoc } from '../parse/markdown.ts'
 import { rangeFor, type LineTable } from '../parse/positions.ts'
-import { discardReason, normalizePathText, type DiscardReason } from './discard.ts'
+import {
+  discardReason,
+  normalizePathText,
+  type DiscardOptions,
+  type DiscardReason,
+} from './discard.ts'
 
 /**
  * Extensiones que cuentan como "archivo" para la regla de forma de SPEC.md § 3
@@ -118,8 +124,8 @@ export type PathEvaluation =
  * descartar, normalizar, y recien entonces decidir si tiene forma de ruta. Los
  * pasos 6 y 7 (resolver contra el baseDir y consultar el indice) son del check.
  */
-export function evaluatePathText(raw: string): PathEvaluation {
-  const reason = discardReason(raw)
+export function evaluatePathText(raw: string, options?: DiscardOptions): PathEvaluation {
+  const reason = discardReason(raw, options)
   if (reason !== undefined) return { kind: 'discarded', reason }
 
   const text = normalizePathText(raw)
@@ -150,6 +156,20 @@ function withoutAnchor(url: string): string | undefined {
 }
 
 /**
+ * Un destino de link viene percent-encoded: Markdown escribe `%20` donde el
+ * nombre del archivo tiene un espacio. Sin decodificar, `docs/Guia%20X.md` se
+ * reporta como faltante aunque `docs/Guia X.md` este ahi.
+ */
+function decodeTarget(target: string): string {
+  try {
+    return decodeURIComponent(target)
+  } catch {
+    // Un escape mal formado se deja como esta: mejor no verificar que inventar.
+    return target
+  }
+}
+
+/**
  * Claims de tipo path desde codigo inline. Los links de Markdown y el
  * frontmatter son las otras dos fuentes, y llegan en su propio ticket.
  *
@@ -166,7 +186,9 @@ export function extractPathClaims({ source, doc, frontmatter, table }: ExtractCo
     context: Claim['context'],
     meta?: Record<string, unknown>,
   ): void => {
-    const evaluated = evaluatePathText(candidate)
+    const evaluated = evaluatePathText(candidate, {
+      couldBeCommand: context !== 'link',
+    })
     if (evaluated.kind === 'discarded') return
     claims.push({
       kind: 'path',
@@ -181,15 +203,19 @@ export function extractPathClaims({ source, doc, frontmatter, table }: ExtractCo
   }
 
   for (const span of doc.inlineCode) {
+    // Regla 8: la linea puede estar diciendo que esto es un ejemplo, o que la
+    // ruta puede no existir. En los dos casos no hay afirmacion que verificar.
+    if (proseDisclaims(lineAround(source.content, span.offset[0]))) continue
     push(span.value, span.value, span.offset, 'inline-code')
   }
 
   for (const link of doc.links) {
     const target = withoutAnchor(link.value)
     if (target === undefined) continue
+    if (proseDisclaims(lineAround(source.content, link.offset[0]))) continue
     // El offset sigue apuntando a la url completa, ancla incluida, porque es
     // lo que hay escrito en el archivo y lo que --fix tendria que reemplazar.
-    push(link.value, target, link.offset, 'link')
+    push(link.value, decodeTarget(target), link.offset, 'link')
   }
 
   for (const value of frontmatter?.values ?? []) {

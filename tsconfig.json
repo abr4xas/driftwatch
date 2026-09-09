@@ -20,5 +20,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "test", "*.config.ts"]
+  "include": ["src", "test", "scripts", "*.config.ts"],
+  // Los clones del corpus son codigo de otros proyectos, no nuestro.
+  "exclude": ["test/corpus", "dist", "node_modules"]
 }

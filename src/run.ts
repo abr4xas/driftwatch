@@ -7,7 +7,9 @@ import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
 import type { CheckContext } from './verify/check.ts'
 import { CHECKS, CHECK_IDS } from './verify/checks/index.ts'
+import { gitIgnoredPaths } from './verify/git.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
+import { resolveInRepo } from './verify/resolve.ts'
 
 export type RunOptions = {
   cwd: string
@@ -45,6 +47,33 @@ function verify(claims: readonly Claim[], ctx: CheckContext): Finding[] {
   return findings
 }
 
+/** Nombre improbable, para preguntarle a git por el contenido de un directorio. */
+const DIR_PROBE = '__driftwatch_probe__'
+
+/** Las rutas que los checks van a consultar, en las dos resoluciones posibles. */
+function candidatePaths(claims: readonly Claim[]): string[] {
+  const paths = new Set<string>()
+  for (const claim of claims) {
+    if (claim.kind !== 'path') continue
+    for (const base of [claim.source.baseDir, '']) {
+      const rel = resolveInRepo(base, claim.text)
+      if (rel === undefined || rel === '') continue
+      paths.add(rel)
+      /**
+       * Un patron como `pr-status/*` ignora el *contenido* del directorio, no
+       * el directorio. Asi que para una afirmacion de directorio se pregunta
+       * tambien por un hijo inventado: si git ignoraria lo que hay adentro, el
+       * directorio es salida generada.
+       *
+       * Caso real (vercel/next.js): `scripts/pr-status/`, con
+       * `scripts/.gitignore` conteniendo `pr-status/*`.
+       */
+      if (claim.text.endsWith('/')) paths.add(`${rel}/${DIR_PROBE}`)
+    }
+  }
+  return [...paths]
+}
+
 /** Orden estable: por archivo, y dentro del archivo por posicion. */
 function sortFindings(findings: Finding[]): Finding[] {
   return findings.toSorted((a, b) => {
@@ -75,8 +104,16 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const index = await buildRepoIndex(root)
   const sources = await discoverSources(index, { paths: options.paths })
 
-  const ctx: CheckContext = { index }
-  const findings = sortFindings(sources.flatMap((source) => verify(claimsFor(source), ctx)))
+  const claims = sources.flatMap(claimsFor)
+
+  // Se le pregunta a git por todas las rutas candidatas de una sola vez, antes
+  // de correr los checks: una ruta que git ignora no se puede afirmar faltante.
+  const ctx: CheckContext = {
+    index,
+    ignoredByGit: await gitIgnoredPaths(root, candidatePaths(claims)),
+  }
+
+  const findings = sortFindings(verify(claims, ctx))
 
   return {
     root,

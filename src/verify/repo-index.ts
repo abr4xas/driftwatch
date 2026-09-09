@@ -23,6 +23,8 @@ export type RepoIndex = {
   dirs: ReadonlySet<string>
   /** 'auth.ts' -> ['src/auth.ts', 'test/auth.ts']. Alimenta las sugerencias. */
   byBasename: ReadonlyMap<string, readonly string[]>
+  /** Lo mismo para directorios: 'router' -> ['src/lib/router']. */
+  dirsByBasename: ReadonlyMap<string, readonly string[]>
   manifests: ReadonlyMap<string, Manifest>
   /** Si el listado vino de git o del fallback a glob. Se reporta en --json. */
   listing: 'git' | 'glob'
@@ -142,6 +144,7 @@ export async function buildRepoIndex(root: string): Promise<RepoIndex> {
   const files = new Set<string>()
   const dirs = new Set<string>()
   const byBasename = new Map<string, string[]>()
+  const dirsByBasename = new Map<string, string[]>()
   const manifests = new Map<string, Manifest>()
 
   for (const entry of raw) {
@@ -161,6 +164,10 @@ export async function buildRepoIndex(root: string): Promise<RepoIndex> {
       const dir = rel.slice(0, cut)
       if (dirs.has(dir)) break
       dirs.add(dir)
+      const dirBase = dir.slice(dir.lastIndexOf('/') + 1)
+      const sameName = dirsByBasename.get(dirBase)
+      if (sameName === undefined) dirsByBasename.set(dirBase, [dir])
+      else sameName.push(dir)
       cut = dir.lastIndexOf('/')
     }
 
@@ -171,7 +178,7 @@ export async function buildRepoIndex(root: string): Promise<RepoIndex> {
     }
   }
 
-  return { root, files, dirs, byBasename, manifests, listing }
+  return { root, files, dirs, byBasename, dirsByBasename, manifests, listing }
 }
 
 export function hasFile(index: RepoIndex, rel: string): boolean {
@@ -184,6 +191,32 @@ export function hasDir(index: RepoIndex, rel: string): boolean {
 
 export function candidatesFor(index: RepoIndex, basename: string): readonly string[] {
   return index.byBasename.get(basename) ?? []
+}
+
+export function dirCandidatesFor(index: RepoIndex, basename: string): readonly string[] {
+  return index.dirsByBasename.get(basename) ?? []
+}
+
+/**
+ * Si alguna ruta del repo **termina** con `rel`, tomando segmentos enteros.
+ *
+ * Es la respuesta al patron mas comun de los archivos de contexto reales: la
+ * prosa nombra un directorio ("dentro de `packages/next`") y despues las rutas
+ * se escriben relativas a el (`src/cli/next-dev.ts`). Ni el baseDir de la
+ * fuente ni la raiz del repo las resuelven, y no hay senal sintactica que
+ * distinga eso de una ruta rota.
+ *
+ * La busqueda arranca por el ultimo segmento, asi que solo compara contra los
+ * homonimos y no recorre el indice.
+ */
+export function someEntryEndsWith(index: RepoIndex, rel: string): boolean {
+  const basename = rel.slice(rel.lastIndexOf('/') + 1)
+  const suffix = `/${rel}`
+  const matches = (candidate: string): boolean => candidate.endsWith(suffix)
+  return (
+    (index.byBasename.get(basename) ?? []).some(matches) ||
+    (index.dirsByBasename.get(basename) ?? []).some(matches)
+  )
 }
 
 /** El manifiesto mas cercano subiendo desde `dir`. Es lo que hace andar monorepos. */

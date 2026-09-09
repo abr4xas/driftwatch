@@ -1,0 +1,14 @@
+# prisma/prisma
+
+fuentes: 2
+errores: 2
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+AGENTS.md:38:185  [path/missing] inline-code  skills/.pilot/
+CLAUDE.md:38:185  [path/missing] inline-code  skills/.pilot/
