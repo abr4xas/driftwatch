@@ -62,3 +62,17 @@ Nombres de archivos y funciones, estructura interna de módulos, elección entre
 ## Qué NO construir
 
 Está en `docs/spec/ROADMAP.md` § "Fuera de alcance". Lo repito porque es la tentación principal: **no metas un LLM para verificar afirmaciones de prosa.** Rompe el determinismo, el presupuesto de latencia y la propuesta de valor entera. El proyecto gana por ser rápido, offline y confiable.
+
+## Agent skills
+
+### Issue tracker
+
+Issues y specs viven como markdown local bajo `.scratch/<feature>/`. Ver `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Las cinco etiquetas canónicas sin renombrar, registradas como una línea `Status:` en cada archivo de issue. Ver `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: un `CONTEXT.md` en la raíz (creado de forma lazy) y ADRs en `docs/adr/`. Ver `docs/agents/domain.md`.
