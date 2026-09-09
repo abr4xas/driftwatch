@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { colorEnabled } from '../src/report/colors.ts'
 import { renderPretty } from '../src/report/pretty.ts'
 import type { RunResult } from '../src/run.ts'
-import type { Source } from '../src/core/types.ts'
+import type { Claim, Finding, Source } from '../src/core/types.ts'
 
 /** El caracter de escape ANSI, para detectar color sin escribirlo literal. */
 const ESC = '['
@@ -11,11 +11,33 @@ function source(path: string, kind: Source['kind'] = 'claude-md'): Source {
   return { path, absPath: `/repo/${path}`, kind, content: '', baseDir: '' }
 }
 
+function claim(file: string, line: number, text: string): Claim {
+  return {
+    kind: 'path',
+    source: source(file),
+    text,
+    raw: text,
+    range: { line, column: 1, endLine: line, endColumn: 1 + text.length },
+    offset: [0, text.length],
+    context: 'inline-code',
+  }
+}
+
+function finding(file: string, line: number, text: string): Finding {
+  return {
+    check: 'path/missing',
+    severity: 'error',
+    claim: claim(file, line, text),
+    message: 'ruta no existe',
+  }
+}
+
 function result(over: Partial<RunResult> = {}): RunResult {
   return {
     root: '/repo',
     sources: [source('CLAUDE.md')],
-    checks: [],
+    checks: ['path/missing'],
+    findings: [],
     counts: { errors: 0, warnings: 0 },
     fixable: 0,
     durationMs: 210,
@@ -57,18 +79,74 @@ describe('renderPretty', () => {
     expect(renderPretty(result(), { color: false, quiet: true })).not.toContain('sin drift')
   })
 
-  it('mientras no haya checks registrados, lista las fuentes', () => {
-    const out = renderPretty(result({ sources: [source('AGENTS.md', 'agents-md')] }), plain)
-    expect(out).toContain('fuentes descubiertas')
-    expect(out).toContain('agents-md')
-    expect(out).toContain('AGENTS.md')
-    expect(out).toContain('sin checks registrados todavia')
+  it('agrupa los findings por archivo y los ordena por linea', () => {
+    const out = renderPretty(
+      result({
+        findings: [
+          finding('CLAUDE.md', 12, 'src/lib/auth.ts'),
+          finding('CLAUDE.md', 34, 'src/otro.ts'),
+          finding('AGENTS.md', 3, 'scripts/x.sh'),
+        ],
+        counts: { errors: 3, warnings: 0 },
+      }),
+      plain,
+    )
+    const lines = out.split('\n')
+    expect(lines[0]).toBe('CLAUDE.md')
+    expect(lines[1]).toContain('12  src/lib/auth.ts')
+    expect(lines[2]).toContain('34  src/otro.ts')
+    expect(lines.find((l) => l === 'AGENTS.md')).toBeDefined()
   })
 
-  it('en cuanto hay un check registrado, el listado desaparece solo', () => {
-    expect(renderPretty(result({ checks: ['path/missing'] }), plain)).not.toContain(
-      'fuentes descubiertas',
+  it('alinea el numero de linea y el fragmento dentro del grupo', () => {
+    const out = renderPretty(
+      result({
+        findings: [finding('CLAUDE.md', 5, 'a/b.ts'), finding('CLAUDE.md', 120, 'c/d/e.ts')],
+        counts: { errors: 2, warnings: 0 },
+      }),
+      plain,
     )
+    expect(out).toContain('  ✗   5  a/b.ts    ruta no existe')
+    expect(out).toContain('  ✗ 120  c/d/e.ts  ruta no existe')
+  })
+
+  it('trunca el fragmento a 40 caracteres con puntos suspensivos', () => {
+    const largo = `src/${'x'.repeat(60)}.ts`
+    const out = renderPretty(
+      result({ findings: [finding('CLAUDE.md', 1, largo)], counts: { errors: 1, warnings: 0 } }),
+      plain,
+    )
+    expect(out).toContain('…')
+    const cited = out.split('\n')[1]?.split('  ')[2] ?? ''
+    expect(cited.length).toBe(40)
+  })
+
+  it('renderiza la sugerencia cuando el finding la trae', () => {
+    const base = finding('CLAUDE.md', 12, 'src/lib/auth.ts')
+    const out = renderPretty(
+      result({
+        findings: [
+          { ...base, suggestion: { value: 'src/auth/index.ts', confidence: 0.86, fixable: true } },
+        ],
+        counts: { errors: 1, warnings: 0 },
+        fixable: 1,
+      }),
+      plain,
+    )
+    expect(out).toContain('→ src/auth/index.ts?')
+    expect(out).toContain('1 corregible con --fix')
+  })
+
+  it('un warning usa el simbolo de aviso y no el de error', () => {
+    const out = renderPretty(
+      result({
+        findings: [{ ...finding('CLAUDE.md', 1, 'x/y.ts'), severity: 'warning' }],
+        counts: { errors: 0, warnings: 1 },
+      }),
+      plain,
+    )
+    expect(out).toContain('⚠')
+    expect(out).not.toContain('✗')
   })
 
   it('sin color no emite secuencias de escape', () => {

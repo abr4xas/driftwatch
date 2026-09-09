@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { EXIT } from '../src/core/exit-codes.ts'
 import { main } from '../src/cli/main.ts'
+import { makeTempRepo } from './helpers/temp-repo.ts'
 
 const CWD = process.cwd()
 
@@ -79,8 +80,10 @@ describe('main', () => {
   })
 
   it('sin nada que reportar sale con 0', async () => {
+    // En un repo sin fuentes no hay nada que afirmar, asi que no hay drift.
+    const root = makeTempRepo({ files: { 'README.md': '# no es una fuente\n' } })
     const c = capture()
-    await expect(main([], c.io, CWD)).resolves.toBe(EXIT.ok)
+    await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
 
   it.each([

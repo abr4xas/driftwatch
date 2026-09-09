@@ -25,3 +25,7 @@ Dos decisiones de diseño que vale registrar:
 - **Los patrones anclados se aceptan a cualquier profundidad.** SPEC § 2 escribe `.claude/skills/**/SKILL.md` desde la raíz, pero un monorepo con un `.claude/` por paquete es normal, y un `SKILL.md` bajo `.claude/skills` es una skill viva donde sea que esté. El riesgo de falso positivo es nulo: la regla se volvió más permisiva en *qué archivos audita*, no en qué reporta.
 
 `--quiet` pasa a estar implementado y sale de la lista de pendientes. `--strict` sigue en ella: solo cambia algo cuando existen warnings, y los warnings son tier 2, que es M5. Aceptarlo hoy sería prometer de más.
+
+### Nota posterior, al cerrar el ticket 05
+
+El listado de fuentes se eliminó, no se autodestruyó. La idea era que el bloque desapareciera solo al registrarse el primer check, y el mecanismo (`result.checks.length === 0`) funcionaba, pero dejarlo habría sido código muerto en cuanto `path/missing` entró al registro. Se borró junto con sus dos tests, y el test de aceptación de M0 se reescribió para conservar lo que sigue vigente del criterio: el presupuesto de tiempo, y que un repo sin drift salga con 0.

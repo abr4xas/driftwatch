@@ -51,8 +51,10 @@ jobs:
       - name: el binario compilado responde
         run: node ./dist/cli.js --help
 
-      # La herramienta corrida sobre su propio repo. Mientras no haya checks
-      # esto solo verifica que no crashea; cuando los haya, es la primera
-      # senal de que la herramienta se soporta a si misma.
+      # La herramienta corrida sobre su propio repo: el primer sujeto de
+      # prueba real. Hoy no bloquea porque este repo tiene drift conocido
+      # (menciona `scripts/corpus.ts`, que crea el ticket 10). Pasa a
+      # bloquear en cuanto la corrida sobre este repo quede limpia.
       - name: driftwatch sobre driftwatch
+        continue-on-error: true
         run: node ./dist/cli.js

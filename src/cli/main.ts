@@ -3,9 +3,6 @@ import { resolve } from 'node:path'
 import { isUserError, messageOf, notYetImplemented, UserError } from '../core/errors.ts'
 import { EXIT, exitCodeFor, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
-import { colorEnabled } from '../report/colors.ts'
-import { renderPretty } from '../report/pretty.ts'
-import { run } from '../run.ts'
 import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
@@ -75,6 +72,15 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
 
     assertNotYetImplemented(args)
     assertPathsExist(args.paths, cwd)
+
+    // El pipeline y el reporter se importan de forma dinamica: `--help` y
+    // `--version` no tienen por que pagar la carga de remark-parse, y el
+    // presupuesto de arranque en frio de 80 ms es parte del producto.
+    const [{ run }, { renderPretty }, { colorEnabled }] = await Promise.all([
+      import('../run.ts'),
+      import('../report/pretty.ts'),
+      import('../report/colors.ts'),
+    ])
 
     const result = await run({ cwd, paths: args.paths })
     io.out(

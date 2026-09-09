@@ -23,6 +23,7 @@ Esto importa para el proyecto en sí: la mayor parte del trabajo futuro es *agre
 src/
   cli.ts               entrypoint del bin  (único que toca process)
   index.ts             API pública: run(), defineConfig, tipos
+  run.ts               el pipeline completo; devuelve findings, no salida
   cli/
     main.ts            el cuerpo del CLI; recibe el entorno, devuelve el exit code
     args.ts            parseo de flags sobre node:util parseArgs
@@ -37,15 +38,19 @@ src/
     ignores.ts         parsea directivas <!-- driftwatch-ignore -->
   parse/
     markdown.ts        mdast + posiciones, extrae inline code / links / code fences
+    positions.ts       offset absoluto -> línea y columna 1-indexadas
     frontmatter.ts     YAML del bloque inicial
   extract/
     paths.ts           Claim[] de tipo path
+    discard.ts         las reglas de descarte del extractor de rutas
     scripts.ts         Claim[] de tipo script (npm/pnpm/make/deno)
     deps.ts            Claim[] de tipo dependency
     symbols.ts         Claim[] de tipo symbol
     links.ts           Claim[] de tipo link
   verify/
     repo-index.ts      índice del repo en memoria (el corazón)
+    check.ts           la forma de un check y su contexto
+    resolve.ts         texto de una claim -> ruta relativa a la raíz
     manifest.ts        lee package.json / Makefile / pyproject / go.mod / Cargo
     git.ts             churn por archivo, último commit de una fuente
     checks/
@@ -61,6 +66,7 @@ src/
     apply.ts           aplica ediciones por rango, preserva formato
     suggest.ts         candidatos + scoring de confianza
   report/
+    colors.ts          decide si hay color (NO_COLOR, tty) una sola vez
     pretty.ts
     json.ts
     github.ts
@@ -189,7 +195,9 @@ Si falla, generar sugerencia: buscar `basename` en `index.byBasename`. Confianza
 Tres niveles, en orden de importancia:
 
 ### 1. Fixtures (el grueso)
-`test/fixtures/<escenario>/` contiene un mini-repo completo: `CLAUDE.md`, `package.json`, algunos archivos fuente, y un `expected.json` con los findings esperados.
+`test/fixtures/<escenario>.ts` **declara** un mini-repo completo: el mapa de archivos (`CLAUDE.md`, `package.json`, algunos archivos fuente) y los findings esperados. Un helper lo materializa en un directorio temporal, corre el pipeline y compara.
+
+Los archivos se declaran como datos en vez de vivir commiteados como `CLAUDE.md` de verdad por una razón concreta: si vivieran en el árbol, driftwatch corrido sobre su propio repo los descubriría como fuentes y reportaría las rutas que están rotas a propósito. Un fixture tiene que poder mentir sin contaminar al repo que lo contiene.
 
 Escenarios mínimos:
 - `happy-path` — todo correcto, cero findings

@@ -1,0 +1,39 @@
+import type { Range } from '../core/types.ts'
+
+/**
+ * Tabla de offsets de inicio de linea. Se construye una vez por fuente y
+ * convierte cualquier offset absoluto en linea y columna 1-indexadas, que es
+ * lo que espera cualquier terminal y cualquier editor.
+ */
+export type LineTable = readonly number[]
+
+export function buildLineTable(content: string): LineTable {
+  const starts = [0]
+  for (let i = 0; i < content.length; i += 1) {
+    if (content[i] === '\n') starts.push(i + 1)
+  }
+  return starts
+}
+
+/** Busqueda binaria de la linea que contiene un offset. */
+function lineAt(table: LineTable, offset: number): number {
+  let low = 0
+  let high = table.length - 1
+  while (low < high) {
+    const mid = (low + high + 1) >> 1
+    if ((table[mid] ?? 0) <= offset) low = mid
+    else high = mid - 1
+  }
+  return low
+}
+
+export function rangeFor(table: LineTable, start: number, end: number): Range {
+  const startLine = lineAt(table, start)
+  const endLine = lineAt(table, end)
+  return {
+    line: startLine + 1,
+    column: start - (table[startLine] ?? 0) + 1,
+    endLine: endLine + 1,
+    endColumn: end - (table[endLine] ?? 0) + 1,
+  }
+}
