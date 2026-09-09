@@ -87,6 +87,26 @@ const PLACEHOLDER_MAYUSCULAS = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
  */
 const PLACEHOLDER_POSESIVO = /^(your|my|tu|mi|su|myapp|mycompany)[-_]/iu
 
+/**
+ * Placeholders en CamelCase con relleno, la otra forma de "poné el tuyo acá".
+ *
+ * Caso real (browser-use/browser-use): "any tests specific to an event live in
+ * its `tests/ci/test_action_EventNameHere.py` file". `EventNameHere` es un
+ * hueco, no un archivo.
+ *
+ * Las tres formas se eligieron angostas a proposito:
+ *
+ * - `...Here` con `H` mayuscula precedida de minuscula. Exige la mayuscula para
+ *   no tocar palabras reales que terminan en "here" (`sphere`, `elsewhere`).
+ * - `Your...` o `My...` seguidos de otra mayuscula: `YourClassName`.
+ * - `XXX` o `Xxx`, que es la convencion clasica de hueco.
+ */
+const PLACEHOLDER_CAMEL = [
+  /[a-z]Here(?![a-z])/u,
+  /(?:^|[^A-Za-z])(?:Your|My)[A-Z]/u,
+  /(?:XXX|Xxx)(?![a-z])/u,
+]
+
 function tieneSegmentoMetasintactico(text: string): boolean {
   return text
     .split('/')
@@ -94,7 +114,8 @@ function tieneSegmentoMetasintactico(text: string): boolean {
       (segment) =>
         METASINTACTICOS.has(segment.toLowerCase()) ||
         PLACEHOLDER_MAYUSCULAS.test(segment) ||
-        PLACEHOLDER_POSESIVO.test(segment),
+        PLACEHOLDER_POSESIVO.test(segment) ||
+        PLACEHOLDER_CAMEL.some((pattern) => pattern.test(segment)),
     )
 }
 

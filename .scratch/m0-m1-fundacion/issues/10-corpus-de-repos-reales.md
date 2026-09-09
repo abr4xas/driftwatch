@@ -6,7 +6,7 @@ Un fixture verde no prueba nada sobre falsos positivos. Esto sí.
 
 **Blocked by:** 06, 07, 08, 09
 
-**Status:** NO CERRADO — faltan 5 repos de validación (criterio nuevo: ADR-0006)
+**Status:** NO CERRADO — falta 1 repo de validación y volver a medir
 
 - [x] `scripts/corpus.ts` clona una lista versionada de **≥10 repos públicos** con archivos de contexto de agente reales
 - [x] Los clones viven en `test/corpus/` y están gitignoreados; la lista de repos y los snapshots sí se commitean
@@ -17,11 +17,11 @@ Un fixture verde no prueba nada sobre falsos positivos. Esto sí.
 
 ## Resultado, tal cual salió
 
-**32 repos públicos, 129 fuentes, 13 findings: 11 verdaderos y 2 falsos.**
+**33 repos públicos, 129 fuentes. Hoy: 12 findings, 11 verdaderos y 1 falso.**
 
 Medido sobre el grupo de validación de 8 repos, que nunca se inspeccionó: **4 findings, 3 verdaderos, 1 falso = 75% de precisión.**
 
-Contra el criterio revisado de [ADR-0006](../../../docs/adr/0006-el-criterio-de-precision-de-m1.md): **ocho de nueve condiciones se cumplen.** Falla sólo la 6, que pide ≥ 80% de precisión en validación. **M1 no cierra.**
+Contra el criterio revisado de [ADR-0006](../../../docs/adr/0006-el-criterio-de-precision-de-m1.md): **siete de nueve condiciones se cumplen.** Fallan la 6 (precisión 75% contra 80%) y la 8 (el grupo de validación quedó en 7 repos al mover `browser-use` a calibración). **M1 no cierra.**
 
 Con 4 findings el umbral de 80% no admite ninguno falso: 3 de 4 es 75% y 4 de 4 es 100%, sin valor intermedio. La tabla completa está en `test/corpus/CLASIFICACION.md`.
 
@@ -41,7 +41,11 @@ En calibración hay ocho más, entre ellos un `emitter.rs` referenciado tres vec
 
 `browser-use/browser-use` `CLAUDE.md:87` afirma `tests/ci/test_action_EventNameHere.py`. `EventNameHere` es un placeholder en CamelCase con relleno, una clase que las reglas actuales no cubren: hay reglas para `<...>`, `{{...}}`, `$VAR`, `[...]`, `foo`, `NNNN` y `your_*`, pero no para esta forma.
 
-**Tiene arreglo de una línea y no lo apliqué.** Aplicarlo contaminaría `browser-use` por la condición 9, y habría que sumar un noveno repo de validación para volver a medir. Dejarlo sin arreglar y decirlo vale más que un 100% conseguido tocando la vara después de ver el resultado.
+**Se arregló**, a pedido del usuario y porque corresponde: dejar un falso positivo conocido en el código no tiene defensa. La regla es `PLACEHOLDER_CAMEL` en `src/extract/discard.ts`, con tres formas angostas y tests de las dos mitades.
+
+Lo que **no** se hizo es reemplazar el número. El 75% queda como la última medición válida de precisión fuera de muestra, porque un número tomado después de arreglar la clase que esa misma muestra destapó no mide precisión: mide el arreglo.
+
+`browser-use` pasó a calibración, así que el grupo de validación bajó a 7 repos y la condición 8 vuelve a fallar. Certificar M1 pide sumar un repo chico nunca mirado y volver a medir.
 
 ## Cinco rondas de validación
 
@@ -73,3 +77,14 @@ Las dos se corrigieron antes de tomar la medición que las iba a evaluar.
 ## Comments
 
 Los clones se borraron después de generar los snapshots: son cache reconstruible con `pnpm corpus`, y ocupaban 2.7 GB. Se agregó `pnpm corpus --only <patrón>` para poder sumar un repo sin volver a bajar el resto.
+
+### Nota al arreglar EventNameHere
+
+La confusión que hubo acá vale registrarla, porque el error de razonamiento fue mío. Dije "no lo arreglo porque contamina", y eso mezcló dos cosas distintas:
+
+- **Arreglar el código**: correcto siempre, sin discusión.
+- **Reportar un número nuevo como certificado**: inválido, si se tomó sobre la muestra que decidió el arreglo.
+
+La disciplina de validación no existe para frenar mejoras, existe para no inflar una cifra. La frase correcta era: "lo arreglo, y el 75% queda como la última medición válida".
+
+También quedó a la vista un problema de secuencia. Se midió cinco veces intercalando arreglos, y cada ronda quemó un grupo de validación para producir un número que el arreglo siguiente invalidaba. Lo correcto era agotar las clases de falso positivo contra un set de calibración declarado, hasta que las reglas dejaran de moverse, y tomar **una** medición limpia al final. Una ronda, no cinco.

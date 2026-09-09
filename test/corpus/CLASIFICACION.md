@@ -2,8 +2,12 @@
 
 Revisión a mano de cada finding contra el repo real. Fecha: 2026-09-09.
 
-Corpus: **32 repos públicos fijados a un commit, 129 fuentes de contexto, 13 findings.**
-De los 32, **8 forman el grupo de validación**: nunca se inspeccionaron antes de medir.
+Corpus: **33 repos públicos fijados a un commit, 129 fuentes de contexto, 12 findings.**
+De los 33, **7 forman el grupo de validación**: nunca se inspeccionaron antes de medir.
+
+> **La medición válida de precisión fuera de muestra es 3 verdaderos sobre 4 findings = 75%**, tomada sobre el grupo de validación de la quinta ronda, que incluía `browser-use/browser-use`.
+>
+> Después de esa medición se arregló la clase de falso positivo que ella destapó (placeholders en CamelCase con relleno, `EventNameHere`). Eso contaminó `browser-use`, que pasó a calibración. **El 75% queda como la última medición válida y no se reemplaza** por el número que daría el corpus ahora: sería una medición tomada sobre la misma muestra que decidió el arreglo.
 
 ## Estado del criterio ([ADR-0006](../../docs/adr/0006-el-criterio-de-precision-de-m1.md))
 
@@ -11,19 +15,23 @@ De los 32, **8 forman el grupo de validación**: nunca se inspeccionaron antes d
 |---|---|---|---|
 | 1 | Fixture `false-positive-traps` en cero | 0 findings | **cumple** |
 | 2 | Cero falsos positivos entre findings `fixable` | `corregibles: 0` en los 33 snapshots | **cumple** |
-| 3 | Mediana de FP por repo = 0 | 0 (30 de 32 repos sin ningún FP) | **cumple** |
+| 3 | Mediana de FP por repo = 0 | 0 (32 de 33 repos sin ningún FP) | **cumple** |
 | 4 | Percentil 90 de FP por repo ≤ 1 | 0 | **cumple** |
 | 5 | Ningún repo con más de 2 FP | máximo 1 | **cumple** |
-| 6 | Precisión agregada ≥ 80% en validación | 3 verdaderos de 4 findings = **75%** | **no cumple** |
-| 7 | ≥ 1 verdadero positivo en validación | 3 | **cumple** |
-| 8 | ≥ 20 repos, con ≥ 8 en validación | 32 repos, 8 en validación | **cumple** |
+| 6 | Precisión agregada ≥ 80% en validación | 3 verdaderos de 4 findings = **75%** (medición de la ronda 5) | **no cumple** |
+| 7 | ≥ 1 verdadero positivo en validación | 3 (misma medición) | **cumple** |
+| 8 | ≥ 20 repos, con ≥ 8 en validación | 33 repos, **7** en validación | **no cumple** |
 | 9 | Regla de contaminación codificada | campo `holdout` en `scripts/corpus.ts` | **cumple** |
 
-**Ocho de nueve. M1 no cierra, y falla sólo la condición 6, por un finding.** Con 4 findings en validación el umbral de 80% no admite ninguno falso: 3 de 4 es 75% y 4 de 4 es 100%, sin valor intermedio posible.
+**Siete de nueve. M1 no cierra.**
+
+Falla la **6** (precisión 75% contra un umbral de 80%) y la **8** (el grupo de validación quedó en 7 repos al mover `browser-use` a calibración).
+
+Las dos fallan por lo mismo: la medición válida se tomó antes de arreglar la clase que ella destapó. Certificar M1 pide **sumar un repo chico que nunca se haya mirado** y volver a medir. Con el arreglo de `EventNameHere` aplicado, los 4 findings de la ronda 5 habrían sido 3 de 3, pero eso no es una medición: es una cuenta hecha sabiendo la respuesta.
 
 ## El corpus completo
 
-13 findings, **11 verdaderos y 2 falsos**.
+Hoy el corpus produce **12 findings, 11 verdaderos y 1 falso**. El finding de `browser-use` desapareció al arreglar la clase de placeholders en CamelCase; el diff de su snapshot se revisó a mano (1 finding → 0) y se verificó que la regla nueva no toca a ninguno de los otros nueve textos afirmados.
 
 | Repo | Findings | Verdaderos | Falsos | Grupo |
 |---|---|---|---|---|
@@ -33,8 +41,8 @@ De los 32, **8 forman el grupo de validación**: nunca se inspeccionaron antes d
 | `cloudflare/workers-sdk` | 1 | 1 | 0 | calibración |
 | `calcom/cal.com` | 1 | 1 | 0 | calibración |
 | `github/spec-kit` | 1 | 0 | 1 | calibración |
-| `browser-use/browser-use` | 1 | 0 | 1 | **validación** |
-| los otros 25 | 0 | — | — | — |
+| `browser-use/browser-use` | ~~1~~ 0 | — | — | calibración (era validación) |
+| los otros 27 | 0 | — | — | — |
 
 ---
 
@@ -62,7 +70,11 @@ El documento dice: "**SSE** (`packages/server/src/server/sse.ts`, `packages/clie
 
 El texto dice: "Make sure any tests specific to an event live in its `tests/ci/test_action_EventNameHere.py` file". `EventNameHere` es un **placeholder**: hay que reemplazarlo por el nombre del evento.
 
-Es una clase nueva y general: placeholder en **CamelCase con relleno** (`EventNameHere`, `YourClassName`, `SomethingHere`). Las reglas existentes cubren `<...>`, `{{...}}`, `$VAR`, `[...]`, `foo`, `NNNN` y `your_*`, pero no esta forma. Tiene arreglo de una línea y **no se aplicó**: hacerlo contaminaría `browser-use` y obligaría a sumar un noveno repo de validación para volver a medir.
+Es una clase nueva y general: placeholder en **CamelCase con relleno** (`EventNameHere`, `YourClassName`, `SomethingHere`). Las reglas existentes cubrían `<...>`, `{{...}}`, `$VAR`, `[...]`, `foo`, `NNNN` y `your_*`, pero no esta forma.
+
+**Se arregló** (`PLACEHOLDER_CAMEL` en `src/extract/discard.ts`), con tres formas elegidas angostas: `...Here` con `H` mayúscula precedida de minúscula, para no tocar `sphere` ni `elsewhere`; `Your...`/`My...` seguidos de otra mayúscula; y `XXX`/`Xxx`. Hay tests de las dos mitades: las seis formas que descarta y las seis palabras reales que no.
+
+Eso contaminó `browser-use`, que pasó a calibración. La medición del 75% **no se reemplaza**: es la última tomada sobre una muestra limpia.
 
 ---
 

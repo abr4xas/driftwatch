@@ -30,8 +30,10 @@ type CorpusRepo = {
    * numero del grupo de calibracion esta contaminado por haber sido el material
    * con el que se escribieron las reglas.
    *
-   * Si alguna vez se ajusta una regla mirando un repo de este grupo, ese repo
-   * pasa a ser de calibracion y hay que sumar otro nuevo aca.
+   * Condicion 9 de ADR-0006: si se **inspeccionan** los findings o los descartes
+   * de un repo de este grupo, ese repo pasa a calibracion y hay que sumar otro
+   * nuevo aca. Clasificar sus findings es la medicion y no contamina; abrir el
+   * repo a ver que descarto la herramienta, si.
    */
   holdout?: boolean
   /**
@@ -44,10 +46,12 @@ type CorpusRepo = {
 /**
  * Repos publicos con `AGENTS.md` o `CLAUDE.md` reales, verificados a mano.
  *
- * Son 28: 20 de calibracion y 8 de validacion, que es lo que pide la condicion
- * 8 de ADR-0006. Clonarlos todos cuesta ~2.6 GB, asi que la lista se mantiene
- * deliberadamente corta y los agregados nuevos se eligen chicos. `oven-sh/bun`
- * y `supabase/supabase` tienen archivos de contexto buenos pero suman ~1.5 GB
+ * Son 33: 26 de calibracion y 7 de validacion. La condicion 8 de ADR-0006 pide
+ * ocho de validacion, asi que **falta uno** para poder certificar M1.
+ *
+ * Clonarlos todos cuesta ~2.7 GB, asi que la lista se mantiene deliberadamente
+ * corta y los agregados nuevos se eligen chicos. `oven-sh/bun` y
+ * `supabase/supabase` tienen archivos de contexto buenos pero suman ~1.5 GB
  * entre los dos, y no hacen falta. Si se agregan, conviene avisar del tamano
  * antes de arrancar la descarga.
  *
@@ -94,9 +98,20 @@ const CORPUS: readonly CorpusRepo[] = [
   { repo: 'cyanheads/git-mcp-server', sha: 'd34d83af201dc0c9012ca501336c3df6171da932' },
   { repo: 'unjs/h3', sha: 'aa50e96a4a3da1732aa54542c498b37e0f8e3508' },
 
+  // Fue validacion en la quinta ronda. Su unico finding,
+  // `test_action_EventNameHere.py`, era un placeholder en CamelCase, y de ahi
+  // salio la regla PLACEHOLDER_CAMEL. Por la condicion 9, pasa a calibracion.
+  //
+  // La medicion que produjo, 3 verdaderos sobre 4 findings = 75%, queda como la
+  // ultima medicion valida de precision fuera de muestra. No se reemplaza por el
+  // numero que daria ahora: seria una medicion tomada sobre la misma muestra que
+  // decidio el arreglo.
+  { repo: 'browser-use/browser-use', sha: '2b1f9d377999a59fe7627c1a5aa88c12aa42e11f' },
+
   // --- Validacion: nunca inspeccionados ---
-  // Ocho repos, que es lo que pide la condicion 8 de ADR-0006. Se eligen
-  // chicos a proposito: el corpus completo ya pesa ~2.7 GB de clones.
+  // Siete repos. La condicion 8 de ADR-0006 pide ocho, asi que **falta uno**:
+  // certificar M1 exige sumar un repo chico que nunca se haya mirado. Se eligen
+  // chicos a proposito, porque el corpus completo ya pesa ~2.7 GB de clones.
   { repo: 'vitest-dev/vitest', sha: 'c119be016295b45a005e2a36367ea7d133b4f385', holdout: true },
   {
     repo: 'rust-lang/rust-analyzer',
@@ -116,11 +131,6 @@ const CORPUS: readonly CorpusRepo[] = [
     holdout: true,
   },
   { repo: 'openai/openai-python', sha: 'f348ec87b934c98889102668913e0a3ae7fc303d', holdout: true },
-  {
-    repo: 'browser-use/browser-use',
-    sha: '2b1f9d377999a59fe7627c1a5aa88c12aa42e11f',
-    holdout: true,
-  },
 ]
 
 const HERE = dirname(fileURLToPath(import.meta.url))

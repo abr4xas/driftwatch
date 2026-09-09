@@ -215,3 +215,27 @@ describe('la ventana de prosa no sangra entre elementos independientes', () => {
     expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
   })
 })
+
+describe('clase 8: placeholders en CamelCase con relleno', () => {
+  it.each([
+    'tests/ci/test_action_EventNameHere.py',
+    'src/NameHere/index.ts',
+    'src/YourClassName.ts',
+    'app/MyComponent/index.tsx',
+    'src/XXX/config.ts',
+    'src/Xxx.ts',
+  ])('descarta %s', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'metasintactico' })
+  })
+
+  it.each([
+    'src/sphere.ts',
+    'src/elsewhere/index.ts',
+    'src/Sphere.ts',
+    'src/Mystery.ts',
+    'src/Yourself.ts',
+    'src/adhere/cohere.ts',
+  ])('no descarta %s, que es una palabra real', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'path', text })
+  })
+})
