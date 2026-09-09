@@ -34,3 +34,9 @@ CLAUDE.md
 1. **Un directorio faltante nunca recibe sugerencia.** `byBasename` indexa archivos, no directorios, así que `` `public/imagenes/` `` se reporta sin candidato. Cerrarlo significa cambiar el contrato de `RepoIndex`, que no es lo que este ticket pedía. Es una decisión para M3, cuando `--fix` defina qué necesita de verdad.
 
 2. **El ejemplo del `BRIEF.md` no es alcanzable por búsqueda de basename.** El brief muestra `src/lib/auth.ts → src/auth/index.ts?`, que es un renombre *más* un movimiento: el basename cambia de `auth.ts` a `index.ts`, así que `byBasename` no lo encuentra nunca. `ARCHITECTURE.md` prescribe explícitamente la búsqueda por basename, y ampliarla a "un `index.*` dentro de un directorio con el nombre del archivo viejo" es una heurística nueva con riesgo propio de sugerencia equivocada, que además `--fix` aplicaría con confianza alta. No la inventé. Queda como observación: el ejemplo del brief es ilustrativo, no un caso que la implementación actual produzca.
+
+### Nota posterior, al cerrar el ticket 09
+
+El scoring de este ticket tenía un problema de precisión que el fixture de monorepo destapó. `parentSimilarity` medía solapamiento de segmentos como conjunto, y eso daba 0.667 para `packages/web/src` contra `packages/api/src`, con lo que la sugerencia salía con confianza 1 y `fixable: true`. `--fix` habría reescrito el documento de un paquete apuntando al archivo de otro.
+
+Se cambió a prefijo común: hasta dónde coinciden los dos directorios antes de divergir. Los tres casos del fixture `suggestions` dan lo mismo que antes; el caso de monorepo baja a 0.333 y la sugerencia deja de ser corregible.

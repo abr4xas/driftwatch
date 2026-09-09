@@ -17,10 +17,19 @@ function basenameOf(rel: string): string {
 }
 
 /**
- * Cuanto se parecen dos directorios, medido por segmentos compartidos sobre el
- * mas corto de los dos. No es distancia de edicion a proposito: mover un
- * archivo de `src/lib` a `src/auth` conserva un segmento, y eso es la senal que
- * interesa, no que las cadenas se parezcan letra a letra.
+ * Cuanto se parecen dos directorios, medido por **prefijo comun**: hasta donde
+ * coinciden antes de divergir, sobre la profundidad del mas corto.
+ *
+ * No es solapamiento de segmentos como conjunto, y la diferencia importa. Un
+ * conjunto dice que `packages/web/src` y `packages/api/src` se parecen mucho,
+ * porque comparten dos de tres segmentos; pero el segmento que difiere es el
+ * que identifica al paquete, y proponer el archivo del otro paquete como
+ * destino inequivoco es exactamente el autofix que no queremos aplicar. El
+ * prefijo comun los separa: coinciden solo en `packages` y ahi divergen.
+ *
+ * Tampoco es distancia de edicion: mover un archivo de `src/lib` a `src/auth`
+ * conserva el prefijo, y eso es la senal, no que las cadenas se parezcan letra
+ * a letra.
  */
 export function parentSimilarity(a: string, b: string): number {
   if (a === b) return 1
@@ -28,9 +37,11 @@ export function parentSimilarity(a: string, b: string): number {
   const right = b === '' ? [] : b.split('/')
   if (left.length === 0 || right.length === 0) return 0
 
-  const shared = new Set(right)
-  const overlap = left.filter((segment) => shared.has(segment)).length
-  return overlap / Math.min(left.length, right.length)
+  let shared = 0
+  while (shared < left.length && shared < right.length && left[shared] === right[shared]) {
+    shared += 1
+  }
+  return shared / Math.min(left.length, right.length)
 }
 
 const SIMILAR = 0.5

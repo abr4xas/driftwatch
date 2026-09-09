@@ -9,10 +9,17 @@ describe('parentSimilarity', () => {
     expect(parentSimilarity('', '')).toBe(1)
   })
 
-  it('mide segmentos compartidos sobre el directorio mas corto', () => {
+  it('mide el prefijo comun sobre el directorio mas corto', () => {
     expect(parentSimilarity('src/lib', 'src/auth')).toBe(0.5)
     expect(parentSimilarity('src', 'src/auth')).toBe(1)
     expect(parentSimilarity('a/b/c', 'x/y/z')).toBe(0)
+  })
+
+  it('no confunde dos paquetes de un monorepo por coincidir despues de divergir', () => {
+    // Comparten `packages` y `src`, pero divergen en el segmento que identifica
+    // al paquete. Como conjunto darian 0.667; como prefijo dan 0.333, que es lo
+    // correcto: proponer el archivo del otro paquete no es inequivoco.
+    expect(parentSimilarity('packages/web/src', 'packages/api/src')).toBeCloseTo(1 / 3)
   })
 
   it('la raiz no se parece a ningun subdirectorio', () => {

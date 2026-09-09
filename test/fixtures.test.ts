@@ -1,19 +1,18 @@
-import { describe, it } from 'vitest'
+import { readdirSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
+import { ALL_FIXTURES } from './fixtures/index.ts'
 import { checkFixture } from './helpers/fixture.ts'
-import { brokenPaths } from './fixtures/broken-paths.ts'
-import { falsePositiveTraps } from './fixtures/false-positive-traps.ts'
-import { happyPath } from './fixtures/happy-path.ts'
-import { linksYFrontmatter } from './fixtures/links-y-frontmatter.ts'
-import { suggestions } from './fixtures/suggestions.ts'
 
 describe('fixtures', () => {
-  for (const fixture of [
-    happyPath,
-    brokenPaths,
-    falsePositiveTraps,
-    suggestions,
-    linksYFrontmatter,
-  ]) {
+  it('el registro incluye todos los archivos de fixture del directorio', () => {
+    const onDisk = readdirSync(new URL('./fixtures/', import.meta.url))
+      .filter((name) => name.endsWith('.ts') && name !== 'index.ts')
+      .toSorted()
+    expect(ALL_FIXTURES).toHaveLength(onDisk.length)
+    expect(new Set(ALL_FIXTURES.map((f) => f.name)).size).toBe(ALL_FIXTURES.length)
+  })
+
+  for (const fixture of ALL_FIXTURES) {
     it(fixture.name, async () => {
       await checkFixture(fixture)
     })
