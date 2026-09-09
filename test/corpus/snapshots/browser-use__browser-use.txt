@@ -1,0 +1,13 @@
+# browser-use/browser-use
+
+fuentes: 2
+errores: 1
+avisos: 0
+corregibles: 0
+
+## fuentes
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+CLAUDE.md:87:267  [path/missing] inline-code  tests/ci/test_action_EventNameHere.py

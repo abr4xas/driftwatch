@@ -65,14 +65,26 @@ Dos líneas dudosas en una corrida se perdonan. A partir de la tercera se lee co
 ### C. Utilidad — para que el silencio no alcance
 
 6. **Precisión agregada ≥ 80%** sobre el grupo de validación: como máximo un falso positivo por cada cuatro findings.
-7. **Al menos un verdadero positivo por cada tres repos** del corpus.
+7. **Al menos un verdadero positivo en el grupo de validación.**
 
-El 7 es el piso de cobertura que faltaba. Sin él, la forma más fácil de pasar es no reportar nada.
+El 7 es el piso de cobertura que faltaba. Sin él, la forma más fácil de pasar es no reportar nada, porque una herramienta muda tiene cero falsos positivos.
+
+Se pide sobre el grupo de validación y no sobre el corpus completo a propósito: lo que hay que demostrar es que la herramienta encuentra drift real en repos que nadie usó para ajustarla. Un verdadero positivo en un repo de calibración no prueba eso, porque las reglas se escribieron sabiendo que estaba ahí.
+
+### Corrección de esta condición, antes de medir
+
+La primera redacción decía "al menos un verdadero positivo por cada tres repos del corpus". Estaba mal especificada, y se corrigió antes de tomar la medición que la iba a evaluar, no después de que fallara.
+
+El problema: la cantidad de verdaderos positivos depende de **cuánto drift tengan realmente los repos elegidos**, no de la calidad de la herramienta. Agregar cinco repos sanos al corpus habría hecho caer el ratio y "fallado" el criterio sin que nada cambiara en el código. Una vara que empeora cuando ampliás la muestra mide el corpus, no la herramienta.
+
+La forma corregida no tiene ese problema y sigue cerrando el agujero del silencio.
 
 ### D. Metodología — dónde se mide
 
 8. El corpus tiene **≥20 repos**, de los cuales **≥8 forman un grupo de validación** que no se miró para derivar ninguna heurística.
-9. **Regla de contaminación:** si los findings de un repo se usan para ajustar una regla, ese repo pasa a calibración y hay que sumar uno nuevo a validación. Las condiciones 6 y 7 se miden sobre validación; las de A y B, sobre el corpus completo.
+9. **Regla de contaminación:** si se **inspeccionan** los findings o los descartes de un repo de validación, ese repo pasa a calibración y hay que sumar uno nuevo. Las condiciones 6 y 7 se miden sobre validación; las de A y B, sobre el corpus completo.
+
+Clasificar los findings de un repo de validación es la medición misma y no lo contamina. Lo que contamina es **mirar más de lo que la medición necesita**: abrir el repo, revisar qué descartó la herramienta, buscar el porqué. La primera redacción decía "si se usan para ajustar una regla", y es demasiado indulgente: quien vio los datos no puede desverlos, y la intención de no usarlos no es verificable por nadie. La versión estricta sí lo es, porque inspeccionar deja rastro en el trabajo.
 
 ## Por qué 80% y no 5%
 

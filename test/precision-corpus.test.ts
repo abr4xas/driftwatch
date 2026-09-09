@@ -170,3 +170,48 @@ describe('clase 7: archivos que el documento declara generados', () => {
     expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
   })
 })
+
+describe('la ventana de prosa no sangra entre elementos independientes', () => {
+  it('un marcador en una fila de tabla no suprime la fila siguiente', async () => {
+    const root = makeTempRepo({
+      files: {
+        'CLAUDE.md': [
+          '| ruta | que es |',
+          '|---|---|',
+          '| `src/existe.ts` | algo (e.g., un ejemplo) |',
+          '| `src/falta.ts` | otra cosa |',
+          '',
+        ].join('\n'),
+        'src/existe.ts': '',
+      },
+    })
+    const result = await run({ cwd: root, paths: [] })
+    expect(result.findings.map((f) => f.claim.text)).toEqual(['src/falta.ts'])
+  })
+
+  it('un marcador en una vineta no suprime la vineta siguiente', async () => {
+    const root = makeTempRepo({
+      files: {
+        'CLAUDE.md': [
+          '- Internos usan `_` (e.g., `_utils.ts`)',
+          '- La auth va en `src/falta.ts`',
+          '',
+        ].join('\n'),
+      },
+    })
+    expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
+  })
+
+  it('pero una oracion envuelta si mira la linea anterior', async () => {
+    const root = makeTempRepo({
+      files: {
+        'CLAUDE.md': [
+          'Usá subdirectorios que sigan la ruta, por ejemplo',
+          '`auth/test_x.py` para `auth/x.py`.',
+          '',
+        ].join('\n'),
+      },
+    })
+    expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
+  })
+})

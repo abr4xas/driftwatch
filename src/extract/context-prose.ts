@@ -119,7 +119,19 @@ function esInstruccionDeCrear(line: string): boolean {
 const MARCADORES = [...EJEMPLO, ...CUBIERTO]
 
 /**
- * La linea que contiene un offset, mas la anterior.
+ * Si una linea **abre** un elemento propio en vez de continuar el anterior.
+ *
+ * Una fila de tabla, una vineta, un paso numerado y un encabezado son
+ * afirmaciones independientes. Una oracion envuelta, en cambio, nunca empieza
+ * con ninguno de esos marcadores.
+ */
+function opensItsOwnItem(line: string): boolean {
+  return /^[\s>]*(?:\||[-*+]\s|\d+[.)]\s|#{1,6}\s)/u.test(line)
+}
+
+/**
+ * La linea que contiene un offset, y la anterior **solo si esta es su
+ * continuacion**.
  *
  * La linea sola no alcanza: una oracion envuelta parte el marcador de la ruta.
  * Caso real (BerriAI/litellm), donde el "such as" queda una linea arriba:
@@ -127,14 +139,27 @@ const MARCADORES = [...EJEMPLO, ...CUBIERTO]
  *     Use subdirectories that match the implementation path, such as
  *     `auth/test_token_exchange.py` for `auth/token_exchange.py` and
  *
- * Dos lineas cubren el envoltorio tipico sin tragarse un parrafo entero, que
- * suprimiria de mas.
+ * Pero mirar la linea anterior sin condiciones sangra entre elementos que no
+ * tienen nada que ver. Caso real (cyanheads/git-mcp-server), dos filas de una
+ * tabla:
+ *
+ *     | `src/mcp-server/prompts/definitions/` | MCP Prompt definitions (e.g., ...) |
+ *     | `src/mcp-server/transports/`          | Transport implementations ...      |
+ *
+ * El "e.g." de la primera fila suprimia la segunda, que es otra afirmacion.
+ * Por eso la ventana se abre solo cuando la linea actual no abre un elemento
+ * propio.
  */
 export function lineAround(content: string, offset: number): string {
   const lineStart = content.lastIndexOf('\n', offset) + 1
-  const previousStart = lineStart === 0 ? 0 : content.lastIndexOf('\n', lineStart - 2) + 1
   const end = content.indexOf('\n', offset)
-  return content.slice(previousStart, end === -1 ? content.length : end)
+  const lineEnd = end === -1 ? content.length : end
+  const line = content.slice(lineStart, lineEnd)
+
+  if (lineStart === 0 || opensItsOwnItem(line)) return line
+
+  const previousStart = content.lastIndexOf('\n', lineStart - 2) + 1
+  return content.slice(previousStart, lineEnd)
 }
 
 /**

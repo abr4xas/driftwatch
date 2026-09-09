@@ -1,6 +1,6 @@
 # colinhacks/zod
 
-fuentes: 5
+fuentes: 3
 errores: 0
 avisos: 0
 corregibles: 0
@@ -9,8 +9,6 @@ corregibles: 0
 skill  .claude/skills/security-advisory/SKILL.md
 skill  .claude/skills/triage/SKILL.md
 cursor-rule  .cursorrules
-agents-md  AGENTS.md
-claude-md  CLAUDE.md
 
 ## findings
 (ninguno)

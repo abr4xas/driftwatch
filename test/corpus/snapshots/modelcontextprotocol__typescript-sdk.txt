@@ -1,0 +1,15 @@
+# modelcontextprotocol/typescript-sdk
+
+fuentes: 2
+errores: 3
+avisos: 0
+corregibles: 0
+
+## fuentes
+claude-md  CLAUDE.md
+claude-md  test/e2e/CLAUDE.md
+
+## findings
+CLAUDE.md:87:13  [path/missing] inline-code  packages/server/src/server/sse.ts  -> packages/client/src/client/sse.ts (0.3)
+CLAUDE.md:93:60  [path/missing] inline-code  packages/server/src/server/auth/
+CLAUDE.md:98:79  [path/missing] inline-code  packages/client/src/client/auth-extensions.ts

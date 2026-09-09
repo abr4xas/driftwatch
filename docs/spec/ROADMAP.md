@@ -32,8 +32,8 @@ El criterio vigente tiene cuatro partes, y las cuatro se cumplen o M1 no cierra:
 
 - **Piso duro:** fixture `false-positive-traps` en cero, y **cero falsos positivos entre los findings `fixable`**. Un autofix equivocado no es ruido, es corrupción del documento.
 - **Forma de una corrida:** mediana de falsos positivos por repo 0, percentil 90 ≤ 1, ninguno > 2.
-- **Utilidad:** precisión agregada ≥ 80% fuera de muestra, y ≥ 1 verdadero positivo por cada 3 repos, para que el silencio no alcance para pasar.
-- **Metodología:** corpus de ≥20 repos con ≥8 en un grupo de validación que no se miró para ajustar heurísticas.
+- **Utilidad:** precisión agregada ≥ 80% fuera de muestra, y ≥ 1 verdadero positivo en el grupo de validación, para que el silencio no alcance para pasar.
+- **Metodología:** corpus de ≥20 repos con ≥8 en un grupo de validación que no se inspeccionó. Clasificar sus findings es la medición; abrir el repo a ver qué descartó lo contamina.
 
 Si no se cumple, no se avanza — se ajustan las heurísticas, o se acepta que el check no llega y se dice.
 

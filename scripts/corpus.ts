@@ -11,8 +11,9 @@
  * precision que tiene el proyecto.
  *
  * Uso:
- *   pnpm corpus            clona lo que falte y reescribe los snapshots
- *   pnpm corpus --check    falla si algun snapshot difiere del guardado
+ *   pnpm corpus                    clona lo que falte y reescribe los snapshots
+ *   pnpm corpus --check            falla si algun snapshot difiere del guardado
+ *   pnpm corpus --only <patron>    solo los repos que matcheen el patron
  */
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -43,11 +44,14 @@ type CorpusRepo = {
 /**
  * Repos publicos con `AGENTS.md` o `CLAUDE.md` reales, verificados a mano.
  *
- * Son 13, por encima del minimo de 10 que pide el criterio. Clonarlos cuesta
- * ~1.7 GB de disco, asi que la lista se mantiene deliberadamente corta:
- * `oven-sh/bun` y `supabase/supabase` tienen archivos de contexto buenos pero
- * agregan ~1.5 GB entre los dos, y trece repos ya dan una muestra suficiente
- * para medir precision. Si se agregan, conviene avisar del tamano primero.
+ * Son 28: 20 de calibracion y 8 de validacion, que es lo que pide la condicion
+ * 8 de ADR-0006. Clonarlos todos cuesta ~2.6 GB, asi que la lista se mantiene
+ * deliberadamente corta y los agregados nuevos se eligen chicos. `oven-sh/bun`
+ * y `supabase/supabase` tienen archivos de contexto buenos pero suman ~1.5 GB
+ * entre los dos, y no hacen falta. Si se agregan, conviene avisar del tamano
+ * antes de arrancar la descarga.
+ *
+ * Con `--only <patron>` se corre un subconjunto sin volver a clonar el resto.
  */
 const CORPUS: readonly CorpusRepo[] = [
   { repo: 'openai/codex', sha: '73a1148c9c775c2a4616ce5096291740a00ed68a' },
@@ -80,7 +84,19 @@ const CORPUS: readonly CorpusRepo[] = [
   { repo: 'tursodatabase/turso', sha: '85e234697d687d4482b693483ac13fb6c93ae99d' },
   { repo: 'sveltejs/svelte', sha: 'ce89035ecbf88ee131838527d29584b968d450fb' },
 
-  // --- Validacion, tercera ronda: nunca mirados para ajustar nada ---
+  // Fueron validacion en la cuarta ronda. Se inspeccionaron sus descartes para
+  // entender por que el grupo salia mudo, y de ahi salio la correccion de la
+  // ventana de prosa. Por la condicion 9 de ADR-0006 eso los contamina:
+  // inspeccionar es contaminar, aunque el cambio que sale sea a favor de
+  // reportar mas y no de reportar menos.
+  { repo: 'jina-ai/reader', sha: '1574bfd380d249c86c82db4dace0d9c8fe17e2b1' },
+  { repo: 'simonw/llm', sha: '1df47ddcac20d58726a993949da8ef84f4081085' },
+  { repo: 'cyanheads/git-mcp-server', sha: 'd34d83af201dc0c9012ca501336c3df6171da932' },
+  { repo: 'unjs/h3', sha: 'aa50e96a4a3da1732aa54542c498b37e0f8e3508' },
+
+  // --- Validacion: nunca inspeccionados ---
+  // Ocho repos, que es lo que pide la condicion 8 de ADR-0006. Se eligen
+  // chicos a proposito: el corpus completo ya pesa ~2.7 GB de clones.
   { repo: 'vitest-dev/vitest', sha: 'c119be016295b45a005e2a36367ea7d133b4f385', holdout: true },
   {
     repo: 'rust-lang/rust-analyzer',
@@ -88,6 +104,23 @@ const CORPUS: readonly CorpusRepo[] = [
     holdout: true,
   },
   { repo: 'nuxt/nuxt', sha: '03e9df01a1256d214ac5c5c14514f95803ecb244', holdout: true },
+  { repo: 'openai/openai-node', sha: 'b4168065d3839b3008d557fdbb8972da2e247f24', holdout: true },
+  {
+    repo: 'modelcontextprotocol/typescript-sdk',
+    sha: '5119ee7fd7790e335a3fb60ef36f85334e2a6326',
+    holdout: true,
+  },
+  {
+    repo: 'modelcontextprotocol/python-sdk',
+    sha: '9972c21aa42054fb1450c5fc614761ed11847ec6',
+    holdout: true,
+  },
+  { repo: 'openai/openai-python', sha: 'f348ec87b934c98889102668913e0a3ae7fc303d', holdout: true },
+  {
+    repo: 'browser-use/browser-use',
+    sha: '2b1f9d377999a59fe7627c1a5aa88c12aa42e11f',
+    holdout: true,
+  },
 ]
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -171,8 +204,15 @@ async function snapshotOf(repo: string, dir: string): Promise<string> {
   return `${lines.join('\n')}\n`
 }
 
+/** `--only <patron>`: corre solo los repos cuyo nombre contiene el patron. */
+function onlyPattern(argv: readonly string[]): string | undefined {
+  const at = argv.indexOf('--only')
+  return at === -1 ? undefined : argv[at + 1]
+}
+
 async function main(): Promise<number> {
   const check = process.argv.includes('--check')
+  const only = onlyPattern(process.argv)
   mkdirSync(SNAPSHOTS_DIR, { recursive: true })
 
   let differing = 0
@@ -181,6 +221,9 @@ async function main(): Promise<number> {
   let holdoutFindings = 0
 
   for (const entry of CORPUS) {
+    // Con --only se saltean los demas sin tocar su snapshot, para poder sumar
+    // un repo nuevo sin volver a clonar los gigabytes de todo el corpus.
+    if (only !== undefined && !entry.repo.includes(only)) continue
     process.stderr.write(`${entry.repo}${entry.holdout === true ? ' [validacion]' : ''} ... `)
     let dir: string
     try {
