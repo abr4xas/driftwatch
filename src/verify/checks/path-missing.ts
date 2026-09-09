@@ -1,3 +1,4 @@
+import { suggestPath } from '../../fix/suggest.ts'
 import type { Check } from '../check.ts'
 import { hasDir, hasFile } from '../repo-index.ts'
 import { resolveInRepo } from '../resolve.ts'
@@ -15,11 +16,13 @@ export const pathMissing: Check = {
 
     if (hasFile(ctx.index, rel) || hasDir(ctx.index, rel)) return null
 
+    const suggestion = suggestPath(ctx.index, rel)
     return {
       check: pathMissing.id,
       severity: pathMissing.defaultSeverity,
       claim,
       message: 'ruta no existe',
+      ...(suggestion === undefined ? {} : { suggestion }),
     }
   },
 }
