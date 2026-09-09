@@ -2,13 +2,13 @@ import { readFileSync } from 'node:fs'
 import { dirname, join, parse } from 'node:path'
 
 /**
- * La versión se lee del package.json en tiempo de ejecución en vez de inyectarse
- * en build para que `--version` no dependa del bundler y siga siendo correcta
- * cuando se corre desde `src/` en desarrollo. La búsqueda hacia arriba está
- * acotada por la raíz del filesystem.
+ * The version is read from package.json at runtime instead of being injected at
+ * build time so that `--version` does not depend on the bundler and stays
+ * correct when running from `src/` in development. The upward search is bounded
+ * by the filesystem root.
  *
- * Si no encuentra nada, lanza. Devolver un placeholder como '0.0.0' haría que un
- * fallo de lectura fuera indistinguible de una versión real.
+ * If it finds nothing, it throws. Returning a placeholder like '0.0.0' would
+ * make a read failure indistinguishable from a real version.
  */
 export function readVersion(from: string = import.meta.dirname): string {
   const { root } = parse(from)
@@ -17,7 +17,7 @@ export function readVersion(from: string = import.meta.dirname): string {
     const found = versionIn(dir)
     if (found !== undefined) return found
     if (dir === root) {
-      throw new Error(`no se encontró un package.json con version subiendo desde ${from}`)
+      throw new Error(`no package.json with a version found walking up from ${from}`)
     }
     dir = dirname(dir)
   }
@@ -28,7 +28,7 @@ function versionIn(dir: string): string | undefined {
   try {
     raw = readFileSync(join(dir, 'package.json'), 'utf8')
   } catch {
-    // Este directorio no tiene package.json; el llamador sigue subiendo.
+    // This directory has no package.json; the caller keeps walking up.
     return undefined
   }
   const parsed: unknown = JSON.parse(raw)

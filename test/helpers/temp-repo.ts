@@ -4,15 +4,15 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 
 export type TempRepoOptions = {
-  /** Mapa de ruta relativa a contenido. Los directorios se crean solos. */
+  /** A map of relative path to content. Directories are created as needed. */
   files: Record<string, string>
-  /** Si es false, no se corre `git init`: ejercita el fallback a glob. */
+  /** When false, `git init` is not run: exercises the glob fallback. */
   git?: boolean
 }
 
 /**
- * Crea un mini-repo en un directorio temporal. Es la base de los fixtures: un
- * escenario es un arbol de archivos mas una expectativa sobre la salida.
+ * Creates a mini-repo in a temporary directory. It is the basis of the
+ * fixtures: a scenario is a file tree plus an expectation about the output.
  */
 export function makeTempRepo({ files, git = true }: TempRepoOptions): string {
   const root = mkdtempSync(join(tmpdir(), 'driftwatch-'))

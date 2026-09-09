@@ -1,26 +1,26 @@
-/** El texto de --help. Es el contrato de SPEC.md § 4 escrito una sola vez. */
-export const HELP = `driftwatch [paths...] [opciones]
+/** The --help text. It is the SPEC.md § 4 contract written down once. */
+export const HELP = `driftwatch [paths...] [options]
 
-Encuentra las afirmaciones de tus archivos de contexto de agente que ya no son ciertas.
+Find the claims in your agent context files that are no longer true.
 
-Opciones
-  --fix                  Aplica las correcciones inequívocas
-  --json                 Salida JSON en stdout
+Options
+  --fix                  Apply the unambiguous fixes
+  --json                 JSON output on stdout
   --format <fmt>         pretty | json | github | sarif   (default: pretty)
-  --only <ids>           Solo estos checks (coma-separados, acepta prefijo: --only path)
-  --skip <ids>           Excluye estos checks
-  --strict               Los warnings cuentan como errores para el exit code
-  --no-tier2             Desactiva todos los checks de tier 2
-  --config <ruta>        Ruta explícita al config
-  --no-config            Ignora cualquier config encontrado
-  --quiet                Solo muestra problemas, sin resumen
-  --watch                Re-ejecuta al cambiar cualquier fuente
-  --init                 Escribe un driftwatch.config.ts comentado
-  --version, -v          Imprime la versión
-  --help, -h             Imprime esta ayuda
+  --only <ids>           Only these checks (comma-separated, accepts a prefix: --only path)
+  --skip <ids>           Exclude these checks
+  --strict               Warnings count as errors for the exit code
+  --no-tier2             Turn off every tier 2 check
+  --config <path>        Explicit path to the config
+  --no-config            Ignore any config found
+  --quiet                Show problems only, no summary
+  --watch                Re-run whenever a source changes
+  --init                 Write a commented driftwatch.config.ts
+  --version, -v          Print the version
+  --help, -h             Print this help
 
 Exit codes
-  0  Sin errores
-  1  Se encontró al menos un error
-  2  Fallo de la propia herramienta
+  0  No errors
+  1  At least one error was found
+  2  The tool itself failed
 `

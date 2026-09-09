@@ -3,16 +3,16 @@ import type { RepoIndex } from './repo-index.ts'
 
 export type CheckContext = {
   index: RepoIndex
-  /** Rutas que git ignora. Ver `gitIgnoredPaths`. */
+  /** Paths git ignores. See `gitIgnoredPaths`. */
   ignoredByGit: ReadonlySet<string>
 }
 
 /**
- * La forma de un check (ARCHITECTURE.md § Extensibilidad). Un check nuevo es un
- * archivo nuevo mas una entrada en el registro: no toca nada del pipeline.
+ * The shape of a check (ARCHITECTURE.md § Extensibility). A new check is a new
+ * file plus an entry in the registry: it touches nothing in the pipeline.
  */
 export type Check = {
-  /** Id estable, usado en config, en `--only/--skip` y en los ignores. */
+  /** Stable id, used in config, in `--only/--skip` and in the ignores. */
   id: string
   tier: 1 | 2
   defaultSeverity: Severity

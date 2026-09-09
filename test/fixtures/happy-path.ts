@@ -1,21 +1,21 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
-/** Todo lo que el documento afirma es cierto. Expected: cero findings. */
+/** Everything the document claims is true. Expected: zero findings. */
 export const happyPath: Fixture = {
   name: 'happy-path',
   files: {
     'CLAUDE.md': [
-      '# Proyecto',
+      '# Project',
       '',
-      'El punto de entrada es `src/index.ts` y los tests viven en `test/`.',
+      'The entry point is `src/index.ts` and the tests live in `test/`.',
       '',
-      'La config esta en `config/app.json`, y el helper en `./src/util/fecha.ts`.',
+      'The config is at `config/app.json`, and the helper at `./src/util/date.ts`.',
       '',
-      'Una ruta desde la raiz: `/src/index.ts`.',
+      'A path from the root: `/src/index.ts`.',
       '',
     ].join('\n'),
     'src/index.ts': 'export const x = 1\n',
-    'src/util/fecha.ts': 'export const hoy = () => new Date()\n',
+    'src/util/date.ts': 'export const today = () => new Date()\n',
     'config/app.json': '{}\n',
     'test/index.test.ts': '',
   },

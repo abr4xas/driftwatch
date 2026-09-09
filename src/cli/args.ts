@@ -19,13 +19,13 @@ export type CliArgs = {
   help: boolean
   version: boolean
   tier2: boolean
-  /** Ruta explícita al config, o `false` para ignorar cualquier config. */
+  /** Explicit path to the config, or `false` to ignore any config. */
   config: string | false | undefined
   only: string[] | undefined
   skip: string[] | undefined
 }
 
-/** Las claves de `CliArgs` que son banderas booleanas. */
+/** The keys of `CliArgs` that are boolean flags. */
 export type BooleanFlag = {
   [K in keyof CliArgs]: CliArgs[K] extends boolean ? K : never
 }[keyof CliArgs]
@@ -47,7 +47,7 @@ const OPTIONS = {
   help: { type: 'boolean', short: 'h' },
 } as const
 
-/** Una lista separada por coma, tolerante con comas de más: `path,,script`. */
+/** A comma-separated list, tolerant of extra commas: `path,,script`. */
 function splitList(raw: string | undefined): string[] | undefined {
   if (raw === undefined) return undefined
   const entries = raw
@@ -61,10 +61,7 @@ function resolveFormat(values: { format?: string; json?: boolean }): Format {
   const explicit = values.format
   if (explicit !== undefined) {
     if (!isFormat(explicit)) {
-      throw new UserError(
-        `formato desconocido: ${explicit}`,
-        `los formatos válidos son ${FORMATS.join(', ')}`,
-      )
+      throw new UserError(`unknown format: ${explicit}`, `valid formats are ${FORMATS.join(', ')}`)
     }
     return explicit
   }
@@ -72,27 +69,24 @@ function resolveFormat(values: { format?: string; json?: boolean }): Format {
 }
 
 /**
- * parseArgs lanza mensajes en inglés y bastante largos ("place it at the end of
- * the command after '--'"). Los reescribimos cortos y en el idioma del CLI: el
- * mensaje de error es parte de la interfaz, no un detalle de implementación.
+ * parseArgs throws fairly long messages ("place it at the end of the command
+ * after '--'"). We rewrite them short: the error message is part of the
+ * interface, not an implementation detail.
  */
 function asUserError(cause: unknown): UserError {
   const flag = /'(-{1,2}[^']+)'/u.exec(messageOf(cause))?.[1]
 
   switch (codeOf(cause)) {
     case 'ERR_PARSE_ARGS_UNKNOWN_OPTION':
-      return new UserError(`opción desconocida: ${flag ?? 'la que pasaste'}`, 'corré --help')
+      return new UserError(`unknown option: ${flag ?? 'the one you passed'}`, 'run --help')
     case 'ERR_PARSE_ARGS_INVALID_OPTION_VALUE':
-      return new UserError(
-        `la opción ${flag ?? 'que pasaste'} tiene un valor inválido`,
-        'corré --help',
-      )
+      return new UserError(`the option ${flag ?? 'you passed'} has an invalid value`, 'run --help')
     default:
-      return new UserError(messageOf(cause), 'corré --help')
+      return new UserError(messageOf(cause), 'run --help')
   }
 }
 
-/** Aísla el único punto donde parseArgs puede lanzar, para no perder inferencia. */
+/** Isolates the only place parseArgs can throw, so inference survives. */
 function runParse(argv: readonly string[]) {
   try {
     return parseArgs({
@@ -110,7 +104,7 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
   const { values, positionals } = runParse(argv)
 
   if (values.config !== undefined && values['no-config'] === true) {
-    throw new UserError('--config y --no-config se contradicen', 'elegí uno de los dos')
+    throw new UserError('--config and --no-config contradict each other', 'pick one of the two')
   }
 
   return {

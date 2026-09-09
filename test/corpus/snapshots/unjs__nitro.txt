@@ -1,14 +1,14 @@
 # unjs/nitro
 
-fuentes: 3
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 3
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 copilot  .github/copilot-instructions.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-(ninguno)
+(none)

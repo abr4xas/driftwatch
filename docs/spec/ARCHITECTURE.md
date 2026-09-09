@@ -1,58 +1,60 @@
-# driftwatch — Arquitectura
+# driftwatch — Architecture
 
-## Principio ordenador
+## Ordering principle
 
-El pipeline es lineal y cada etapa tiene una frontera de datos angosta:
+The pipeline is linear and every stage has a narrow data boundary:
 
 ```
 discover  →  parse  →  extract  →  verify  →  report
  Source[]    Doc[]     Claim[]    Finding[]   stdout
 ```
 
-Ninguna etapa conoce a la siguiente. Un check nuevo es un archivo nuevo en `extract/` y/o `verify/`, sin tocar el resto. Un formato de salida nuevo es un archivo en `report/`.
+No stage knows the next one. A new check is a new file in `extract/` and/or `verify/`, without touching the rest. A new output format is a file in `report/`.
 
-El CLI queda fuera del pipeline: `cli/` traduce argumentos a una configuración y una configuración a un exit code, y no sabe nada de checks. El pipeline no importa nada de `cli/`.
+The CLI sits outside the pipeline: `cli/` translates arguments into a configuration and a configuration into an exit code, and knows nothing about checks. The pipeline imports nothing from `cli/`.
 
-Esto importa para el proyecto en sí: la mayor parte del trabajo futuro es *agregar checks*, y esa operación tiene que costar un archivo.
+This matters for the project itself: most of the future work is *adding checks*, and that operation has to cost one file.
 
 ---
 
-## Estructura de directorios
+## Directory structure
 
 ```
 src/
-  cli.ts               entrypoint del bin  (único que toca process)
-  index.ts             API pública: run(), defineConfig, tipos
-  run.ts               el pipeline completo; devuelve findings, no salida
+  cli.ts               bin entrypoint  (the only one touching process)
+  index.ts             public API: run(), defineConfig, types
+  run.ts               the whole pipeline; returns findings, not output
   cli/
-    main.ts            el cuerpo del CLI; recibe el entorno, devuelve el exit code
-    args.ts            parseo de flags sobre node:util parseArgs
-    help.ts            el texto de --help, que es el contrato de SPEC.md § 4
+    main.ts            the CLI body; receives the environment, returns the exit code
+    args.ts            flag parsing on top of node:util parseArgs
+    help.ts            the --help text, which is the SPEC.md § 4 contract
   core/
     types.ts           Source, Claim, Finding, Verdict, Config
-    errors.ts          UserError y los helpers de normalización de excepciones
-    exit-codes.ts      los tres exit codes y cómo se derivan de un recuento
-    version.ts         lee la versión del package.json más cercano
-    discover.ts        encuentra fuentes, respeta .gitignore
-    config.ts          carga y valida config, mergea con defaults
-    ignores.ts         parsea directivas <!-- driftwatch-ignore -->
+    errors.ts          UserError and the exception normalization helpers
+    exit-codes.ts      the three exit codes and how they derive from a count
+    version.ts         reads the version from the nearest package.json
+    discover.ts        finds sources, respects .gitignore
+    config.ts          loads and validates config, merges with defaults
+    ignores.ts         parses <!-- driftwatch-ignore --> directives
   parse/
-    markdown.ts        mdast + posiciones, extrae inline code / links / code fences
-    positions.ts       offset absoluto -> línea y columna 1-indexadas
-    frontmatter.ts     YAML del bloque inicial
+    markdown.ts        mdast + positions, extracts inline code / links / code fences
+    positions.ts       absolute offset -> 1-indexed line and column
+    frontmatter.ts     YAML of the leading block
   extract/
-    paths.ts           Claim[] de tipo path
-    discard.ts         las reglas de descarte del extractor de rutas
-    scripts.ts         Claim[] de tipo script (npm/pnpm/make/deno)
-    deps.ts            Claim[] de tipo dependency
-    symbols.ts         Claim[] de tipo symbol
-    links.ts           Claim[] de tipo link
+    paths.ts           path Claim[]
+    discard.ts         the discard rules of the path extractor
+    context-prose.ts   the prose markers that disclaim a nearby claim
+    scripts.ts         script Claim[] (npm/pnpm/make/deno)
+    deps.ts            dependency Claim[]
+    symbols.ts         symbol Claim[]
+    links.ts           link Claim[]
   verify/
-    repo-index.ts      índice del repo en memoria (el corazón)
-    check.ts           la forma de un check y su contexto
-    resolve.ts         texto de una claim -> ruta relativa a la raíz
-    manifest.ts        lee package.json / Makefile / pyproject / go.mod / Cargo
-    git.ts             churn por archivo, último commit de una fuente
+    repo-index.ts      in-memory repo index (the heart)
+    check.ts           the shape of a check and its context
+    resolve.ts         a claim's text -> path relative to the root
+    generated.ts       directories whose contents are generated, not versioned
+    manifest.ts        reads package.json / Makefile / pyproject / go.mod / Cargo
+    git.ts             per-file churn, a source's last commit
     checks/
       path-missing.ts
       script-missing.ts
@@ -63,40 +65,40 @@ src/
       stale-churn.ts
       command-unknown.ts
   fix/
-    apply.ts           aplica ediciones por rango, preserva formato
-    suggest.ts         candidatos + scoring de confianza
+    apply.ts           applies range edits, preserves formatting
+    suggest.ts         candidates + confidence scoring
   report/
-    colors.ts          decide si hay color (NO_COLOR, tty) una sola vez
+    colors.ts          decides once whether there is color (NO_COLOR, tty)
     pretty.ts
     json.ts
     github.ts
     sarif.ts
 test/
-  fixtures/            repos sintéticos completos por escenario
-  corpus/              repos reales clonados (gitignored, ver §Corpus)
+  fixtures/            complete synthetic repos, one per scenario
+  corpus/              cloned real repos (gitignored, see §Corpus)
 ```
 
 ---
 
-## Modelo de datos
+## Data model
 
 ```ts
 type Source = {
-  path: string            // relativo a root
+  path: string            // relative to root
   absPath: string
   kind: 'claude-md' | 'agents-md' | 'skill' | 'subagent' | 'command' | 'cursor-rule' | 'copilot'
   content: string
-  baseDir: string         // directorio contra el que se resuelven rutas relativas
+  baseDir: string         // directory that relative paths resolve against
 }
 
 type Claim = {
   kind: 'path' | 'script' | 'dep' | 'symbol' | 'link' | 'frontmatter'
   source: Source
-  text: string            // el fragmento exacto afirmado
+  text: string            // the exact claimed fragment
   range: { line: number; column: number; endLine: number; endColumn: number }
-  offset: [number, number]  // offsets absolutos en content, para --fix
+  offset: [number, number]  // absolute offsets into content, for --fix
   context: 'inline-code' | 'code-fence' | 'link' | 'frontmatter' | 'prose'
-  meta?: Record<string, unknown>   // ej. { manager: 'pnpm' } para scripts
+  meta?: Record<string, unknown>   // e.g. { manager: 'pnpm' } for scripts
 }
 
 type Finding = {
@@ -108,119 +110,119 @@ type Finding = {
 }
 ```
 
-`offset` es lo que hace posible `--fix` sin reformatear: se reemplaza exactamente ese rango de bytes.
+`offset` is what makes `--fix` possible without reformatting: exactly that byte range gets replaced.
 
 ---
 
-## El índice del repo
+## The repo index
 
-`verify/repo-index.ts` es la pieza de la que depende el presupuesto de performance. Se construye **una vez** por ejecución:
+`verify/repo-index.ts` is the piece the performance budget depends on. It is built **once** per run:
 
 ```ts
 type RepoIndex = {
-  files: Set<string>                    // todas las rutas relativas
+  files: Set<string>                    // every relative path
   dirs: Set<string>
   byBasename: Map<string, string[]>     // 'auth.ts' → ['src/auth.ts', 'test/auth.ts']
-  manifests: Map<string, Manifest>      // dir → package.json parseado (monorepo)
+  manifests: Map<string, Manifest>      // dir → parsed package.json (monorepo)
 }
 ```
 
-Decisiones:
-- Un solo recorrido del árbol con `fast-glob` o `tinyglobby`, honrando `.gitignore`.
-- Si hay git disponible, usar `git ls-files` — es más rápido y ya respeta ignores. Fallback a glob si no hay repo.
-- `byBasename` es lo que alimenta las sugerencias de `--fix`. Es un `Map` de arrays, no una búsqueda difusa: la búsqueda difusa solo se corre sobre los candidatos de ese basename, nunca sobre todo el índice.
-- Todo en memoria. En un repo de 100k archivos son unos pocos MB; aceptable.
+Decisions:
+- A single tree walk with `fast-glob` or `tinyglobby`, honouring `.gitignore`.
+- If git is available, use `git ls-files` — it is faster and already respects ignores. Fall back to glob if there is no repo.
+- `byBasename` is what feeds the `--fix` suggestions. It is a `Map` of arrays, not a fuzzy search: the fuzzy search only runs over the candidates for that basename, never over the whole index.
+- Everything in memory. On a repo of 100k files that is a few MB; acceptable.
 
-Las verificaciones son entonces `O(1)` por claim. Ninguna llamada a `fs.stat` en el camino caliente.
-
----
-
-## Parseo de Markdown
-
-Usar **mdast** (`remark-parse` + `unist-util-visit`), no regex sobre el texto crudo.
-
-La razón no es purismo: es que necesitamos saber **en qué contexto** aparece cada fragmento. `` `src/foo.ts` `` dentro de un bloque de código de ejemplo, dentro de una cita, o dentro de una tabla tiene distinto peso. Con regex esa distinción se pierde y aparecen los falsos positivos que matan el proyecto.
-
-mdast da `node.position` con line/column/offset, que mapea directo al `range` y `offset` de `Claim`.
-
-Del árbol nos interesan cuatro tipos de nodo:
-- `inlineCode` → fuente principal de claims de path, script, dep, symbol
-- `code` (fences) → claims de script y command; se ignora si `lang` es un lenguaje que no es shell
-- `link` → claims de link
-- `yaml` (frontmatter) → claims de frontmatter
-
-La prosa cruda (`text`) **no** se escanea por defecto, con una excepción: `dep/missing` la mira buscando verbos de uso. Escanear prosa en general es la fuente número uno de ruido.
+Verifications are then `O(1)` per claim. No `fs.stat` call on the hot path.
 
 ---
 
-## Extracción de rutas: el detalle que define la calidad
+## Markdown parsing
 
-Este es el algoritmo con más matiz del proyecto. Orden de las reglas:
+Use **mdast** (`remark-parse` + `unist-util-visit`), not regex over raw text.
 
-1. Descartar si parsea como URL con protocolo.
-2. Descartar si contiene caracteres de glob o placeholder: `* ? { } < > $ [ ]`.
-3. Descartar si es una sola palabra sin `/` (`foo` no es una ruta, `foo.ts` tampoco, `src/foo` sí). El paréntesis original decía que `foo.ts` sí lo era, contradiciendo a `SPEC.md` § 3; ver ADR-0003.
-4. Descartar extensiones no-archivo comunes que confunden: `1.0`, `v2.1`, `node.js` cuando no hay `/` (lista negra de palabras: `node.js`, `next.js`, `nuxt.js`, `vue.js`, `d.ts` suelto).
-5. Normalizar: quitar `./` inicial, quitar `:línea` final, quitar backticks residuales, quitar puntuación final (`.`, `,`, `)`).
-6. Resolver contra `source.baseDir`.
-7. Consultar `index.files` y `index.dirs`.
+The reason is not purism: it is that we need to know **in what context** each fragment appears. `` `src/foo.ts` `` inside an example code block, inside a quote, or inside a table carries different weight. With regex that distinction is lost and the false positives that kill the project show up.
 
-Si falla, generar sugerencia: buscar `basename` en `index.byBasename`. Confianza = 1.0 si hay un único candidato y el directorio padre es similar; 0.6 si hay un único candidato con directorio distinto; 0.3 si hay varios.
+mdast gives `node.position` with line/column/offset, which maps directly to `Claim`'s `range` and `offset`.
 
-**Cada regla de descarte debe tener un caso en `test/fixtures/`.** Es el contrato contra la regresión de falsos positivos.
+Four node types matter from the tree:
+- `inlineCode` → main source of path, script, dep and symbol claims
+- `code` (fences) → script and command claims; ignored if `lang` is a non-shell language
+- `link` → link claims
+- `yaml` (frontmatter) → frontmatter claims
+
+Raw prose (`text`) is **not** scanned by default, with one exception: `dep/missing` looks at it hunting for usage verbs. Scanning prose in general is the number one source of noise.
+
+---
+
+## Path extraction: the detail that defines quality
+
+This is the most nuanced algorithm in the project. Rule order:
+
+1. Discard if it parses as a URL with a protocol.
+2. Discard if it contains glob or placeholder characters: `* ? { } < > $ [ ]`.
+3. Discard if it is a single word with no `/` (`foo` is not a path, `foo.ts` is not either, `src/foo` is). The original parenthetical said `foo.ts` was one, contradicting `SPEC.md` § 3; see ADR-0003.
+4. Discard common non-file extensions that confuse: `1.0`, `v2.1`, `node.js` when there is no `/` (a blocklist of words: `node.js`, `next.js`, `nuxt.js`, `vue.js`, a bare `d.ts`).
+5. Normalize: strip a leading `./`, strip a trailing `:line`, strip leftover backticks, strip trailing punctuation (`.`, `,`, `)`).
+6. Resolve against `source.baseDir`.
+7. Look up `index.files` and `index.dirs`.
+
+If it fails, generate a suggestion: look up `basename` in `index.byBasename`. Confidence = 1.0 if there is a single candidate and the parent directory is similar; 0.6 if there is a single candidate in a different directory; 0.3 if there are several.
+
+**Every discard rule must have a case in `test/fixtures/`.** That is the contract against false positive regression.
 
 ---
 
 ## Stack
 
-| Decisión | Elección | Por qué |
+| Decision | Choice | Why |
 |---|---|---|
-| Lenguaje | TypeScript, ESM puro | Es lo que el ecosistema objetivo usa |
-| Runtime mínimo | Node 24 | LTS con `node:` builtins estables |
-| Build | `tsdown` o `unbuild` | Salida ESM + tipos, sin ceremonia |
-| Args | parseo propio sobre `node:util parseArgs` | Un CLI de 12 flags no justifica una dependencia |
-| Markdown | `remark-parse` + `unist-util-visit` | Posiciones exactas |
-| Frontmatter | `yaml` | Parser correcto; no regex |
-| Glob | `tinyglobby` | Rápido, chico; solo si no hay git |
-| Colores | `picocolors` | 2 kB, respeta `NO_COLOR` |
-| Config | `jiti` o import dinámico | Para cargar `.ts` config; **lazy**, solo si hay config |
-| Tests | `vitest` | Estándar del ecosistema |
+| Language | TypeScript, pure ESM | It is what the target ecosystem uses |
+| Minimum runtime | Node 24 | LTS with stable `node:` builtins |
+| Build | `tsdown` or `unbuild` | ESM output + types, no ceremony |
+| Args | our own parsing on `node:util parseArgs` | A 12-flag CLI does not justify a dependency |
+| Markdown | `remark-parse` + `unist-util-visit` | Exact positions |
+| Frontmatter | `yaml` | A correct parser; not regex |
+| Glob | `tinyglobby` | Fast, small; only when there is no git |
+| Colors | `picocolors` | 2 kB, respects `NO_COLOR` |
+| Config | `jiti` or dynamic import | To load `.ts` config; **lazy**, only if a config exists |
+| Tests | `vitest` | Ecosystem standard |
 
-**Restricción dura:** el camino de `npx driftwatch` sin config no puede cargar más de ~6 dependencias. El arranque en frío es parte del producto.
+**Hard constraint:** the `npx driftwatch` path with no config cannot load more than ~6 dependencies. Cold start is part of the product.
 
 ---
 
 ## Testing
 
-Tres niveles, en orden de importancia:
+Three levels, in order of importance:
 
-### 1. Fixtures (el grueso)
-`test/fixtures/<escenario>.ts` **declara** un mini-repo completo: el mapa de archivos (`CLAUDE.md`, `package.json`, algunos archivos fuente) y los findings esperados. Un helper lo materializa en un directorio temporal, corre el pipeline y compara.
+### 1. Fixtures (the bulk)
+`test/fixtures/<scenario>.ts` **declares** a complete mini-repo: the file map (`CLAUDE.md`, `package.json`, a few source files) and the expected findings. A helper materializes it in a temporary directory, runs the pipeline and compares.
 
-Los archivos se declaran como datos en vez de vivir commiteados como `CLAUDE.md` de verdad por una razón concreta: si vivieran en el árbol, driftwatch corrido sobre su propio repo los descubriría como fuentes y reportaría las rutas que están rotas a propósito. Un fixture tiene que poder mentir sin contaminar al repo que lo contiene.
+The files are declared as data instead of living committed as real `CLAUDE.md` files for a concrete reason: if they lived in the tree, driftwatch run over its own repo would discover them as sources and report the paths that are broken on purpose. A fixture has to be able to lie without contaminating the repo containing it.
 
-Escenarios mínimos:
-- `happy-path` — todo correcto, cero findings
-- `broken-paths` — rutas rotas con y sin sugerencia
-- `monorepo` — CLAUDE.md anidados, resolución relativa, package.json múltiples
-- `skills` — frontmatter válido e inválido
-- `false-positive-traps` — el más importante: URLs, globs, placeholders, versiones, `node.js`, rutas en bloques de ejemplo, texto entre comillas. **Expected: cero findings.**
-- `ignores` — directivas en línea funcionando
-- `no-git` — repo sin `.git`, fallback a glob
+Minimum scenarios:
+- `happy-path` — everything correct, zero findings
+- `broken-paths` — broken paths with and without a suggestion
+- `monorepo` — nested CLAUDE.md files, relative resolution, multiple package.json
+- `skills` — valid and invalid frontmatter
+- `false-positive-traps` — the most important one: URLs, globs, placeholders, versions, `node.js`, paths in example blocks, quoted text. **Expected: zero findings.**
+- `ignores` — inline directives working
+- `no-git` — repo with no `.git`, glob fallback
 
-### 2. Corpus de repos reales
-Un script `scripts/corpus.ts` clona una lista de repos públicos con `CLAUDE.md`/`AGENTS.md` reales, corre driftwatch y **guarda el output como snapshot**. No se afirma que sea correcto — se afirma que no cambia sin intención. Cada cambio en el snapshot se revisa a mano.
+### 2. Corpus of real repos
+A `scripts/corpus.ts` script clones a list of public repos with real `CLAUDE.md`/`AGENTS.md` files, runs driftwatch and **stores the output as a snapshot**. It is not claimed to be correct — it is claimed not to change without intent. Every change in the snapshot is reviewed by hand.
 
-Es la única forma de medir falsos positivos en la práctica.
+It is the only way to measure false positives in practice.
 
 ### 3. Unit
-Solo para el extractor de rutas y el scoring de sugerencias. El resto se cubre por fixtures.
+Only for the path extractor and the suggestion scoring. The rest is covered by fixtures.
 
 ---
 
-## Extensibilidad (post-v1)
+## Extensibility (post-v1)
 
-Un check es un módulo con esta forma:
+A check is a module with this shape:
 
 ```ts
 export const check: Check = {
@@ -232,4 +234,4 @@ export const check: Check = {
 }
 ```
 
-`ctx` expone `index`, `manifests`, `git`, `config`. Registro estático en `verify/checks/index.ts` — sin carga dinámica de plugins en v1. Los plugins de terceros son una decisión de v2 y no deben condicionar el diseño ahora.
+`ctx` exposes `index`, `manifests`, `git`, `config`. Static registry in `verify/checks/index.ts` — no dynamic plugin loading in v1. Third-party plugins are a v2 decision and must not shape the design now.

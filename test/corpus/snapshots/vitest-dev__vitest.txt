@@ -1,11 +1,11 @@
 # vitest-dev/vitest
 
-fuentes: 6
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 6
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 subagent  .claude/agents/vitest-test-writer.md
 skill  .claude/skills/typo-checker/SKILL.md
 copilot  .github/copilot-instructions.md
@@ -14,4 +14,4 @@ claude-md  CLAUDE.md
 agents-md  docs/AGENTS.md
 
 ## findings
-(ninguno)
+(none)

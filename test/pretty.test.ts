@@ -4,7 +4,7 @@ import { renderPretty } from '../src/report/pretty.ts'
 import type { RunResult } from '../src/run.ts'
 import type { Claim, Finding, Source } from '../src/core/types.ts'
 
-/** El caracter de escape ANSI, para detectar color sin escribirlo literal. */
+/** The ANSI escape character, to detect color without writing it literally. */
 const ESC = '['
 
 function source(path: string, kind: Source['kind'] = 'claude-md'): Source {
@@ -28,7 +28,7 @@ function finding(file: string, line: number, text: string): Finding {
     check: 'path/missing',
     severity: 'error',
     claim: claim(file, line, text),
-    message: 'ruta no existe',
+    message: 'path does not exist',
   }
 }
 
@@ -48,16 +48,16 @@ function result(over: Partial<RunResult> = {}): RunResult {
 const plain = { color: false, quiet: false }
 
 describe('renderPretty', () => {
-  it('sin problemas cierra con la linea de SPEC.md § 5', () => {
+  it('with no problems it closes with the SPEC.md § 5 line', () => {
     const sources = Array.from({ length: 14 }, (_, i) => source(`d${i}/CLAUDE.md`))
-    expect(renderPretty(result({ sources }), plain)).toContain('✓ 14 archivos · sin drift · 210ms')
+    expect(renderPretty(result({ sources }), plain)).toContain('✓ 14 files · no drift · 210ms')
   })
 
-  it('singulariza cuando hay una sola fuente', () => {
-    expect(renderPretty(result(), plain)).toContain('✓ 1 archivo · sin drift · 210ms')
+  it('singularizes when there is a single source', () => {
+    expect(renderPretty(result(), plain)).toContain('✓ 1 file · no drift · 210ms')
   })
 
-  it('desglosa errores y avisos cuando hay problemas', () => {
+  it('breaks down errors and warnings when there are problems', () => {
     const out = renderPretty(
       result({
         counts: { errors: 4, warnings: 1 },
@@ -66,25 +66,25 @@ describe('renderPretty', () => {
       }),
       plain,
     )
-    expect(out).toContain('2 archivos · 5 problemas (4 errores, 1 aviso) · 340ms')
+    expect(out).toContain('2 files · 5 problems (4 errors, 1 warning) · 340ms')
   })
 
-  it('omite la parte del desglose que es cero', () => {
+  it('omits the part of the breakdown that is zero', () => {
     const out = renderPretty(result({ counts: { errors: 1, warnings: 0 } }), plain)
-    expect(out).toContain('1 problema (1 error) ·')
-    expect(out).not.toContain('aviso')
+    expect(out).toContain('1 problem (1 error) ·')
+    expect(out).not.toContain('warning')
   })
 
-  it('--quiet suprime el resumen', () => {
-    expect(renderPretty(result(), { color: false, quiet: true })).not.toContain('sin drift')
+  it('--quiet suppresses the summary', () => {
+    expect(renderPretty(result(), { color: false, quiet: true })).not.toContain('no drift')
   })
 
-  it('agrupa los findings por archivo y los ordena por linea', () => {
+  it('groups the findings by file and orders them by line', () => {
     const out = renderPretty(
       result({
         findings: [
           finding('CLAUDE.md', 12, 'src/lib/auth.ts'),
-          finding('CLAUDE.md', 34, 'src/otro.ts'),
+          finding('CLAUDE.md', 34, 'src/other.ts'),
           finding('AGENTS.md', 3, 'scripts/x.sh'),
         ],
         counts: { errors: 3, warnings: 0 },
@@ -94,11 +94,11 @@ describe('renderPretty', () => {
     const lines = out.split('\n')
     expect(lines[0]).toBe('CLAUDE.md')
     expect(lines[1]).toContain('12  src/lib/auth.ts')
-    expect(lines[2]).toContain('34  src/otro.ts')
+    expect(lines[2]).toContain('34  src/other.ts')
     expect(lines.find((l) => l === 'AGENTS.md')).toBeDefined()
   })
 
-  it('alinea el numero de linea y el fragmento dentro del grupo', () => {
+  it('aligns the line number and the fragment within the group', () => {
     const out = renderPretty(
       result({
         findings: [finding('CLAUDE.md', 5, 'a/b.ts'), finding('CLAUDE.md', 120, 'c/d/e.ts')],
@@ -106,14 +106,14 @@ describe('renderPretty', () => {
       }),
       plain,
     )
-    expect(out).toContain('  ✗   5  a/b.ts    ruta no existe')
-    expect(out).toContain('  ✗ 120  c/d/e.ts  ruta no existe')
+    expect(out).toContain('  ✗   5  a/b.ts    path does not exist')
+    expect(out).toContain('  ✗ 120  c/d/e.ts  path does not exist')
   })
 
-  it('trunca el fragmento a 40 caracteres con puntos suspensivos', () => {
-    const largo = `src/${'x'.repeat(60)}.ts`
+  it('truncates the fragment to 40 characters with an ellipsis', () => {
+    const long = `src/${'x'.repeat(60)}.ts`
     const out = renderPretty(
-      result({ findings: [finding('CLAUDE.md', 1, largo)], counts: { errors: 1, warnings: 0 } }),
+      result({ findings: [finding('CLAUDE.md', 1, long)], counts: { errors: 1, warnings: 0 } }),
       plain,
     )
     expect(out).toContain('…')
@@ -121,7 +121,7 @@ describe('renderPretty', () => {
     expect(cited.length).toBe(40)
   })
 
-  it('renderiza la sugerencia cuando el finding la trae', () => {
+  it('renders the suggestion when the finding carries one', () => {
     const base = finding('CLAUDE.md', 12, 'src/lib/auth.ts')
     const out = renderPretty(
       result({
@@ -134,10 +134,10 @@ describe('renderPretty', () => {
       plain,
     )
     expect(out).toContain('→ src/auth/index.ts?')
-    expect(out).toContain('1 corregible con --fix')
+    expect(out).toContain('1 fixable with --fix')
   })
 
-  it('un warning usa el simbolo de aviso y no el de error', () => {
+  it('a warning uses the warning symbol and not the error one', () => {
     const out = renderPretty(
       result({
         findings: [{ ...finding('CLAUDE.md', 1, 'x/y.ts'), severity: 'warning' }],
@@ -149,34 +149,34 @@ describe('renderPretty', () => {
     expect(out).not.toContain('✗')
   })
 
-  it('sin color no emite secuencias de escape', () => {
+  it('with no color it emits no escape sequences', () => {
     expect(renderPretty(result({ counts: { errors: 1, warnings: 0 } }), plain)).not.toContain(ESC)
   })
 
-  it('con color si las emite', () => {
+  it('with color it does emit them', () => {
     expect(renderPretty(result(), { color: true, quiet: false })).toContain(ESC)
   })
 
-  it('no usa emojis: solo los tres simbolos de SPEC.md § 5', () => {
+  it('uses no emojis: only the three symbols of SPEC.md § 5', () => {
     const out = renderPretty(result(), plain) + renderPretty(result({ checks: ['x'] }), plain)
     expect(out).not.toMatch(/\p{Extended_Pictographic}/u)
   })
 })
 
 describe('colorEnabled', () => {
-  it('apaga el color si NO_COLOR esta seteado, incluso en una tty', () => {
+  it('turns color off if NO_COLOR is set, even on a tty', () => {
     expect(colorEnabled({ NO_COLOR: '1' } as NodeJS.ProcessEnv, true)).toBe(false)
   })
 
-  it('un NO_COLOR vacio no cuenta como seteado', () => {
+  it('an empty NO_COLOR does not count as set', () => {
     expect(colorEnabled({ NO_COLOR: '' } as NodeJS.ProcessEnv, true)).toBe(true)
   })
 
-  it('apaga el color si stdout no es una tty', () => {
+  it('turns color off if stdout is not a tty', () => {
     expect(colorEnabled({} as NodeJS.ProcessEnv, false)).toBe(false)
   })
 
-  it('lo enciende en una tty sin NO_COLOR', () => {
+  it('turns it on for a tty with no NO_COLOR', () => {
     expect(colorEnabled({} as NodeJS.ProcessEnv, true)).toBe(true)
   })
 })

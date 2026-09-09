@@ -1,76 +1,76 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * El fixture mas importante del proyecto. Cada bloque de este documento es una
- * trampa que un extractor ingenuo reportaria, y **ninguna** debe producir un
- * finding. Un solo finding aca es una regresion de precision.
+ * The most important fixture in the project. Every block of this document is a
+ * trap a naive extractor would report, and **none** of them may produce a
+ * finding. A single finding here is a precision regression.
  *
- * Cada seccion corresponde a una regla de descarte de ARCHITECTURE.md
- * § "Extraccion de rutas". El repo materializado a proposito no contiene
- * ninguno de los archivos mencionados: si alguna trampa se reportara, seria
- * porque la regla fallo, no porque el archivo casualmente exista.
+ * Each section corresponds to a discard rule from ARCHITECTURE.md § "Path
+ * extraction". The materialized repo deliberately contains none of the
+ * mentioned files: if a trap were reported, it would be because the rule
+ * failed, not because the file happened to exist.
  */
 export const falsePositiveTraps: Fixture = {
   name: 'false-positive-traps',
   files: {
     'CLAUDE.md': [
-      '# Trampas de falsos positivos',
+      '# False positive traps',
       '',
-      '## Regla 1: URLs',
+      '## Rule 1: URLs',
       '',
-      'La guia esta en `https://ejemplo.com/docs/guia.md` y el mirror en',
-      '`http://cdn.ejemplo.com/lib/app.js`. El protocolo file tambien:',
-      '`file:///tmp/salida/reporte.json`. Y sin protocolo: `//cdn.ejemplo.com/x.js`.',
+      'The guide is at `https://example.com/docs/guide.md` and the mirror at',
+      '`http://cdn.example.com/lib/app.js`. The file protocol too:',
+      '`file:///tmp/output/report.json`. And without a protocol: `//cdn.example.com/x.js`.',
       '',
-      '## Regla 2: globs y placeholders',
+      '## Rule 2: globs and placeholders',
       '',
-      'Los tests son `src/**/*.test.ts` y los fixtures `test/fixtures/*.json`.',
-      'Un ticket vive en `.scratch/<feature>/issues/`, la plantilla en',
-      '`{{ruta}}/plantilla.md`, la config del usuario en `$HOME/.config/app.json`,',
-      'y cada paquete en `packages/[nombre]/src`. Un signo de pregunta tambien',
-      'cuenta: `docs/pagina?.md`.',
+      'The tests are `src/**/*.test.ts` and the fixtures `test/fixtures/*.json`.',
+      'A ticket lives in `.scratch/<feature>/issues/`, the template in',
+      '`{{path}}/template.md`, the user config in `$HOME/.config/app.json`,',
+      'and each package in `packages/[name]/src`. A question mark counts too:',
+      '`docs/page?.md`.',
       '',
-      '## Regla 3: palabras sueltas',
+      '## Rule 3: bare words',
       '',
-      'Cada modulo tiene su `index.ts`, la config es `tsconfig.json`, el gestor',
-      'es `pnpm` y el comando `build`. Nada de eso afirma una ubicacion.',
+      'Every module has its `index.ts`, the config is `tsconfig.json`, the package',
+      'manager is `pnpm` and the command is `build`. None of that claims a location.',
       '',
-      '## Regla 4: parece archivo y no lo es',
+      '## Rule 4: looks like a file and is not',
       '',
-      'Corremos sobre `node.js` con `next.js` en el front y `vue.js` en el admin.',
-      'La version minima es `1.0` y la actual `v2.1.3`. Los tipos van en un `d.ts`.',
+      'We run on `node.js` with `next.js` on the front end and `vue.js` in the admin.',
+      'The minimum version is `1.0` and the current one `v2.1.3`. Types go in a `d.ts`.',
       '',
-      '## Rutas dentro de bloques de ejemplo',
+      '## Paths inside example blocks',
       '',
-      'Asi se veria la salida, con rutas que no existen:',
+      'This is what the output would look like, with paths that do not exist:',
       '',
       '```bash',
-      'cat src/inventado/no-existe.ts',
-      'mv docs/viejo/guia.md docs/nuevo/guia.md',
+      'cat src/made-up/does-not-exist.ts',
+      'mv docs/old/guide.md docs/new/guide.md',
       '```',
       '',
       '```',
-      'src/tampoco/existe.ts',
+      'src/also/missing.ts',
       '```',
       '',
-      '## Rutas en prosa, sin marcar como codigo',
+      '## Paths in prose, not marked up as code',
       '',
-      'El archivo src/prosa/suelta.ts se menciona sin backticks, y "otra/cosa.ts"',
-      'entre comillas. La prosa no se escanea.',
+      'The file src/prose/loose.ts is mentioned without backticks, and "other/thing.ts"',
+      'in quotes. Prose is not scanned.',
       '',
-      '## Rutas que se escapan de la raiz',
+      '## Paths that escape above the root',
       '',
-      'El brief original esta en `../otro-repo/BRIEF.md` y mas arriba en',
-      '`../../compartido/notas.md`.',
+      'The original brief is at `../other-repo/BRIEF.md` and further up at',
+      '`../../shared/notes.md`.',
       '',
-      '## Lo que si existe',
+      '## What does exist',
       '',
-      'El entrypoint es `src/index.ts` y la doc `docs/guia.md`, y los dos existen,',
-      'asi que tampoco producen findings.',
+      'The entrypoint is `src/index.ts` and the docs `docs/guide.md`, and both exist,',
+      'so they produce no findings either.',
       '',
     ].join('\n'),
     'src/index.ts': 'export const x = 1\n',
-    'docs/guia.md': '# guia\n',
+    'docs/guide.md': '# guide\n',
   },
   expected: [],
 }

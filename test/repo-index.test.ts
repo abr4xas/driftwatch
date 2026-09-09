@@ -10,19 +10,19 @@ import {
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
 describe('findRepoRoot', () => {
-  it('sube hasta el directorio con .git', async () => {
+  it('walks up to the directory holding .git', async () => {
     const root = makeTempRepo({ files: { 'packages/api/src/db.ts': '' } })
     expect(findRepoRoot(`${root}/packages/api/src`)).toBe(root)
   })
 
-  it('sin repo devuelve el cwd tal cual', async () => {
+  it('with no repo it returns the cwd as is', async () => {
     const root = makeTempRepo({ files: { 'a.ts': '' }, git: false })
     expect(findRepoRoot(root)).toBe(root)
   })
 })
 
 describe('buildRepoIndex', () => {
-  it('indexa archivos y directorios con rutas relativas y separador posix', async () => {
+  it('indexes files and directories with relative paths and posix separators', async () => {
     const root = makeTempRepo({
       files: { 'src/auth/index.ts': '', 'README.md': '' },
     })
@@ -35,28 +35,28 @@ describe('buildRepoIndex', () => {
     expect(hasDir(index, 'src/auth/index.ts')).toBe(false)
   })
 
-  it('respeta .gitignore cuando hay repo', async () => {
+  it('respects .gitignore when there is a repo', async () => {
     const root = makeTempRepo({
-      files: { '.gitignore': 'secreto.txt\n', 'secreto.txt': '', 'visible.txt': '' },
+      files: { '.gitignore': 'secret.txt\n', 'secret.txt': '', 'visible.txt': '' },
     })
     const index = await buildRepoIndex(root)
     expect(hasFile(index, 'visible.txt')).toBe(true)
-    expect(hasFile(index, 'secreto.txt')).toBe(false)
+    expect(hasFile(index, 'secret.txt')).toBe(false)
   })
 
-  it('respeta .gitignore tambien en el fallback sin git', async () => {
+  it('respects .gitignore in the no-git fallback too', async () => {
     const root = makeTempRepo({
-      files: { '.gitignore': 'secreto.txt\n', 'secreto.txt': '', 'visible.txt': '' },
+      files: { '.gitignore': 'secret.txt\n', 'secret.txt': '', 'visible.txt': '' },
       git: false,
     })
     const index = await buildRepoIndex(root)
     expect(hasFile(index, 'visible.txt')).toBe(true)
-    expect(hasFile(index, 'secreto.txt')).toBe(false)
+    expect(hasFile(index, 'secret.txt')).toBe(false)
   })
 
-  it('nunca entra a los directorios de build, con git o sin git', async () => {
+  it('never walks into the build directories, with or without git', async () => {
     const files = {
-      'node_modules/paquete/index.js': '',
+      'node_modules/package/index.js': '',
       'dist/cli.js': '',
       'build/out.js': '',
       '.next/server.js': '',
@@ -73,22 +73,22 @@ describe('buildRepoIndex', () => {
     }
   })
 
-  it('byBasename agrupa los homonimos para alimentar las sugerencias', async () => {
+  it('byBasename groups the namesakes to feed the suggestions', async () => {
     const root = makeTempRepo({
-      files: { 'src/auth.ts': '', 'test/auth.ts': '', 'src/solo.ts': '' },
+      files: { 'src/auth.ts': '', 'test/auth.ts': '', 'src/only.ts': '' },
     })
     const index = await buildRepoIndex(root)
     expect([...candidatesFor(index, 'auth.ts')].toSorted()).toEqual(['src/auth.ts', 'test/auth.ts'])
-    expect(candidatesFor(index, 'solo.ts')).toEqual(['src/solo.ts'])
-    expect(candidatesFor(index, 'no-existe.ts')).toEqual([])
+    expect(candidatesFor(index, 'only.ts')).toEqual(['src/only.ts'])
+    expect(candidatesFor(index, 'does-not-exist.ts')).toEqual([])
   })
 })
 
 describe('manifestFor', () => {
-  it('resuelve el package.json mas cercano hacia arriba', async () => {
+  it('resolves the nearest package.json upwards', async () => {
     const root = makeTempRepo({
       files: {
-        'package.json': JSON.stringify({ name: 'raiz', scripts: { build: 'tsdown' } }),
+        'package.json': JSON.stringify({ name: 'root', scripts: { build: 'tsdown' } }),
         'packages/api/package.json': JSON.stringify({ name: 'api', scripts: { dev: 'node .' } }),
         'packages/api/src/db.ts': '',
         'packages/web/src/app.ts': '',
@@ -96,17 +96,17 @@ describe('manifestFor', () => {
     })
     const index = await buildRepoIndex(root)
     expect(manifestFor(index, 'packages/api/src')?.name).toBe('api')
-    expect(manifestFor(index, 'packages/web/src')?.name).toBe('raiz')
-    expect(manifestFor(index, '')?.name).toBe('raiz')
+    expect(manifestFor(index, 'packages/web/src')?.name).toBe('root')
+    expect(manifestFor(index, '')?.name).toBe('root')
   })
 
-  it('un package.json ilegible no rompe el indice', async () => {
-    const root = makeTempRepo({ files: { 'package.json': '{ esto no es json' } })
+  it('an unreadable package.json does not break the index', async () => {
+    const root = makeTempRepo({ files: { 'package.json': '{ this is not json' } })
     const index = await buildRepoIndex(root)
     expect(manifestFor(index, '')).toBeUndefined()
   })
 
-  it('sin package.json en ningun lado devuelve undefined', async () => {
+  it('with no package.json anywhere it returns undefined', async () => {
     const index = await buildRepoIndex(makeTempRepo({ files: { 'a.ts': '' } }))
     expect(manifestFor(index, '')).toBeUndefined()
   })

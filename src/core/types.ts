@@ -1,38 +1,37 @@
 /**
- * El modelo de datos del pipeline (ARCHITECTURE.md § "Modelo de datos").
- * Las etapas se comunican solo a traves de estos tipos, y ninguna conoce a la
- * siguiente. Cada tipo aparece aca cuando hay una etapa que lo consume, no
- * antes.
+ * The pipeline's data model (ARCHITECTURE.md § "Data model").
+ * The stages communicate only through these types, and none of them knows the
+ * next one. Each type shows up here when a stage consumes it, not before.
  */
 
 export type SourceKind =
   'claude-md' | 'agents-md' | 'skill' | 'subagent' | 'command' | 'cursor-rule' | 'copilot'
 
-/** Un archivo de contexto de agente: lo que se audita. */
+/** An agent context file: the thing being audited. */
 export type Source = {
-  /** Relativa a la raiz del repo, con separador posix. */
+  /** Relative to the repo root, with posix separators. */
   path: string
   absPath: string
   kind: SourceKind
   content: string
   /**
-   * Directorio contra el que se resuelven las rutas relativas que menciona.
-   * Un `packages/api/CLAUDE.md` habla de su propio directorio, no de la raiz.
-   * Es '' para una fuente en la raiz.
+   * The directory the relative paths it mentions resolve against.
+   * A `packages/api/CLAUDE.md` talks about its own directory, not the root.
+   * It is '' for a source at the root.
    */
   baseDir: string
   /**
-   * Otras rutas con contenido byte a byte identico a esta, en el mismo
-   * directorio. Es comun tener `AGENTS.md` y `CLAUDE.md` como copias: auditar
-   * las dos reporta el mismo problema dos veces, que es la forma mas facil de
-   * que la salida parezca el doble de ruidosa de lo que es.
+   * Other paths whose content is byte-for-byte identical to this one, in the
+   * same directory. Having `AGENTS.md` and `CLAUDE.md` as copies is common:
+   * auditing both reports the same problem twice, which is the easiest way to
+   * make the output look twice as noisy as it really is.
    */
   aliases: readonly string[]
 }
 
 export type ClaimKind = 'path' | 'script' | 'dep' | 'symbol' | 'link' | 'frontmatter'
 
-/** Donde aparecio el fragmento. Es lo que separa una ruta real de un ejemplo. */
+/** Where the fragment appeared. It is what separates a real path from an example. */
 export type ClaimContext = 'inline-code' | 'code-fence' | 'link' | 'frontmatter' | 'prose'
 
 export type Range = {
@@ -42,17 +41,17 @@ export type Range = {
   endColumn: number
 }
 
-/** Un fragmento de una fuente que asegura algo verificable sobre el repo. */
+/** A fragment of a source that asserts something verifiable about the repo. */
 export type Claim = {
   kind: ClaimKind
   source: Source
-  /** El fragmento exacto afirmado, ya normalizado. */
+  /** The exact asserted fragment, already normalized. */
   text: string
-  /** El fragmento tal cual aparece en el archivo, antes de normalizar. */
+  /** The fragment as it appears in the file, before normalizing. */
   raw: string
-  /** 1-indexado, apuntando al fragmento y no al nodo que lo contiene. */
+  /** 1-indexed, pointing at the fragment and not at the node containing it. */
   range: Range
-  /** Offsets absolutos en `source.content`. Habilita --fix sin reformatear. */
+  /** Absolute offsets into `source.content`. Enables --fix without reformatting. */
   offset: [number, number]
   context: ClaimContext
   meta?: Record<string, unknown>
@@ -69,7 +68,7 @@ export type Suggestion = {
 }
 
 export type Finding = {
-  /** Id estable del check, como `path/missing`. */
+  /** Stable check id, such as `path/missing`. */
   check: string
   severity: Severity
   claim: Claim

@@ -4,7 +4,7 @@ import { ALL_FIXTURES } from './fixtures/index.ts'
 import { checkFixture } from './helpers/fixture.ts'
 
 describe('fixtures', () => {
-  it('el registro incluye todos los archivos de fixture del directorio', () => {
+  it('the registry includes every fixture file in the directory', () => {
     const onDisk = readdirSync(new URL('./fixtures/', import.meta.url))
       .filter((name) => name.endsWith('.ts') && name !== 'index.ts')
       .toSorted()

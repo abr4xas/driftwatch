@@ -1,69 +1,69 @@
 # driftwatch — Brief
 
-## El problema en una frase
+## The problem in one sentence
 
-Los archivos de contexto para agentes (`CLAUDE.md`, `AGENTS.md`, skills, reglas de Cursor) envejecen mal: describen rutas, comandos y convenciones que el repo ya cambió, y nadie se entera hasta que un agente actúa sobre información falsa.
+Agent context files (`CLAUDE.md`, `AGENTS.md`, skills, Cursor rules) age badly: they describe paths, commands and conventions the repo has already changed, and nobody finds out until an agent acts on false information.
 
-## Por qué duele de verdad
+## Why it actually hurts
 
-Un `README` desactualizado confunde a una persona, que lo nota y pregunta. Un `CLAUDE.md` desactualizado le da al agente una premisa falsa que **ejecuta con confianza**: corre un script que ya no existe, edita un archivo movido, sigue una convención abandonada. El costo no es confusión, es trabajo incorrecto sin señal de error.
+An out-of-date `README` confuses a person, who notices and asks. An out-of-date `CLAUDE.md` hands the agent a false premise that it **executes with confidence**: it runs a script that no longer exists, edits a file that moved, follows an abandoned convention. The cost is not confusion, it is incorrect work with no error signal.
 
-Y a diferencia del código, estos archivos no tienen compilador, ni tests, ni linter. Son la única parte del repo donde mentir no tiene consecuencia mecánica.
+And unlike code, these files have no compiler, no tests, no linter. They are the one part of the repo where lying has no mechanical consequence.
 
-## Qué es driftwatch
+## What driftwatch is
 
-Un CLI de cero configuración que lee los archivos de contexto de agente de un repo, extrae las **afirmaciones verificables** que contienen (rutas, comandos, dependencias, símbolos, links) y comprueba cuáles ya son falsas.
+A zero-configuration CLI that reads a repo's agent context files, extracts the **verifiable claims** they contain (paths, commands, dependencies, symbols, links) and checks which ones are already false.
 
 ```
 $ npx driftwatch
 
 CLAUDE.md
-  ✗ 12  src/lib/auth.ts                  ruta no existe  → src/auth/index.ts?
-  ✗ 34  pnpm run test:e2e                script no existe en package.json
-  ⚠ 51  "usamos Prisma para el ORM"      no está en dependencies
+  ✗ 12  src/lib/auth.ts                  path does not exist  → src/auth/index.ts?
+  ✗ 34  pnpm run test:e2e                script not in package.json
+  ⚠ 51  "we use Prisma as the ORM"       not in dependencies
 
 .claude/skills/deploy/SKILL.md
-  ✗  3  name: deployment                 no coincide con el directorio (deploy)
-  ✗ 18  ./scripts/release.sh             ruta no existe
+  ✗  3  name: deployment                 does not match the directory (deploy)
+  ✗ 18  ./scripts/release.sh             path does not exist
 
-2 archivos · 5 problemas (4 errores, 1 aviso) · 340ms
+2 files · 5 problems (4 errors, 1 warning) · 340ms
 ```
 
-Con `--fix` corrige lo que puede resolver sin ambigüedad. Con `--json` alimenta CI.
+With `--fix` it corrects what it can resolve unambiguously. With `--json` it feeds CI.
 
-## Tesis: la forma de la herramienta
+## Thesis: the shape of the tool
 
-Esto es una herramienta, no una plataforma. Las skills y los archivos de contexto de agente ya son una forma de software: se versionan, se revisan, se rompen. Lo que todavía no tienen es tooling.
+This is a tool, not a platform. Skills and agent context files are already a form of software: they are versioned, reviewed, and they break. What they still lack is tooling.
 
-`knip` encuentra código muerto. **driftwatch encuentra contexto muerto.** Es la misma forma de herramienta aplicada a una capa nueva.
+`knip` finds dead code. **driftwatch finds dead context.** It is the same shape of tool applied to a new layer.
 
-Señales de que tiene la forma correcta:
-- Un solo verbo, ejecutable a diario en un loop real de trabajo.
-- `npx driftwatch` sin configuración, resultado visible en segundos.
-- Demo que se entiende en un GIF de 10 segundos.
-- Difícil de generar con un prompt: el valor está en las heurísticas de extracción y en la tasa de falsos positivos, no en el andamiaje.
+Signals that it has the right shape:
+- A single verb, runnable daily in a real work loop.
+- `npx driftwatch` with no configuration, visible result in seconds.
+- A demo that lands in a 10-second GIF.
+- Hard to generate from a prompt: the value is in the extraction heuristics and in the false positive rate, not in the scaffolding.
 
-## La métrica que define el éxito
+## The metric that defines success
 
-**Falsos positivos cerca de cero.** Una herramienta de linting que grita de más se desinstala en el primer uso. Es preferible reportar 6 problemas reales que 20 con 8 dudosos.
+**False positives near zero.** A linting tool that shouts too much gets uninstalled on first use. Reporting 6 real problems beats reporting 20 with 8 doubtful ones.
 
-Esto es la restricción de diseño principal y ordena todas las decisiones técnicas del proyecto. Cuando haya que elegir entre cobertura y precisión, gana precisión.
+This is the main design constraint and it orders every technical decision in the project. When coverage and precision conflict, precision wins.
 
-## No-objetivos
+## Non-goals
 
-- No es un linter de Markdown (no revisa estilo, formato ni ortografía).
-- No juzga si el contenido es *bueno*, solo si es *cierto*.
-- No usa un LLM en el camino principal. Debe correr offline, determinista y en milisegundos.
-- No es un servicio, ni una app web, ni requiere cuenta.
-- No reescribe prosa. `--fix` solo toca cosas mecánicamente verificables.
+- It is not a Markdown linter (it does not check style, formatting or spelling).
+- It does not judge whether the content is *good*, only whether it is *true*.
+- It does not use an LLM on the main path. It has to run offline, deterministically, in milliseconds.
+- It is not a service, not a web app, and requires no account.
+- It does not rewrite prose. `--fix` only touches mechanically verifiable things.
 
-## Documentos de la especificación
+## Specification documents
 
-| Archivo | Para qué |
+| File | What for |
 |---|---|
-| `BRIEF.md` | Este archivo: por qué existe y qué cuenta como éxito |
-| `SPEC.md` | Comportamiento observable: checks, CLI, salidas, config |
-| `ARCHITECTURE.md` | Cómo está construido por dentro |
-| `ROADMAP.md` | Milestones con criterios de aceptación |
+| `BRIEF.md` | This file: why it exists and what counts as success |
+| `SPEC.md` | Observable behaviour: checks, CLI, outputs, config |
+| `ARCHITECTURE.md` | How it is built on the inside |
+| `ROADMAP.md` | Milestones with acceptance criteria |
 
-El handoff para el agente que construye el proyecto vive en `AGENTS.md`, en la raíz del repo.
+The handoff for the agent building the project lives in `AGENTS.md`, at the repo root.

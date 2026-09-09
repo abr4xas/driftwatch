@@ -5,10 +5,10 @@ import { makeTempRepo } from './helpers/temp-repo.ts'
 
 const CWD = process.cwd()
 
-/** La forma de un frame de stack: dos espacios, "at ", y algo con linea:columna. */
+/** The shape of a stack frame: whitespace, "at ", and something with line:column. */
 const STACK_FRAME = /\n\s+at .*:\d+:\d+/u
 
-/** SPEC.md § 5: sin emojis. Los simbolos permitidos son solo tres. */
+/** SPEC.md § 5: no emojis. Only three symbols are allowed. */
 const EMOJI = /\p{Extended_Pictographic}/u
 
 function capture() {
@@ -27,14 +27,14 @@ function capture() {
 }
 
 describe('main', () => {
-  it('--help imprime el uso en stdout y sale con 0', async () => {
+  it('--help prints the usage on stdout and exits 0', async () => {
     const c = capture()
     await expect(main(['--help'], c.io, CWD)).resolves.toBe(EXIT.ok)
     expect(c.stdout()).toContain('driftwatch [paths...]')
     expect(c.stderr()).toBe('')
   })
 
-  it('el texto de --help documenta cada flag de la especificacion', async () => {
+  it('the --help text documents every flag in the specification', async () => {
     const c = capture()
     await main(['--help'], c.io, CWD)
     const help = c.stdout()
@@ -54,17 +54,17 @@ describe('main', () => {
       '--version',
       '--help',
     ]) {
-      expect(help, `falta ${flag} en --help`).toContain(flag)
+      expect(help, `${flag} is missing from --help`).toContain(flag)
     }
   })
 
-  it('--version imprime solo la version y sale con 0', async () => {
+  it('--version prints only the version and exits 0', async () => {
     const c = capture()
     await expect(main(['--version'], c.io, CWD)).resolves.toBe(EXIT.ok)
     expect(c.stdout().trim()).toMatch(/^\d+\.\d+\.\d+/u)
   })
 
-  it('un flag desconocido sale con 2 y explica el problema sin stack trace', async () => {
+  it('an unknown flag exits 2 and explains the problem without a stack trace', async () => {
     const c = capture()
     await expect(main(['--turbo'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
     expect(c.stderr()).toContain('--turbo')
@@ -72,16 +72,16 @@ describe('main', () => {
     expect(c.stdout()).toBe('')
   })
 
-  it('una ruta posicional inexistente sale con 2 y la nombra', async () => {
+  it('a nonexistent positional path exits 2 and names it', async () => {
     const c = capture()
-    await expect(main(['no-existe-este-archivo.md'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain('no-existe-este-archivo.md')
+    await expect(main(['this-file-does-not-exist.md'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain('this-file-does-not-exist.md')
     expect(c.stderr()).not.toMatch(STACK_FRAME)
   })
 
-  it('sin nada que reportar sale con 0', async () => {
-    // En un repo sin fuentes no hay nada que afirmar, asi que no hay drift.
-    const root = makeTempRepo({ files: { 'README.md': '# no es una fuente\n' } })
+  it('exits 0 with nothing to report', async () => {
+    // In a repo with no sources there is nothing claimed, so there is no drift.
+    const root = makeTempRepo({ files: { 'README.md': '# not a source\n' } })
     const c = capture()
     await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
@@ -95,21 +95,21 @@ describe('main', () => {
     ['--only'],
     ['--skip'],
     ['--no-config'],
-  ])('%s todavia no esta implementado y lo dice, en vez de ignorarse', async (flag) => {
+  ])('%s is not implemented yet and says so, instead of being ignored', async (flag) => {
     const c = capture()
     const argv = flag === '--only' || flag === '--skip' ? [flag, 'path'] : [flag]
     await expect(main(argv, c.io, CWD)).resolves.toBe(EXIT.toolFailure)
     expect(c.stderr()).toContain(flag)
-    expect(c.stderr()).toContain('no esta implementado'.replace('esta', 'está'))
+    expect(c.stderr()).toContain('is not implemented yet')
   })
 
-  it('un formato distinto de pretty todavia no esta implementado', async () => {
+  it('a format other than pretty is not implemented yet', async () => {
     const c = capture()
     await expect(main(['--format', 'sarif'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
     expect(c.stderr()).toContain('sarif')
   })
 
-  it('no hay emojis en ninguna salida', async () => {
+  it('there are no emojis in any output', async () => {
     const c = capture()
     await main(['--help'], c.io, CWD)
     await main([], c.io, CWD)

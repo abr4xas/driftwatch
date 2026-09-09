@@ -1,16 +1,17 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * Resolución en un monorepo, con `CLAUDE.md` anidados.
+ * Resolution in a monorepo, with nested `CLAUDE.md` files.
  *
- * Este fixture cambió al cerrar el ticket 10. La versión original probaba que
- * la **misma cadena** (`src/db.ts`) se reportara en `packages/web` y no en
- * `packages/api`. Eso dejó de ser el comportamiento: ADR-0005 decidió que una
- * ruta cuya forma existe en algún lugar del repo no se reporta, porque sobre 13
- * repos reales esa era la última clase grande de falso positivo.
+ * This fixture changed when ticket 10 closed. The original version proved that
+ * the **same string** (`src/db.ts`) was reported in `packages/web` and not in
+ * `packages/api`. That stopped being the behaviour: ADR-0005 decided that a
+ * path whose shape exists somewhere in the repo is not reported, because across
+ * 13 real repos that was the last large class of false positive.
  *
- * El caso perdido sigue escrito abajo, sin finding esperado, para que quede
- * registrado qué se dejó de detectar y no parezca un olvido.
+ * The lost case is still written below, with no expected finding, so that what
+ * stopped being detected stays on the record and does not look like an
+ * oversight.
  */
 export const monorepo: Fixture = {
   name: 'monorepo',
@@ -18,35 +19,35 @@ export const monorepo: Fixture = {
     'CLAUDE.md': [
       '# Monorepo',
       '',
-      'El entrypoint compartido es `src/index.ts`.', // 3: existe en la raiz
+      'The shared entrypoint is `src/index.ts`.', // 3: exists at the root
       '',
     ].join('\n'),
     'packages/api/CLAUDE.md': [
       '# api',
       '',
-      'La base de datos es `src/db.ts`.', // 3: existe en packages/api
+      'The database is `src/db.ts`.', // 3: exists in packages/api
       '',
-      'El entrypoint compartido es `/src/index.ts`.', // 5: barra inicial = raiz del repo
+      'The shared entrypoint is `/src/index.ts`.', // 5: leading slash = repo root
       '',
-      'La app web esta en `../web/app.ts`.', // 7: existe, subiendo un nivel
+      'The web app is at `../web/app.ts`.', // 7: exists, one level up
       '',
-      'La config del sistema es `/etc/hosts`.', // 9: ruta del filesystem, se deja pasar
+      'The system config is `/etc/hosts`.', // 9: filesystem path, let through
       '',
-      'Mis notas locales: `/Users/alguien/notas.md`.', // 11: idem
+      'My local notes: `/Users/someone/notes.md`.', // 11: same
       '',
-      'La cache vive en `src/cache/redis.ts`.', // 13: no existe en ninguna forma
+      'The cache lives in `src/cache/redis.ts`.', // 13: exists in no form
       '',
     ].join('\n'),
     'packages/web/CLAUDE.md': [
       '# web',
       '',
-      // ADR-0005: `packages/api/src/db.ts` termina con `/src/db.ts`, asi que
-      // esta linea NO produce finding. Es el caso que se dejo de detectar: un
-      // archivo que se movio de paquete. No se puede distinguir de un
-      // documento que habla en relativo del otro paquete.
-      'La base de datos es `src/db.ts`.', // 7
+      // ADR-0005: `packages/api/src/db.ts` ends with `/src/db.ts`, so this
+      // line produces NO finding. It is the case that stopped being detected:
+      // a file that moved between packages. It cannot be told apart from a
+      // document speaking relatively about the other package.
+      'The database is `src/db.ts`.', // 7
       '',
-      'La app es `app.ts` y vive al lado.', // 9: palabra suelta, se descarta
+      'The app is `app.ts` and lives next door.', // 9: bare word, discarded
       '',
     ].join('\n'),
     'src/index.ts': '',
@@ -59,10 +60,10 @@ export const monorepo: Fixture = {
       severity: 'error',
       file: 'packages/api/CLAUDE.md',
       line: 13,
-      column: 19,
+      column: 21,
       text: 'src/cache/redis.ts',
-      message: 'ruta no existe',
-      // Sin sugerencia: no hay ningun `redis.ts` en el repo.
+      message: 'path does not exist',
+      // No suggestion: there is no `redis.ts` anywhere in the repo.
     },
   ],
 }

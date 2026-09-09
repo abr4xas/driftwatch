@@ -1,11 +1,11 @@
 # tursodatabase/turso
 
-fuentes: 14
-errores: 3
-avisos: 0
-corregibles: 0
+sources: 14
+errors: 3
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 skill  .claude/skills/async-io-model/SKILL.md
 skill  .claude/skills/cdc/SKILL.md
 skill  .claude/skills/code-quality/SKILL.md

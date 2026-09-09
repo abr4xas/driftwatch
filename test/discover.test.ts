@@ -4,30 +4,30 @@ import { buildRepoIndex } from '../src/verify/repo-index.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
 describe('classifySource', () => {
-  it('reconoce los siete patrones de SPEC.md § 2', () => {
+  it('recognizes the seven patterns of SPEC.md § 2', () => {
     expect(classifySource('CLAUDE.md')).toBe('claude-md')
     expect(classifySource('packages/api/CLAUDE.local.md')).toBe('claude-md')
     expect(classifySource('AGENTS.md')).toBe('agents-md')
     expect(classifySource('.claude/skills/deploy/SKILL.md')).toBe('skill')
     expect(classifySource('.claude/agents/reviewer.md')).toBe('subagent')
     expect(classifySource('.claude/commands/ship/release.md')).toBe('command')
-    expect(classifySource('.cursor/rules/estilo.mdc')).toBe('cursor-rule')
+    expect(classifySource('.cursor/rules/style.mdc')).toBe('cursor-rule')
     expect(classifySource('.cursorrules')).toBe('cursor-rule')
     expect(classifySource('.github/copilot-instructions.md')).toBe('copilot')
   })
 
-  it('reconoce los patrones anclados tambien anidados en un monorepo', () => {
+  it('recognizes the anchored patterns nested in a monorepo too', () => {
     expect(classifySource('packages/api/.claude/skills/build/SKILL.md')).toBe('skill')
     expect(classifySource('apps/web/.github/copilot-instructions.md')).toBe('copilot')
   })
 
-  it('no clasifica markdown que no es una fuente de contexto', () => {
+  it('does not classify markdown that is not a context source', () => {
     for (const rel of [
       'README.md',
       'docs/spec/SPEC.md',
-      '.claude/skills/deploy/referencia.md',
-      '.claude/agents/anidado/demasiado.md',
-      '.cursor/rules/notas.md',
+      '.claude/skills/deploy/reference.md',
+      '.claude/agents/nested/too-deep.md',
+      '.cursor/rules/notes.md',
       'CLAUDE.md.bak',
       'src/CLAUDE.ts',
     ]) {
@@ -38,15 +38,15 @@ describe('classifySource', () => {
 
 describe('discoverSources', () => {
   const files = {
-    'CLAUDE.md': '# raiz\n',
+    'CLAUDE.md': '# root\n',
     'packages/api/CLAUDE.md': '# api\n',
     '.claude/skills/deploy/SKILL.md': '---\nname: deploy\n---\n',
-    'README.md': '# no es fuente\n',
-    '.gitignore': 'ignorado/\n',
-    'ignorado/CLAUDE.md': '# no deberia aparecer\n',
+    'README.md': '# not a source\n',
+    '.gitignore': 'ignored/\n',
+    'ignored/CLAUDE.md': '# should not show up\n',
   }
 
-  it('encuentra las fuentes y saltea lo que no lo es', async () => {
+  it('finds the sources and skips what is not one', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
     expect(sources.map((s) => s.path)).toEqual([
@@ -56,13 +56,13 @@ describe('discoverSources', () => {
     ])
   })
 
-  it('respeta .gitignore', async () => {
+  it('respects .gitignore', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
-    expect(sources.some((s) => s.path.startsWith('ignorado/'))).toBe(false)
+    expect(sources.some((s) => s.path.startsWith('ignored/'))).toBe(false)
   })
 
-  it('cada fuente lleva su propio baseDir, que es su directorio', async () => {
+  it('each source carries its own baseDir, which is its directory', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
     const byPath = new Map(sources.map((s) => [s.path, s]))
@@ -71,31 +71,31 @@ describe('discoverSources', () => {
     expect(byPath.get('.claude/skills/deploy/SKILL.md')?.baseDir).toBe('.claude/skills/deploy')
   })
 
-  it('lee el contenido de cada fuente', async () => {
+  it('reads the content of each source', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
-    expect(sources.find((s) => s.path === 'CLAUDE.md')?.content).toBe('# raiz\n')
+    expect(sources.find((s) => s.path === 'CLAUDE.md')?.content).toBe('# root\n')
   })
 
-  it('un argumento posicional que es directorio limita el alcance', async () => {
+  it('a positional argument that is a directory narrows the scope', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: ['packages'] })
     expect(sources.map((s) => s.path)).toEqual(['packages/api/CLAUDE.md'])
   })
 
-  it('un argumento posicional que es archivo audita solo ese archivo', async () => {
+  it('a positional argument that is a file audits only that file', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: ['CLAUDE.md'] })
     expect(sources.map((s) => s.path)).toEqual(['CLAUDE.md'])
   })
 
-  it('un posicional que no contiene fuentes no devuelve nada, sin error', async () => {
+  it('a positional containing no sources returns nothing, without erroring', async () => {
     const root = makeTempRepo({ files })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: ['README.md'] })
     expect(sources).toEqual([])
   })
 
-  it('un prefijo de directorio no matchea un nombre de directorio parcial', async () => {
+  it('a directory prefix does not match a partial directory name', async () => {
     const root = makeTempRepo({
       files: { 'pack/CLAUDE.md': '#\n', 'packages/api/CLAUDE.md': '#\n' },
     })

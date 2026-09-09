@@ -1,12 +1,12 @@
 /**
- * Resuelve el texto de una claim a una ruta relativa a la raiz del repo.
+ * Resolves a claim's text to a path relative to the repo root.
  *
- * Devuelve `undefined` cuando la ruta se escapa de la raiz: eso no es un
- * archivo faltante del repo, es una afirmacion sobre el sistema de archivos de
- * quien escribio el documento, y no nos toca verificarla.
+ * Returns `undefined` when the path escapes above the root: that is not a
+ * missing file in the repo, it is a claim about the filesystem of whoever wrote
+ * the document, and it is not ours to verify.
  */
 export function resolveInRepo(baseDir: string, text: string): string | undefined {
-  // Una barra inicial se lee como "desde la raiz del repo", no del filesystem.
+  // A leading slash reads as "from the repo root", not from the filesystem.
   const fromRoot = text.startsWith('/')
   const joined = fromRoot ? text.slice(1) : baseDir === '' ? text : `${baseDir}/${text}`
 

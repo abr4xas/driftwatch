@@ -1,11 +1,11 @@
 # sst/opencode
 
-fuentes: 18
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 18
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  AGENTS.md
 agents-md  packages/app/AGENTS.md
 agents-md  packages/app/e2e/AGENTS.md
@@ -26,4 +26,4 @@ agents-md  packages/stats/AGENTS.md
 agents-md  packages/ui/AGENTS.md
 
 ## findings
-(ninguno)
+(none)

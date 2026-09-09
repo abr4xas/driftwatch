@@ -4,11 +4,11 @@ import type { RepoIndex } from '../verify/repo-index.ts'
 import type { Source, SourceKind } from './types.ts'
 
 export type DiscoverOptions = {
-  /** Argumentos posicionales que limitan el alcance. Vacio audita todo el repo. */
+  /** Positional arguments that narrow the scope. Empty audits the whole repo. */
   paths: readonly string[]
 }
 
-/** Los segmentos de una ruta relativa, ya en posix. */
+/** The segments of a relative path, already in posix form. */
 function segmentsOf(rel: string): string[] {
   return rel.split('/')
 }
@@ -19,9 +19,9 @@ function basenameOf(rel: string): string {
 }
 
 /**
- * Busca la posicion de un par de segmentos consecutivos, como `.claude/skills`.
- * Se acepta a cualquier profundidad para que un monorepo con un `.claude/` por
- * paquete funcione igual que un repo plano.
+ * Finds the position of a pair of consecutive segments, such as
+ * `.claude/skills`. It is accepted at any depth so that a monorepo with one
+ * `.claude/` per package works the same as a flat repo.
  */
 function indexOfPair(segments: readonly string[], first: string, second: string): number {
   for (let i = 0; i + 1 < segments.length; i += 1) {
@@ -31,8 +31,8 @@ function indexOfPair(segments: readonly string[], first: string, second: string)
 }
 
 /**
- * Que tipo de fuente es una ruta, o `undefined` si no es una fuente.
- * El orden de las reglas importa: las anclas mas especificas van primero.
+ * What kind of source a path is, or `undefined` if it is not a source.
+ * Rule order matters: the most specific anchors come first.
  */
 export function classifySource(rel: string): SourceKind | undefined {
   const base = basenameOf(rel)
@@ -49,7 +49,7 @@ export function classifySource(rel: string): SourceKind | undefined {
   if (skills !== -1 && base === 'SKILL.md') return 'skill'
 
   const agents = indexOfPair(segments, '.claude', 'agents')
-  // `.claude/agents/*.md` es plano: un .md mas abajo no es un subagente.
+  // `.claude/agents/*.md` is flat: a .md one level deeper is not a subagent.
   if (agents !== -1 && base.endsWith('.md') && segments.length === agents + 3) return 'subagent'
 
   const commands = indexOfPair(segments, '.claude', 'commands')
@@ -62,9 +62,9 @@ export function classifySource(rel: string): SourceKind | undefined {
 }
 
 /**
- * Un posicional limita el alcance a un archivo exacto o a todo lo que este bajo
- * un directorio. Se compara por segmento y no por prefijo de texto, para que
- * `pack` no arrastre `packages/`.
+ * A positional narrows the scope to an exact file or to everything under a
+ * directory. It is compared segment-wise and not by text prefix, so that `pack`
+ * does not drag `packages/` along.
  */
 function isInScope(rel: string, paths: readonly string[]): boolean {
   if (paths.length === 0) return true
@@ -86,8 +86,8 @@ export async function discoverSources(
     if (kind !== undefined) matched.push({ path: rel, kind })
   }
 
-  // Orden estable por ruta: la salida de la herramienta tiene que ser la misma
-  // corrida tras corrida para que un snapshot del corpus signifique algo.
+  // Stable order by path: the tool's output has to be the same run after run
+  // for a corpus snapshot to mean anything.
   matched.sort((a, b) => a.path.localeCompare(b.path))
 
   const read = await Promise.all(
@@ -109,13 +109,15 @@ export async function discoverSources(
 }
 
 /**
- * Junta las fuentes que son copias byte a byte dentro del mismo directorio.
+ * Collapses the sources that are byte-for-byte copies within the same
+ * directory.
  *
- * `AGENTS.md` y `CLAUDE.md` identicos son la norma, no la excepcion: sobre el
- * corpus de repos reales, 4 de 13 findings eran el mismo problema contado dos
- * veces. Se audita una y las demas quedan como alias, que el reporter nombra.
+ * Identical `AGENTS.md` and `CLAUDE.md` files are the norm, not the exception:
+ * across the corpus of real repos, 4 of 13 findings were the same problem
+ * counted twice. One is audited and the rest stay as aliases, which the
+ * reporter names.
  *
- * Gana la primera en orden alfabetico, que deja `AGENTS.md` antes que
+ * The first one in alphabetical order wins, which puts `AGENTS.md` before
  * `CLAUDE.md`.
  */
 function collapseDuplicates(sources: readonly Source[]): Source[] {

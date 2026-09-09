@@ -1,19 +1,19 @@
 /**
- * El corpus de repos reales.
+ * The corpus of real repos.
  *
- * Un fixture verde no prueba nada sobre falsos positivos: lo escribimos
- * nosotros, con las trampas que ya sabemos que existen. El corpus corre la
- * herramienta sobre archivos de contexto que escribieron otras personas, sin
- * saber que driftwatch existe, y guarda la salida como snapshot.
+ * A green fixture proves nothing about false positives: we wrote it, with the
+ * traps we already know exist. The corpus runs the tool over context files
+ * other people wrote, without knowing driftwatch exists, and stores the output
+ * as a snapshot.
  *
- * El snapshot **no afirma ser correcto**. Afirma no cambiar sin intencion. Cada
- * diff se revisa a mano, y esa revision es la unica senal real de regresion de
- * precision que tiene el proyecto.
+ * The snapshot **does not claim to be correct**. It claims not to change
+ * without intent. Every diff is reviewed by hand, and that review is the only
+ * real precision-regression signal the project has.
  *
- * Uso:
- *   pnpm corpus                    clona lo que falte y reescribe los snapshots
- *   pnpm corpus --check            falla si algun snapshot difiere del guardado
- *   pnpm corpus --only <patron>    solo los repos que matcheen el patron
+ * Usage:
+ *   pnpm corpus                    clone what is missing and rewrite snapshots
+ *   pnpm corpus --check            fail if a snapshot differs from the stored one
+ *   pnpm corpus --only <pattern>   only the repos matching the pattern
  */
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -24,38 +24,37 @@ import { run } from '../src/run.ts'
 type CorpusRepo = {
   repo: string
   /**
-   * Conjunto de validacion. Estos repos se agregaron **despues** de ajustar las
-   * heuristicas, y no se miraron para derivar ninguna regla. Su tasa de falsos
-   * positivos es la unica estimacion honesta de precision fuera de muestra: el
-   * numero del grupo de calibracion esta contaminado por haber sido el material
-   * con el que se escribieron las reglas.
+   * Validation set. These repos were added **after** tuning the heuristics, and
+   * were not looked at to derive any rule. Their false positive rate is the
+   * only honest out-of-sample precision estimate: the calibration group's
+   * number is contaminated by having been the material the rules were written
+   * against.
    *
-   * Condicion 9 de ADR-0006: si se **inspeccionan** los findings o los descartes
-   * de un repo de este grupo, ese repo pasa a calibracion y hay que sumar otro
-   * nuevo aca. Clasificar sus findings es la medicion y no contamina; abrir el
-   * repo a ver que descarto la herramienta, si.
+   * ADR-0006 condition 9: if the findings or the discards of a repo in this
+   * group are **inspected**, that repo moves to calibration and a new one has
+   * to be added here. Classifying its findings is the measurement and does not
+   * contaminate; opening the repo to see what the tool discarded does.
    */
   holdout?: boolean
   /**
-   * Commit fijo. Sin pinnear, el snapshot cambiaria cada vez que el repo de
-   * arriba se mueve, y el diff dejaria de significar "cambio driftwatch".
+   * Pinned commit. Without pinning, the snapshot would change every time the
+   * upstream repo moves, and the diff would stop meaning "driftwatch changed".
    */
   sha: string
 }
 
 /**
- * Repos publicos con `AGENTS.md` o `CLAUDE.md` reales, verificados a mano.
+ * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * Son 34: 26 de calibracion y 8 de validacion, que es lo que pide la condicion
- * 8 de ADR-0006.
+ * There are 34: 26 calibration and 8 validation, which is what ADR-0006
+ * condition 8 requires.
  *
- * Clonarlos todos cuesta ~2.7 GB, asi que la lista se mantiene deliberadamente
- * corta y los agregados nuevos se eligen chicos. `oven-sh/bun` y
- * `supabase/supabase` tienen archivos de contexto buenos pero suman ~1.5 GB
- * entre los dos, y no hacen falta. Si se agregan, conviene avisar del tamano
- * antes de arrancar la descarga.
+ * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
+ * new additions are chosen small. `oven-sh/bun` and `supabase/supabase` have
+ * good context files but add ~1.5 GB between them, and are not needed. If they
+ * are added, warn about the size before starting the download.
  *
- * Con `--only <patron>` se corre un subconjunto sin volver a clonar el resto.
+ * With `--only <pattern>` a subset runs without re-cloning the rest.
  */
 const CORPUS: readonly CorpusRepo[] = [
   { repo: 'openai/codex', sha: '73a1148c9c775c2a4616ce5096291740a00ed68a' },
@@ -72,46 +71,48 @@ const CORPUS: readonly CorpusRepo[] = [
   { repo: 'modelcontextprotocol/servers', sha: 'd73f99efbfd40c3aa1b61e88728b3d49fb52608f' },
   { repo: 'block/goose', sha: 'e84de9fe08eb27cd42eca022c2bf59e13baed39e' },
 
-  // Fueron validacion en la primera ronda. Sus dos findings se revisaron y de
-  // ahi salio la regla de placeholders en mayusculas, asi que pasaron a ser
-  // material de calibracion: ya no pueden medir precision fuera de muestra.
+  // These were validation in the first round. Their two findings were reviewed
+  // and the uppercase-placeholder rule came out of them, so they became
+  // calibration material: they can no longer measure out-of-sample precision.
   { repo: 'microsoft/playwright-mcp', sha: '8a13ef8e9f7385a0f89477922127f31cbfde9761' },
   { repo: 'anthropics/anthropic-sdk-typescript', sha: 'ba14b1f4fdf2e840a7b32297965342a099f6201d' },
   { repo: 'github/spec-kit', sha: '4dd2402ea6d644ee655b78213a1f6d679fc88b0b' },
   { repo: 'unjs/nitro', sha: '3b8980bb824e8552053426243a4755a71a44b377' },
   { repo: 'colinhacks/zod', sha: '36f17960d1defca5d0896d9424f4e1059fbbf081' },
 
-  // Fueron validacion en la segunda ronda. De uno de sus findings salio la
-  // regla de nombres de relleno posesivos y la de instrucciones de crear, asi
-  // que tambien pasaron a calibracion.
+  // These were validation in the second round. The possessive-filler-name rule
+  // and the create-instruction rule came out of one of their findings, so they
+  // moved to calibration too.
   { repo: 'charmbracelet/crush', sha: 'aee8760458b9b7eaeb58655aee150e3ffef21cd0' },
   { repo: 'tursodatabase/turso', sha: '85e234697d687d4482b693483ac13fb6c93ae99d' },
   { repo: 'sveltejs/svelte', sha: 'ce89035ecbf88ee131838527d29584b968d450fb' },
 
-  // Fueron validacion en la cuarta ronda. Se inspeccionaron sus descartes para
-  // entender por que el grupo salia mudo, y de ahi salio la correccion de la
-  // ventana de prosa. Por la condicion 9 de ADR-0006 eso los contamina:
-  // inspeccionar es contaminar, aunque el cambio que sale sea a favor de
-  // reportar mas y no de reportar menos.
+  // These were validation in the fourth round. Their discards were inspected to
+  // understand why the group came out silent, and the prose-window correction
+  // came out of that. By ADR-0006 condition 9 that contaminates them:
+  // inspecting is contaminating, even when the resulting change favours
+  // reporting more rather than reporting less.
   { repo: 'jina-ai/reader', sha: '1574bfd380d249c86c82db4dace0d9c8fe17e2b1' },
   { repo: 'simonw/llm', sha: '1df47ddcac20d58726a993949da8ef84f4081085' },
   { repo: 'cyanheads/git-mcp-server', sha: 'd34d83af201dc0c9012ca501336c3df6171da932' },
   { repo: 'unjs/h3', sha: 'aa50e96a4a3da1732aa54542c498b37e0f8e3508' },
 
-  // Fue validacion en la quinta ronda. Su unico finding,
-  // `test_action_EventNameHere.py`, era un placeholder en CamelCase, y de ahi
-  // salio la regla PLACEHOLDER_CAMEL. Por la condicion 9, pasa a calibracion.
+  // This was validation in the fifth round. Its only finding,
+  // `test_action_EventNameHere.py`, was a CamelCase placeholder, and the
+  // PLACEHOLDER_CAMEL rule came out of it. By condition 9, it moves to
+  // calibration.
   //
-  // La medicion que produjo, 3 verdaderos sobre 4 findings = 75%, queda como la
-  // ultima medicion valida de precision fuera de muestra. No se reemplaza por el
-  // numero que daria ahora: seria una medicion tomada sobre la misma muestra que
-  // decidio el arreglo.
+  // The measurement it produced, 3 true out of 4 findings = 75%, stands as the
+  // last valid out-of-sample precision measurement for this group. It is not
+  // replaced by the number it would give now: that would be a measurement taken
+  // on the very sample that decided the fix.
   { repo: 'browser-use/browser-use', sha: '2b1f9d377999a59fe7627c1a5aa88c12aa42e11f' },
 
-  // --- Validacion: nunca inspeccionados ---
-  // Ocho repos, que es lo que pide la condicion 8 de ADR-0006. Se eligen chicos
-  // a proposito, porque el corpus completo ya pesa ~2.7 GB de clones, y se
-  // clonan solo cuando hace falta medir: `pnpm corpus --only <patron>`.
+  // --- Validation: never inspected ---
+  // Eight repos, which is what ADR-0006 condition 8 requires. They are chosen
+  // small on purpose, because the full corpus already weighs ~2.7 GB of clones,
+  // and they are cloned only when a measurement is needed:
+  // `pnpm corpus --only <pattern>`.
   { repo: 'vitest-dev/vitest', sha: 'c119be016295b45a005e2a36367ea7d133b4f385', holdout: true },
   {
     repo: 'rust-lang/rust-analyzer',
@@ -152,9 +153,9 @@ function git(args: readonly string[], cwd?: string): void {
 }
 
 /**
- * Clona superficial y se para en el commit fijado. Si el directorio ya esta y
- * apunta al sha correcto, no se toca: el corpus se clona una vez y despues es
- * cache local.
+ * Shallow-clones and parks on the pinned commit. If the directory is already
+ * there and points at the right sha, it is left alone: the corpus is cloned
+ * once and is a local cache afterwards.
  */
 function ensureClone({ repo, sha }: CorpusRepo): string {
   const dir = join(REPOS_DIR, slugOf(repo))
@@ -164,7 +165,7 @@ function ensureClone({ repo, sha }: CorpusRepo): string {
       encoding: 'utf8',
     }).trim()
     if (head === sha) return dir
-    // El pin cambio: se rehace, porque un clon superficial no puede navegar.
+    // The pin changed: redo it, because a shallow clone cannot navigate.
     rmSync(dir, { recursive: true, force: true })
   }
 
@@ -176,25 +177,25 @@ function ensureClone({ repo, sha }: CorpusRepo): string {
   return dir
 }
 
-/** Rendering estable y diffeable de una corrida. */
+/** Stable, diffable rendering of a run. */
 async function snapshotOf(repo: string, dir: string): Promise<string> {
   const result = await run({ cwd: dir, paths: [] })
   const lines: string[] = [
     `# ${repo}`,
     '',
-    `fuentes: ${result.sources.length}`,
-    `errores: ${result.counts.errors}`,
-    `avisos: ${result.counts.warnings}`,
-    `corregibles: ${result.fixable}`,
+    `sources: ${result.sources.length}`,
+    `errors: ${result.counts.errors}`,
+    `warnings: ${result.counts.warnings}`,
+    `fixable: ${result.fixable}`,
     '',
-    '## fuentes',
+    '## sources',
     ...result.sources.map((source) => `${source.kind}  ${source.path}`),
     '',
     '## findings',
   ]
 
   if (result.findings.length === 0) {
-    lines.push('(ninguno)')
+    lines.push('(none)')
   } else {
     for (const finding of result.findings) {
       const { source, range, text, context } = finding.claim
@@ -202,7 +203,7 @@ async function snapshotOf(repo: string, dir: string): Promise<string> {
         finding.suggestion === undefined
           ? ''
           : `  -> ${finding.suggestion.value} (${finding.suggestion.confidence}${
-              finding.suggestion.fixable ? ', corregible' : ''
+              finding.suggestion.fixable ? ', fixable' : ''
             })`
       lines.push(
         `${source.path}:${range.line}:${range.column}  [${finding.check}] ${context}  ${text}${suggestion}`,
@@ -210,12 +211,12 @@ async function snapshotOf(repo: string, dir: string): Promise<string> {
     }
   }
 
-  // El tiempo no entra al snapshot: cambia en cada corrida y no dice nada
-  // sobre precision.
+  // Time does not enter the snapshot: it changes on every run and says nothing
+  // about precision.
   return `${lines.join('\n')}\n`
 }
 
-/** `--only <patron>`: corre solo los repos cuyo nombre contiene el patron. */
+/** `--only <pattern>`: run only the repos whose name contains the pattern. */
 function onlyPattern(argv: readonly string[]): string | undefined {
   const at = argv.indexOf('--only')
   return at === -1 ? undefined : argv[at + 1]
@@ -232,15 +233,15 @@ async function main(): Promise<number> {
   let holdoutFindings = 0
 
   for (const entry of CORPUS) {
-    // Con --only se saltean los demas sin tocar su snapshot, para poder sumar
-    // un repo nuevo sin volver a clonar los gigabytes de todo el corpus.
+    // With --only the rest are skipped without touching their snapshot, so a
+    // new repo can be added without re-cloning the whole corpus.
     if (only !== undefined && !entry.repo.includes(only)) continue
-    process.stderr.write(`${entry.repo}${entry.holdout === true ? ' [validacion]' : ''} ... `)
+    process.stderr.write(`${entry.repo}${entry.holdout === true ? ' [validation]' : ''} ... `)
     let dir: string
     try {
       dir = ensureClone(entry)
     } catch {
-      process.stderr.write('no se pudo clonar, se saltea\n')
+      process.stderr.write('could not clone, skipping\n')
       continue
     }
 
@@ -248,16 +249,16 @@ async function main(): Promise<number> {
     const path = join(SNAPSHOTS_DIR, `${slugOf(entry.repo)}.txt`)
 
     const findings = snapshot.split('\n## findings\n')[1] ?? ''
-    const n = findings.trim() === '(ninguno)' ? 0 : findings.trim().split('\n').length
+    const n = findings.trim() === '(none)' ? 0 : findings.trim().split('\n').length
     totalFindings += n
     if (entry.holdout === true) holdoutFindings += n
-    totalSources += Number(/fuentes: (\d+)/u.exec(snapshot)?.[1] ?? 0)
+    totalSources += Number(/sources: (\d+)/u.exec(snapshot)?.[1] ?? 0)
 
     if (check) {
       const previous = existsSync(path) ? readFileSync(path, 'utf8') : ''
       if (previous !== snapshot) {
         differing += 1
-        process.stderr.write('CAMBIO\n')
+        process.stderr.write('CHANGED\n')
       } else {
         process.stderr.write(`ok (${n})\n`)
       }
@@ -273,14 +274,14 @@ async function main(): Promise<number> {
     : 0
 
   process.stderr.write(
-    `\n${snapshotCount} repos · ${totalSources} fuentes · ${totalFindings} findings\n` +
-      `  calibracion: ${totalFindings - holdoutFindings} · validacion: ${holdoutFindings}\n`,
+    `\n${snapshotCount} repos · ${totalSources} sources · ${totalFindings} findings\n` +
+      `  calibration: ${totalFindings - holdoutFindings} · validation: ${holdoutFindings}\n`,
   )
 
   if (check && differing > 0) {
     process.stderr.write(
-      `\n${differing} snapshot(s) cambiaron. Revisa el diff a mano antes de aceptarlo:\n` +
-        `ese diff es la unica senal real de regresion de precision.\n`,
+      `\n${differing} snapshot(s) changed. Review the diff by hand before accepting it:\n` +
+        `that diff is the only real precision-regression signal.\n`,
     )
     return 1
   }

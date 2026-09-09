@@ -4,22 +4,22 @@ import { colorsFor, type Colors } from './colors.ts'
 
 export type PrettyOptions = {
   color: boolean
-  /** SPEC.md § 5: solo muestra problemas, sin resumen. */
+  /** SPEC.md § 5: show problems only, no summary. */
   quiet: boolean
 }
 
-/** SPEC.md § 5: el fragmento citado se trunca a 40 caracteres con '…'. */
+/** SPEC.md § 5: the quoted fragment is truncated to 40 characters with '…'. */
 const MAX_TEXT = 40
 
-/** Plural del castellano para los contadores del resumen. */
+/** Pluralizes a counter for the summary line. */
 function count(n: number, singular: string, plural: string): string {
   return `${n} ${n === 1 ? singular : plural}`
 }
 
 function breakdown(errors: number, warnings: number): string {
   const parts: string[] = []
-  if (errors > 0) parts.push(count(errors, 'error', 'errores'))
-  if (warnings > 0) parts.push(count(warnings, 'aviso', 'avisos'))
+  if (errors > 0) parts.push(count(errors, 'error', 'errors'))
+  if (warnings > 0) parts.push(count(warnings, 'warning', 'warnings'))
   return parts.length > 0 ? ` (${parts.join(', ')})` : ''
 }
 
@@ -43,13 +43,13 @@ function groupByFile(findings: readonly Finding[]): Map<string, Finding[]> {
   return groups
 }
 
-/** El encabezado del grupo, nombrando las copias identicas si las hay. */
+/** The group header, naming the identical copies if there are any. */
 function headerFor(findings: readonly Finding[], c: Colors): string {
   const source = findings[0]?.claim.source
   const file = source?.path ?? ''
   const aliases = source?.aliases ?? []
   if (aliases.length === 0) return c.bold(file)
-  return `${c.bold(file)} ${c.dim(`(y ${aliases.join(', ')}, identicos)`)}`
+  return `${c.bold(file)} ${c.dim(`(and ${aliases.join(', ')}, identical)`)}`
 }
 
 function renderGroup(findings: readonly Finding[], c: Colors): string {
@@ -70,19 +70,19 @@ function renderGroup(findings: readonly Finding[], c: Colors): string {
 }
 
 function summary(result: RunResult, c: Colors): string {
-  const files = count(result.sources.length, 'archivo', 'archivos')
+  const files = count(result.sources.length, 'file', 'files')
   const ms = `${Math.round(result.durationMs)}ms`
   const { errors, warnings } = result.counts
   const problems = errors + warnings
 
   if (problems === 0) {
-    return `${c.green('✓')} ${files} · sin drift · ${ms}\n`
+    return `${c.green('✓')} ${files} · no drift · ${ms}\n`
   }
 
-  const total = count(problems, 'problema', 'problemas')
+  const total = count(problems, 'problem', 'problems')
   const head = `${files} · ${total}${breakdown(errors, warnings)} · ${ms}\n`
   if (result.fixable === 0) return head
-  return `${head}${c.dim(`${count(result.fixable, 'corregible', 'corregibles')} con --fix\n`)}`
+  return `${head}${c.dim(`${count(result.fixable, 'fixable', 'fixable')} with --fix\n`)}`
 }
 
 export function renderPretty(result: RunResult, options: PrettyOptions): string {

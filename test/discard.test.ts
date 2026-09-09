@@ -3,105 +3,105 @@ import { discardReason, normalizePathText } from '../src/extract/discard.ts'
 import { evaluatePathText } from '../src/extract/paths.ts'
 
 /**
- * Una regla por bloque, en el orden de ARCHITECTURE.md. Cada caso de aca tiene
- * su gemelo en el fixture `false-positive-traps`: los unit tests fijan la regla,
- * el fixture fija el resultado observable.
+ * One rule per block, in ARCHITECTURE.md order. Every case here has its twin in
+ * the `false-positive-traps` fixture: the unit tests pin the rule, the fixture
+ * pins the observable result.
  */
-describe('regla 1: URLs', () => {
+describe('rule 1: URLs', () => {
   it.each([
-    'https://ejemplo.com/docs/guia.md',
-    'http://cdn.ejemplo.com/lib/app.js',
-    'file:///tmp/salida/reporte.json',
-    'ftp://host/archivo.txt',
-    '//cdn.ejemplo.com/x.js',
-  ])('descarta %s', (text) => {
+    'https://example.com/docs/guide.md',
+    'http://cdn.example.com/lib/app.js',
+    'file:///tmp/output/report.json',
+    'ftp://host/file.txt',
+    '//cdn.example.com/x.js',
+  ])('discards %s', (text) => {
     expect(discardReason(text)).toBe('url')
   })
 })
 
-describe('regla 2: globs y placeholders', () => {
+describe('rule 2: globs and placeholders', () => {
   it.each([
     'src/**/*.test.ts',
     'test/fixtures/*.json',
     '.scratch/<feature>/issues/',
-    '{{ruta}}/plantilla.md',
+    '{{path}}/template.md',
     '$HOME/.config/app.json',
-    'packages/[nombre]/src',
-    'docs/pagina?.md',
-  ])('descarta %s', (text) => {
-    expect(discardReason(text)).toBe('glob-o-placeholder')
+    'packages/[name]/src',
+    'docs/page?.md',
+  ])('discards %s', (text) => {
+    expect(discardReason(text)).toBe('glob-or-placeholder')
   })
 })
 
-describe('regla 3: palabras sueltas', () => {
+describe('rule 3: bare words', () => {
   it.each(['index.ts', 'tsconfig.json', 'pnpm', 'build', 'README.md'])(
-    'descarta %s, porque no fija una ubicacion (ADR-0003)',
+    'discards %s, because it does not pin a location (ADR-0003)',
     (text) => {
-      expect(discardReason(text)).toBe('palabra-suelta')
+      expect(discardReason(text)).toBe('bare-word')
     },
   )
 
-  it('no descarta algo que si tiene barra', () => {
+  it('does not discard something that does have a slash', () => {
     expect(discardReason('src/index.ts')).toBeUndefined()
   })
 })
 
-describe('regla 4: parece archivo y no lo es', () => {
+describe('rule 4: looks like a file and is not', () => {
   it.each(['node.js', 'next.js', 'vue.js', 'nuxt.js', 'd.ts', '1.0', 'v2.1.3'])(
-    'descarta %s',
+    'discards %s',
     (text) => {
       expect(discardReason(text)).not.toBeUndefined()
     },
   )
 
-  it('descarta el nombre de tecnologia incluso con barra delante', () => {
-    expect(discardReason('runtime/node.js')).toBe('no-es-un-archivo')
+  it('discards the technology name even with a slash in front', () => {
+    expect(discardReason('runtime/node.js')).toBe('not-a-file')
   })
 
-  it('no descarta un archivo real con nombre parecido', () => {
+  it('does not discard a real file with a similar name', () => {
     expect(discardReason('src/node.ts')).toBeUndefined()
   })
 })
 
-describe('regla 5: normalizacion', () => {
-  it('quita el ./ inicial', () => {
+describe('rule 5: normalization', () => {
+  it('strips the leading ./', () => {
     expect(normalizePathText('./src/index.ts')).toBe('src/index.ts')
   })
 
-  it('quita una referencia a linea, y a linea y columna', () => {
+  it('strips a line reference, and a line-and-column one', () => {
     expect(normalizePathText('src/index.ts:12')).toBe('src/index.ts')
     expect(normalizePathText('src/index.ts:12:4')).toBe('src/index.ts')
   })
 
-  it('quita backticks residuales', () => {
+  it('strips leftover backticks', () => {
     expect(normalizePathText('`src/index.ts`')).toBe('src/index.ts')
   })
 
-  it('quita la puntuacion final, que es de la oracion y no de la ruta', () => {
+  it('strips trailing punctuation, which belongs to the sentence not the path', () => {
     expect(normalizePathText('src/index.ts.')).toBe('src/index.ts')
     expect(normalizePathText('src/index.ts,')).toBe('src/index.ts')
     expect(normalizePathText('(src/index.ts)')).toBe('(src/index.ts')
   })
 
-  it('no toca una ruta que ya esta limpia', () => {
+  it('leaves an already clean path alone', () => {
     expect(normalizePathText('src/index.ts')).toBe('src/index.ts')
     expect(normalizePathText('src/lib/')).toBe('src/lib/')
   })
 })
 
 describe('evaluatePathText', () => {
-  it('devuelve la ruta normalizada cuando sobrevive a todo', () => {
+  it('returns the normalized path when it survives everything', () => {
     expect(evaluatePathText('./src/index.ts:12')).toEqual({
       kind: 'path',
       text: 'src/index.ts',
     })
   })
 
-  it('descarta lo que despues de normalizar ya no tiene forma de ruta', () => {
-    expect(evaluatePathText('a/b:1')).toEqual({ kind: 'discarded', reason: 'sin-forma-de-ruta' })
+  it('discards what is no longer path-shaped after normalizing', () => {
+    expect(evaluatePathText('a/b:1')).toEqual({ kind: 'discarded', reason: 'not-path-shaped' })
   })
 
-  it('el orden importa: una URL se descarta antes de normalizarse', () => {
+  it('order matters: a URL is discarded before being normalized', () => {
     expect(evaluatePathText('https://x.com/a.md.')).toEqual({ kind: 'discarded', reason: 'url' })
   })
 })

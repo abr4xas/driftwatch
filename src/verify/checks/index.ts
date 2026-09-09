@@ -2,9 +2,9 @@ import type { Check } from '../check.ts'
 import { pathMissing } from './path-missing.ts'
 
 /**
- * Registro estatico de checks. ARCHITECTURE.md § Extensibilidad: sin carga
- * dinamica de plugins en v1, asi que agregar un check es agregar un archivo al
- * lado y una entrada aca.
+ * Static check registry. ARCHITECTURE.md § Extensibility: no dynamic plugin
+ * loading in v1, so adding a check means adding a file next to this one and an
+ * entry here.
  */
 export const CHECKS: readonly Check[] = [pathMissing]
 

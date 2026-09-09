@@ -2,8 +2,8 @@ import type { Suggestion } from '../core/types.ts'
 import { candidatesFor, type RepoIndex } from '../verify/repo-index.ts'
 
 /**
- * SPEC.md § 8: `--fix` solo aplica cuando la correccion es inequivoca, y eso
- * significa un unico candidato con confianza por encima de 0.8.
+ * SPEC.md § 8: `--fix` only applies when the correction is unambiguous, and
+ * that means a single candidate with confidence above 0.8.
  */
 const FIXABLE_THRESHOLD = 0.8
 
@@ -17,19 +17,19 @@ function basenameOf(rel: string): string {
 }
 
 /**
- * Cuanto se parecen dos directorios, medido por **prefijo comun**: hasta donde
- * coinciden antes de divergir, sobre la profundidad del mas corto.
+ * How similar two directories are, measured by **common prefix**: how far they
+ * agree before diverging, over the depth of the shorter one.
  *
- * No es solapamiento de segmentos como conjunto, y la diferencia importa. Un
- * conjunto dice que `packages/web/src` y `packages/api/src` se parecen mucho,
- * porque comparten dos de tres segmentos; pero el segmento que difiere es el
- * que identifica al paquete, y proponer el archivo del otro paquete como
- * destino inequivoco es exactamente el autofix que no queremos aplicar. El
- * prefijo comun los separa: coinciden solo en `packages` y ahi divergen.
+ * It is not set overlap of segments, and the difference matters. A set says
+ * `packages/web/src` and `packages/api/src` are very similar, because they
+ * share two of three segments; but the segment that differs is the one
+ * identifying the package, and proposing the other package's file as an
+ * unambiguous target is exactly the autofix we do not want to apply. The common
+ * prefix separates them: they agree only on `packages` and diverge there.
  *
- * Tampoco es distancia de edicion: mover un archivo de `src/lib` a `src/auth`
- * conserva el prefijo, y eso es la senal, no que las cadenas se parezcan letra
- * a letra.
+ * It is not edit distance either: moving a file from `src/lib` to `src/auth`
+ * preserves the prefix, and that is the signal, not that the strings look alike
+ * letter by letter.
  */
 export function parentSimilarity(a: string, b: string): number {
   if (a === b) return 1
@@ -47,12 +47,11 @@ export function parentSimilarity(a: string, b: string): number {
 const SIMILAR = 0.5
 
 /**
- * Busca un destino probable para una ruta que no existe.
+ * Looks for a likely target for a path that does not exist.
  *
- * La busqueda arranca en `byBasename`, no sobre el indice completo: la
- * comparacion difusa se corre solo entre los candidatos que ya comparten el
- * nombre de archivo. Sobre 100k archivos eso es la diferencia entre una
- * consulta y un recorrido.
+ * The search starts from `byBasename`, not over the whole index: the fuzzy
+ * comparison only runs among the candidates that already share the file name.
+ * Over 100k files that is the difference between a lookup and a scan.
  */
 export function suggestPath(index: RepoIndex, rel: string): Suggestion | undefined {
   const candidates = candidatesFor(index, basenameOf(rel))
@@ -66,7 +65,7 @@ export function suggestPath(index: RepoIndex, rel: string): Suggestion | undefin
   const best = scored[0]
   if (best === undefined) return undefined
 
-  // Varios homonimos: se dice cual es el mas parecido, pero no se corrige solo.
+  // Several namesakes: we say which is closest, but do not fix it ourselves.
   if (candidates.length > 1) {
     return { value: best.candidate, confidence: 0.3, fixable: false }
   }

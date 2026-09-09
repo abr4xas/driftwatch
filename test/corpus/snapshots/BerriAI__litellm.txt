@@ -1,11 +1,11 @@
 # BerriAI/litellm
 
-fuentes: 22
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 22
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 agents-md  litellm-rust/AGENTS.md
@@ -30,4 +30,4 @@ claude-md  ui/litellm-dashboard/CLAUDE.md
 agents-md  ui/litellm-dashboard/src/components/chat/AGENTS.md
 
 ## findings
-(ninguno)
+(none)

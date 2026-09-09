@@ -5,8 +5,9 @@ export default defineConfig({
   format: 'esm',
   target: 'node24',
   dts: true,
-  // El package.json ya declara type: module, asi que .js es ESM. Importa porque
-  // el bin y el comando de verificacion de AGENTS.md apuntan a dist/cli.js.
+  // package.json already declares type: module, so .js is ESM. It matters
+  // because the bin and the AGENTS.md verification command point at
+  // dist/cli.js.
   fixedExtension: false,
   clean: true,
 })

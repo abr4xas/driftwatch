@@ -1,7 +1,7 @@
 # driftwatch
 
-Encuentra las partes de tu `CLAUDE.md`, `AGENTS.md` y skills que ya no son ciertas.
+Find the parts of your `CLAUDE.md`, `AGENTS.md` and skills that are no longer true.
 
-> `knip` encuentra código muerto. driftwatch encuentra **contexto muerto**.
+> `knip` finds dead code. driftwatch finds **dead context**.
 
-**Estado: en construcción.** Todavía no hay release. La especificación completa está en [`docs/spec/`](./docs/spec/README.md); el handoff para agentes en [`AGENTS.md`](./AGENTS.md).
+**Status: under construction.** There is no release yet. The full specification is in [`docs/spec/`](./docs/spec/README.md); the agent handoff is in [`AGENTS.md`](./AGENTS.md).

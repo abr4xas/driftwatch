@@ -1,26 +1,26 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * Los tres niveles de confianza de ARCHITECTURE.md, cada uno con su caso.
- * El documento afirma tres rutas que se movieron; el repo tiene los destinos.
+ * The three confidence levels from ARCHITECTURE.md, each with its own case.
+ * The document claims three paths that moved; the repo holds the targets.
  */
 export const suggestions: Fixture = {
   name: 'suggestions',
   files: {
     'CLAUDE.md': [
-      '# Proyecto',
+      '# Project',
       '',
-      'La auth vive en `src/lib/auth.ts`.', // 3: movida dentro de src
+      'Auth lives in `src/lib/auth.ts`.', // 3: moved within src
       '',
-      'El seed esta en `src/seed.ts`.', // 5: movida a otro arbol
+      'The seed is at `src/seed.ts`.', // 5: moved to another tree
       '',
-      'El helper es `src/util/fecha.ts`.', // 7: hay dos homonimos
+      'The helper is `src/util/date.ts`.', // 7: there are two namesakes
       '',
     ].join('\n'),
     'src/auth/auth.ts': '',
     'scripts/db/seed.ts': '',
-    'paquetes/a/fecha.ts': '',
-    'paquetes/b/fecha.ts': '',
+    'packages/a/date.ts': '',
+    'packages/b/date.ts': '',
   },
   expected: [
     {
@@ -28,10 +28,10 @@ export const suggestions: Fixture = {
       severity: 'error',
       file: 'CLAUDE.md',
       line: 3,
-      column: 18,
+      column: 16,
       text: 'src/lib/auth.ts',
-      message: 'ruta no existe',
-      // Candidato unico y comparte el segmento `src`: inequivoco.
+      message: 'path does not exist',
+      // Single candidate and it shares the `src` segment: unambiguous.
       suggestion: { value: 'src/auth/auth.ts', confidence: 1, fixable: true },
     },
     {
@@ -39,10 +39,10 @@ export const suggestions: Fixture = {
       severity: 'error',
       file: 'CLAUDE.md',
       line: 5,
-      column: 18,
+      column: 17,
       text: 'src/seed.ts',
-      message: 'ruta no existe',
-      // Candidato unico pero en otro arbol: se sugiere, no se corrige.
+      message: 'path does not exist',
+      // Single candidate but in another tree: suggested, not fixed.
       suggestion: { value: 'scripts/db/seed.ts', confidence: 0.6, fixable: false },
     },
     {
@@ -50,11 +50,11 @@ export const suggestions: Fixture = {
       severity: 'error',
       file: 'CLAUDE.md',
       line: 7,
-      column: 15,
-      text: 'src/util/fecha.ts',
-      message: 'ruta no existe',
-      // Dos homonimos: nunca autofixable, por mas parecido que sea uno.
-      suggestion: { value: 'paquetes/a/fecha.ts', confidence: 0.3, fixable: false },
+      column: 16,
+      text: 'src/util/date.ts',
+      message: 'path does not exist',
+      // Two namesakes: never autofixable, no matter how close one of them is.
+      suggestion: { value: 'packages/a/date.ts', confidence: 0.3, fixable: false },
     },
   ],
 }

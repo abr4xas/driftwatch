@@ -19,14 +19,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ADR-0002: el piso es Node 24 (LTS activo). 25 es la current.
+        # ADR-0002: the floor is Node 24 (active LTS). 25 is current.
         node: [24, 25]
 
     steps:
       - uses: actions/checkout@v5
         with:
-          # driftwatch usa `git ls-files` para construir su indice, asi que
-          # necesita un working tree real, no solo el commit.
+          # driftwatch uses `git ls-files` to build its index, so it needs a
+          # real working tree, not just the commit.
           fetch-depth: 1
 
       - uses: pnpm/action-setup@v4
@@ -46,13 +46,13 @@ jobs:
 
       - run: pnpm build
 
-      # Un `bin` roto no aparece en ningun test unitario: hay que invocar el
-      # binario compilado como lo invocaria un usuario.
-      - name: el binario compilado responde
+      # A broken `bin` shows up in no unit test: the compiled binary has to be
+      # invoked the way a user would invoke it.
+      - name: the compiled binary responds
         run: node ./dist/cli.js --help
 
-      # La herramienta corrida sobre su propio repo: el primer sujeto de
-      # prueba real, y ahora bloqueante. La corrida esta limpia, asi que
-      # cualquier ruta que se rompa en AGENTS.md o en docs/ tumba el CI.
-      - name: driftwatch sobre driftwatch
+      # The tool run against its own repo: the first real test subject, and now
+      # blocking. The run is clean, so any path that breaks in AGENTS.md or in
+      # docs/ takes CI down.
+      - name: driftwatch on driftwatch
         run: node ./dist/cli.js

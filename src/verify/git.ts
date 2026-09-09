@@ -3,21 +3,21 @@ import { promisify } from 'node:util'
 
 const run = promisify(execFile)
 
-/** Cuantas rutas se pasan por invocacion, para no rozar el limite de argv. */
+/** How many paths are passed per invocation, to stay clear of the argv limit. */
 const BATCH = 400
 
 /**
- * Cuales de estas rutas ignoraria git.
+ * Which of these paths git would ignore.
  *
- * Es la respuesta general a una clase entera de falso positivo: si git ignora
- * una ruta, el indice no puede saber si existe, asi que afirmar que falta es
- * inventar. Cubre `dist/` y `node_modules/`, pero tambien los nombres propios
- * de cada proyecto: `wrangler-dist/` en workers-sdk, `scripts/pr-status/` en
- * next.js, `.agents/skills/` en prisma. Ninguna lista escrita a mano llega a
- * eso; el `.gitignore` del repo si, incluidos los anidados.
+ * This is the general answer to a whole class of false positive: if git ignores
+ * a path, the index cannot know whether it exists, so claiming it is missing is
+ * making things up. It covers `dist/` and `node_modules/`, but also each
+ * project's own names: `wrangler-dist/` in workers-sdk, `scripts/pr-status/` in
+ * next.js, `.agents/skills/` in prisma. No hand-written list gets there; the
+ * repo's `.gitignore` does, nested ones included.
  *
- * Solo se pregunta por las rutas que algun check va a consultar, que son unas
- * decenas por corrida.
+ * Only the paths some check is going to look up are asked about, which is a few
+ * dozen per run.
  */
 export async function gitIgnoredPaths(
   root: string,
@@ -30,23 +30,23 @@ export async function gitIgnoredPaths(
     const batch = paths.slice(i, i + BATCH)
     let stdout: string
     try {
-      // `-n` para que no haga falta que la ruta exista, que es justo el caso.
-      // `check-ignore` sale con 1 cuando no matchea nada, asi que el catch
-      // cubre tanto "ninguna ignorada" como "no hay git".
+      // `-n` so the path does not need to exist, which is exactly the case
+      // here. `check-ignore` exits 1 when nothing matches, so the catch covers
+      // both "none ignored" and "no git available".
       const result = await run('git', ['-C', root, 'check-ignore', '-n', '-v', '--', ...batch], {
         maxBuffer: 16 * 1024 * 1024,
         encoding: 'utf8',
       })
       stdout = result.stdout
     } catch (cause) {
-      // Salida 1 con stdout vacio es "ninguna ignorada", no un fallo.
+      // Exit 1 with empty stdout means "none ignored", not a failure.
       const partial = (cause as { stdout?: string }).stdout
       if (typeof partial !== 'string' || partial.length === 0) continue
       stdout = partial
     }
 
     for (const line of stdout.split('\n')) {
-      // Formato de -v: `<fuente>:<linea>:<patron>\t<ruta>`. Sin patron, `::`.
+      // -v format: `<source>:<line>:<pattern>\t<path>`. With no pattern, `::`.
       const tab = line.lastIndexOf('\t')
       if (tab === -1) continue
       if (line.slice(0, tab) === '::') continue
@@ -58,12 +58,12 @@ export async function gitIgnoredPaths(
 }
 
 /**
- * `owner/repo` del remoto `origin`, o `undefined` si no hay.
+ * `owner/repo` of the `origin` remote, or `undefined` if there is none.
  *
- * Sirve para una sola cosa: saber cuando un documento esta hablando de **otro**
- * repositorio. Un `AGENTS.md` que dice "estas skills viven en
- * [prisma/ignite](https://github.com/prisma/ignite) (`skills/.pilot/`)" no
- * afirma que `skills/.pilot/` exista aca.
+ * It serves one purpose: knowing when a document is talking about **another**
+ * repository. An `AGENTS.md` saying "these skills live in
+ * [prisma/ignite](https://github.com/prisma/ignite) (`skills/.pilot/`)" does
+ * not claim that `skills/.pilot/` exists here.
  */
 export async function originSlug(root: string): Promise<string | undefined> {
   try {

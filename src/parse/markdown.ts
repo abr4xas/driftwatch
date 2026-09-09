@@ -4,9 +4,9 @@ import { unified } from 'unified'
 import { visit } from 'unist-util-visit'
 
 /**
- * Un fragmento con su posicion exacta en el contenido original. Los offsets son
- * lo que hace posible `--fix` sin reformatear: se reemplaza ese rango de bytes
- * y nada mas.
+ * A fragment with its exact position in the original content. The offsets are
+ * what makes `--fix` possible without reformatting: that byte range is
+ * replaced and nothing else.
  */
 export type Span = {
   value: string
@@ -14,12 +14,12 @@ export type Span = {
 }
 
 export type FenceSpan = Span & {
-  /** El lenguaje declarado en el fence, o undefined si no declara ninguno. */
+  /** The language declared on the fence, or undefined if it declares none. */
   lang: string | undefined
 }
 
 export type LinkSpan = Span & {
-  /** El texto visible del link, para poder citarlo en un mensaje. */
+  /** The link's visible text, so a message can quote it. */
   label: string
 }
 
@@ -29,7 +29,7 @@ export type ParsedDoc = {
   links: readonly LinkSpan[]
 }
 
-/** Si una url apunta afuera del repo. */
+/** Whether a url points outside the repo. */
 function isExternal(url: string): boolean {
   return /^[a-z][a-z0-9+.-]*:\/\//iu.test(url) || url.startsWith('//')
 }
@@ -37,9 +37,9 @@ function isExternal(url: string): boolean {
 const processor = unified().use(remarkParse)
 
 /**
- * Localiza `value` dentro del texto crudo de un nodo. Hace falta porque la
- * posicion de mdast incluye la sintaxis (los backticks de un inlineCode, los
- * parentesis de un link), y lo que queremos senalar es el contenido.
+ * Locates `value` inside a node's raw text. It is needed because the mdast
+ * position includes the syntax (the backticks of an inlineCode, the parentheses
+ * of a link), and what we want to point at is the content.
  */
 function offsetOfValue(
   content: string,
@@ -61,7 +61,7 @@ export function parseMarkdown(content: string): ParsedDoc {
   const inlineCode: Span[] = []
   const fences: FenceSpan[] = []
   const links: LinkSpan[] = []
-  /** Rangos de inlineCode que son etiqueta de un link externo. */
+  /** inlineCode ranges that are the label of an external link. */
   const externalLabels: Array<[number, number]> = []
 
   visit(tree, (node) => {
@@ -79,8 +79,9 @@ export function parseMarkdown(content: string): ParsedDoc {
       fences.push({
         value: node.value,
         lang: node.lang ?? undefined,
-        // El cuerpo del fence se localiza igual que los demas, pero cuando el
-        // valor esta vacio no hay nada que senalar y se usa el nodo entero.
+        // The fence body is located like every other value, but when the
+        // value is empty there is nothing to point at and the whole node is
+        // used instead.
         offset: offsetOfValue(content, start, end, node.value) ?? [start, end],
       })
       return
@@ -95,12 +96,12 @@ export function parseMarkdown(content: string): ParsedDoc {
       links.push({ value: node.url, label, offset })
 
       /**
-       * Un `inlineCode` que es la etiqueta de un link describe el **destino**
-       * del link. Si el destino es externo, la ruta no es de este repo.
+       * An `inlineCode` that is a link's label describes the link's
+       * **target**. If the target is external, the path is not from this repo.
        *
-       * Caso real (prisma/prisma):
+       * Real case (prisma/prisma):
        * `` [`docs/drive/`](https://github.com/prisma/ignite/tree/main/docs/drive) ``
-       * afirma que `docs/drive/` existe en *prisma/ignite*, no aca.
+       * claims that `docs/drive/` exists in *prisma/ignite*, not here.
        */
       if (isExternal(node.url)) {
         for (const child of node.children) {

@@ -3,7 +3,7 @@ import type { Finding } from '../../src/core/types.ts'
 import { run } from '../../src/run.ts'
 import { makeTempRepo } from './temp-repo.ts'
 
-/** La proyeccion de un finding que un fixture puede afirmar sin fragilidad. */
+/** The projection of a finding a fixture can assert on without being brittle. */
 export type ExpectedFinding = {
   check: string
   severity: 'error' | 'warning'
@@ -16,12 +16,12 @@ export type ExpectedFinding = {
 }
 
 /**
- * Un escenario: un mini-repo completo mas los findings que debe producir.
+ * A scenario: a whole mini-repo plus the findings it must produce.
  *
- * Los archivos se declaran como datos y se materializan en un directorio
- * temporal en vez de vivir commiteados como `CLAUDE.md` de verdad. Si vivieran
- * en el arbol, driftwatch corrido sobre su propio repo los auditaria y
- * reportaria las rutas que estan rotas a proposito.
+ * The files are declared as data and materialized in a temporary directory
+ * instead of living committed as real `CLAUDE.md` files. If they lived in the
+ * tree, driftwatch run against its own repo would audit them and report the
+ * paths that are broken on purpose.
  */
 export type Fixture = {
   name: string

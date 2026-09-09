@@ -1,55 +1,56 @@
 /**
- * Las reglas de descarte del extractor de rutas, en el orden de
- * ARCHITECTURE.md § "Extracción de rutas".
+ * The discard rules of the path extractor, in the order given by
+ * ARCHITECTURE.md § "Path extraction".
  *
- * Este modulo es donde se concentra el riesgo del proyecto entero: un falso
- * positivo cuesta mas que diez falsos negativos, asi que ante la duda se
- * descarta. Cada regla lleva escrito el falso positivo concreto que evita, y
- * cada una tiene su caso en el fixture `false-positive-traps`.
+ * This module is where the risk of the whole project concentrates: one false
+ * positive costs more than ten false negatives, so when in doubt we discard.
+ * Every rule has the concrete false positive it prevents written down, and
+ * every one has its case in the `false-positive-traps` fixture.
  */
 
-/** Por que se descarto un texto. Los tests fijan cada regla por su razon. */
+/** Why a text was discarded. The tests pin each rule by its reason. */
 export type DiscardReason =
   | 'url'
-  | 'tiene-espacios'
-  | 'glob-o-placeholder'
-  | 'palabra-suelta'
-  | 'no-es-un-archivo'
-  | 'directorio-suelto'
-  | 'metasintactico'
-  | 'sin-forma-de-ruta'
+  | 'has-spaces'
+  | 'glob-or-placeholder'
+  | 'bare-word'
+  | 'not-a-file'
+  | 'bare-directory'
+  | 'metasyntactic'
+  | 'not-path-shaped'
 
 /**
- * Regla 1. Un texto con protocolo apunta afuera del repo.
- * Evita: `https://ejemplo.com/docs/guia.md` reportado como archivo faltante.
+ * Rule 1. A text with a protocol points outside the repo.
+ * Prevents: `https://example.com/docs/guide.md` reported as a missing file.
  */
 function isUrl(text: string): boolean {
   return /^[a-z][a-z0-9+.-]*:\/\//iu.test(text) || text.startsWith('//')
 }
 
 /**
- * Regla 2. Un glob o un placeholder no nombra un archivo, nombra una familia o
- * un hueco que quien lee tiene que rellenar.
- * Evita: `src/**\/*.test.ts`, `.scratch/<feature>/issues/`, `{{ruta}}/x.ts`,
- * `$HOME/.config/app.json`, `packages/[nombre]/src`.
+ * Rule 2. A glob or a placeholder does not name a file, it names a family or a
+ * hole the reader is expected to fill in.
+ * Prevents: `src/**\/*.test.ts`, `.scratch/<feature>/issues/`, `{{path}}/x.ts`,
+ * `$HOME/.config/app.json`, `packages/[name]/src`.
  */
-const GLOB_O_PLACEHOLDER = /[*?{}<>$[\]]/u
+const GLOB_OR_PLACEHOLDER = /[*?{}<>$[\]]/u
 
 /**
- * Regla 3. Una palabra sola no es una afirmacion sobre una ruta del repo, ni
- * siquiera con extension conocida (ADR-0003).
- * Evita: `index.ts`, `tsconfig.json`, `pnpm`, `build` reportados contra la raiz.
+ * Rule 3. A single word is not a claim about a path in the repo, not even with
+ * a known extension (ADR-0003).
+ * Prevents: `index.ts`, `tsconfig.json`, `pnpm`, `build` reported against the
+ * root.
  */
-function isPalabraSuelta(text: string): boolean {
+function isBareWord(text: string): boolean {
   return !text.includes('/')
 }
 
 /**
- * Regla 4. Cosas con punto que parecen archivo y no lo son.
- * Evita: `node.js`, `next.js`, `vue.js` (nombres de tecnologia), `1.0`, `v2.1`
- * (versiones), y `d.ts` suelto (una extension, no un archivo).
+ * Rule 4. Things with a dot that look like a file and are not.
+ * Prevents: `node.js`, `next.js`, `vue.js` (technology names), `1.0`, `v2.1`
+ * (versions), and a bare `d.ts` (an extension, not a file).
  */
-const NO_SON_ARCHIVOS = new Set([
+const NOT_FILES = new Set([
   'node.js',
   'nodejs',
   'next.js',
@@ -64,42 +65,46 @@ const NO_SON_ARCHIVOS = new Set([
 const VERSION = /^v?\d+(\.\d+)+$/u
 
 /**
- * Nombres que en escritura tecnica son huecos, no cosas.
- * Evita: `foo/index.ts` en sst/opencode, donde el documento dice "if the module
- * is `foo/index.ts`" para explicar una convencion de reexport. `foo` no es un
- * directorio del repo, es la letra x de un enunciado.
+ * Names that in technical writing are holes, not things.
+ * Prevents: `foo/index.ts` in sst/opencode, where the document says "if the
+ * module is `foo/index.ts`" to explain a re-export convention. `foo` is not a
+ * directory in the repo, it is the x of a statement.
+ *
+ * The list keeps the Spanish fillers too: this runs against documents written
+ * in any language, and `fulano/` is as much of a hole as `foo/`.
  */
-const METASINTACTICOS = new Set(['foo', 'bar', 'baz', 'qux', 'quux', 'fulano', 'ejemplo'])
+const METASYNTACTIC = new Set(['foo', 'bar', 'baz', 'qux', 'quux', 'fulano', 'ejemplo'])
 
 /**
- * La otra convencion de placeholder: una letra repetida en mayusculas, que se
- * lee como "poné el numero acá".
- * Evita: `../NNNN/results.md` en colinhacks/zod, donde `NNNN` es el numero de
- * issue. Tambien `XXXX`, `YYYY`, `NN`, `ID`.
+ * The other placeholder convention: a repeated uppercase letter, which reads as
+ * "put the number here".
+ * Prevents: `../NNNN/results.md` in colinhacks/zod, where `NNNN` is the issue
+ * number. Also `XXXX`, `YYYY`, `NN`, `ID`.
  */
-const PLACEHOLDER_MAYUSCULAS = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
+const PLACEHOLDER_UPPERCASE = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
 
 /**
- * Nombres de relleno con prefijo posesivo, que le piden al lector que ponga el
- * suyo.
- * Evita: `perf/memory/src/profile/your_profile.rs` en tursodatabase/turso, que
- * el documento pide crear.
+ * Filler names with a possessive prefix, which ask the reader to put in their
+ * own.
+ * Prevents: `perf/memory/src/profile/your_profile.rs` in tursodatabase/turso,
+ * which the document asks you to create.
  */
-const PLACEHOLDER_POSESIVO = /^(your|my|tu|mi|su|myapp|mycompany)[-_]/iu
+const PLACEHOLDER_POSSESSIVE = /^(your|my|tu|mi|su|myapp|mycompany)[-_]/iu
 
 /**
- * Placeholders en CamelCase con relleno, la otra forma de "poné el tuyo acá".
+ * CamelCase placeholders with filler, the other form of "put yours here".
  *
- * Caso real (browser-use/browser-use): "any tests specific to an event live in
- * its `tests/ci/test_action_EventNameHere.py` file". `EventNameHere` es un
- * hueco, no un archivo.
+ * Real case (browser-use/browser-use): "any tests specific to an event live in
+ * its `tests/ci/test_action_EventNameHere.py` file". `EventNameHere` is a hole,
+ * not a file.
  *
- * Las tres formas se eligieron angostas a proposito:
+ * The three forms were deliberately kept narrow:
  *
- * - `...Here` con `H` mayuscula precedida de minuscula. Exige la mayuscula para
- *   no tocar palabras reales que terminan en "here" (`sphere`, `elsewhere`).
- * - `Your...` o `My...` seguidos de otra mayuscula: `YourClassName`.
- * - `XXX` o `Xxx`, que es la convencion clasica de hueco.
+ * - `...Here` with an uppercase `H` preceded by a lowercase letter. The
+ *   uppercase is required so real words ending in "here" (`sphere`,
+ *   `elsewhere`) are left alone.
+ * - `Your...` or `My...` followed by another uppercase letter: `YourClassName`.
+ * - `XXX` or `Xxx`, the classic hole convention.
  */
 const PLACEHOLDER_CAMEL = [
   /[a-z]Here(?![a-z])/u,
@@ -107,30 +112,30 @@ const PLACEHOLDER_CAMEL = [
   /(?:XXX|Xxx)(?![a-z])/u,
 ]
 
-function tieneSegmentoMetasintactico(text: string): boolean {
+function hasMetasyntacticSegment(text: string): boolean {
   return text
     .split('/')
     .some(
       (segment) =>
-        METASINTACTICOS.has(segment.toLowerCase()) ||
-        PLACEHOLDER_MAYUSCULAS.test(segment) ||
-        PLACEHOLDER_POSESIVO.test(segment) ||
+        METASYNTACTIC.has(segment.toLowerCase()) ||
+        PLACEHOLDER_UPPERCASE.test(segment) ||
+        PLACEHOLDER_POSSESSIVE.test(segment) ||
         PLACEHOLDER_CAMEL.some((pattern) => pattern.test(segment)),
     )
 }
 
-function noEsUnArchivo(text: string): boolean {
+function isNotAFile(text: string): boolean {
   const last = text.slice(text.lastIndexOf('/') + 1).toLowerCase()
-  return NO_SON_ARCHIVOS.has(last) || VERSION.test(last) || NO_SON_ARCHIVOS.has(text.toLowerCase())
+  return NOT_FILES.has(last) || VERSION.test(last) || NOT_FILES.has(text.toLowerCase())
 }
 
 /**
- * Regla 5. Normaliza lo que sobrevivio a las reglas anteriores.
+ * Rule 5. Normalizes whatever survived the previous rules.
  *
- * Cada recorte tiene su motivo: `./` inicial es ruido de escritura; un sufijo
- * `:12` o `:12:3` es una referencia a una linea, no parte del nombre; los
- * backticks residuales aparecen cuando alguien anida comillas; y la puntuacion
- * final es de la oracion, no de la ruta.
+ * Every trim has its reason: a leading `./` is writing noise; a `:12` or
+ * `:12:3` suffix is a line reference, not part of the name; leftover backticks
+ * show up when someone nests quotes; and trailing punctuation belongs to the
+ * sentence, not to the path.
  */
 export function normalizePathText(text: string): string {
   let out = text.trim()
@@ -142,53 +147,52 @@ export function normalizePathText(text: string): string {
 }
 
 /**
- * Regla 6. Un fragmento con espacios dentro de codigo inline es, casi siempre,
- * un comando entero y no una ruta.
- * Evita: `node scripts/sync.mjs`, `pnpm test test/e2e/app/x.test.ts`,
- * `prisma/ignite docs/drive/`, que un extractor ingenuo lee como una sola ruta
- * porque terminan con una extension conocida.
+ * Rule 6. A fragment with spaces inside inline code is, almost always, a whole
+ * command and not a path.
+ * Prevents: `node scripts/sync.mjs`, `pnpm test test/e2e/app/x.test.ts`,
+ * `prisma/ignite docs/drive/`, which a naive extractor reads as a single path
+ * because they end in a known extension.
  *
- * El costo es no verificar una ruta que de verdad tiene un espacio en el
- * nombre. Por eso la regla **no** aplica a los destinos de link, donde el texto
- * es una URL por construccion y no puede ser un comando.
+ * The cost is not verifying a path that really does have a space in its name.
+ * That is why the rule does **not** apply to link targets, where the text is a
+ * URL by construction and cannot be a command.
  */
-function tieneEspacios(text: string): boolean {
+function hasSpaces(text: string): boolean {
   return /\s/u.test(text.trim())
 }
 
 /**
- * Regla 7. Un directorio de un solo segmento no fija una ubicacion.
- * Evita: `feat/` y `fix/` (prefijos de rama), `embeddings/` y `security/`
- * (categorias de test), `ppr/` (un modo), `partners/` (un paquete que vive mas
- * profundo). Es la extension natural de ADR-0003 a los directorios; ver
+ * Rule 7. A single-segment directory does not pin down a location.
+ * Prevents: `feat/` and `fix/` (branch prefixes), `embeddings/` and
+ * `security/` (test categories), `ppr/` (a mode), `partners/` (a package that
+ * lives deeper). It is the natural extension of ADR-0003 to directories; see
  * ADR-0004.
  */
-function esDirectorioSuelto(text: string): boolean {
+function isBareDirectory(text: string): boolean {
   if (!text.endsWith('/')) return false
   return !text.slice(0, -1).includes('/')
 }
 
 export type DiscardOptions = {
-  /** Si el texto puede ser un comando. Falso para destinos de link. */
+  /** Whether the text could be a command. False for link targets. */
   couldBeCommand: boolean
 }
 
 /**
- * Las reglas de descarte sobre el texto crudo. La normalizacion viene despues,
- * para que un recorte no pueda convertir en ruta algo que ya se habia
- * descartado.
+ * The discard rules applied to the raw text. Normalization comes afterwards, so
+ * that a trim cannot turn something already discarded into a path.
  */
 export function discardReason(
   text: string,
   options: DiscardOptions = { couldBeCommand: true },
 ): DiscardReason | undefined {
-  if (text.length === 0) return 'sin-forma-de-ruta'
+  if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text)) return 'url'
-  if (options.couldBeCommand && tieneEspacios(text)) return 'tiene-espacios'
-  if (GLOB_O_PLACEHOLDER.test(text)) return 'glob-o-placeholder'
-  if (isPalabraSuelta(text)) return 'palabra-suelta'
-  if (noEsUnArchivo(text)) return 'no-es-un-archivo'
-  if (esDirectorioSuelto(text)) return 'directorio-suelto'
-  if (tieneSegmentoMetasintactico(text)) return 'metasintactico'
+  if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
+  if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'
+  if (isBareWord(text)) return 'bare-word'
+  if (isNotAFile(text)) return 'not-a-file'
+  if (isBareDirectory(text)) return 'bare-directory'
+  if (hasMetasyntacticSegment(text)) return 'metasyntactic'
   return undefined
 }

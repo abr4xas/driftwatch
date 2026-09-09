@@ -1,18 +1,18 @@
-# driftwatch — especificación
+# driftwatch — specification
 
-Encuentra las partes de tu `CLAUDE.md`, `AGENTS.md` y skills que ya no son ciertas.
+Find the parts of your `CLAUDE.md`, `AGENTS.md` and skills that are no longer true.
 
-> `knip` encuentra código muerto. driftwatch encuentra **contexto muerto**.
+> `knip` finds dead code. driftwatch finds **dead context**.
 
-Este directorio es la **especificación de referencia** del proyecto. Es la fuente primaria: cuando el código y estos documentos discrepan, primero se decide cuál está mal, no se ajusta el documento por reflejo.
+This directory is the project's **reference specification**. It is primary source: when the code and these documents disagree, the first step is deciding which one is wrong, not adjusting the document reflexively.
 
-## Lectura
+## Reading order
 
-| Documento | Contenido |
+| Document | Contents |
 |---|---|
-| [BRIEF.md](./BRIEF.md) | El problema, por qué duele, qué cuenta como éxito, no-objetivos |
-| [SPEC.md](./SPEC.md) | Checks, CLI, formatos de salida, config, autofix, presupuesto de perf |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Pipeline, modelo de datos, stack, estrategia de testing |
-| [ROADMAP.md](./ROADMAP.md) | Milestones M0–M6 con criterios de aceptación |
+| [BRIEF.md](./BRIEF.md) | The problem, why it hurts, what counts as success, non-goals |
+| [SPEC.md](./SPEC.md) | Checks, CLI, output formats, config, autofix, perf budget |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Pipeline, data model, stack, testing strategy |
+| [ROADMAP.md](./ROADMAP.md) | Milestones M0–M6 with acceptance criteria |
 
-El handoff para el agente que construye vive en la raíz del repo: [AGENTS.md](../../AGENTS.md).
+The handoff for the agent doing the building lives at the repo root: [AGENTS.md](../../AGENTS.md).

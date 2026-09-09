@@ -1,13 +1,13 @@
 # browser-use/browser-use
 
-fuentes: 2
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 2
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-(ninguno)
+(none)

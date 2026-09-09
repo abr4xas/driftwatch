@@ -1,113 +1,113 @@
 # driftwatch — Roadmap
 
-Cada milestone tiene criterios de aceptación verificables. No se avanza al siguiente sin cerrarlos.
+Every milestone has verifiable acceptance criteria. We do not move to the next one without closing them.
 
 ---
 
-## M0 — Esqueleto ejecutable
-**Objetivo:** `npx driftwatch` corre y no hace nada útil, pero corre.
+## M0 — Executable skeleton
+**Goal:** `npx driftwatch` runs and does nothing useful, but it runs.
 
-- Repo TS/ESM, build con tsdown, `bin` apuntando al CLI compilado
+- TS/ESM repo, build with tsdown, `bin` pointing at the compiled CLI
 - `--help`, `--version`, exit codes 0/1/2
-- Descubrimiento de fuentes (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`) respetando `.gitignore`
-- Reporter `pretty` con el resumen final
-- CI: lint + typecheck + test en Node 24 y 25 (ver ADR-0002)
+- Source discovery (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`) respecting `.gitignore`
+- `pretty` reporter with the closing summary
+- CI: lint + typecheck + test on Node 24 and 25 (see ADR-0002)
 
-**Aceptación:** en este mismo repo, `driftwatch` lista las fuentes encontradas y sale con 0 en menos de 300 ms.
-
----
-
-## M1 — El check que justifica el proyecto
-**Objetivo:** `path/missing` funcionando con precisión real.
-
-- Parseo mdast con posiciones
-- Extractor de rutas con las 7 reglas de descarte de `ARCHITECTURE.md`
-- `RepoIndex` construido con `git ls-files`, fallback a glob
-- Sugerencias por basename con scoring de confianza
-- Fixture `false-positive-traps` en verde con **cero findings**
-
-**Aceptación:** ver [ADR-0006](../adr/0006-el-criterio-de-precision-de-m1.md), que reemplaza el criterio original de "< 5% de falsos positivos". Ese criterio se midió y resultó no ser medible: una herramienta precisa produce pocos findings, y con 9 findings un solo falso positivo ya es 11%.
-
-El criterio vigente tiene cuatro partes, y las cuatro se cumplen o M1 no cierra:
-
-- **Piso duro:** fixture `false-positive-traps` en cero, y **cero falsos positivos entre los findings `fixable`**. Un autofix equivocado no es ruido, es corrupción del documento.
-- **Forma de una corrida:** mediana de falsos positivos por repo 0, percentil 90 ≤ 1, ninguno > 2.
-- **Utilidad:** precisión agregada ≥ 80% fuera de muestra, y ≥ 1 verdadero positivo en el grupo de validación, para que el silencio no alcance para pasar.
-- **Metodología:** corpus de ≥20 repos con ≥8 en un grupo de validación que no se inspeccionó. Clasificar sus findings es la medición; abrir el repo a ver qué descartó lo contamina.
-
-Si no se cumple, no se avanza — se ajustan las heurísticas, o se acepta que el check no llega y se dice.
-
-**Certificado el 2026-09-09**: nueve de nueve condiciones, sobre un corpus de 34 repos con 8 de validación. El registro, la clasificación de cada finding y la salvedad sobre el tamaño de muestra están en `test/corpus/CLASIFICACION.md`. La salvedad importa: la condición 6 pasó con 3 findings de una sola causa raíz, así que hay que reconfirmarla cuando M2 sume checks y el grupo de validación acumule más masa.
-
-Este es el milestone que decide si el proyecto vale la pena. Todo lo demás es incremental.
+**Acceptance:** on this very repo, `driftwatch` lists the sources it found and exits 0 in under 300 ms.
 
 ---
 
-## M2 — Los otros checks de tier 1
-- `script/missing` con resolución de `package.json` más cercano (monorepo)
-- `skill/frontmatter` completo
-- `link/broken` incluyendo anclas
+## M1 — The check that justifies the project
+**Goal:** `path/missing` working with real precision.
+
+- mdast parsing with positions
+- Path extractor with the 7 discard rules from `ARCHITECTURE.md`
+- `RepoIndex` built with `git ls-files`, falling back to glob
+- Basename suggestions with confidence scoring
+- `false-positive-traps` fixture green with **zero findings**
+
+**Acceptance:** see [ADR-0006](../adr/0006-the-m1-precision-criterion.md), which replaces the original "< 5% false positives" criterion. That criterion was measured and turned out not to be measurable: a precise tool produces few findings, and with 9 findings a single false positive is already 11%.
+
+The current criterion has four parts, and all four hold or M1 does not close:
+
+- **Hard floor:** the `false-positive-traps` fixture at zero, and **zero false positives among the `fixable` findings**. A wrong autofix is not noise, it is corruption of the document.
+- **Shape of a run:** median false positives per repo 0, 90th percentile ≤ 1, none above 2.
+- **Usefulness:** aggregate precision ≥ 80% out of sample, and ≥ 1 true positive in the validation group, so that silence is not enough to pass.
+- **Methodology:** a corpus of ≥20 repos with ≥8 in a validation group that was not inspected. Classifying its findings is the measurement; opening the repo to see what it discarded contaminates it.
+
+If it does not hold, we do not advance — we tune the heuristics, or we accept that the check does not get there and say so.
+
+**Certified on 2026-09-09**: nine of nine conditions, over a corpus of 34 repos with 8 in validation. The record, the classification of every finding and the caveat about sample size are in `test/corpus/CLASSIFICATION.md`. The caveat matters: condition 6 passed with 3 findings from a single root cause, so it has to be reconfirmed once M2 adds checks and the validation group accumulates more mass.
+
+This is the milestone that decides whether the project is worth it. Everything else is incremental.
+
+---
+
+## M2 — The other tier 1 checks
+- `script/missing` resolving the nearest `package.json` (monorepo)
+- `skill/frontmatter` complete
+- `link/broken` including anchors
 - `frontmatter/invalid`
-- Directivas de ignore en línea
+- Inline ignore directives
 - Config file + `--only` / `--skip` / `--no-tier2`
 
-**Aceptación:** el fixture `monorepo` pasa. Los cuatro checks tienen fixture propio con casos positivos y negativos.
+**Acceptance:** the `monorepo` fixture passes. All four checks have their own fixture with positive and negative cases.
 
 ---
 
 ## M3 — Autofix
-- `fix/apply.ts` con edición por rangos de offset, preservando formato
-- `--fix`, `--fix --dry-run` con diff
-- Solo aplica sobre confianza > 0.8 y candidato único
+- `fix/apply.ts` editing by offset ranges, preserving formatting
+- `--fix`, `--fix --dry-run` with a diff
+- Only applies on confidence > 0.8 and a single candidate
 
-**Aceptación:** aplicar `--fix` sobre un fixture roto lo deja idéntico a su versión correcta, byte a byte. Correr `--fix` dos veces es idempotente.
+**Acceptance:** applying `--fix` to a broken fixture leaves it byte-for-byte identical to its correct version. Running `--fix` twice is idempotent.
 
 ---
 
 ## M4 — Presentable
-Lo que convierte una herramienta que funciona en un proyecto que alguien adopta.
+What turns a tool that works into a project someone adopts.
 
-- README con GIF de ≤15 s arriba de todo, antes de cualquier texto
-- Formatos `--json`, `--github`, `--sarif`
-- GitHub Action publicada (`driftwatch/action@v1`)
-- Sitio estático de una página en Vercel con demo y el GIF
-- Publicado en npm con provenance (`npm publish --provenance`)
-- Licencia MIT
+- README with a ≤15 s GIF at the very top, before any text
+- `--json`, `--github`, `--sarif` formats
+- Published GitHub Action (`driftwatch/action@v1`)
+- One-page static site with the demo and the GIF
+- Published to npm with provenance (`npm publish --provenance`)
+- MIT license
 
-**Aceptación:** una persona que nunca vio el proyecto entiende qué hace en menos de 15 segundos mirando solo el README.
+**Acceptance:** someone who has never seen the project understands what it does in under 15 seconds, looking only at the README.
 
 ---
 
 ## M5 — Tier 2
-- `dep/missing` con diccionario curado
+- `dep/missing` with a curated dictionary
 - `symbol/missing`
-- `stale/churn` con git
+- `stale/churn` using git
 - `command/unknown`
 
-**Aceptación:** cada uno se puede apagar por config, y ninguno sube la tasa de falsos positivos del corpus por encima del 10% agregado.
+**Acceptance:** each one can be turned off by config, and none of them pushes the corpus false positive rate above 10% aggregate.
 
 ---
 
-## M6 — Loop diario
+## M6 — Daily loop
 - `--watch`
-- Extensión de VS Code que subraya el drift en vivo en `CLAUDE.md`
-- Hook de pre-commit opcional (`driftwatch --only path,script --strict`)
+- VS Code extension underlining drift live in `CLAUDE.md`
+- Optional pre-commit hook (`driftwatch --only path,script --strict`)
 
 ---
 
-## Fuera de alcance (decidido, no pendiente)
+## Out of scope (decided, not pending)
 
-- Modo LLM para verificar afirmaciones de prosa. Rompe el determinismo y el presupuesto de latencia. Si se explora alguna vez, es un comando aparte (`driftwatch review`), nunca el default.
-- Sistema de plugins de terceros.
-- Servicio hosted, dashboard, o cualquier cosa con cuenta.
-- Soporte para formatos de contexto de agente que no existan todavía.
+- LLM mode for verifying prose claims. It breaks determinism and the latency budget. If it is ever explored, it is a separate command (`driftwatch review`), never the default.
+- Third-party plugin system.
+- Hosted service, dashboard, or anything with an account.
+- Support for agent context formats that do not exist yet.
 
 ---
 
-## Orden de publicación sugerido
+## Suggested release order
 
-No esperar a M6 para mostrar el proyecto. La cadencia visible es parte de lo que hace que alguien confíe en la herramienta.
+Do not wait for M6 to show the project. Visible cadence is part of what makes someone trust the tool.
 
-1. Publicar en npm al cerrar **M2** — ya es útil.
-2. Post de lanzamiento con el GIF al cerrar **M4**.
-3. Sostener commits durante meses, no un sprint de una semana.
+1. Publish to npm when **M2** closes — it is already useful.
+2. Launch post with the GIF when **M4** closes.
+3. Sustain commits over months, not a one-week sprint.

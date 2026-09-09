@@ -1,11 +1,11 @@
 # calcom/cal.com
 
-fuentes: 5
-errores: 1
-avisos: 0
-corregibles: 0
+sources: 5
+errors: 1
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  .opencode/skill/vercel-react-best-practices/AGENTS.md
 agents-md  AGENTS.md
 agents-md  agents/skills/vercel-react-best-practices/AGENTS.md

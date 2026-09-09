@@ -1,11 +1,11 @@
 # cloudflare/workers-sdk
 
-fuentes: 10
-errores: 1
-avisos: 0
-corregibles: 0
+sources: 10
+errors: 1
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 agents-md  packages/auto-triage-bot/AGENTS.md

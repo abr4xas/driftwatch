@@ -1,34 +1,34 @@
 import { parse as parseYaml } from 'yaml'
 
-/** Un valor de cadena del frontmatter, con su posicion en el archivo. */
+/** A string value from the frontmatter, with its position in the file. */
 export type FrontmatterValue = {
-  /** La clave, con notacion de punto para valores anidados: `meta.ruta`. */
+  /** The key, in dot notation for nested values: `meta.path`. */
   key: string
   value: string
   offset: [number, number]
 }
 
 export type Frontmatter = {
-  /** El cuerpo YAML, sin los delimitadores. */
+  /** The YAML body, without the delimiters. */
   raw: string
-  /** Offsets del cuerpo YAML en el contenido del archivo. */
+  /** Offsets of the YAML body within the file's content. */
   offset: [number, number]
   data: unknown
-  /** El mensaje de error si el YAML no parsea. */
+  /** The error message if the YAML does not parse. */
   error: string | undefined
-  /** Solo los valores de cadena, que son los unicos que pueden ser rutas. */
+  /** String values only, which are the only ones that can be paths. */
   values: readonly FrontmatterValue[]
 }
 
 /**
- * El bloque inicial delimitado por `---`. Se recorta a mano en vez de sumar
- * `remark-frontmatter`: son tres lineas de regex contra una dependencia mas en
- * el camino principal. El YAML de adentro si va a un parser de verdad, nunca a
- * una regex (ARCHITECTURE.md § Stack).
+ * The leading block delimited by `---`. It is sliced by hand instead of adding
+ * `remark-frontmatter`: three lines of regex against one more dependency on the
+ * main path. The YAML inside does go to a real parser, never to a regex
+ * (ARCHITECTURE.md § Stack).
  */
 const BLOCK = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(\r?\n|$)/u
 
-/** Recolecta los valores de cadena, con la clave en notacion de punto. */
+/** Collects the string values, with the key in dot notation. */
 function collectStrings(node: unknown, prefix: string, into: Array<[string, string]>): void {
   if (typeof node === 'string') {
     into.push([prefix, node])
@@ -64,9 +64,10 @@ export function parseFrontmatter(content: string): Frontmatter | undefined {
   const pairs: Array<[string, string]> = []
   if (error === undefined) collectStrings(data, '', pairs)
 
-  // La posicion se busca por texto dentro del bloque. El parser de YAML expone
-  // un CST con posiciones exactas, pero usarlo obligaria a reimplementar el
-  // recorrido: para senalar una ruta, la primera aparicion del valor alcanza.
+  // The position is found by text search inside the block. The YAML parser
+  // exposes a CST with exact positions, but using it would mean
+  // reimplementing the traversal: to point at a path, the value's first
+  // occurrence is enough.
   const values: FrontmatterValue[] = []
   let cursor = 0
   for (const [key, value] of pairs) {

@@ -1,83 +1,84 @@
-# Instrucciones para el agente que trabaje en driftwatch
+# Instructions for the agent working on driftwatch
 
-La especificación de referencia vive en `docs/spec/`. El código vive en `src/`.
+The reference specification lives in `docs/spec/`. The code lives in `src/`.
 
-## Antes de escribir código
+## Before writing code
 
-Leé los cuatro documentos en este orden: `docs/spec/BRIEF.md` (por qué), `docs/spec/SPEC.md` (qué), `docs/spec/ARCHITECTURE.md` (cómo), `docs/spec/ROADMAP.md` (en qué orden). El resto de este archivo asume que ya los leíste.
+Read the four documents in this order: `docs/spec/BRIEF.md` (why), `docs/spec/SPEC.md` (what), `docs/spec/ARCHITECTURE.md` (how), `docs/spec/ROADMAP.md` (in what order). The rest of this file assumes you have read them.
 
-`docs/spec/` es fuente primaria. Si el código y la spec discrepan, decidí cuál está mal antes de tocar nada; no ajustes el documento por reflejo para que cierre.
+`docs/spec/` is primary source. If the code and the spec disagree, decide which one is wrong before touching anything; do not adjust the document reflexively to make it fit.
 
-## La regla que ordena todas las decisiones
+## The rule that orders every decision
 
-**Un falso positivo cuesta más que diez falsos negativos.**
+**One false positive costs more than ten false negatives.**
 
-Cuando estés indeciso entre reportar algo dudoso o dejarlo pasar, dejalo pasar. Una herramienta que reporta 6 problemas reales se usa todos los días; una que reporta 20 con 8 dudosos se desinstala en el primer uso y no vuelve.
+When you are torn between reporting something doubtful and letting it through, let it through. A tool that reports 6 real problems gets used every day; one that reports 20 with 8 doubtful ones gets uninstalled on first use and never comes back.
 
-Esto aplica especialmente al extractor de rutas (`docs/spec/ARCHITECTURE.md` § "Extracción de rutas"), que es donde se concentra el riesgo.
+This applies especially to the path extractor (`docs/spec/ARCHITECTURE.md` § "Path extraction"), which is where the risk concentrates.
 
-## Orden de trabajo
+## Order of work
 
-Seguí los milestones de `docs/spec/ROADMAP.md` en orden. **M1 es la puerta:** si no se cumple el criterio de precisión de `docs/adr/0006-el-criterio-de-precision-de-m1.md`, no avances a M2 — volvé a las heurísticas. Es preferible un proyecto con un solo check excelente que uno con ocho checks ruidosos.
+Follow the milestones in `docs/spec/ROADMAP.md` in order. **M1 is the gate:** if the precision criterion in `docs/adr/0006-the-m1-precision-criterion.md` is not met, do not move on to M2 — go back to the heuristics. A project with a single excellent check beats one with eight noisy ones.
 
-Dos cosas de ese criterio que ordenan el trabajo diario:
+Two things from that criterion that shape the daily work:
 
-- **Cero falsos positivos autofixables**, sin tasa que lo module. Un finding dudoso que alguien lee y descarta es una molestia; un `--fix` que reescribe el documento apuntando a un archivo equivocado hace que el próximo agente actúe sobre una mentira con confianza.
-- **La precisión se mide fuera de muestra.** Ajustar heurísticas mirando un corpus y después medir sobre ese mismo corpus no mide precisión, mide cuánto ajustaste. `scripts/corpus.ts` separa calibración de validación; si usás los findings de un repo de validación para cambiar una regla, ese repo pasa a calibración y hay que sumar otro.
+- **Zero autofixable false positives**, with no rate modulating it. A doubtful finding someone reads and dismisses is an annoyance; a `--fix` that rewrites the document to point at the wrong file makes the next agent act on a lie with confidence.
+- **Precision is measured out of sample.** Tuning heuristics while looking at a corpus and then measuring against that same corpus does not measure precision, it measures how much you tuned. `scripts/corpus.ts` separates calibration from validation; if you use a validation repo's findings to change a rule, that repo moves to calibration and another one has to be added.
 
-Los tickets de trabajo viven en `.scratch/<feature>/issues/`. Ver `docs/agents/issue-tracker.md`.
+Work tickets live in `.scratch/<feature>/issues/`. See `docs/agents/issue-tracker.md`.
 
-## Convenciones de código
+## Code conventions
 
-- TypeScript estricto (`strict: true`, `noUncheckedIndexedAccess: true`). Sin `any`, sin `as` salvo en fronteras de parseo con validación adyacente.
-- ESM puro. Imports de builtins con prefijo `node:`.
-- Sin clases salvo que haya estado real que encapsular. `RepoIndex` es una struct con funciones, no una clase.
-- Errores del usuario (config inválido, ruta inexistente) se manejan con mensaje claro y exit 2. Nunca un stack trace crudo.
-- Comentarios solo donde el *por qué* no es obvio. Las heurísticas del extractor de rutas sí los necesitan: cada regla de descarte lleva una línea explicando qué falso positivo evita.
-- Sin emojis en el código ni en la salida del CLI.
+- Strict TypeScript (`strict: true`, `noUncheckedIndexedAccess: true`). No `any`, no `as` except at parsing boundaries with adjacent validation.
+- Pure ESM. Builtin imports with the `node:` prefix.
+- No classes unless there is real state to encapsulate. `RepoIndex` is a struct with functions, not a class.
+- User errors (invalid config, nonexistent path) are handled with a clear message and exit 2. Never a raw stack trace.
+- Comments only where the *why* is not obvious. The path extractor heuristics do need them: every discard rule carries a line explaining which false positive it prevents.
+- No emojis in the code or in the CLI output.
+- Code, comments and documentation are written in English. That includes the CLI output: the tool ships to the ecosystem.
 
-## Dependencias
+## Dependencies
 
-El presupuesto de arranque en frío (< 80 ms) es parte del producto, no un nice-to-have. Antes de agregar una dependencia al camino principal, verificá que no la puedas resolver con `node:` builtins en menos de 40 líneas. `jiti` y cualquier cosa relacionada con config `.ts` va cargada de forma lazy, solo si existe un archivo de config.
+The cold-start budget (< 80 ms) is part of the product, not a nice-to-have. Before adding a dependency to the main path, check that you cannot solve it with `node:` builtins in under 40 lines. `jiti` and anything related to `.ts` config is loaded lazily, only if a config file exists.
 
-## Verificación
+## Verification
 
-No des un milestone por cerrado sin correr:
+Do not call a milestone closed without running:
 
 ```
 pnpm typecheck && pnpm test && pnpm build && node ./dist/cli.js --help
 ```
 
-Además, **corré la herramienta sobre sí misma y sobre repos reales**. Este repo tiene su propio `AGENTS.md` y `docs/`, así que es el primer sujeto de prueba. Un fixture verde no prueba nada sobre falsos positivos; el corpus de `scripts/corpus.ts` sí. Si un snapshot del corpus cambia, revisá el diff a mano antes de aceptarlo — ese diff es la única señal real de regresión de precisión.
+Also, **run the tool against itself and against real repos**. This repo has its own `AGENTS.md` and `docs/`, so it is the first test subject. A green fixture proves nothing about false positives; the corpus in `scripts/corpus.ts` does. If a corpus snapshot changes, review the diff by hand before accepting it — that diff is the only real precision-regression signal.
 
-Reportá los resultados tal cual salen. Si un check queda a medias o el corpus muestra ruido, decilo explícitamente en vez de cerrarlo como hecho.
+Report results exactly as they come out. If a check is half-done or the corpus shows noise, say so explicitly instead of closing it as done.
 
-## Decisiones que podés tomar solo
+## Decisions you can make on your own
 
-Nombres de archivos y funciones, estructura interna de módulos, elección entre `tinyglobby` y `fast-glob`, formato exacto de los mensajes de error, cómo organizar los fixtures.
+File and function names, the internal structure of modules, choosing between `tinyglobby` and `fast-glob`, the exact wording of error messages, how to organize the fixtures.
 
-## Decisiones que requieren consultar al usuario
+## Decisions that require asking the user
 
-- Cambiar el nombre del proyecto o el paquete de npm.
-- Agregar una dependencia pesada al camino principal.
-- Meter un LLM en cualquier parte (está fuera de alcance por diseño, ver `docs/spec/ROADMAP.md`).
-- Publicar a npm, crear el repo remoto, o cualquier acción de cara al exterior.
-- Cambiar el contrato de la salida JSON después de la primera publicación.
+- Changing the project name or the npm package.
+- Adding a heavy dependency to the main path.
+- Putting an LLM anywhere (it is out of scope by design, see `docs/spec/ROADMAP.md`).
+- Publishing to npm, creating the remote repo, or any outward-facing action.
+- Changing the JSON output contract after the first release.
 
-## Qué NO construir
+## What NOT to build
 
-Está en `docs/spec/ROADMAP.md` § "Fuera de alcance". Lo repito porque es la tentación principal: **no metas un LLM para verificar afirmaciones de prosa.** Rompe el determinismo, el presupuesto de latencia y la propuesta de valor entera. El proyecto gana por ser rápido, offline y confiable.
+It is in `docs/spec/ROADMAP.md` § "Out of scope". I repeat it here because it is the main temptation: **do not put an LLM in to verify prose claims.** It breaks determinism, the latency budget and the entire value proposition. The project wins by being fast, offline and reliable.
 
 ## Agent skills
 
 ### Issue tracker
 
-Issues y specs viven como markdown local bajo `.scratch/<feature>/`. Ver `docs/agents/issue-tracker.md`.
+Issues and specs live as local markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Las cinco etiquetas canónicas sin renombrar, registradas como una línea `Status:` en cada archivo de issue. Ver `docs/agents/triage-labels.md`.
+The five canonical labels, unrenamed, recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: un `CONTEXT.md` en la raíz (creado de forma lazy) y ADRs en `docs/adr/`. Ver `docs/agents/domain.md`.
+Single-context: a `CONTEXT.md` at the root (created lazily) and ADRs in `docs/adr/`. See `docs/agents/domain.md`.

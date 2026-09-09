@@ -1,9 +1,9 @@
 import type { Range } from '../core/types.ts'
 
 /**
- * Tabla de offsets de inicio de linea. Se construye una vez por fuente y
- * convierte cualquier offset absoluto en linea y columna 1-indexadas, que es
- * lo que espera cualquier terminal y cualquier editor.
+ * A table of line-start offsets. It is built once per source and turns any
+ * absolute offset into a 1-indexed line and column, which is what every
+ * terminal and every editor expects.
  */
 export type LineTable = readonly number[]
 
@@ -15,7 +15,7 @@ export function buildLineTable(content: string): LineTable {
   return starts
 }
 
-/** Busqueda binaria de la linea que contiene un offset. */
+/** Binary search for the line containing an offset. */
 function lineAt(table: LineTable, offset: number): number {
   let low = 0
   let high = table.length - 1

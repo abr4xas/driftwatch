@@ -1,14 +1,14 @@
 # colinhacks/zod
 
-fuentes: 3
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 3
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 skill  .claude/skills/security-advisory/SKILL.md
 skill  .claude/skills/triage/SKILL.md
 cursor-rule  .cursorrules
 
 ## findings
-(ninguno)
+(none)

@@ -21,6 +21,6 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src", "test", "scripts", "*.config.ts"],
-  // Los clones del corpus son codigo de otros proyectos, no nuestro.
+  // The corpus clones are other projects' code, not ours.
   "exclude": ["test/corpus", "dist", "node_modules"]
 }

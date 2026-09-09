@@ -5,17 +5,17 @@ import { run } from '../src/run.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
 /**
- * Las cuatro clases de falso positivo que el corpus de repos reales destapo, y
- * que las heuristicas no filtraban. Cada bloque de aca corresponde a una clase
- * medida sobre archivos de contexto que escribieron otras personas.
+ * The classes of false positive the corpus of real repos uncovered, and that
+ * the heuristics were not filtering. Every block here corresponds to a class
+ * measured against context files other people wrote.
  */
 
-describe('clase 1: rutas relativas a la raiz desde una fuente anidada', () => {
-  it('una fuente anidada puede hablar de su propio directorio desde la raiz', async () => {
+describe('class 1: root-relative paths from a nested source', () => {
+  it('a nested source may talk about its own directory from the root', async () => {
     const root = makeTempRepo({
       files: {
-        // Un caso real de BerriAI/litellm: tests/e2e/CLAUDE.md dice `tests/e2e/`.
-        'tests/e2e/CLAUDE.md': 'Los tests viven en `tests/e2e/` y usan `tests/e2e/util.py`.\n',
+        // A real case from BerriAI/litellm: tests/e2e/CLAUDE.md says `tests/e2e/`.
+        'tests/e2e/CLAUDE.md': 'The tests live in `tests/e2e/` and use `tests/e2e/util.py`.\n',
         'tests/e2e/util.py': '',
       },
     })
@@ -23,19 +23,19 @@ describe('clase 1: rutas relativas a la raiz desde una fuente anidada', () => {
     expect(result.findings).toEqual([])
   })
 
-  it('sigue resolviendo contra el baseDir cuando eso es lo correcto', async () => {
+  it('still resolves against the baseDir when that is the right answer', async () => {
     const root = makeTempRepo({
       files: {
-        'packages/api/CLAUDE.md': 'La base es `src/db.ts`.\n',
+        'packages/api/CLAUDE.md': 'The database is `src/db.ts`.\n',
         'packages/api/src/db.ts': '',
       },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
   })
 
-  it('reporta solo si la ruta no existe ni contra el baseDir ni contra la raiz', async () => {
+  it('reports only if the path exists neither against the baseDir nor the root', async () => {
     const root = makeTempRepo({
-      files: { 'packages/api/CLAUDE.md': 'La base es `src/db.ts`.\n' },
+      files: { 'packages/api/CLAUDE.md': 'The database is `src/db.ts`.\n' },
     })
     const result = await run({ cwd: root, paths: [] })
     expect(result.findings).toHaveLength(1)
@@ -43,7 +43,7 @@ describe('clase 1: rutas relativas a la raiz desde una fuente anidada', () => {
   })
 })
 
-describe('clase 2: artefactos generados', () => {
+describe('class 2: generated artifacts', () => {
   it.each([
     'dist/cli.js',
     'node_modules/astro/dist/index.js',
@@ -52,33 +52,33 @@ describe('clase 2: artefactos generados', () => {
     'packages/next/dist/docs',
     '.turbo/cache',
     '.react-router/types',
-  ])('%s pasa por un directorio generado', (rel) => {
+  ])('%s passes through a generated directory', (rel) => {
     expect(passesThroughGenerated(rel)).toBe(true)
   })
 
-  it('una ruta normal no', () => {
+  it('an ordinary path does not', () => {
     expect(passesThroughGenerated('src/index.ts')).toBe(false)
     expect(passesThroughGenerated('packages/api/src/db.ts')).toBe(false)
   })
 
-  it('no se reporta un artefacto generado aunque no este en el indice', async () => {
+  it('a generated artifact is not reported even though it is not in the index', async () => {
     const root = makeTempRepo({
-      files: { 'CLAUDE.md': 'El bundle queda en `dist/cli.js`, no edites `node_modules/`.\n' },
+      files: { 'CLAUDE.md': 'The bundle ends up in `dist/cli.js`, do not edit `node_modules/`.\n' },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
   })
 })
 
-describe('clase 3: comandos tomados como ruta', () => {
+describe('class 3: commands taken for a path', () => {
   it.each([
     'node scripts/sync-agent-rules.mjs',
     'pnpm test packages/react-router/__tests__/router/fetchers-test.ts',
     'prisma/ignite docs/drive/',
-  ])('descarta %s por tener espacios', (text) => {
-    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'tiene-espacios' })
+  ])('discards %s for having spaces', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'has-spaces' })
   })
 
-  it('un destino de link con espacios no se descarta, porque no puede ser un comando', () => {
+  it('a link target with spaces is not discarded, because it cannot be a command', () => {
     expect(evaluatePathText('docs/architecture docs/x.md', { couldBeCommand: false })).toEqual({
       kind: 'path',
       text: 'docs/architecture docs/x.md',
@@ -86,55 +86,55 @@ describe('clase 3: comandos tomados como ruta', () => {
   })
 })
 
-describe('clase 4: links percent-encoded', () => {
-  it('un %20 en el destino de un link se decodifica antes de verificar', async () => {
+describe('class 4: percent-encoded links', () => {
+  it('a %20 in a link target is decoded before verifying', async () => {
     const root = makeTempRepo({
       files: {
-        'CLAUDE.md': 'Ver [la guia](./docs/Architecture%20Overview.md).\n',
-        'docs/Architecture Overview.md': '# guia\n',
+        'CLAUDE.md': 'See [the guide](./docs/Architecture%20Overview.md).\n',
+        'docs/Architecture Overview.md': '# guide\n',
       },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
   })
 
-  it('un escape mal formado no rompe la corrida', async () => {
+  it('a malformed escape does not break the run', async () => {
     const root = makeTempRepo({
-      files: { 'CLAUDE.md': 'Ver [roto](./docs/100%.md).\n' },
+      files: { 'CLAUDE.md': 'See [broken](./docs/100%.md).\n' },
     })
     await expect(run({ cwd: root, paths: [] })).resolves.toBeDefined()
   })
 })
 
-describe('clase 5: archivos que hay que crear', () => {
-  it('un paso que empieza con Create no afirma que el archivo exista', async () => {
+describe('class 5: files that have to be created', () => {
+  it('a step starting with Create does not claim the file exists', async () => {
     const root = makeTempRepo({
       files: {
-        'CLAUDE.md': '1. Create `src/profile/nuevo.rs` implementando el trait.\n',
+        'CLAUDE.md': '1. Create `src/profile/new.rs` implementing the trait.\n',
       },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
   })
 
-  it('un Create en medio de una oracion no suprime nada', async () => {
+  it('a Create in the middle of a sentence suppresses nothing', async () => {
     const root = makeTempRepo({
-      files: { 'CLAUDE.md': 'El comando create usa `src/falta.ts` para el molde.\n' },
+      files: { 'CLAUDE.md': 'The create command uses `src/missing.ts` as the mould.\n' },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
   })
 
-  it('un nombre de relleno posesivo se descarta', () => {
+  it('a possessive filler name is discarded', () => {
     expect(evaluatePathText('perf/memory/src/profile/your_profile.rs')).toEqual({
       kind: 'discarded',
-      reason: 'metasintactico',
+      reason: 'metasyntactic',
     })
   })
 })
 
-describe('clase 6: copias identicas de AGENTS.md y CLAUDE.md', () => {
-  it('el mismo problema se reporta una vez, nombrando la copia', async () => {
-    const contenido = 'La auth vive en `src/lib/auth.ts`.\n'
+describe('class 6: identical copies of AGENTS.md and CLAUDE.md', () => {
+  it('the same problem is reported once, naming the copy', async () => {
+    const content = 'Auth lives in `src/lib/auth.ts`.\n'
     const root = makeTempRepo({
-      files: { 'AGENTS.md': contenido, 'CLAUDE.md': contenido },
+      files: { 'AGENTS.md': content, 'CLAUDE.md': content },
     })
     const result = await run({ cwd: root, paths: [] })
     expect(result.findings).toHaveLength(1)
@@ -142,59 +142,59 @@ describe('clase 6: copias identicas de AGENTS.md y CLAUDE.md', () => {
     expect(result.findings[0]?.claim.source.aliases).toEqual(['CLAUDE.md'])
   })
 
-  it('dos documentos distintos se auditan por separado', async () => {
+  it('two different documents are audited separately', async () => {
     const root = makeTempRepo({
       files: {
-        'AGENTS.md': 'La auth vive en `src/lib/auth.ts`.\n',
-        'CLAUDE.md': 'El seed vive en `src/lib/seed.ts`.\n',
+        'AGENTS.md': 'Auth lives in `src/lib/auth.ts`.\n',
+        'CLAUDE.md': 'The seed lives in `src/lib/seed.ts`.\n',
       },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(2)
   })
 })
 
-describe('clase 7: archivos que el documento declara generados', () => {
-  it('una ruta que el documento dice que se genera no se reporta', async () => {
+describe('class 7: files the document declares generated', () => {
+  it('a path the document says is generated is not reported', async () => {
     const root = makeTempRepo({
       files: {
-        'CLAUDE.md': '- `docs/.vitepress/nombres.json` is generated by `pnpm docs:contribs`\n',
+        'CLAUDE.md': '- `docs/.vitepress/names.json` is generated by `pnpm docs:contribs`\n',
       },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
   })
 
-  it('la palabra generated sin la marca de generacion no suprime', async () => {
+  it('the word generated without the generation marker does not suppress', async () => {
     const root = makeTempRepo({
-      files: { 'CLAUDE.md': 'El codigo generated-ish vive en `src/falta.ts`.\n' },
+      files: { 'CLAUDE.md': 'The generated-ish code lives in `src/missing.ts`.\n' },
     })
     expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
   })
 })
 
-describe('la ventana de prosa no sangra entre elementos independientes', () => {
-  it('un marcador en una fila de tabla no suprime la fila siguiente', async () => {
+describe('the prose window does not bleed between independent items', () => {
+  it('a marker in one table row does not suppress the next row', async () => {
     const root = makeTempRepo({
       files: {
         'CLAUDE.md': [
-          '| ruta | que es |',
+          '| path | what it is |',
           '|---|---|',
-          '| `src/existe.ts` | algo (e.g., un ejemplo) |',
-          '| `src/falta.ts` | otra cosa |',
+          '| `src/exists.ts` | something (e.g., an example) |',
+          '| `src/missing.ts` | something else |',
           '',
         ].join('\n'),
-        'src/existe.ts': '',
+        'src/exists.ts': '',
       },
     })
     const result = await run({ cwd: root, paths: [] })
-    expect(result.findings.map((f) => f.claim.text)).toEqual(['src/falta.ts'])
+    expect(result.findings.map((f) => f.claim.text)).toEqual(['src/missing.ts'])
   })
 
-  it('un marcador en una vineta no suprime la vineta siguiente', async () => {
+  it('a marker in one bullet does not suppress the next bullet', async () => {
     const root = makeTempRepo({
       files: {
         'CLAUDE.md': [
-          '- Internos usan `_` (e.g., `_utils.ts`)',
-          '- La auth va en `src/falta.ts`',
+          '- Internal ones use `_` (e.g., `_utils.ts`)',
+          '- Auth goes in `src/missing.ts`',
           '',
         ].join('\n'),
       },
@@ -202,12 +202,12 @@ describe('la ventana de prosa no sangra entre elementos independientes', () => {
     expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
   })
 
-  it('pero una oracion envuelta si mira la linea anterior', async () => {
+  it('but a wrapped sentence does look at the previous line', async () => {
     const root = makeTempRepo({
       files: {
         'CLAUDE.md': [
-          'Usá subdirectorios que sigan la ruta, por ejemplo',
-          '`auth/test_x.py` para `auth/x.py`.',
+          'Use subdirectories that match the implementation path, such as',
+          '`auth/test_x.py` for `auth/x.py`.',
           '',
         ].join('\n'),
       },
@@ -216,7 +216,7 @@ describe('la ventana de prosa no sangra entre elementos independientes', () => {
   })
 })
 
-describe('clase 8: placeholders en CamelCase con relleno', () => {
+describe('class 8: CamelCase placeholders with filler', () => {
   it.each([
     'tests/ci/test_action_EventNameHere.py',
     'src/NameHere/index.ts',
@@ -224,8 +224,8 @@ describe('clase 8: placeholders en CamelCase con relleno', () => {
     'app/MyComponent/index.tsx',
     'src/XXX/config.ts',
     'src/Xxx.ts',
-  ])('descarta %s', (text) => {
-    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'metasintactico' })
+  ])('discards %s', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'metasyntactic' })
   })
 
   it.each([
@@ -235,7 +235,7 @@ describe('clase 8: placeholders en CamelCase con relleno', () => {
     'src/Mystery.ts',
     'src/Yourself.ts',
     'src/adhere/cohere.ts',
-  ])('no descarta %s, que es una palabra real', (text) => {
+  ])('does not discard %s, which is a real word', (text) => {
     expect(evaluatePathText(text)).toEqual({ kind: 'path', text })
   })
 })

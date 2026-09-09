@@ -2,23 +2,23 @@ import { describe, expect, it } from 'vitest'
 import { parseFrontmatter } from '../src/parse/frontmatter.ts'
 
 describe('parseFrontmatter', () => {
-  it('sin bloque inicial devuelve undefined', () => {
-    expect(parseFrontmatter('# Solo un titulo\n')).toBeUndefined()
+  it('returns undefined with no leading block', () => {
+    expect(parseFrontmatter('# Just a heading\n')).toBeUndefined()
   })
 
-  it('un `---` que no esta al principio no es frontmatter', () => {
-    expect(parseFrontmatter('texto\n\n---\nname: x\n---\n')).toBeUndefined()
+  it('a `---` that is not at the start is not frontmatter', () => {
+    expect(parseFrontmatter('text\n\n---\nname: x\n---\n')).toBeUndefined()
   })
 
-  it('parsea el bloque y expone los datos', () => {
+  it('parses the block and exposes the data', () => {
     const fm = parseFrontmatter(
-      '---\nname: deploy\ndescription: manda a produccion\n---\n\ncuerpo\n',
+      '---\nname: deploy\ndescription: ships to production\n---\n\nbody\n',
     )
     expect(fm?.error).toBeUndefined()
-    expect(fm?.data).toEqual({ name: 'deploy', description: 'manda a produccion' })
+    expect(fm?.data).toEqual({ name: 'deploy', description: 'ships to production' })
   })
 
-  it('el offset de cada valor apunta al valor dentro del archivo', () => {
+  it('each value offset points at the value inside the file', () => {
     const content = '---\nscript: ./scripts/release.sh\n---\n'
     const fm = parseFrontmatter(content)
     const value = fm?.values.find((v) => v.key === 'script')
@@ -26,29 +26,29 @@ describe('parseFrontmatter', () => {
     expect(content.slice(value!.offset[0], value!.offset[1])).toBe('./scripts/release.sh')
   })
 
-  it('recolecta valores anidados con notacion de punto', () => {
-    const fm = parseFrontmatter('---\nmeta:\n  ruta: src/index.ts\n---\n')
-    expect(fm?.values.map((v) => v.key)).toEqual(['meta.ruta'])
+  it('collects nested values in dot notation', () => {
+    const fm = parseFrontmatter('---\nmeta:\n  path: src/index.ts\n---\n')
+    expect(fm?.values.map((v) => v.key)).toEqual(['meta.path'])
   })
 
-  it('recolecta los elementos de una lista con su indice', () => {
-    const fm = parseFrontmatter('---\nfuentes:\n  - a/uno.md\n  - a/dos.md\n---\n')
-    expect(fm?.values.map((v) => v.key)).toEqual(['fuentes[0]', 'fuentes[1]'])
+  it('collects list items with their index', () => {
+    const fm = parseFrontmatter('---\nsources:\n  - a/one.md\n  - a/two.md\n---\n')
+    expect(fm?.values.map((v) => v.key)).toEqual(['sources[0]', 'sources[1]'])
   })
 
-  it('ignora los valores que no son cadenas', () => {
-    const fm = parseFrontmatter('---\nname: x\nversion: 3\nactivo: true\n---\n')
+  it('ignores values that are not strings', () => {
+    const fm = parseFrontmatter('---\nname: x\nversion: 3\nactive: true\n---\n')
     expect(fm?.values.map((v) => v.key)).toEqual(['name'])
   })
 
-  it('un YAML roto se reporta como error en vez de tumbar el parseo', () => {
-    const fm = parseFrontmatter('---\nname: [sin cerrar\n---\n')
+  it('broken YAML is reported as an error instead of taking down the parse', () => {
+    const fm = parseFrontmatter('---\nname: [unclosed\n---\n')
     expect(fm?.error).toBeDefined()
     expect(fm?.values).toEqual([])
   })
 
-  it('dos valores identicos no colapsan en el mismo offset', () => {
-    const content = '---\nuno: src/a.ts\ndos: src/a.ts\n---\n'
+  it('two identical values do not collapse onto the same offset', () => {
+    const content = '---\none: src/a.ts\ntwo: src/a.ts\n---\n'
     const fm = parseFrontmatter(content)
     expect(fm?.values).toHaveLength(2)
     expect(fm?.values[0]?.offset[0]).not.toBe(fm?.values[1]?.offset[0])

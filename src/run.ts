@@ -13,14 +13,14 @@ import { resolveInRepo } from './verify/resolve.ts'
 
 export type RunOptions = {
   cwd: string
-  /** Argumentos posicionales que limitan el alcance. */
+  /** Positional arguments that narrow the scope. */
   paths: readonly string[]
 }
 
 export type RunResult = {
   root: string
   sources: readonly Source[]
-  /** Los ids de los checks registrados. */
+  /** The ids of the registered checks. */
   checks: readonly string[]
   findings: readonly Finding[]
   counts: Counts
@@ -47,10 +47,10 @@ function verify(claims: readonly Claim[], ctx: CheckContext): Finding[] {
   return findings
 }
 
-/** Nombre improbable, para preguntarle a git por el contenido de un directorio. */
+/** An improbable name, to ask git about a directory's contents. */
 const DIR_PROBE = '__driftwatch_probe__'
 
-/** Las rutas que los checks van a consultar, en las dos resoluciones posibles. */
+/** The paths the checks will look up, in both possible resolutions. */
 function candidatePaths(claims: readonly Claim[]): string[] {
   const paths = new Set<string>()
   for (const claim of claims) {
@@ -60,13 +60,13 @@ function candidatePaths(claims: readonly Claim[]): string[] {
       if (rel === undefined || rel === '') continue
       paths.add(rel)
       /**
-       * Un patron como `pr-status/*` ignora el *contenido* del directorio, no
-       * el directorio. Asi que para una afirmacion de directorio se pregunta
-       * tambien por un hijo inventado: si git ignoraria lo que hay adentro, el
-       * directorio es salida generada.
+       * A pattern like `pr-status/*` ignores the directory's *contents*, not
+       * the directory. So for a directory claim we also ask about a made-up
+       * child: if git would ignore what is inside, the directory is generated
+       * output.
        *
-       * Caso real (vercel/next.js): `scripts/pr-status/`, con
-       * `scripts/.gitignore` conteniendo `pr-status/*`.
+       * Real case (vercel/next.js): `scripts/pr-status/`, with
+       * `scripts/.gitignore` containing `pr-status/*`.
        */
       if (claim.text.endsWith('/')) paths.add(`${rel}/${DIR_PROBE}`)
     }
@@ -74,7 +74,7 @@ function candidatePaths(claims: readonly Claim[]): string[] {
   return [...paths]
 }
 
-/** Orden estable: por archivo, y dentro del archivo por posicion. */
+/** Stable order: by file, and within the file by position. */
 function sortFindings(findings: Finding[]): Finding[] {
   return findings.toSorted((a, b) => {
     const byFile = a.claim.source.path.localeCompare(b.claim.source.path)
@@ -95,8 +95,8 @@ function countBySeverity(findings: readonly Finding[]): Counts {
 }
 
 /**
- * El pipeline completo: discover -> parse -> extract -> verify. El reporte queda
- * afuera a proposito, porque quien llama decide en que formato lo quiere.
+ * The full pipeline: discover -> parse -> extract -> verify. Reporting is left
+ * outside on purpose, because the caller decides which format it wants.
  */
 export async function run(options: RunOptions): Promise<RunResult> {
   const started = performance.now()
@@ -107,8 +107,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const origin = await originSlug(root)
   const claims = sources.flatMap((source) => claimsFor(source, origin))
 
-  // Se le pregunta a git por todas las rutas candidatas de una sola vez, antes
-  // de correr los checks: una ruta que git ignora no se puede afirmar faltante.
+  // git is asked about every candidate path in one go, before running the
+  // checks: a path git ignores cannot be claimed to be missing.
   const ctx: CheckContext = {
     index,
     ignoredByGit: await gitIgnoredPaths(root, candidatePaths(claims)),

@@ -3,14 +3,14 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, parse, sep } from 'node:path'
 
 /**
- * Directorios que nunca se recorren, con git o sin git. No dependen de
- * `.gitignore` porque un repo puede tener `dist/` commiteado y aun asi no
- * queremos indexar su contenido: son artefactos, no fuentes.
+ * Directories that are never walked, with or without git. They do not depend on
+ * `.gitignore` because a repo may have `dist/` committed and we still do not
+ * want to index its contents: those are artifacts, not sources.
  */
 const NEVER_WALK = ['node_modules', 'dist', 'build', '.next', 'vendor', 'target'] as const
 
 export type Manifest = {
-  /** Directorio que contiene el package.json, relativo a la raiz. '' es la raiz. */
+  /** Directory holding the package.json, relative to the root. '' is the root. */
   dir: string
   name: string | undefined
   scripts: Readonly<Record<string, string>>
@@ -18,19 +18,19 @@ export type Manifest = {
 
 export type RepoIndex = {
   root: string
-  /** Todas las rutas de archivo relativas a la raiz, con separador posix. */
+  /** Every file path relative to the root, with posix separators. */
   files: ReadonlySet<string>
   dirs: ReadonlySet<string>
-  /** 'auth.ts' -> ['src/auth.ts', 'test/auth.ts']. Alimenta las sugerencias. */
+  /** 'auth.ts' -> ['src/auth.ts', 'test/auth.ts']. Feeds the suggestions. */
   byBasename: ReadonlyMap<string, readonly string[]>
-  /** Lo mismo para directorios: 'router' -> ['src/lib/router']. */
+  /** The same for directories: 'router' -> ['src/lib/router']. */
   dirsByBasename: ReadonlyMap<string, readonly string[]>
   manifests: ReadonlyMap<string, Manifest>
-  /** Si el listado vino de git o del fallback a glob. Se reporta en --json. */
+  /** Whether the listing came from git or the glob fallback. Reported in --json. */
   listing: 'git' | 'glob'
 }
 
-/** El directorio con `.git`, o el punto de partida si no hay repo. */
+/** The directory holding `.git`, or the starting point if there is no repo. */
 export function findRepoRoot(from: string): string {
   const { root } = parse(from)
   let dir = from
@@ -51,10 +51,10 @@ function isExcluded(rel: string): boolean {
 }
 
 /**
- * `git ls-files` con `--others --exclude-standard` lista lo trackeado mas lo no
- * trackeado que no esta ignorado: exactamente el conjunto de archivos que el
- * repo considera suyos, ya filtrado por `.gitignore`, y mas rapido que caminar
- * el arbol nosotros.
+ * `git ls-files` with `--others --exclude-standard` lists what is tracked plus
+ * what is untracked and not ignored: exactly the set of files the repo
+ * considers its own, already filtered by `.gitignore`, and faster than walking
+ * the tree ourselves.
  */
 function listWithGit(root: string): string[] | undefined {
   try {
@@ -65,15 +65,15 @@ function listWithGit(root: string): string[] | undefined {
     )
     return stdout.split('\0').filter((entry) => entry.length > 0)
   } catch {
-    // No hay git, no es un repo, o el binario fallo. El llamador usa el glob.
+    // No git, not a repo, or the binary failed. The caller falls back to glob.
     return undefined
   }
 }
 
 /**
- * El camino frio: sin repo hay que caminar el arbol y aplicar `.gitignore` a
- * mano. Las dos dependencias se importan de forma dinamica para que el camino
- * caliente, que en cualquier repo real es git, no pague su carga.
+ * The cold path: with no repo we have to walk the tree and apply `.gitignore` by
+ * hand. Both dependencies are imported dynamically so the hot path, which in
+ * any real repo is git, does not pay for loading them.
  */
 async function listWithGlob(root: string): Promise<string[]> {
   const { glob } = await import('tinyglobby')
@@ -92,7 +92,7 @@ async function applyGitignore(root: string, paths: readonly string[]): Promise<s
   try {
     raw = readFileSync(join(root, '.gitignore'), 'utf8')
   } catch {
-    // Sin .gitignore no hay nada que filtrar.
+    // With no .gitignore there is nothing to filter.
     return [...paths]
   }
   const { default: ignore } = await import('ignore')
@@ -111,8 +111,9 @@ function readManifest(root: string, dir: string): Manifest | undefined {
   try {
     parsed = JSON.parse(raw)
   } catch {
-    // Un package.json roto es problema del proyecto, no nuestro. Se ignora en
-    // vez de tumbar la corrida entera por un archivo que no pedimos auditar.
+    // A broken package.json is the project's problem, not ours. It is ignored
+    // instead of taking down the whole run over a file we were not asked to
+    // audit.
     return undefined
   }
   if (typeof parsed !== 'object' || parsed === null) return undefined
@@ -133,8 +134,8 @@ function readManifest(root: string, dir: string): Manifest | undefined {
 }
 
 /**
- * Se construye una sola vez por corrida. A partir de aca cada verificacion es
- * una consulta en memoria: ni un `fs.stat` en el camino caliente.
+ * Built exactly once per run. From here on every verification is an in-memory
+ * lookup: not a single `fs.stat` on the hot path.
  */
 export async function buildRepoIndex(root: string): Promise<RepoIndex> {
   const fromGit = listWithGit(root)
@@ -158,7 +159,7 @@ export async function buildRepoIndex(root: string): Promise<RepoIndex> {
     if (existing === undefined) byBasename.set(basename, [rel])
     else existing.push(rel)
 
-    // Cada prefijo de la ruta es un directorio que existe.
+    // Every prefix of the path is a directory that exists.
     let cut = slash
     while (cut > 0) {
       const dir = rel.slice(0, cut)
@@ -198,16 +199,16 @@ export function dirCandidatesFor(index: RepoIndex, basename: string): readonly s
 }
 
 /**
- * Si alguna ruta del repo **termina** con `rel`, tomando segmentos enteros.
+ * Whether some path in the repo **ends** with `rel`, taking whole segments.
  *
- * Es la respuesta al patron mas comun de los archivos de contexto reales: la
- * prosa nombra un directorio ("dentro de `packages/next`") y despues las rutas
- * se escriben relativas a el (`src/cli/next-dev.ts`). Ni el baseDir de la
- * fuente ni la raiz del repo las resuelven, y no hay senal sintactica que
- * distinga eso de una ruta rota.
+ * It is the answer to the most common pattern in real context files: the prose
+ * names a directory ("inside `packages/next`") and the paths that follow are
+ * written relative to it (`src/cli/next-dev.ts`). Neither the source's baseDir
+ * nor the repo root resolves them, and there is no syntactic signal telling
+ * that apart from a broken path.
  *
- * La busqueda arranca por el ultimo segmento, asi que solo compara contra los
- * homonimos y no recorre el indice.
+ * The search starts from the last segment, so it only compares against the
+ * namesakes and never scans the index.
  */
 export function someEntryEndsWith(index: RepoIndex, rel: string): boolean {
   const basename = rel.slice(rel.lastIndexOf('/') + 1)
@@ -219,7 +220,7 @@ export function someEntryEndsWith(index: RepoIndex, rel: string): boolean {
   )
 }
 
-/** El manifiesto mas cercano subiendo desde `dir`. Es lo que hace andar monorepos. */
+/** The nearest manifest walking up from `dir`. It is what makes monorepos work. */
 export function manifestFor(index: RepoIndex, dir: string): Manifest | undefined {
   let current = dir
   while (true) {

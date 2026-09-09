@@ -17,20 +17,20 @@ function capture(): { io: Io; printed: () => string } {
 }
 
 /**
- * ROADMAP.md § M0 pedia: "en este mismo repo, driftwatch lista las fuentes
- * encontradas y sale con 0 en menos de 300 ms".
+ * ROADMAP.md § M0 asked for: "on this very repo, driftwatch lists the sources
+ * it found and exits 0 in under 300 ms".
  *
- * El "lista las fuentes" era andamiaje de M0, cuando no habia ningun check y no
- * habia otra cosa observable que mostrar. Desde que `path/missing` existe, la
- * salida son findings, y el exit code refleja el estado real del repo. Lo que
- * sigue vigente del criterio, y es lo que se verifica aca, es el presupuesto de
- * tiempo y que un repo sin drift salga con 0.
+ * The "lists the sources" part was M0 scaffolding, back when there was no check
+ * and nothing else observable to show. Since `path/missing` exists, the output
+ * is findings, and the exit code reflects the repo's real state. What still
+ * holds from the criterion, and what is verified here, is the time budget and
+ * that a repo with no drift exits 0.
  */
-describe('aceptacion de M0, revisada en M1', () => {
-  it('auditar este repo tarda menos de 300 ms', async () => {
-    // La primera invocacion en un worker fresco paga el calentamiento del JIT,
-    // que no es trabajo de la herramienta. El arranque en frio del proceso se
-    // mide aparte, invocando el binario compilado.
+describe('M0 acceptance, revised in M1', () => {
+  it('auditing this repo takes under 300 ms', async () => {
+    // The first invocation in a fresh worker pays for JIT warm-up, which is not
+    // the tool's work. Process cold start is measured separately, by invoking
+    // the compiled binary.
     await main([], capture().io, process.cwd())
 
     const c = capture()
@@ -38,34 +38,34 @@ describe('aceptacion de M0, revisada en M1', () => {
     await main([], c.io, process.cwd())
     const elapsed = performance.now() - started
 
-    expect(elapsed, `tardo ${elapsed.toFixed(0)} ms`).toBeLessThan(300)
+    expect(elapsed, `took ${elapsed.toFixed(0)} ms`).toBeLessThan(300)
   })
 
-  it('un posicional limita el alcance a lo que se le pide', async () => {
+  it('a positional narrows the scope to what it was given', async () => {
     const c = capture()
     await main(['AGENTS.md'], c.io, process.cwd())
-    expect(c.printed()).toContain('1 archivo')
+    expect(c.printed()).toContain('1 file')
   })
 
-  it('un repo cuyo contexto es cierto sale con 0 y lo dice', async () => {
+  it('a repo whose context is true exits 0 and says so', async () => {
     const root = makeTempRepo({
       files: {
-        'CLAUDE.md': 'El entrypoint es `src/index.ts`.\n',
+        'CLAUDE.md': 'The entrypoint is `src/index.ts`.\n',
         'src/index.ts': 'export const x = 1\n',
       },
     })
     const c = capture()
     expect(await main([], c.io, root)).toBe(EXIT.ok)
-    expect(c.printed()).toContain('✓ 1 archivo · sin drift')
+    expect(c.printed()).toContain('✓ 1 file · no drift')
   })
 
-  it('un repo con una ruta rota sale con 1 y la senala', async () => {
+  it('a repo with a broken path exits 1 and points at it', async () => {
     const root = makeTempRepo({
-      files: { 'CLAUDE.md': 'La auth vive en `src/lib/auth.ts`.\n' },
+      files: { 'CLAUDE.md': 'Auth lives in `src/lib/auth.ts`.\n' },
     })
     const c = capture()
     expect(await main([], c.io, root)).toBe(EXIT.findings)
     expect(c.printed()).toContain('src/lib/auth.ts')
-    expect(c.printed()).toContain('ruta no existe')
+    expect(c.printed()).toContain('path does not exist')
   })
 })

@@ -9,22 +9,22 @@ import { HELP } from './help.ts'
 export type Io = {
   out: (text: string) => void
   err: (text: string) => void
-  /** Si stdout es una terminal. Decide si la salida lleva color. */
+  /** Whether stdout is a terminal. Decides if the output carries color. */
   isTty: boolean
   env: NodeJS.ProcessEnv
 }
 
 /**
- * Los flags booleanos que el parser acepta pero que todavía no hacen nada. Esta
- * lista es una lista de pendientes que el test suite vigila: cuando un ticket
- * implementa un flag, lo borra de acá y el test que exigía el exit 2 se cae.
+ * The boolean flags the parser accepts but that do not do anything yet. This
+ * list is a to-do list the test suite watches: when a ticket implements a flag,
+ * it deletes it from here and the test that demanded exit 2 fails.
  */
 const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
   ['fix', '--fix'],
   ['watch', '--watch'],
   ['init', '--init'],
-  // --strict solo cambia algo cuando existen warnings, y los warnings son
-  // tier 2, que es M5. Hasta entonces aceptarlo seria prometer de mas.
+  // --strict only changes something once warnings exist, and warnings are
+  // tier 2, which is M5. Until then, accepting it would promise too much.
   ['strict', '--strict'],
 ]
 
@@ -46,15 +46,16 @@ function assertPathsExist(paths: readonly string[], cwd: string): void {
     try {
       statSync(resolve(cwd, path))
     } catch {
-      throw new UserError(`la ruta no existe: ${path}`)
+      throw new UserError(`path does not exist: ${path}`)
     }
   }
 }
 
 /**
- * El cuerpo del CLI. Recibe el entorno en vez de leerlo y devuelve el exit code
- * en vez de llamar a process.exit, para que sea testeable sin spawnear procesos.
- * `cli.ts` es el único módulo que toca `process`.
+ * The body of the CLI. It receives the environment instead of reading it and
+ * returns the exit code instead of calling process.exit, so it is testable
+ * without spawning processes. `cli.ts` is the only module that touches
+ * `process`.
  */
 export async function main(argv: readonly string[], io: Io, cwd: string): Promise<ExitCode> {
   try {
@@ -73,9 +74,9 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
     assertNotYetImplemented(args)
     assertPathsExist(args.paths, cwd)
 
-    // El pipeline y el reporter se importan de forma dinamica: `--help` y
-    // `--version` no tienen por que pagar la carga de remark-parse, y el
-    // presupuesto de arranque en frio de 80 ms es parte del producto.
+    // The pipeline and the reporter are imported dynamically: `--help` and
+    // `--version` have no reason to pay for loading remark-parse, and the
+    // 80 ms cold-start budget is part of the product.
     const [{ run }, { renderPretty }, { colorEnabled }] = await Promise.all([
       import('../run.ts'),
       import('../report/pretty.ts'),
@@ -96,10 +97,10 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
       if (error.hint !== undefined) io.err(`  ${error.hint}\n`)
       return EXIT.toolFailure
     }
-    // Un bug nuestro. Se dice que lo es, con el mensaje pero sin volcar el stack
-    // encima de quien solo quería correr un linter.
-    io.err(`driftwatch: fallo interno: ${messageOf(error)}\n`)
-    io.err('  esto es un bug de driftwatch; reportalo con el comando que lo produjo\n')
+    // A bug of ours. We say so, with the message but without dumping the stack
+    // on someone who only wanted to run a linter.
+    io.err(`driftwatch: internal failure: ${messageOf(error)}\n`)
+    io.err('  this is a driftwatch bug; report it with the command that produced it\n')
     return EXIT.toolFailure
   }
 }

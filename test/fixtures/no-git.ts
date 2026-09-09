@@ -1,26 +1,27 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * Un repo sin `.git`: el indice cae al fallback de glob y tiene que aplicar
- * `.gitignore` a mano. La deteccion no cambia, y eso es lo que se verifica.
+ * A repo with no `.git`: the index falls back to glob and has to apply
+ * `.gitignore` by hand. Detection does not change, and that is what is
+ * verified here.
  */
 export const noGit: Fixture = {
   name: 'no-git',
   git: false,
   files: {
-    '.gitignore': 'generado/\n',
+    '.gitignore': 'generated/\n',
     'CLAUDE.md': [
-      '# Sin git',
+      '# No git',
       '',
-      'El entrypoint es `src/index.ts`.', // 3: existe
+      'The entrypoint is `src/index.ts`.', // 3: exists
       '',
-      'El build queda en `generado/salida.js`.', // 5: ignorado, no se indexa
+      'The build ends up in `generated/output.js`.', // 5: ignored, not indexed
       '',
-      'La auth vive en `src/lib/auth.ts`.', // 7: no existe
+      'Auth lives in `src/lib/auth.ts`.', // 7: does not exist
       '',
     ].join('\n'),
     'src/index.ts': '',
-    'generado/salida.js': '',
+    'generated/output.js': '',
   },
   expected: [
     {
@@ -28,22 +29,22 @@ export const noGit: Fixture = {
       severity: 'error',
       file: 'CLAUDE.md',
       line: 5,
-      column: 20,
-      text: 'generado/salida.js',
-      message: 'ruta no existe',
-      // Falso positivo conocido: el archivo existe en disco pero esta
-      // gitignoreado, asi que no entra al indice. SPEC.md § 7 lo resuelve con
-      // `knownPaths`, que es M2. Se fija aca como comportamiento actual, no
-      // como comportamiento deseado.
+      column: 23,
+      text: 'generated/output.js',
+      message: 'path does not exist',
+      // Known false positive: the file exists on disk but is gitignored, so it
+      // never enters the index. SPEC.md § 7 solves this with `knownPaths`,
+      // which is M2. It is pinned here as current behaviour, not as desired
+      // behaviour.
     },
     {
       check: 'path/missing',
       severity: 'error',
       file: 'CLAUDE.md',
       line: 7,
-      column: 18,
+      column: 16,
       text: 'src/lib/auth.ts',
-      message: 'ruta no existe',
+      message: 'path does not exist',
     },
   ],
 }

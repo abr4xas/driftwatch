@@ -3,7 +3,7 @@ import { UserError } from '../src/core/errors.ts'
 import { parseCliArgs } from '../src/cli/args.ts'
 
 describe('parseCliArgs', () => {
-  it('sin argumentos audita el cwd con los defaults', () => {
+  it('with no arguments it audits the cwd with the defaults', () => {
     const args = parseCliArgs([])
     expect(args.paths).toEqual([])
     expect(args.format).toBe('pretty')
@@ -13,56 +13,56 @@ describe('parseCliArgs', () => {
     expect(args.version).toBe(false)
   })
 
-  it('acepta rutas posicionales', () => {
+  it('accepts positional paths', () => {
     expect(parseCliArgs(['AGENTS.md', 'docs/']).paths).toEqual(['AGENTS.md', 'docs/'])
   })
 
-  it('--json es azucar de --format json', () => {
+  it('--json is sugar for --format json', () => {
     expect(parseCliArgs(['--json']).format).toBe('json')
   })
 
-  it('--format explicito gana sobre el default', () => {
+  it('an explicit --format wins over the default', () => {
     expect(parseCliArgs(['--format', 'sarif']).format).toBe('sarif')
   })
 
-  it('rechaza un formato desconocido con UserError', () => {
+  it('rejects an unknown format with UserError', () => {
     expect(() => parseCliArgs(['--format', 'yaml'])).toThrow(UserError)
   })
 
-  it('rechaza un flag desconocido con UserError', () => {
+  it('rejects an unknown flag with UserError', () => {
     expect(() => parseCliArgs(['--turbo'])).toThrow(UserError)
   })
 
-  it('parsea las listas separadas por coma de --only y --skip', () => {
+  it('parses the comma-separated lists of --only and --skip', () => {
     const args = parseCliArgs(['--only', 'path,script', '--skip', 'dep/missing'])
     expect(args.only).toEqual(['path', 'script'])
     expect(args.skip).toEqual(['dep/missing'])
   })
 
-  it('descarta las entradas vacias de una lista mal escrita', () => {
+  it('drops the empty entries of a badly written list', () => {
     expect(parseCliArgs(['--only', 'path,,']).only).toEqual(['path'])
   })
 
-  it('reconoce los alias cortos -h y -v', () => {
+  it('recognizes the short aliases -h and -v', () => {
     expect(parseCliArgs(['-h']).help).toBe(true)
     expect(parseCliArgs(['-v']).version).toBe(true)
   })
 
-  it('--no-tier2 y --no-config se leen como booleanos', () => {
+  it('--no-tier2 and --no-config read as booleans', () => {
     const args = parseCliArgs(['--no-tier2', '--no-config'])
     expect(args.tier2).toBe(false)
     expect(args.config).toBe(false)
   })
 
-  it('no acepta flags que no estan en SPEC.md § 4', () => {
+  it('does not accept flags that are not in SPEC.md § 4', () => {
     expect(() => parseCliArgs(['--dry-run'])).toThrow(UserError)
   })
 
-  it('--config con ruta guarda la ruta', () => {
+  it('--config with a path stores the path', () => {
     expect(parseCliArgs(['--config', './dw.config.ts']).config).toBe('./dw.config.ts')
   })
 
-  it('rechaza --config y --no-config juntos, porque se contradicen', () => {
+  it('rejects --config and --no-config together, because they contradict', () => {
     expect(() => parseCliArgs(['--config', 'a.ts', '--no-config'])).toThrow(UserError)
   })
 })

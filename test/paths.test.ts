@@ -4,74 +4,74 @@ import { discardReason } from '../src/extract/discard.ts'
 import { resolveInRepo } from '../src/verify/resolve.ts'
 
 describe('looksLikePath', () => {
-  it('acepta lo que tiene barra y extension conocida', () => {
+  it('accepts what has a slash and a known extension', () => {
     for (const text of ['src/foo.ts', 'a/b/c.json', 'docs/spec/SPEC.md']) {
       expect(looksLikePath(text), text).toBe(true)
     }
   })
 
-  it('acepta lo que empieza con un marcador de ruta', () => {
-    for (const text of ['./scripts/release.sh', '../paquete/src/x', '/src/index.ts']) {
+  it('accepts what starts with a path marker', () => {
+    for (const text of ['./scripts/release.sh', '../package/src/x', '/src/index.ts']) {
       expect(looksLikePath(text), text).toBe(true)
     }
   })
 
-  it('acepta lo que termina en barra, que es un directorio', () => {
+  it('accepts what ends in a slash, which is a directory', () => {
     for (const text of ['test/', 'src/lib/', 'node_modules/']) {
       expect(looksLikePath(text), text).toBe(true)
     }
   })
 
-  it('rechaza una palabra sola, con o sin punto', () => {
+  it('rejects a single word, with or without a dot', () => {
     for (const text of ['foo', 'build', 'pnpm', 'index.ts', 'v1.2.3', '']) {
       expect(looksLikePath(text), text).toBe(false)
     }
   })
 
-  it('rechaza una barra con un ultimo segmento sin extension conocida', () => {
-    for (const text of ['npm run build', 'foo/bar', 'a/b.desconocido']) {
+  it('rejects a slash whose last segment has no known extension', () => {
+    for (const text of ['npm run build', 'foo/bar', 'a/b.unknown']) {
       expect(looksLikePath(text), text).toBe(false)
     }
   })
 })
 
 describe('discardReason', () => {
-  it('descarta URLs con protocolo', () => {
-    for (const text of ['https://ejemplo.com/a.md', 'http://x/y', 'file:///tmp/a.ts']) {
+  it('discards URLs with a protocol', () => {
+    for (const text of ['https://example.com/a.md', 'http://x/y', 'file:///tmp/a.ts']) {
       expect(discardReason(text), text).toBe('url')
     }
   })
 
-  it('descarta URLs sin protocolo pero con doble barra', () => {
-    expect(discardReason('//cdn.ejemplo.com/lib.js')).toBe('url')
+  it('discards URLs with no protocol but a double slash', () => {
+    expect(discardReason('//cdn.example.com/lib.js')).toBe('url')
   })
 
-  it('no descarta una ruta normal', () => {
+  it('does not discard an ordinary path', () => {
     expect(discardReason('src/index.ts')).toBeUndefined()
   })
 })
 
 describe('resolveInRepo', () => {
-  it('resuelve contra el baseDir de la fuente', () => {
+  it('resolves against the source baseDir', () => {
     expect(resolveInRepo('packages/api', 'src/db.ts')).toBe('packages/api/src/db.ts')
     expect(resolveInRepo('', 'src/db.ts')).toBe('src/db.ts')
   })
 
-  it('una barra inicial se lee desde la raiz del repo, no del filesystem', () => {
+  it('a leading slash reads from the repo root, not the filesystem', () => {
     expect(resolveInRepo('packages/api', '/src/db.ts')).toBe('src/db.ts')
   })
 
-  it('normaliza ./ y ../', () => {
+  it('normalizes ./ and ../', () => {
     expect(resolveInRepo('packages/api', './src/db.ts')).toBe('packages/api/src/db.ts')
     expect(resolveInRepo('packages/api', '../web/app.ts')).toBe('packages/web/app.ts')
   })
 
-  it('quita la barra final de un directorio', () => {
+  it('strips a directory trailing slash', () => {
     expect(resolveInRepo('', 'src/lib/')).toBe('src/lib')
   })
 
-  it('devuelve undefined si la ruta se escapa de la raiz', () => {
-    expect(resolveInRepo('', '../afuera/x.ts')).toBeUndefined()
+  it('returns undefined if the path escapes above the root', () => {
+    expect(resolveInRepo('', '../outside/x.ts')).toBeUndefined()
     expect(resolveInRepo('packages/api', '../../../x.ts')).toBeUndefined()
   })
 })

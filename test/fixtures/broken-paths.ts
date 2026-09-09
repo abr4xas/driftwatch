@@ -1,19 +1,19 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
-/** Rutas que el documento afirma y el repo no tiene. */
+/** Paths the document claims and the repo does not have. */
 export const brokenPaths: Fixture = {
   name: 'broken-paths',
   files: {
     'CLAUDE.md': [
-      '# Proyecto', // linea 1
+      '# Project', // line 1
       '', // 2
-      'La autenticacion vive en `src/lib/auth.ts`.', // 3
+      'Authentication lives in `src/lib/auth.ts`.', // 3
       '', // 4
-      'El indice real es `src/index.ts`, que si existe.', // 5
+      'The real index is `src/index.ts`, which does exist.', // 5
       '', // 6
-      'El script de release es `./scripts/release.sh`.', // 7
+      'The release script is `./scripts/release.sh`.', // 7
       '', // 8
-      'Los assets estan en `public/imagenes/`.', // 9
+      'The assets are in `public/images/`.', // 9
       '',
     ].join('\n'),
     'src/index.ts': 'export const x = 1\n',
@@ -24,28 +24,28 @@ export const brokenPaths: Fixture = {
       severity: 'error',
       file: 'CLAUDE.md',
       line: 3,
-      column: 27,
+      column: 26,
       text: 'src/lib/auth.ts',
-      message: 'ruta no existe',
+      message: 'path does not exist',
     },
     {
       check: 'path/missing',
       severity: 'error',
       file: 'CLAUDE.md',
       line: 7,
-      column: 26,
-      // El `./` se recorta en la normalizacion (regla 5).
+      column: 24,
+      // The `./` is trimmed during normalization (rule 5).
       text: 'scripts/release.sh',
-      message: 'ruta no existe',
+      message: 'path does not exist',
     },
     {
       check: 'path/missing',
       severity: 'error',
       file: 'CLAUDE.md',
       line: 9,
-      column: 22,
-      text: 'public/imagenes/',
-      message: 'ruta no existe',
+      column: 20,
+      text: 'public/images/',
+      message: 'path does not exist',
     },
   ],
 }

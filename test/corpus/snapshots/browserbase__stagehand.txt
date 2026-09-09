@@ -1,14 +1,14 @@
 # browserbase/stagehand
 
-fuentes: 3
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 3
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  AGENTS.md
 agents-md  packages/integrations/cursor/AGENTS.md
 agents-md  packages/integrations/fx/AGENTS.md
 
 ## findings
-(ninguno)
+(none)

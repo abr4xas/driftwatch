@@ -1,12 +1,12 @@
 # prisma/prisma
 
-fuentes: 1
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 1
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  AGENTS.md
 
 ## findings
-(ninguno)
+(none)

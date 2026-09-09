@@ -1,11 +1,11 @@
 # vercel/next.js
 
-fuentes: 5
-errores: 0
-avisos: 0
-corregibles: 0
+sources: 5
+errors: 0
+warnings: 0
+fixable: 0
 
-## fuentes
+## sources
 agents-md  .github/AGENTS.md
 agents-md  AGENTS.md
 agents-md  packages/next/AGENTS.md
@@ -13,4 +13,4 @@ agents-md  test/AGENTS.md
 agents-md  turbopack/AGENTS.md
 
 ## findings
-(ninguno)
+(none)

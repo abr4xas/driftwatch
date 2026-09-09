@@ -2,7 +2,7 @@
   "name": "driftwatch",
   "version": "0.0.0",
   "private": true,
-  "description": "Encuentra las partes de tu CLAUDE.md, AGENTS.md y skills que ya no son ciertas",
+  "description": "Find the parts of your CLAUDE.md, AGENTS.md and skills that are no longer true",
   "license": "MIT",
   "type": "module",
   "bin": {

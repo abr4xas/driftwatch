@@ -1,182 +1,182 @@
-# driftwatch — Especificación funcional
+# driftwatch — Functional specification
 
-Todo lo que sigue describe **comportamiento observable**. La implementación está en `ARCHITECTURE.md`.
-
----
-
-## 1. Modelo conceptual
-
-driftwatch opera sobre tres conceptos:
-
-**Fuente (`Source`)** — un archivo de contexto de agente. Es lo que se audita.
-
-**Afirmación (`Claim`)** — un fragmento de una fuente que asegura algo verificable sobre el repo. Ejemplo: el texto `` `src/lib/auth.ts` `` en la línea 12 afirma que ese archivo existe.
-
-**Veredicto (`Verdict`)** — el resultado de verificar una afirmación: `ok`, `broken`, `suspect` o `skipped`.
-
-El trabajo de la herramienta es: descubrir fuentes → extraer afirmaciones → verificarlas → reportar.
+Everything below describes **observable behaviour**. The implementation is in `ARCHITECTURE.md`.
 
 ---
 
-## 2. Descubrimiento de fuentes
+## 1. Conceptual model
 
-Por defecto, desde la raíz del repo (el directorio con `.git`, o el cwd si no hay):
+driftwatch operates on three concepts:
 
-| Patrón | Tipo |
+**Source (`Source`)** — an agent context file. It is what gets audited.
+
+**Claim (`Claim`)** — a fragment of a source that asserts something verifiable about the repo. Example: the text `` `src/lib/auth.ts` `` on line 12 claims that file exists.
+
+**Verdict (`Verdict`)** — the result of verifying a claim: `ok`, `broken`, `suspect` or `skipped`.
+
+The tool's job is: discover sources → extract claims → verify them → report.
+
+---
+
+## 2. Source discovery
+
+By default, from the repo root (the directory holding `.git`, or the cwd if there is none):
+
+| Pattern | Kind |
 |---|---|
-| `CLAUDE.md`, `CLAUDE.local.md` (en cualquier directorio) | `claude-md` |
-| `AGENTS.md` (en cualquier directorio) | `agents-md` |
+| `CLAUDE.md`, `CLAUDE.local.md` (in any directory) | `claude-md` |
+| `AGENTS.md` (in any directory) | `agents-md` |
 | `.claude/skills/**/SKILL.md` | `skill` |
 | `.claude/agents/*.md` | `subagent` |
 | `.claude/commands/**/*.md` | `command` |
 | `.cursor/rules/**/*.mdc`, `.cursorrules` | `cursor-rule` |
 | `.github/copilot-instructions.md` | `copilot` |
 
-Reglas:
-- Se respeta `.gitignore`. Nunca se entra a `node_modules`, `dist`, `build`, `.next`, `vendor`, `target`.
-- Los archivos anidados se resuelven **relativos a su propio directorio**. Un `packages/api/CLAUDE.md` que menciona `src/db.ts` se refiere a `packages/api/src/db.ts`.
-- Argumentos posicionales limitan el alcance: `driftwatch CLAUDE.md .claude/skills` audita solo eso.
+Rules:
+- `.gitignore` is respected. `node_modules`, `dist`, `build`, `.next`, `vendor`, `target` are never walked into.
+- Nested files resolve **relative to their own directory**. A `packages/api/CLAUDE.md` mentioning `src/db.ts` refers to `packages/api/src/db.ts`.
+- Positional arguments narrow the scope: `driftwatch CLAUDE.md .claude/skills` audits only that.
 
 ---
 
 ## 3. Checks
 
-Cada check tiene un **id estable** (usado en config e ignores) y un **nivel de confianza** que determina si emite error o aviso.
+Every check has a **stable id** (used in config and ignores) and a **confidence level** that determines whether it emits an error or a warning.
 
-### Tier 1 — Alta confianza (emiten `error`)
+### Tier 1 — High confidence (emit `error`)
 
-Extraen afirmaciones sintácticamente inequívocas. Deben tener falsos positivos ~0.
+They extract syntactically unambiguous claims. They must have ~0 false positives.
 
 #### `path/missing`
-Una ruta que no existe en el repo.
+A path that does not exist in the repo.
 
-Se extrae de: código inline (`` `src/foo.ts` ``), links relativos de Markdown (`[x](./docs/y.md)`), y valores de frontmatter que sean rutas.
+Extracted from: inline code (`` `src/foo.ts` ``), relative Markdown links (`[x](./docs/y.md)`), and frontmatter values that are paths.
 
-Se considera ruta si cumple **alguna**:
-- Contiene `/` y un segmento final con extensión conocida.
-- Empieza con `./`, `../` o `/` y contiene `/`.
-- Termina en `/` (directorio).
+It counts as a path if **any** of these holds:
+- It contains `/` and a final segment with a known extension.
+- It starts with `./`, `../` or `/` and contains `/`.
+- It ends in `/` (a directory).
 
-Se **descarta** si: es una URL, contiene glob (`*`, `?`, `{`), contiene un placeholder (`<...>`, `{{...}}`, `$VAR`, `[nombre]`), o es una ruta absoluta fuera del repo.
+It is **discarded** if: it is a URL, contains a glob (`*`, `?`, `{`), contains a placeholder (`<...>`, `{{...}}`, `$VAR`, `[name]`), or is an absolute path outside the repo.
 
-Cuando falla, se busca un candidato por nombre de basename en el repo y se sugiere: `→ src/auth/index.ts?`. Si hay exactamente un candidato, es autofixable.
+When it fails, a candidate is looked up by basename in the repo and suggested: `→ src/auth/index.ts?`. If there is exactly one candidate, it is autofixable.
 
 #### `script/missing`
-Un comando de gestor de paquetes cuyo script no existe.
+A package manager command whose script does not exist.
 
-Detecta `npm run X`, `pnpm run X`, `pnpm X`, `yarn X`, `bun run X`, `deno task X`, `make X` en bloques de código y en código inline. Verifica contra `package.json#scripts` (el más cercano en el árbol, para monorepos), `Makefile`, o `deno.json#tasks`.
+Detects `npm run X`, `pnpm run X`, `pnpm X`, `yarn X`, `bun run X`, `deno task X`, `make X` in code blocks and in inline code. Verifies against `package.json#scripts` (the nearest one in the tree, for monorepos), `Makefile`, or `deno.json#tasks`.
 
-Si el script no existe pero hay uno con nombre parecido (distancia de edición ≤ 2), se sugiere y es autofixable.
+If the script does not exist but there is one with a similar name (edit distance ≤ 2), it is suggested and autofixable.
 
 #### `skill/frontmatter`
-Problemas estructurales en el frontmatter de un `SKILL.md`:
-- Falta `name` o `description`.
-- `name` no coincide con el nombre del directorio contenedor.
-- `name` no es kebab-case.
-- `description` vacía o de menos de 20 caracteres (una descripción pobre hace que la skill nunca se invoque).
-- Claves desconocidas en el frontmatter.
+Structural problems in a `SKILL.md` frontmatter:
+- Missing `name` or `description`.
+- `name` does not match the containing directory's name.
+- `name` is not kebab-case.
+- `description` empty or shorter than 20 characters (a poor description means the skill never gets invoked).
+- Unknown keys in the frontmatter.
 
 #### `link/broken`
-Un link relativo de Markdown a un archivo que no existe, o a un ancla (`#seccion`) que no existe en el archivo destino.
+A relative Markdown link to a file that does not exist, or to an anchor (`#section`) that does not exist in the target file.
 
 #### `frontmatter/invalid`
-YAML de frontmatter que no parsea, o campos con el tipo equivocado.
+Frontmatter YAML that does not parse, or fields with the wrong type.
 
-### Tier 2 — Confianza media (emiten `warning`)
+### Tier 2 — Medium confidence (emit `warning`)
 
-Requieren inferencia. Se activan por defecto pero son degradables a `off` en config.
+They require inference. They are on by default but can be degraded to `off` in config.
 
 #### `dep/missing`
-El texto nombra una tecnología que no está en el manifiesto del proyecto.
+The text names a technology that is not in the project manifest.
 
-Solo dispara con nombres de un **diccionario curado** de dependencias populares (`prisma`, `drizzle`, `tailwind`, `vitest`, `jest`, `playwright`, `zod`, `trpc`, …), y solo cuando el nombre aparece con un verbo de uso cerca (`usamos`, `we use`, `built with`, `powered by`) o en código inline. Verifica contra `package.json` (todas las secciones de deps), `requirements.txt`, `pyproject.toml`, `go.mod`, `Cargo.toml`.
+It only fires for names from a **curated dictionary** of popular dependencies (`prisma`, `drizzle`, `tailwind`, `vitest`, `jest`, `playwright`, `zod`, `trpc`, …), and only when the name appears with a usage verb nearby (`we use`, `built with`, `powered by`) or in inline code. Verifies against `package.json` (every deps section), `requirements.txt`, `pyproject.toml`, `go.mod`, `Cargo.toml`.
 
-Nunca dispara por una mención suelta en prosa sin marca de uso. Este check es el de mayor riesgo de falso positivo: ante la duda, no reportar.
+It never fires on a bare prose mention with no usage marker. This check carries the highest false positive risk: when in doubt, do not report.
 
 #### `symbol/missing`
-Un identificador referenciado como `` `funcionX()` `` o `` `ClaseY` `` que no aparece exportado en ningún archivo fuente.
+An identifier referenced as `` `functionX()` `` or `` `ClassY` `` that does not appear exported in any source file.
 
-Solo se aplica a identificadores en código inline con forma de símbolo (camelCase con paréntesis, o PascalCase). Búsqueda textual sobre archivos fuente, no análisis semántico. Si aparece en *cualquier* lugar del código, se considera `ok`.
+Only applies to identifiers in inline code with a symbol shape (camelCase with parentheses, or PascalCase). A textual search over source files, not semantic analysis. If it appears *anywhere* in the code, it counts as `ok`.
 
 #### `stale/churn`
-La fuente no se ha modificado desde hace N commits mientras que los archivos que menciona cambiaron mucho.
+The source has not been modified for N commits while the files it mentions changed a lot.
 
-Heurística: si un archivo mencionado tiene ≥ `staleThreshold` commits (default 15) posteriores al último commit que tocó la fuente, se avisa. Es una señal de "revisá esto", no una afirmación de error. Requiere git; se salta silenciosamente si no hay repo.
+Heuristic: if a mentioned file has ≥ `staleThreshold` commits (default 15) after the last commit that touched the source, a warning is emitted. It is a "review this" signal, not an assertion of error. Requires git; skipped silently if there is no repo.
 
 #### `command/unknown`
-Un comando de shell en un bloque de código cuyo binario no está en `PATH` ni en `node_modules/.bin` ni es un builtin conocido.
+A shell command in a code block whose binary is neither in `PATH` nor in `node_modules/.bin` nor a known builtin.
 
-Solo la primera palabra de la línea. Lista blanca amplia de builtins POSIX. Se salta bloques marcados con un lenguaje que no sea shell.
+Only the first word of the line. A broad allowlist of POSIX builtins. Blocks marked with a non-shell language are skipped.
 
 ---
 
-## 4. Interfaz de línea de comandos
+## 4. Command line interface
 
 ```
-driftwatch [paths...] [opciones]
+driftwatch [paths...] [options]
 
-Opciones
-  --fix                  Aplica las correcciones inequívocas
-  --json                 Salida JSON en stdout (ver §6)
+Options
+  --fix                  Apply the unambiguous fixes
+  --json                 JSON output on stdout (see §6)
   --format <fmt>         pretty | json | github | sarif   (default: pretty)
-  --only <ids>           Solo estos checks (coma-separados, acepta prefijo: --only path)
-  --skip <ids>           Excluye estos checks
-  --strict               Los warnings cuentan como errores para el exit code
-  --no-tier2             Desactiva todos los checks de tier 2
-  --config <ruta>        Ruta explícita al config
-  --no-config            Ignora cualquier config encontrado
-  --quiet                Solo muestra problemas, sin resumen
-  --watch                Re-ejecuta al cambiar cualquier fuente
-  --init                 Escribe un driftwatch.config.ts comentado
+  --only <ids>           Only these checks (comma-separated, accepts a prefix: --only path)
+  --skip <ids>           Exclude these checks
+  --strict               Warnings count as errors for the exit code
+  --no-tier2             Turn off every tier 2 check
+  --config <path>        Explicit path to the config
+  --no-config            Ignore any config found
+  --quiet                Show problems only, no summary
+  --watch                Re-run whenever a source changes
+  --init                 Write a commented driftwatch.config.ts
   --version, -v
   --help, -h
 ```
 
-Sin argumentos: audita todo el repo con la configuración por defecto.
+With no arguments: audit the whole repo with the default configuration.
 
 ### Exit codes
 
-| Code | Significado |
+| Code | Meaning |
 |---|---|
-| `0` | Sin errores (puede haber warnings, salvo `--strict`) |
-| `1` | Se encontró al menos un error |
-| `2` | Fallo de la propia herramienta (config inválido, ruta inexistente, crash) |
+| `0` | No errors (there may be warnings, unless `--strict`) |
+| `1` | At least one error was found |
+| `2` | The tool itself failed (invalid config, nonexistent path, crash) |
 
-Con `--fix`, el exit code refleja lo que **queda** después de corregir.
+With `--fix`, the exit code reflects what **remains** after fixing.
 
 ---
 
-## 5. Salida `pretty`
+## 5. `pretty` output
 
 ```
 CLAUDE.md
-  ✗ 12  src/lib/auth.ts                  ruta no existe  → src/auth/index.ts?
-  ✗ 34  pnpm run test:e2e                script no existe en package.json
-  ⚠ 51  "usamos Prisma para el ORM"      no está en dependencies
+  ✗ 12  src/lib/auth.ts                  path does not exist  → src/auth/index.ts?
+  ✗ 34  pnpm run test:e2e                script not in package.json
+  ⚠ 51  "we use Prisma as the ORM"       not in dependencies
 
-2 archivos · 5 problemas (4 errores, 1 aviso) · 340ms
+2 files · 5 problems (4 errors, 1 warning) · 340ms
 ```
 
-Reglas de formato:
-- Agrupado por archivo, ordenado por línea.
-- `file:line` debe ser clickeable en terminales modernas (formato `archivo:línea:columna` en la ruta del encabezado cuando `--no-group`).
-- Colores: rojo para error, amarillo para warning, dim para sugerencias. Se desactivan si `NO_COLOR` está seteado o si stdout no es TTY.
-- El fragmento citado se trunca a 40 caracteres con `…`.
-- Si no hay problemas: `✓ 14 archivos · sin drift · 210ms`.
-- Sin emojis. Símbolos `✗ ⚠ ✓` solamente.
-- Cuando hay autofixes disponibles, cerrar con: `3 corregibles con --fix`.
+Formatting rules:
+- Grouped by file, ordered by line.
+- `file:line` must be clickable in modern terminals (`file:line:column` format on the header path when `--no-group`).
+- Colors: red for errors, yellow for warnings, dim for suggestions. Turned off if `NO_COLOR` is set or if stdout is not a TTY.
+- The quoted fragment is truncated to 40 characters with `…`.
+- With no problems: `✓ 14 files · no drift · 210ms`.
+- No emojis. Only the `✗ ⚠ ✓` symbols.
+- When autofixes are available, close with: `3 fixable with --fix`.
 
-### Formato `github`
-Emite `::error file=X,line=Y::mensaje` para anotaciones nativas en GitHub Actions.
+### `github` format
+Emits `::error file=X,line=Y::message` for native GitHub Actions annotations.
 
-### Formato `sarif`
-SARIF 2.1.0 para subir a GitHub Code Scanning.
+### `sarif` format
+SARIF 2.1.0, for upload to GitHub Code Scanning.
 
 ---
 
-## 6. Salida JSON
+## 6. JSON output
 
-Contrato estable. Cambios rompientes solo en major.
+Stable contract. Breaking changes only on a major.
 
 ```jsonc
 {
@@ -193,90 +193,90 @@ Contrato estable. Cambios rompientes solo en major.
       "column": 4,
       "endColumn": 19,
       "text": "src/lib/auth.ts",
-      "message": "ruta no existe",
+      "message": "path does not exist",
       "suggestion": { "value": "src/auth/index.ts", "confidence": 0.86, "fixable": true }
     }
   ]
 }
 ```
 
-`file` siempre relativo a `root`. `line` y `column` son 1-indexados.
+`file` is always relative to `root`. `line` and `column` are 1-indexed.
 
 ---
 
-## 7. Configuración
+## 7. Configuration
 
-Opcional. Se busca `driftwatch.config.ts`, `.js`, `.json`, o la clave `driftwatch` en `package.json`.
+Optional. `driftwatch.config.ts`, `.js`, `.json`, or the `driftwatch` key in `package.json` is looked up.
 
 ```ts
 import { defineConfig } from 'driftwatch'
 
 export default defineConfig({
-  // Fuentes adicionales más allá de las descubiertas por defecto
+  // Additional sources beyond the ones discovered by default
   sources: ['docs/agent-notes.md'],
 
-  // Excluir del descubrimiento
+  // Exclude from discovery
   ignore: ['**/fixtures/**'],
 
-  // Ajustar severidad por check: 'error' | 'warning' | 'off'
+  // Adjust severity per check: 'error' | 'warning' | 'off'
   checks: {
     'dep/missing': 'off',
     'stale/churn': 'warning',
     'symbol/missing': 'error',
   },
 
-  // Alias para rutas que existen pero no en disco (ej. rutas de build)
+  // Aliases for paths that exist but not on disk (e.g. build outputs)
   knownPaths: ['dist/**', '.next/**'],
 
   staleThreshold: 15,
 })
 ```
 
-### Ignores en línea
+### Inline ignores
 
-Dentro de cualquier fuente Markdown:
+Inside any Markdown source:
 
 ```markdown
 <!-- driftwatch-ignore-next-line -->
-`src/planned/feature.ts` todavía no existe, es el plan
+`src/planned/feature.ts` does not exist yet, it is the plan
 
 <!-- driftwatch-ignore path/missing -->
 <!-- driftwatch-ignore-file -->
 ```
 
-Un ignore sin id aplica a todos los checks de esa línea. Con id, solo a ese check.
+An ignore with no id applies to every check on that line. With an id, only to that check.
 
 ---
 
-## 8. Comportamiento de `--fix`
+## 8. `--fix` behaviour
 
-Solo se aplica cuando la corrección es **inequívoca**: existe exactamente un candidato y su confianza supera 0.8.
+It only applies when the correction is **unambiguous**: there is exactly one candidate and its confidence is above 0.8.
 
 Autofixable:
-- `path/missing` con un único candidato por basename.
-- `script/missing` con un único script a distancia de edición ≤ 2.
-- `skill/frontmatter`: `name` que no coincide con el directorio (se corrige al del directorio).
-- `link/broken` con un único destino candidato.
+- `path/missing` with a single candidate by basename.
+- `script/missing` with a single script at edit distance ≤ 2.
+- `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's).
+- `link/broken` with a single candidate target.
 
-Nunca autofixable: cualquier check de tier 2, y cualquier caso con más de un candidato.
+Never autofixable: any tier 2 check, and any case with more than one candidate.
 
-Reglas:
-- Preserva el formato original del archivo. Solo reemplaza el rango exacto de la afirmación.
-- Imprime un diff resumido de lo aplicado.
-- Con `--fix --dry-run`, muestra el diff sin escribir.
-- Si el working tree tiene cambios sin commitear en un archivo a modificar, avisa pero procede (no es una herramienta de git).
+Rules:
+- Preserves the file's original formatting. Only the claim's exact range is replaced.
+- Prints a summarized diff of what was applied.
+- With `--fix --dry-run`, shows the diff without writing.
+- If the working tree has uncommitted changes in a file to be modified, it warns but proceeds (this is not a git tool).
 
 ---
 
-## 9. Rendimiento
+## 9. Performance
 
-Presupuesto, medido en un repo de 5.000 archivos con 20 fuentes:
+Budget, measured on a repo of 5,000 files with 20 sources:
 
-| Fase | Budget |
+| Phase | Budget |
 |---|---|
-| Descubrimiento + índice del repo | < 200 ms |
-| Parseo de fuentes | < 50 ms |
-| Verificación (todos los checks tier 1) | < 100 ms |
+| Discovery + repo index | < 200 ms |
+| Source parsing | < 50 ms |
+| Verification (all tier 1 checks) | < 100 ms |
 | **Total end-to-end** | **< 500 ms** |
 
-El arranque en frío del CLI (require + parse de args) debe estar bajo 80 ms. Esto excluye dependencias pesadas en el camino principal: nada de `typescript`, `ts-morph`, ni `esbuild` cargados eagerly.
+CLI cold start (require + arg parsing) has to stay under 80 ms. That rules out heavy dependencies on the main path: no `typescript`, `ts-morph` or `esbuild` loaded eagerly.
