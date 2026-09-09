@@ -18,7 +18,12 @@ Esto aplica especialmente al extractor de rutas (`docs/spec/ARCHITECTURE.md` § 
 
 ## Orden de trabajo
 
-Seguí los milestones de `docs/spec/ROADMAP.md` en orden. **M1 es la puerta:** si la tasa de falsos positivos sobre repos reales no baja del 5%, no avances a M2 — volvé a las heurísticas. Es preferible un proyecto con un solo check excelente que uno con ocho checks ruidosos.
+Seguí los milestones de `docs/spec/ROADMAP.md` en orden. **M1 es la puerta:** si no se cumple el criterio de precisión de `docs/adr/0006-el-criterio-de-precision-de-m1.md`, no avances a M2 — volvé a las heurísticas. Es preferible un proyecto con un solo check excelente que uno con ocho checks ruidosos.
+
+Dos cosas de ese criterio que ordenan el trabajo diario:
+
+- **Cero falsos positivos autofixables**, sin tasa que lo module. Un finding dudoso que alguien lee y descarta es una molestia; un `--fix` que reescribe el documento apuntando a un archivo equivocado hace que el próximo agente actúe sobre una mentira con confianza.
+- **La precisión se mide fuera de muestra.** Ajustar heurísticas mirando un corpus y después medir sobre ese mismo corpus no mide precisión, mide cuánto ajustaste. `scripts/corpus.ts` separa calibración de validación; si usás los findings de un repo de validación para cambiar una regla, ese repo pasa a calibración y hay que sumar otro.
 
 Los tickets de trabajo viven en `.scratch/<feature>/issues/`. Ver `docs/agents/issue-tracker.md`.
 

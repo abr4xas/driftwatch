@@ -26,7 +26,16 @@ Cada milestone tiene criterios de aceptación verificables. No se avanza al sigu
 - Sugerencias por basename con scoring de confianza
 - Fixture `false-positive-traps` en verde con **cero findings**
 
-**Aceptación:** corriendo sobre un corpus de ≥10 repos públicos reales, la tasa de falsos positivos revisada a mano es < 5%. Si no se cumple, no se avanza — se ajustan las heurísticas.
+**Aceptación:** ver [ADR-0006](../adr/0006-el-criterio-de-precision-de-m1.md), que reemplaza el criterio original de "< 5% de falsos positivos". Ese criterio se midió y resultó no ser medible: una herramienta precisa produce pocos findings, y con 9 findings un solo falso positivo ya es 11%.
+
+El criterio vigente tiene cuatro partes, y las cuatro se cumplen o M1 no cierra:
+
+- **Piso duro:** fixture `false-positive-traps` en cero, y **cero falsos positivos entre los findings `fixable`**. Un autofix equivocado no es ruido, es corrupción del documento.
+- **Forma de una corrida:** mediana de falsos positivos por repo 0, percentil 90 ≤ 1, ninguno > 2.
+- **Utilidad:** precisión agregada ≥ 80% fuera de muestra, y ≥ 1 verdadero positivo por cada 3 repos, para que el silencio no alcance para pasar.
+- **Metodología:** corpus de ≥20 repos con ≥8 en un grupo de validación que no se miró para ajustar heurísticas.
+
+Si no se cumple, no se avanza — se ajustan las heurísticas, o se acepta que el check no llega y se dice.
 
 Este es el milestone que decide si el proyecto vale la pena. Todo lo demás es incremental.
 

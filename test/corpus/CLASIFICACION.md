@@ -4,6 +4,32 @@ Revisión a mano de cada finding contra el repo real. Fecha: 2026-09-09.
 
 Corpus: **24 repos públicos fijados a un commit, 111 fuentes de contexto.**
 
+## Evaluación contra el criterio vigente
+
+El criterio de "< 5% de falsos positivos" se reemplazó por [ADR-0006](../../docs/adr/0006-el-criterio-de-precision-de-m1.md), porque se midió y resultó no ser medible. Estado de las nueve condiciones:
+
+| # | Condición | Medido | Estado |
+|---|---|---|---|
+| 1 | Fixture `false-positive-traps` en cero | 0 findings | **cumple** |
+| 2 | Cero falsos positivos entre findings `fixable` | 0 findings `fixable` en todo el corpus | **cumple** |
+| 3 | Mediana de FP por repo = 0 | 0 | **cumple** |
+| 4 | Percentil 90 de FP por repo ≤ 1 | 0 | **cumple** |
+| 5 | Ningún repo con más de 2 FP | máximo 1 (`spec-kit`) | **cumple** |
+| 6 | Precisión agregada ≥ 80% fuera de muestra | el grupo de validación vigente produce 0 findings | **no medible** |
+| 7 | ≥ 1 verdadero positivo por cada 3 repos | 8 verdaderos sobre 24 repos = 1 cada 3.0 | **cumple, justo en el límite** |
+| 8 | ≥ 20 repos, con ≥ 8 en validación | 24 repos, pero sólo 3 en validación | **no cumple** |
+| 9 | Regla de contaminación codificada | campo `holdout` en `scripts/corpus.ts` | **cumple** |
+
+**Siete de nueve se cumplen. M1 sigue sin cerrar**, ahora por la condición 8: el grupo de validación tiene 3 repos y el criterio pide 8. De las tres rondas de validación, las dos primeras quedaron contaminadas al derivar reglas de sus findings, y la tercera no alcanza sola.
+
+La condición 6 no es medible mientras el grupo de validación no produzca findings. No es un problema: una vez que el grupo llegue a 8 repos, o produce findings y se mide, o no produce ninguno y entonces lo que hay que revisar es la condición 7.
+
+La condición 2 es la que más se ganó al revisar el criterio, y el original no la mencionaba: **ningún falso positivo del corpus llegó a marcarse autofixable.** Los tres niveles de confianza del ticket 07 y el umbral de 0.8 de `SPEC.md` § 8 están haciendo su trabajo.
+
+La condición 7 pasa exactamente en el límite, y vale decirlo: si se agregan los 5 repos que faltan para validación y ninguno produce un verdadero positivo, el ratio cae por debajo del piso y la que falla es la cobertura, no la precisión.
+
+---
+
 ## El número que importa
 
 Las heurísticas se ajustaron mirando findings de repos concretos. Medir precisión sobre ese mismo material no mide precisión: mide cuánto se ajustó. Así que el corpus está partido en dos, y hubo **tres rondas de validación**, cada una con repos que nunca se miraron antes de medir.

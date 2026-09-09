@@ -6,7 +6,7 @@ Un fixture verde no prueba nada sobre falsos positivos. Esto sí.
 
 **Blocked by:** 06, 07, 08, 09
 
-**Status:** NO CERRADO — la puerta del 5% no se cumple
+**Status:** NO CERRADO — faltan 5 repos de validación (criterio nuevo: ADR-0006)
 
 - [x] `scripts/corpus.ts` clona una lista versionada de **≥10 repos públicos** con archivos de contexto de agente reales
 - [x] Los clones viven en `test/corpus/` y están gitignoreados; la lista de repos y los snapshots sí se commitean
@@ -65,3 +65,11 @@ Seguir agregando una regla por clase mientras re-mido es la trampa del sobreajus
 Los clones se borraron después de generar los snapshots: son cache reconstruible con `pnpm corpus` y ocupaban 2.8 GB. Los snapshots y la clasificación quedan commiteados.
 
 En la última corrida `colinhacks/zod` falló al clonar (transitorio) y se salteó, así que los snapshots cubren 23 de los 24 repos de la lista.
+
+## El criterio se revisó
+
+A pedido del usuario, el criterio de "< 5% de falsos positivos" se reemplazó por [ADR-0006](../../../docs/adr/0006-el-criterio-de-precision-de-m1.md). El original no era estricto de más ni de menos: **no era medible**. Una herramienta precisa produce pocos findings, y con 9 findings un solo falso positivo ya es 11%; para distinguir 5% de 6% harían falta 20 findings, que es la enfermedad que el criterio pretendía prevenir.
+
+El criterio nuevo cambia la forma, no sólo el número: cuenta por repo en vez de globalmente, separa un piso duro para los falsos positivos **autofixables** (que no son ruido sino corrupción del documento), agrega un piso de cobertura para que el silencio no alcance, y exige que la medición sea fuera de muestra.
+
+**Siete de las nueve condiciones ya se cumplen.** Falta la 8: el grupo de validación tiene 3 repos y el criterio pide 8. La tabla completa está en `test/corpus/CLASIFICACION.md`.
