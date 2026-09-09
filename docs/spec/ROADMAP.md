@@ -1,0 +1,102 @@
+# driftwatch — Roadmap
+
+Cada milestone tiene criterios de aceptación verificables. No se avanza al siguiente sin cerrarlos.
+
+---
+
+## M0 — Esqueleto ejecutable
+**Objetivo:** `npx driftwatch` corre y no hace nada útil, pero corre.
+
+- Repo TS/ESM, build con tsdown, `bin` apuntando al CLI compilado
+- `--help`, `--version`, exit codes 0/1/2
+- Descubrimiento de fuentes (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`) respetando `.gitignore`
+- Reporter `pretty` con el resumen final
+- CI: lint + typecheck + test en Node 20 y 22
+
+**Aceptación:** en este mismo repo, `driftwatch` lista las fuentes encontradas y sale con 0 en menos de 300 ms.
+
+---
+
+## M1 — El check que justifica el proyecto
+**Objetivo:** `path/missing` funcionando con precisión real.
+
+- Parseo mdast con posiciones
+- Extractor de rutas con las 7 reglas de descarte de `ARCHITECTURE.md`
+- `RepoIndex` construido con `git ls-files`, fallback a glob
+- Sugerencias por basename con scoring de confianza
+- Fixture `false-positive-traps` en verde con **cero findings**
+
+**Aceptación:** corriendo sobre un corpus de ≥10 repos públicos reales, la tasa de falsos positivos revisada a mano es < 5%. Si no se cumple, no se avanza — se ajustan las heurísticas.
+
+Este es el milestone que decide si el proyecto vale la pena. Todo lo demás es incremental.
+
+---
+
+## M2 — Los otros checks de tier 1
+- `script/missing` con resolución de `package.json` más cercano (monorepo)
+- `skill/frontmatter` completo
+- `link/broken` incluyendo anclas
+- `frontmatter/invalid`
+- Directivas de ignore en línea
+- Config file + `--only` / `--skip` / `--no-tier2`
+
+**Aceptación:** el fixture `monorepo` pasa. Los cuatro checks tienen fixture propio con casos positivos y negativos.
+
+---
+
+## M3 — Autofix
+- `fix/apply.ts` con edición por rangos de offset, preservando formato
+- `--fix`, `--fix --dry-run` con diff
+- Solo aplica sobre confianza > 0.8 y candidato único
+
+**Aceptación:** aplicar `--fix` sobre un fixture roto lo deja idéntico a su versión correcta, byte a byte. Correr `--fix` dos veces es idempotente.
+
+---
+
+## M4 — Presentable
+Lo que convierte una herramienta que funciona en un proyecto que alguien adopta.
+
+- README con GIF de ≤15 s arriba de todo, antes de cualquier texto
+- Formatos `--json`, `--github`, `--sarif`
+- GitHub Action publicada (`driftwatch/action@v1`)
+- Sitio estático de una página en Vercel con demo y el GIF
+- Publicado en npm con provenance (`npm publish --provenance`)
+- Licencia MIT
+
+**Aceptación:** una persona que nunca vio el proyecto entiende qué hace en menos de 15 segundos mirando solo el README.
+
+---
+
+## M5 — Tier 2
+- `dep/missing` con diccionario curado
+- `symbol/missing`
+- `stale/churn` con git
+- `command/unknown`
+
+**Aceptación:** cada uno se puede apagar por config, y ninguno sube la tasa de falsos positivos del corpus por encima del 10% agregado.
+
+---
+
+## M6 — Loop diario
+- `--watch`
+- Extensión de VS Code que subraya el drift en vivo en `CLAUDE.md`
+- Hook de pre-commit opcional (`driftwatch --only path,script --strict`)
+
+---
+
+## Fuera de alcance (decidido, no pendiente)
+
+- Modo LLM para verificar afirmaciones de prosa. Rompe el determinismo y el presupuesto de latencia. Si se explora alguna vez, es un comando aparte (`driftwatch review`), nunca el default.
+- Sistema de plugins de terceros.
+- Servicio hosted, dashboard, o cualquier cosa con cuenta.
+- Soporte para formatos de contexto de agente que no existan todavía.
+
+---
+
+## Orden de publicación sugerido
+
+No esperar a M6 para mostrar el proyecto. La cadencia visible es parte de lo que hace que alguien confíe en la herramienta.
+
+1. Publicar en npm al cerrar **M2** — ya es útil.
+2. Post de lanzamiento con el GIF al cerrar **M4**.
+3. Sostener commits durante meses, no un sprint de una semana.
