@@ -1,0 +1,34 @@
+{
+  "name": "driftwatch",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Encuentra las partes de tu CLAUDE.md, AGENTS.md y skills que ya no son ciertas",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "driftwatch": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src test",
+    "test": "vitest run"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "oxlint": "^1.82.0",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}
