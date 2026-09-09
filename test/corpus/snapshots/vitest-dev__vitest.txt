@@ -1,0 +1,17 @@
+# vitest-dev/vitest
+
+fuentes: 6
+errores: 0
+avisos: 0
+corregibles: 0
+
+## fuentes
+subagent  .claude/agents/vitest-test-writer.md
+skill  .claude/skills/typo-checker/SKILL.md
+copilot  .github/copilot-instructions.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+agents-md  docs/AGENTS.md
+
+## findings
+(ninguno)

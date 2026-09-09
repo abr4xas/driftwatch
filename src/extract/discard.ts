@@ -79,12 +79,22 @@ const METASINTACTICOS = new Set(['foo', 'bar', 'baz', 'qux', 'quux', 'fulano', '
  */
 const PLACEHOLDER_MAYUSCULAS = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
 
+/**
+ * Nombres de relleno con prefijo posesivo, que le piden al lector que ponga el
+ * suyo.
+ * Evita: `perf/memory/src/profile/your_profile.rs` en tursodatabase/turso, que
+ * el documento pide crear.
+ */
+const PLACEHOLDER_POSESIVO = /^(your|my|tu|mi|su|myapp|mycompany)[-_]/iu
+
 function tieneSegmentoMetasintactico(text: string): boolean {
   return text
     .split('/')
     .some(
       (segment) =>
-        METASINTACTICOS.has(segment.toLowerCase()) || PLACEHOLDER_MAYUSCULAS.test(segment),
+        METASINTACTICOS.has(segment.toLowerCase()) ||
+        PLACEHOLDER_MAYUSCULAS.test(segment) ||
+        PLACEHOLDER_POSESIVO.test(segment),
     )
 }
 

@@ -1,7 +1,7 @@
 # tursodatabase/turso
 
-fuentes: 15
-errores: 4
+fuentes: 14
+errores: 3
 avisos: 0
 corregibles: 0
 
@@ -20,10 +20,8 @@ skill  .claude/skills/testing/SKILL.md
 skill  .claude/skills/transaction-correctness/SKILL.md
 skill  .claude/skills/yield-injections/SKILL.md
 agents-md  AGENTS.md
-claude-md  CLAUDE.md
 
 ## findings
 .claude/skills/cdc/SKILL.md:158:24  [path/missing] inline-code  core/translate/emitter.rs
 .claude/skills/cdc/SKILL.md:242:15  [path/missing] inline-code  core/translate/emitter.rs
 .claude/skills/cdc/SKILL.md:246:15  [path/missing] inline-code  core/translate/emitter.rs
-.claude/skills/memory-benchmark/SKILL.md:290:12  [path/missing] inline-code  perf/memory/src/profile/your_profile.rs

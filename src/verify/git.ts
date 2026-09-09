@@ -56,3 +56,23 @@ export async function gitIgnoredPaths(
 
   return ignored
 }
+
+/**
+ * `owner/repo` del remoto `origin`, o `undefined` si no hay.
+ *
+ * Sirve para una sola cosa: saber cuando un documento esta hablando de **otro**
+ * repositorio. Un `AGENTS.md` que dice "estas skills viven en
+ * [prisma/ignite](https://github.com/prisma/ignite) (`skills/.pilot/`)" no
+ * afirma que `skills/.pilot/` exista aca.
+ */
+export async function originSlug(root: string): Promise<string | undefined> {
+  try {
+    const { stdout } = await run('git', ['-C', root, 'remote', 'get-url', 'origin'], {
+      encoding: 'utf8',
+    })
+    const match = /[/:]([^/:]+\/[^/]+?)(?:\.git)?\s*$/u.exec(stdout.trim())
+    return match?.[1]?.toLowerCase()
+  } catch {
+    return undefined
+  }
+}

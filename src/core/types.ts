@@ -21,6 +21,13 @@ export type Source = {
    * Es '' para una fuente en la raiz.
    */
   baseDir: string
+  /**
+   * Otras rutas con contenido byte a byte identico a esta, en el mismo
+   * directorio. Es comun tener `AGENTS.md` y `CLAUDE.md` como copias: auditar
+   * las dos reporta el mismo problema dos veces, que es la forma mas facil de
+   * que la salida parezca el doble de ruidosa de lo que es.
+   */
+  aliases: readonly string[]
 }
 
 export type ClaimKind = 'path' | 'script' | 'dep' | 'symbol' | 'link' | 'frontmatter'

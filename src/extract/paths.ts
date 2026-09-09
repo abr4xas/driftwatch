@@ -141,6 +141,8 @@ export type ExtractContext = {
   doc: ParsedDoc
   frontmatter: Frontmatter | undefined
   table: LineTable
+  /** `owner/repo` de este repo, para reconocer cuando la prosa habla de otro. */
+  origin: string | undefined
 }
 
 /**
@@ -176,7 +178,13 @@ function decodeTarget(target: string): string {
  * El cuerpo de los bloques de codigo no se escanea a proposito: una ruta dentro
  * de un ejemplo de shell es parte del ejemplo, no una afirmacion sobre el repo.
  */
-export function extractPathClaims({ source, doc, frontmatter, table }: ExtractContext): Claim[] {
+export function extractPathClaims({
+  source,
+  doc,
+  frontmatter,
+  table,
+  origin,
+}: ExtractContext): Claim[] {
   const claims: Claim[] = []
 
   const push = (
@@ -205,14 +213,14 @@ export function extractPathClaims({ source, doc, frontmatter, table }: ExtractCo
   for (const span of doc.inlineCode) {
     // Regla 8: la linea puede estar diciendo que esto es un ejemplo, o que la
     // ruta puede no existir. En los dos casos no hay afirmacion que verificar.
-    if (proseDisclaims(lineAround(source.content, span.offset[0]))) continue
+    if (proseDisclaims(lineAround(source.content, span.offset[0]), { origin })) continue
     push(span.value, span.value, span.offset, 'inline-code')
   }
 
   for (const link of doc.links) {
     const target = withoutAnchor(link.value)
     if (target === undefined) continue
-    if (proseDisclaims(lineAround(source.content, link.offset[0]))) continue
+    if (proseDisclaims(lineAround(source.content, link.offset[0]), { origin })) continue
     // El offset sigue apuntando a la url completa, ancla incluida, porque es
     // lo que hay escrito en el archivo y lo que --fix tendria que reemplazar.
     push(link.value, decodeTarget(target), link.offset, 'link')

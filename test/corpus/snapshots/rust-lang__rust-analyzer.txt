@@ -1,4 +1,4 @@
-# langchain-ai/langchain
+# rust-lang/rust-analyzer
 
 fuentes: 1
 errores: 0

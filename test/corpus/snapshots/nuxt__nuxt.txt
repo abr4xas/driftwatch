@@ -1,12 +1,13 @@
-# langchain-ai/langchain
+# nuxt/nuxt
 
-fuentes: 1
+fuentes: 2
 errores: 0
 avisos: 0
 corregibles: 0
 
 ## fuentes
 agents-md  AGENTS.md
+claude-md  CLAUDE.md
 
 ## findings
 (ninguno)

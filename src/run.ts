@@ -7,7 +7,7 @@ import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
 import type { CheckContext } from './verify/check.ts'
 import { CHECKS, CHECK_IDS } from './verify/checks/index.ts'
-import { gitIgnoredPaths } from './verify/git.ts'
+import { gitIgnoredPaths, originSlug } from './verify/git.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
 import { resolveInRepo } from './verify/resolve.ts'
 
@@ -28,11 +28,11 @@ export type RunResult = {
   durationMs: number
 }
 
-function claimsFor(source: Source): Claim[] {
+function claimsFor(source: Source, origin: string | undefined): Claim[] {
   const doc = parseMarkdown(source.content)
   const frontmatter = parseFrontmatter(source.content)
   const table = buildLineTable(source.content)
-  return extractPathClaims({ source, doc, frontmatter, table })
+  return extractPathClaims({ source, doc, frontmatter, table, origin })
 }
 
 function verify(claims: readonly Claim[], ctx: CheckContext): Finding[] {
@@ -104,7 +104,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const index = await buildRepoIndex(root)
   const sources = await discoverSources(index, { paths: options.paths })
 
-  const claims = sources.flatMap(claimsFor)
+  const origin = await originSlug(root)
+  const claims = sources.flatMap((source) => claimsFor(source, origin))
 
   // Se le pregunta a git por todas las rutas candidatas de una sola vez, antes
   // de correr los checks: una ruta que git ignora no se puede afirmar faltante.

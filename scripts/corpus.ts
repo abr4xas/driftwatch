@@ -73,10 +73,21 @@ const CORPUS: readonly CorpusRepo[] = [
   { repo: 'unjs/nitro', sha: '3b8980bb824e8552053426243a4755a71a44b377' },
   { repo: 'colinhacks/zod', sha: '36f17960d1defca5d0896d9424f4e1059fbbf081' },
 
-  // --- Validacion, segunda ronda: nunca mirados para ajustar nada ---
-  { repo: 'charmbracelet/crush', sha: 'aee8760458b9b7eaeb58655aee150e3ffef21cd0', holdout: true },
-  { repo: 'tursodatabase/turso', sha: '85e234697d687d4482b693483ac13fb6c93ae99d', holdout: true },
-  { repo: 'sveltejs/svelte', sha: 'ce89035ecbf88ee131838527d29584b968d450fb', holdout: true },
+  // Fueron validacion en la segunda ronda. De uno de sus findings salio la
+  // regla de nombres de relleno posesivos y la de instrucciones de crear, asi
+  // que tambien pasaron a calibracion.
+  { repo: 'charmbracelet/crush', sha: 'aee8760458b9b7eaeb58655aee150e3ffef21cd0' },
+  { repo: 'tursodatabase/turso', sha: '85e234697d687d4482b693483ac13fb6c93ae99d' },
+  { repo: 'sveltejs/svelte', sha: 'ce89035ecbf88ee131838527d29584b968d450fb' },
+
+  // --- Validacion, tercera ronda: nunca mirados para ajustar nada ---
+  { repo: 'vitest-dev/vitest', sha: 'c119be016295b45a005e2a36367ea7d133b4f385', holdout: true },
+  {
+    repo: 'rust-lang/rust-analyzer',
+    sha: 'f3120321073d8046795c6824976be8b0ae92c999',
+    holdout: true,
+  },
+  { repo: 'nuxt/nuxt', sha: '03e9df01a1256d214ac5c5c14514f95803ecb244', holdout: true },
 ]
 
 const HERE = dirname(fileURLToPath(import.meta.url))

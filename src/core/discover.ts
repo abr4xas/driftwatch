@@ -90,7 +90,7 @@ export async function discoverSources(
   // corrida tras corrida para que un snapshot del corpus signifique algo.
   matched.sort((a, b) => a.path.localeCompare(b.path))
 
-  return Promise.all(
+  const read = await Promise.all(
     matched.map(async ({ path, kind }) => {
       const absPath = join(index.root, path)
       const slash = path.lastIndexOf('/')
@@ -100,7 +100,39 @@ export async function discoverSources(
         kind,
         content: await readFile(absPath, 'utf8'),
         baseDir: slash === -1 ? '' : path.slice(0, slash),
-      } satisfies Source
+        aliases: [] as string[],
+      }
     }),
   )
+
+  return collapseDuplicates(read)
+}
+
+/**
+ * Junta las fuentes que son copias byte a byte dentro del mismo directorio.
+ *
+ * `AGENTS.md` y `CLAUDE.md` identicos son la norma, no la excepcion: sobre el
+ * corpus de repos reales, 4 de 13 findings eran el mismo problema contado dos
+ * veces. Se audita una y las demas quedan como alias, que el reporter nombra.
+ *
+ * Gana la primera en orden alfabetico, que deja `AGENTS.md` antes que
+ * `CLAUDE.md`.
+ */
+function collapseDuplicates(sources: readonly Source[]): Source[] {
+  const byContent = new Map<string, Source & { aliases: string[] }>()
+  const out: Array<Source & { aliases: string[] }> = []
+
+  for (const source of sources) {
+    const key = `${source.baseDir}\u0000${source.content}`
+    const first = byContent.get(key)
+    if (first === undefined) {
+      const copy = { ...source, aliases: [] as string[] }
+      byContent.set(key, copy)
+      out.push(copy)
+      continue
+    }
+    first.aliases.push(source.path)
+  }
+
+  return out
 }

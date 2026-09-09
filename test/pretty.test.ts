@@ -8,7 +8,7 @@ import type { Claim, Finding, Source } from '../src/core/types.ts'
 const ESC = '['
 
 function source(path: string, kind: Source['kind'] = 'claude-md'): Source {
-  return { path, absPath: `/repo/${path}`, kind, content: '', baseDir: '' }
+  return { path, absPath: `/repo/${path}`, kind, content: '', baseDir: '', aliases: [] }
 }
 
 function claim(file: string, line: number, text: string): Claim {

@@ -43,7 +43,16 @@ function groupByFile(findings: readonly Finding[]): Map<string, Finding[]> {
   return groups
 }
 
-function renderGroup(file: string, findings: readonly Finding[], c: Colors): string {
+/** El encabezado del grupo, nombrando las copias identicas si las hay. */
+function headerFor(findings: readonly Finding[], c: Colors): string {
+  const source = findings[0]?.claim.source
+  const file = source?.path ?? ''
+  const aliases = source?.aliases ?? []
+  if (aliases.length === 0) return c.bold(file)
+  return `${c.bold(file)} ${c.dim(`(y ${aliases.join(', ')}, identicos)`)}`
+}
+
+function renderGroup(findings: readonly Finding[], c: Colors): string {
   const lineWidth = Math.max(...findings.map((f) => String(f.claim.range.line).length))
   const textWidth = Math.max(...findings.map((f) => truncate(f.claim.text).length))
 
@@ -57,7 +66,7 @@ function renderGroup(file: string, findings: readonly Finding[], c: Colors): str
     })
     .join('')
 
-  return `${c.bold(file)}\n${rows}\n`
+  return `${headerFor(findings, c)}\n${rows}\n`
 }
 
 function summary(result: RunResult, c: Colors): string {
@@ -79,7 +88,7 @@ function summary(result: RunResult, c: Colors): string {
 export function renderPretty(result: RunResult, options: PrettyOptions): string {
   const c = colorsFor(options.color)
   const body = [...groupByFile(result.findings)]
-    .map(([file, findings]) => renderGroup(file, findings, c))
+    .map(([, findings]) => renderGroup(findings, c))
     .join('')
   return options.quiet ? body : `${body}${summary(result, c)}`
 }
