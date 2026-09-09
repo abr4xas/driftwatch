@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        # ADR-0002: el piso es Node 24 (LTS activo). 25 es la current.
+        node: [24, 25]
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # driftwatch usa `git ls-files` para construir su indice, asi que
+          # necesita un working tree real, no solo el commit.
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm build
+
+      # Un `bin` roto no aparece en ningun test unitario: hay que invocar el
+      # binario compilado como lo invocaria un usuario.
+      - name: el binario compilado responde
+        run: node ./dist/cli.js --help
+
+      # La herramienta corrida sobre su propio repo. Mientras no haya checks
+      # esto solo verifica que no crashea; cuando los haya, es la primera
+      # senal de que la herramienta se soporta a si misma.
+      - name: driftwatch sobre driftwatch
+        run: node ./dist/cli.js
