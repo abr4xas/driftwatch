@@ -1,4 +1,5 @@
 import type { Claim, Source } from '../core/types.ts'
+import type { Frontmatter } from '../parse/frontmatter.ts'
 import type { ParsedDoc } from '../parse/markdown.ts'
 import { rangeFor, type LineTable } from '../parse/positions.ts'
 import { discardReason, normalizePathText, type DiscardReason } from './discard.ts'
@@ -132,7 +133,20 @@ export function evaluatePathText(raw: string): PathEvaluation {
 export type ExtractContext = {
   source: Source
   doc: ParsedDoc
+  frontmatter: Frontmatter | undefined
   table: LineTable
+}
+
+/**
+ * Recorta el ancla de un destino de link: `./docs/x.md#seccion` afirma que
+ * existe `./docs/x.md`. Un ancla sola (`#seccion`) no afirma nada sobre una
+ * ruta, y verificarla es trabajo de `link/broken`.
+ */
+function withoutAnchor(url: string): string | undefined {
+  const hash = url.indexOf('#')
+  if (hash === -1) return url
+  const path = url.slice(0, hash)
+  return path.length === 0 ? undefined : path
 }
 
 /**
@@ -142,21 +156,44 @@ export type ExtractContext = {
  * El cuerpo de los bloques de codigo no se escanea a proposito: una ruta dentro
  * de un ejemplo de shell es parte del ejemplo, no una afirmacion sobre el repo.
  */
-export function extractPathClaims({ source, doc, table }: ExtractContext): Claim[] {
+export function extractPathClaims({ source, doc, frontmatter, table }: ExtractContext): Claim[] {
   const claims: Claim[] = []
 
-  for (const span of doc.inlineCode) {
-    const evaluated = evaluatePathText(span.value)
-    if (evaluated.kind === 'discarded') continue
+  const push = (
+    raw: string,
+    candidate: string,
+    offset: [number, number],
+    context: Claim['context'],
+    meta?: Record<string, unknown>,
+  ): void => {
+    const evaluated = evaluatePathText(candidate)
+    if (evaluated.kind === 'discarded') return
     claims.push({
       kind: 'path',
       source,
       text: evaluated.text,
-      raw: span.value,
-      range: rangeFor(table, span.offset[0], span.offset[1]),
-      offset: span.offset,
-      context: 'inline-code',
+      raw,
+      range: rangeFor(table, offset[0], offset[1]),
+      offset,
+      context,
+      ...(meta === undefined ? {} : { meta }),
     })
+  }
+
+  for (const span of doc.inlineCode) {
+    push(span.value, span.value, span.offset, 'inline-code')
+  }
+
+  for (const link of doc.links) {
+    const target = withoutAnchor(link.value)
+    if (target === undefined) continue
+    // El offset sigue apuntando a la url completa, ancla incluida, porque es
+    // lo que hay escrito en el archivo y lo que --fix tendria que reemplazar.
+    push(link.value, target, link.offset, 'link')
+  }
+
+  for (const value of frontmatter?.values ?? []) {
+    push(value.value, value.value, value.offset, 'frontmatter', { key: value.key })
   }
 
   return claims

@@ -2,6 +2,7 @@ import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import type { Claim, Finding, Source } from './core/types.ts'
 import { extractPathClaims } from './extract/paths.ts'
+import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
 import type { CheckContext } from './verify/check.ts'
@@ -27,8 +28,9 @@ export type RunResult = {
 
 function claimsFor(source: Source): Claim[] {
   const doc = parseMarkdown(source.content)
+  const frontmatter = parseFrontmatter(source.content)
   const table = buildLineTable(source.content)
-  return extractPathClaims({ source, doc, table })
+  return extractPathClaims({ source, doc, frontmatter, table })
 }
 
 function verify(claims: readonly Claim[], ctx: CheckContext): Finding[] {
