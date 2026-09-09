@@ -11,7 +11,7 @@ Cada milestone tiene criterios de aceptación verificables. No se avanza al sigu
 - `--help`, `--version`, exit codes 0/1/2
 - Descubrimiento de fuentes (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`) respetando `.gitignore`
 - Reporter `pretty` con el resumen final
-- CI: lint + typecheck + test en Node 20 y 22
+- CI: lint + typecheck + test en Node 24 y 25 (ver ADR-0002)
 
 **Aceptación:** en este mismo repo, `driftwatch` lista las fuentes encontradas y sale con 0 en menos de 300 ms.
 
