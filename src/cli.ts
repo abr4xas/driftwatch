@@ -6,6 +6,8 @@ const code = await main(
   {
     out: (text) => process.stdout.write(text),
     err: (text) => process.stderr.write(text),
+    isTty: process.stdout.isTTY === true,
+    env: process.env,
   },
   process.cwd(),
 )

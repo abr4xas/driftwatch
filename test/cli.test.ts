@@ -14,7 +14,12 @@ function capture() {
   const out: string[] = []
   const err: string[] = []
   return {
-    io: { out: (s: string) => out.push(s), err: (s: string) => err.push(s) },
+    io: {
+      out: (s: string) => out.push(s),
+      err: (s: string) => err.push(s),
+      isTty: false,
+      env: {} as NodeJS.ProcessEnv,
+    },
     stdout: () => out.join(''),
     stderr: () => err.join(''),
   }
@@ -83,7 +88,6 @@ describe('main', () => {
     ['--watch'],
     ['--init'],
     ['--strict'],
-    ['--quiet'],
     ['--no-tier2'],
     ['--only'],
     ['--skip'],

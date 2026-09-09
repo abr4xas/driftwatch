@@ -1,14 +1,20 @@
 import { statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { isUserError, messageOf, notYetImplemented, UserError } from '../core/errors.ts'
-import { EXIT, exitCodeFor, type Counts, type ExitCode } from '../core/exit-codes.ts'
+import { EXIT, exitCodeFor, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
+import { colorEnabled } from '../report/colors.ts'
+import { renderPretty } from '../report/pretty.ts'
+import { run } from '../run.ts'
 import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
 export type Io = {
   out: (text: string) => void
   err: (text: string) => void
+  /** Si stdout es una terminal. Decide si la salida lleva color. */
+  isTty: boolean
+  env: NodeJS.ProcessEnv
 }
 
 /**
@@ -20,8 +26,9 @@ const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
   ['fix', '--fix'],
   ['watch', '--watch'],
   ['init', '--init'],
+  // --strict solo cambia algo cuando existen warnings, y los warnings son
+  // tier 2, que es M5. Hasta entonces aceptarlo seria prometer de mas.
   ['strict', '--strict'],
-  ['quiet', '--quiet'],
 ]
 
 function assertNotYetImplemented(args: CliArgs): void {
@@ -69,10 +76,14 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
     assertNotYetImplemented(args)
     assertPathsExist(args.paths, cwd)
 
-    // El descubrimiento de fuentes y los checks llegan en los tickets 02 en
-    // adelante. Hasta que existan, el recuento es vacío por construcción.
-    const counts: Counts = { errors: 0, warnings: 0 }
-    return exitCodeFor(counts, args.strict)
+    const result = await run({ cwd, paths: args.paths })
+    io.out(
+      renderPretty(result, {
+        color: colorEnabled(io.env, io.isTty),
+        quiet: args.quiet,
+      }),
+    )
+    return exitCodeFor(result.counts, args.strict)
   } catch (error) {
     if (isUserError(error)) {
       io.err(`driftwatch: ${error.message}\n`)
