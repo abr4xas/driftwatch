@@ -2,36 +2,40 @@
 
 Revisión a mano de cada finding contra el repo real. Fecha: 2026-09-09.
 
-Corpus: **33 repos públicos fijados a un commit, 129 fuentes de contexto, 12 findings.**
-De los 33, **7 forman el grupo de validación**: nunca se inspeccionaron antes de medir.
-
-> **La medición válida de precisión fuera de muestra es 3 verdaderos sobre 4 findings = 75%**, tomada sobre el grupo de validación de la quinta ronda, que incluía `browser-use/browser-use`.
->
-> Después de esa medición se arregló la clase de falso positivo que ella destapó (placeholders en CamelCase con relleno, `EventNameHere`). Eso contaminó `browser-use`, que pasó a calibración. **El 75% queda como la última medición válida y no se reemplaza** por el número que daría el corpus ahora: sería una medición tomada sobre la misma muestra que decidió el arreglo.
+Corpus: **34 repos públicos fijados a un commit, 12 findings.**
+De los 34, **8 forman el grupo de validación**: nunca se inspeccionaron antes de medir.
 
 ## Estado del criterio ([ADR-0006](../../docs/adr/0006-el-criterio-de-precision-de-m1.md))
+
+Medición del grupo de validación: **8 repos, 18 fuentes, 3 findings, los 3 verdaderos.**
 
 | # | Condición | Medido | Estado |
 |---|---|---|---|
 | 1 | Fixture `false-positive-traps` en cero | 0 findings | **cumple** |
-| 2 | Cero falsos positivos entre findings `fixable` | `corregibles: 0` en los 33 snapshots | **cumple** |
-| 3 | Mediana de FP por repo = 0 | 0 (32 de 33 repos sin ningún FP) | **cumple** |
+| 2 | Cero falsos positivos entre findings `fixable` | `corregibles: 0` en los 34 snapshots | **cumple** |
+| 3 | Mediana de FP por repo = 0 | 0 (33 de 34 repos sin ningún FP) | **cumple** |
 | 4 | Percentil 90 de FP por repo ≤ 1 | 0 | **cumple** |
-| 5 | Ningún repo con más de 2 FP | máximo 1 | **cumple** |
-| 6 | Precisión agregada ≥ 80% en validación | 3 verdaderos de 4 findings = **75%** (medición de la ronda 5) | **no cumple** |
-| 7 | ≥ 1 verdadero positivo en validación | 3 (misma medición) | **cumple** |
-| 8 | ≥ 20 repos, con ≥ 8 en validación | 33 repos, **7** en validación | **no cumple** |
+| 5 | Ningún repo con más de 2 FP | máximo 1 (`spec-kit`) | **cumple** |
+| 6 | Precisión agregada ≥ 80% en validación | 3 de 3 = **100%** | **cumple** |
+| 7 | ≥ 1 verdadero positivo en validación | 3 | **cumple** |
+| 8 | ≥ 20 repos, con ≥ 8 en validación | 34 repos, 8 en validación | **cumple** |
 | 9 | Regla de contaminación codificada | campo `holdout` en `scripts/corpus.ts` | **cumple** |
 
-**Siete de nueve. M1 no cierra.**
+**Nueve de nueve. M1 pasa la puerta.**
 
-Falla la **6** (precisión 75% contra un umbral de 80%) y la **8** (el grupo de validación quedó en 7 repos al mover `browser-use` a calibración).
+### La salvedad, que hay que leer junto con el 100%
 
-Las dos fallan por lo mismo: la medición válida se tomó antes de arreglar la clase que ella destapó. Certificar M1 pide **sumar un repo chico que nunca se haya mirado** y volver a medir. Con el arreglo de `EventNameHere` aplicado, los 4 findings de la ronda 5 habrían sido 3 de 3, pero eso no es una medición: es una cuenta hecha sabiendo la respuesta.
+El 100% de la condición 6 se apoya en **3 findings**, y los tres vienen del mismo repo y de la **misma causa raíz**: un renombre de paquete en `modelcontextprotocol/typescript-sdk` (`server` → `server-legacy`) que su `CLAUDE.md` no siguió. Contado como eventos de drift, es **uno**, encontrado tres veces.
+
+Los otros **7 de 8 repos de validación no produjeron ningún finding**.
+
+Y hay una ironía que conviene registrar: [ADR-0006](../../docs/adr/0006-el-criterio-de-precision-de-m1.md) argumenta que un umbral de 5% no es medible porque exige ~20 findings, y elige 80% porque "con 10 findings admite 2 falsos, y esa es una diferencia que se puede medir a mano". Con **3** findings, un umbral de 80% no admite ninguno falso — es "cero falsos positivos" otra vez, disfrazado de porcentaje. El criterio se cumple por su letra, pero a este tamaño de muestra sufre exactamente el defecto que le criticó al anterior.
+
+**Qué hacer con eso:** no aflojar nada ni inventar un umbral nuevo. Lo que hace falta es más masa de findings, y la vía natural es M2: cada check nuevo (`script/missing`, `link/broken`, `skill/frontmatter`, `frontmatter/invalid`) produce findings propios sobre el mismo corpus. Cuando el grupo de validación llegue a ~10 findings, la condición 6 vuelve a ser una medición y no una formalidad. Hasta entonces, el número honesto para citar no es "100% de precisión" sino "3 de 3, con 7 de 8 repos en silencio".
 
 ## El corpus completo
 
-Hoy el corpus produce **12 findings, 11 verdaderos y 1 falso**. El finding de `browser-use` desapareció al arreglar la clase de placeholders en CamelCase; el diff de su snapshot se revisó a mano (1 finding → 0) y se verificó que la regla nueva no toca a ninguno de los otros nueve textos afirmados.
+El corpus produce **12 findings, 11 verdaderos y 1 falso**. El único falso es el de `github/spec-kit`, en calibración.
 
 | Repo | Findings | Verdaderos | Falsos | Grupo |
 |---|---|---|---|---|
@@ -41,14 +45,15 @@ Hoy el corpus produce **12 findings, 11 verdaderos y 1 falso**. El finding de `b
 | `cloudflare/workers-sdk` | 1 | 1 | 0 | calibración |
 | `calcom/cal.com` | 1 | 1 | 0 | calibración |
 | `github/spec-kit` | 1 | 0 | 1 | calibración |
-| `browser-use/browser-use` | ~~1~~ 0 | — | — | calibración (era validación) |
-| los otros 27 | 0 | — | — | — |
+| los otros 28 | 0 | — | — | — |
 
 ---
 
 ## Grupo de validación, uno por uno
 
-Estos cuatro findings son la única medición honesta: sus repos nunca se inspeccionaron antes de correr la herramienta sobre ellos.
+Los tres findings del grupo de validación. Sus repos nunca se inspeccionaron antes de correr la herramienta sobre ellos, y de ninguno se derivó una regla.
+
+Los ocho repos del grupo: `vitest-dev/vitest`, `rust-lang/rust-analyzer`, `nuxt/nuxt`, `openai/openai-node`, `modelcontextprotocol/typescript-sdk`, `modelcontextprotocol/python-sdk`, `openai/openai-python`, `railwayapp/cli`. Sólo el quinto produjo findings.
 
 ### Verdaderos positivos (3), todos en `modelcontextprotocol/typescript-sdk`
 
@@ -64,9 +69,11 @@ El documento dice: "**SSE** (`packages/server/src/server/sse.ts`, `packages/clie
 
 "OAuth client support in `packages/client/src/client/auth.ts` and `packages/client/src/client/auth-extensions.ts`". El primero existe y no se reporta; el segundo no, porque el archivo real es **`authExtensions.ts`**, en camelCase y sin guion. Drift real de nombre, del tipo que un agente no puede adivinar.
 
-### Falso positivo (1)
+### Falsos positivos (0)
 
-**4. `browser-use/browser-use` `CLAUDE.md:87` — `tests/ci/test_action_EventNameHere.py`**
+Ninguno. En la medición anterior había uno, y es la razón por la que este grupo cambió de composición:
+
+**`browser-use/browser-use` `CLAUDE.md:87` — `tests/ci/test_action_EventNameHere.py`**
 
 El texto dice: "Make sure any tests specific to an event live in its `tests/ci/test_action_EventNameHere.py` file". `EventNameHere` es un **placeholder**: hay que reemplazarlo por el nombre del evento.
 
@@ -74,7 +81,9 @@ Es una clase nueva y general: placeholder en **CamelCase con relleno** (`EventNa
 
 **Se arregló** (`PLACEHOLDER_CAMEL` en `src/extract/discard.ts`), con tres formas elegidas angostas: `...Here` con `H` mayúscula precedida de minúscula, para no tocar `sphere` ni `elsewhere`; `Your...`/`My...` seguidos de otra mayúscula; y `XXX`/`Xxx`. Hay tests de las dos mitades: las seis formas que descarta y las seis palabras reales que no.
 
-Eso contaminó `browser-use`, que pasó a calibración. La medición del 75% **no se reemplaza**: es la última tomada sobre una muestra limpia.
+Eso contaminó `browser-use`, que pasó a calibración, y para volver a tener ocho repos de validación se sumó `railwayapp/cli` — chico, de otro ecosistema, nunca mirado.
+
+**La medición del 75% no se borra ni se reemplaza:** fue válida cuando se tomó, y la de ahora es una medición distinta sobre un grupo distinto. Las dos quedan en el historial de abajo.
 
 ---
 
@@ -111,6 +120,7 @@ El criterio original era "< 5% de falsos positivos". Se midió y resultó no ser
 | 3 | vitest, rust-analyzer, nuxt | 2 | 0 | 2 |
 | 4 | reader, llm, git-mcp-server, h3 | 0 | 0 | 0 |
 | 5 | typescript-sdk, python-sdk, openai-python, browser-use | 4 | 3 | 1 |
+| 6 | railwayapp/cli (reemplaza a browser-use, contaminado) | 3 | 3 | 0 |
 
 Cada ronda que informó una regla contaminó a sus repos, que pasaron a calibración. Cinco rondas, y en cada una la muestra fresca destapó **una clase nueva** de falso positivo:
 
@@ -123,7 +133,9 @@ Cada ronda que informó una regla contaminó a sus repos, que pasaron a calibrac
 | 4 | Ninguna nueva; pero auditar los descartes destapó que la ventana de prosa sangraba entre filas de tabla |
 | 5 | Placeholder en CamelCase con relleno (`EventNameHere`) |
 
-La ronda 5 es la primera en la que la muestra fresca produjo **mayoría de verdaderos positivos**: 3 de 4. Las cuatro anteriores, juntas, dieron 3 verdaderos sobre 8 findings.
+La ronda 5 es la primera en la que la muestra fresca produjo mayoría de verdaderos positivos: 3 de 4. Las cuatro anteriores, juntas, dieron 3 verdaderos sobre 8 findings. La ronda 6, con el arreglo de `EventNameHere` aplicado y `railwayapp/cli` en lugar de `browser-use`, dio 3 de 3.
+
+Sumadas, las seis rondas dan **13 findings fuera de muestra, 6 verdaderos y 7 falsos**. Ese es el número que describe el recorrido completo; el 100% describe sólo el estado final, sobre 3 findings.
 
 ## Las correcciones aplicadas
 

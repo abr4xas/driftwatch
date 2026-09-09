@@ -46,8 +46,8 @@ type CorpusRepo = {
 /**
  * Repos publicos con `AGENTS.md` o `CLAUDE.md` reales, verificados a mano.
  *
- * Son 33: 26 de calibracion y 7 de validacion. La condicion 8 de ADR-0006 pide
- * ocho de validacion, asi que **falta uno** para poder certificar M1.
+ * Son 34: 26 de calibracion y 8 de validacion, que es lo que pide la condicion
+ * 8 de ADR-0006.
  *
  * Clonarlos todos cuesta ~2.7 GB, asi que la lista se mantiene deliberadamente
  * corta y los agregados nuevos se eligen chicos. `oven-sh/bun` y
@@ -109,9 +109,9 @@ const CORPUS: readonly CorpusRepo[] = [
   { repo: 'browser-use/browser-use', sha: '2b1f9d377999a59fe7627c1a5aa88c12aa42e11f' },
 
   // --- Validacion: nunca inspeccionados ---
-  // Siete repos. La condicion 8 de ADR-0006 pide ocho, asi que **falta uno**:
-  // certificar M1 exige sumar un repo chico que nunca se haya mirado. Se eligen
-  // chicos a proposito, porque el corpus completo ya pesa ~2.7 GB de clones.
+  // Ocho repos, que es lo que pide la condicion 8 de ADR-0006. Se eligen chicos
+  // a proposito, porque el corpus completo ya pesa ~2.7 GB de clones, y se
+  // clonan solo cuando hace falta medir: `pnpm corpus --only <patron>`.
   { repo: 'vitest-dev/vitest', sha: 'c119be016295b45a005e2a36367ea7d133b4f385', holdout: true },
   {
     repo: 'rust-lang/rust-analyzer',
@@ -131,6 +131,7 @@ const CORPUS: readonly CorpusRepo[] = [
     holdout: true,
   },
   { repo: 'openai/openai-python', sha: 'f348ec87b934c98889102668913e0a3ae7fc303d', holdout: true },
+  { repo: 'railwayapp/cli', sha: 'dee356855b6a88ed52cb3fac42956da7a9200474', holdout: true },
 ]
 
 const HERE = dirname(fileURLToPath(import.meta.url))

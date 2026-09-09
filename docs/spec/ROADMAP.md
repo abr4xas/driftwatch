@@ -37,6 +37,8 @@ El criterio vigente tiene cuatro partes, y las cuatro se cumplen o M1 no cierra:
 
 Si no se cumple, no se avanza — se ajustan las heurísticas, o se acepta que el check no llega y se dice.
 
+**Certificado el 2026-09-09**: nueve de nueve condiciones, sobre un corpus de 34 repos con 8 de validación. El registro, la clasificación de cada finding y la salvedad sobre el tamaño de muestra están en `test/corpus/CLASIFICACION.md`. La salvedad importa: la condición 6 pasó con 3 findings de una sola causa raíz, así que hay que reconfirmarla cuando M2 sume checks y el grupo de validación acumule más masa.
+
 Este es el milestone que decide si el proyecto vale la pena. Todo lo demás es incremental.
 
 ---

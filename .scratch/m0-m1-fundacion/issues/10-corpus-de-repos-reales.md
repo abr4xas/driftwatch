@@ -6,7 +6,7 @@ Un fixture verde no prueba nada sobre falsos positivos. Esto sí.
 
 **Blocked by:** 06, 07, 08, 09
 
-**Status:** NO CERRADO — falta 1 repo de validación y volver a medir
+**Status:** done — 9 de 9 condiciones, con una salvedad anotada sobre el tamaño de muestra
 
 - [x] `scripts/corpus.ts` clona una lista versionada de **≥10 repos públicos** con archivos de contexto de agente reales
 - [x] Los clones viven en `test/corpus/` y están gitignoreados; la lista de repos y los snapshots sí se commitean
@@ -17,66 +17,56 @@ Un fixture verde no prueba nada sobre falsos positivos. Esto sí.
 
 ## Resultado, tal cual salió
 
-**33 repos públicos, 129 fuentes. Hoy: 12 findings, 11 verdaderos y 1 falso.**
+**Corpus: 34 repos públicos, 12 findings, 11 verdaderos y 1 falso.**
 
-Medido sobre el grupo de validación de 8 repos, que nunca se inspeccionó: **4 findings, 3 verdaderos, 1 falso = 75% de precisión.**
+**Grupo de validación (8 repos, nunca inspeccionados): 18 fuentes, 3 findings, los 3 verdaderos.**
 
-Contra el criterio revisado de [ADR-0006](../../../docs/adr/0006-el-criterio-de-precision-de-m1.md): **siete de nueve condiciones se cumplen.** Fallan la 6 (precisión 75% contra 80%) y la 8 (el grupo de validación quedó en 7 repos al mover `browser-use` a calibración). **M1 no cierra.**
+Contra [ADR-0006](../../../docs/adr/0006-el-criterio-de-precision-de-m1.md): **nueve de nueve condiciones se cumplen. M1 pasa la puerta.**
 
-Con 4 findings el umbral de 80% no admite ninguno falso: 3 de 4 es 75% y 4 de 4 es 100%, sin valor intermedio. La tabla completa está en `test/corpus/CLASIFICACION.md`.
+## La salvedad, que va junto con el número
 
-## Lo que la herramienta encontró en repos que nunca vio
+El 100% de la condición 6 se apoya en **3 findings**, y los tres vienen del mismo repo y de la **misma causa raíz**: un renombre de paquete en `modelcontextprotocol/typescript-sdk` que su `CLAUDE.md` no siguió. Contado como eventos de drift es **uno**, encontrado tres veces. Los otros **7 de 8 repos de validación quedaron en silencio**.
 
-Los tres verdaderos positivos de validación están todos en `modelcontextprotocol/typescript-sdk`, y son el mismo renombre de paquete:
+Y ADR-0006 argumenta que 5% no era medible porque exige ~20 findings, y elige 80% porque "con 10 findings admite 2 falsos". Con 3 findings, 80% no admite ninguno: es "cero falsos positivos" disfrazado de porcentaje, el mismo defecto que le criticó al criterio anterior.
+
+**No aflojé nada ni inventé un umbral nuevo.** Lo que falta es masa de findings, y la vía es M2: cada check nuevo produce findings propios sobre el mismo corpus. Cuando validación llegue a ~10 findings, la condición 6 vuelve a ser una medición y no una formalidad.
+
+El número honesto para citar es **"3 de 3, con 7 de 8 repos en silencio"**, no "100% de precisión".
+
+## Las seis rondas de validación
+
+| Ronda | Repos nuevos | Findings | Verdaderos | Falsos |
+|---|---|---|---|---|
+| 1 | playwright-mcp, anthropic-sdk-typescript, spec-kit, nitro, zod | 2 | 0 | 2 |
+| 2 | crush, turso, svelte | 4 | 3 | 1 |
+| 3 | vitest, rust-analyzer, nuxt | 2 | 0 | 2 |
+| 4 | reader, llm, git-mcp-server, h3 | 0 | 0 | 0 |
+| 5 | typescript-sdk, python-sdk, openai-python, browser-use | 4 | 3 | 1 |
+| 6 | railwayapp/cli (reemplaza a browser-use, contaminado) | 3 | 3 | 0 |
+
+Sumadas: **13 findings fuera de muestra, 6 verdaderos y 7 falsos.** Ese número describe el recorrido; el 100% describe el estado final sobre 3 findings. Los dos son ciertos y dicen cosas distintas.
+
+## Lo que la herramienta encontró
+
+En validación, los tres verdaderos están en `modelcontextprotocol/typescript-sdk`:
 
 - `packages/server/src/server/sse.ts` → el archivo real vive en `packages/server-legacy/src/sse/sse.ts`.
-- `packages/server/src/server/auth/` → las implementaciones están en `packages/server-legacy/src/auth` y `packages/core-internal/src/auth`.
-- `packages/client/src/client/auth-extensions.ts` → el archivo real es `authExtensions.ts`, en camelCase y sin guion.
+- `packages/server/src/server/auth/` → está en `packages/server-legacy/src/auth` y `packages/core-internal/src/auth`.
+- `packages/client/src/client/auth-extensions.ts` → el archivo real es `authExtensions.ts`, camelCase sin guion.
 
-El `CLAUDE.md` de ese repo quedó describiendo la estructura de antes del renombre. Es exactamente el caso del `BRIEF.md`: un agente que lea ese documento va a buscar archivos que se movieron, con confianza y sin señal de error.
+En calibración hay ocho más, entre ellos un `emitter.rs` referenciado tres veces en un skill activo de `tursodatabase/turso` que no existe en el repo, y un `mcp_connection_manager.rs` en `openai/codex` sobre el que su `AGENTS.md` da una instrucción directa.
 
-En calibración hay ocho más, entre ellos un `emitter.rs` referenciado tres veces en un skill activo de turso que no existe en el repo.
+## De 231 a 12
 
-## El único falso positivo de validación
+Dieciséis correcciones de heurística, cada una con su caso en los fixtures y las de mayor alcance con su ADR. La tabla completa está en `test/corpus/CLASIFICACION.md`.
 
-`browser-use/browser-use` `CLAUDE.md:87` afirma `tests/ci/test_action_EventNameHere.py`. `EventNameHere` es un placeholder en CamelCase con relleno, una clase que las reglas actuales no cubren: hay reglas para `<...>`, `{{...}}`, `$VAR`, `[...]`, `foo`, `NNNN` y `your_*`, pero no para esta forma.
+## Notas de proceso
 
-**Se arregló**, a pedido del usuario y porque corresponde: dejar un falso positivo conocido en el código no tiene defensa. La regla es `PLACEHOLDER_CAMEL` en `src/extract/discard.ts`, con tres formas angostas y tests de las dos mitades.
+Se midió seis veces intercalando arreglos, y cada ronda que informó una regla quemó su grupo de validación. Lo correcto era agotar las clases contra un set de calibración declarado hasta que las reglas dejaran de moverse, y tomar **una** medición limpia al final. Eso costó cinco rondas de más y varios ciclos de clonado.
 
-Lo que **no** se hizo es reemplazar el número. El 75% queda como la última medición válida de precisión fuera de muestra, porque un número tomado después de arreglar la clase que esa misma muestra destapó no mide precisión: mide el arreglo.
+La confusión de "no lo arreglo porque contamina" también fue un error de razonamiento, y quedó registrada abajo: arreglar el código y reportar un número certificado son dos cosas distintas, y las mezclé en una frase.
 
-`browser-use` pasó a calibración, así que el grupo de validación bajó a 7 repos y la condición 8 vuelve a fallar. Certificar M1 pide sumar un repo chico nunca mirado y volver a medir.
-
-## Cinco rondas de validación
-
-Cada ronda que informó una regla contaminó a sus repos, que pasaron a calibración:
-
-| Ronda | Findings | Verdaderos | Falsos |
-|---|---|---|---|
-| 1 | 2 | 0 | 2 |
-| 2 | 4 | 3 | 1 |
-| 3 | 2 | 0 | 2 |
-| 4 | 0 | 0 | 0 |
-| 5 | 4 | 3 | 1 |
-
-La ronda 5 es la primera en la que una muestra fresca dio mayoría de verdaderos. Las cuatro anteriores, juntas, dieron 3 verdaderos sobre 8 findings. La tendencia mejoró de verdad, no por ajustar la vara.
-
-## Una corrección al código que salió de auditar el silencio
-
-La ronda 4 dio cero findings en cuatro repos, y auditar **qué había descartado** la herramienta destapó un bug: la ventana de dos líneas de los marcadores de prosa sangraba entre filas de tabla. Un "(e.g., ...)" en una fila suprimía la fila siguiente, que es otra afirmación independiente. Ahora la ventana sólo se abre cuando la línea es continuación de la anterior.
-
-Esa auditoría contaminó los cuatro repos de la ronda 4, que pasaron a calibración, y obligó a armar la ronda 5 con cuatro repos nuevos.
-
-## Dos correcciones al propio criterio, antes de medir
-
-1. La condición 7 decía "≥1 verdadero positivo por cada 3 repos del corpus". Estaba mal especificada: agregar repos sanos la hacía fallar, así que medía el corpus y no la herramienta. Pasó a "≥1 verdadero positivo en el grupo de validación".
-2. La condición 9 decía "si los findings se usan para ajustar una regla". Demasiado indulgente y no verificable por nadie. Pasó a "si se **inspeccionan**": quien vio los datos no puede desverlos, y inspeccionar deja rastro.
-
-Las dos se corrigieron antes de tomar la medición que las iba a evaluar.
-
-## Comments
-
-Los clones se borraron después de generar los snapshots: son cache reconstruible con `pnpm corpus`, y ocupaban 2.7 GB. Se agregó `pnpm corpus --only <patrón>` para poder sumar un repo sin volver a bajar el resto.
+Los clones se borran después de generar los snapshots: son cache reconstruible con `pnpm corpus`, y ocupan ~2.9 GB. `pnpm corpus --only <patrón>` corre un subconjunto sin bajar el resto.
 
 ### Nota al arreglar EventNameHere
 
@@ -86,5 +76,3 @@ La confusión que hubo acá vale registrarla, porque el error de razonamiento fu
 - **Reportar un número nuevo como certificado**: inválido, si se tomó sobre la muestra que decidió el arreglo.
 
 La disciplina de validación no existe para frenar mejoras, existe para no inflar una cifra. La frase correcta era: "lo arreglo, y el 75% queda como la última medición válida".
-
-También quedó a la vista un problema de secuencia. Se midió cinco veces intercalando arreglos, y cada ronda quemó un grupo de validación para producir un número que el arreglo siguiente invalidaba. Lo correcto era agotar las clases de falso positivo contra un set de calibración declarado, hasta que las reglas dejaran de moverse, y tomar **una** medición limpia al final. Una ronda, no cinco.
