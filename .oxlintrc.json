@@ -11,16 +11,10 @@
     "no-console": "off",
     "eslint/require-await": "off"
   },
-  "ignorePatterns": [
-    "dist",
-    "test/corpus",
-    "test/fixtures"
-  ],
+  "ignorePatterns": ["dist", "test/corpus", "test/fixtures"],
   "overrides": [
     {
-      "files": [
-        "test/**/*.ts"
-      ],
+      "files": ["test/**/*.ts"],
       "rules": {
         "eslint/max-lines-per-function": "off"
       }

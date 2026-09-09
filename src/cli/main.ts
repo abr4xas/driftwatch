@@ -1,9 +1,9 @@
 import { statSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { isUserError, UserError } from '../core/errors.ts'
-import { EXIT, type ExitCode } from '../core/exit-codes.ts'
+import { isUserError, messageOf, notYetImplemented, UserError } from '../core/errors.ts'
+import { EXIT, exitCodeFor, type Counts, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
-import { parseCliArgs } from './args.ts'
+import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
 export type Io = {
@@ -11,13 +11,31 @@ export type Io = {
   err: (text: string) => void
 }
 
-/** Flags aceptados por el parser pero todavia sin implementar. */
-const NOT_YET_IMPLEMENTED: ReadonlyArray<readonly [keyof ReturnType<typeof parseCliArgs>, string]> =
-  [
-    ['fix', '--fix'],
-    ['watch', '--watch'],
-    ['init', '--init'],
-  ]
+/**
+ * Los flags booleanos que el parser acepta pero que todavía no hacen nada. Esta
+ * lista es una lista de pendientes que el test suite vigila: cuando un ticket
+ * implementa un flag, lo borra de acá y el test que exigía el exit 2 se cae.
+ */
+const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
+  ['fix', '--fix'],
+  ['watch', '--watch'],
+  ['init', '--init'],
+  ['strict', '--strict'],
+  ['quiet', '--quiet'],
+]
+
+function assertNotYetImplemented(args: CliArgs): void {
+  for (const [key, flag] of UNIMPLEMENTED_BOOLEANS) {
+    if (args[key]) throw notYetImplemented(flag)
+  }
+  if (!args.tier2) throw notYetImplemented('--no-tier2')
+  if (args.format !== 'pretty') throw notYetImplemented(`--format ${args.format}`)
+  if (args.only !== undefined) throw notYetImplemented('--only')
+  if (args.skip !== undefined) throw notYetImplemented('--skip')
+  if (args.config !== undefined) {
+    throw notYetImplemented(args.config === false ? '--no-config' : '--config')
+  }
+}
 
 function assertPathsExist(paths: readonly string[], cwd: string): void {
   for (const path of paths) {
@@ -30,14 +48,11 @@ function assertPathsExist(paths: readonly string[], cwd: string): void {
 }
 
 /**
- * El cuerpo del CLI. Devuelve el exit code en vez de llamar a process.exit para
- * que sea testeable; `cli.ts` es el unico modulo que toca `process`.
+ * El cuerpo del CLI. Recibe el entorno en vez de leerlo y devuelve el exit code
+ * en vez de llamar a process.exit, para que sea testeable sin spawnear procesos.
+ * `cli.ts` es el único módulo que toca `process`.
  */
-export async function main(
-  argv: readonly string[],
-  io: Io,
-  cwd: string = process.cwd(),
-): Promise<ExitCode> {
+export async function main(argv: readonly string[], io: Io, cwd: string): Promise<ExitCode> {
   try {
     const args = parseCliArgs(argv)
 
@@ -51,17 +66,13 @@ export async function main(
       return EXIT.ok
     }
 
-    for (const [key, flag] of NOT_YET_IMPLEMENTED) {
-      if (args[key] === true) {
-        throw new UserError(`${flag} todavia no esta implementado`)
-      }
-    }
-
+    assertNotYetImplemented(args)
     assertPathsExist(args.paths, cwd)
 
     // El descubrimiento de fuentes y los checks llegan en los tickets 02 en
-    // adelante. Hasta entonces no hay nada que reportar, y eso es un exito.
-    return EXIT.ok
+    // adelante. Hasta que existan, el recuento es vacío por construcción.
+    const counts: Counts = { errors: 0, warnings: 0 }
+    return exitCodeFor(counts, args.strict)
   } catch (error) {
     if (isUserError(error)) {
       io.err(`driftwatch: ${error.message}\n`)
@@ -69,9 +80,8 @@ export async function main(
       return EXIT.toolFailure
     }
     // Un bug nuestro. Se dice que lo es, con el mensaje pero sin volcar el stack
-    // encima de quien solo queria correr un linter.
-    const message = error instanceof Error ? error.message : String(error)
-    io.err(`driftwatch: fallo interno: ${message}\n`)
+    // encima de quien solo quería correr un linter.
+    io.err(`driftwatch: fallo interno: ${messageOf(error)}\n`)
     io.err('  esto es un bug de driftwatch; reportalo con el comando que lo produjo\n')
     return EXIT.toolFailure
   }

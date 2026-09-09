@@ -1,0 +1,8 @@
+dist
+node_modules
+test/corpus
+pnpm-lock.yaml
+
+# Los documentos son fuente primaria; un formateador les mete churn que
+# ensucia el diff sin cambiar el contenido.
+*.md

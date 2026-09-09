@@ -1,7 +1,7 @@
 /**
  * Los tres exit codes del contrato del CLI (SPEC.md § 4). Son parte de la API
- * publica: un pipeline de CI que distingue "encontre drift" de "la herramienta
- * se rompio" depende de que 1 y 2 no se confundan nunca.
+ * pública: un pipeline de CI que distingue "encontré drift" de "la herramienta
+ * se rompió" depende de que 1 y 2 no se confundan nunca.
  */
 export const EXIT = {
   ok: 0,

@@ -1,14 +1,17 @@
 import { parseArgs } from 'node:util'
-import { UserError } from '../core/errors.ts'
+import { codeOf, messageOf, UserError } from '../core/errors.ts'
 
 export const FORMATS = ['pretty', 'json', 'github', 'sarif'] as const
 export type Format = (typeof FORMATS)[number]
+
+function isFormat(value: string): value is Format {
+  return (FORMATS as readonly string[]).includes(value)
+}
 
 export type CliArgs = {
   paths: string[]
   format: Format
   fix: boolean
-  dryRun: boolean
   strict: boolean
   quiet: boolean
   watch: boolean
@@ -16,15 +19,19 @@ export type CliArgs = {
   help: boolean
   version: boolean
   tier2: boolean
-  /** Ruta explicita al config, o `false` para ignorar cualquier config. */
+  /** Ruta explícita al config, o `false` para ignorar cualquier config. */
   config: string | false | undefined
   only: string[] | undefined
   skip: string[] | undefined
 }
 
+/** Las claves de `CliArgs` que son banderas booleanas. */
+export type BooleanFlag = {
+  [K in keyof CliArgs]: CliArgs[K] extends boolean ? K : never
+}[keyof CliArgs]
+
 const OPTIONS = {
   fix: { type: 'boolean' },
-  'dry-run': { type: 'boolean' },
   json: { type: 'boolean' },
   format: { type: 'string' },
   only: { type: 'string' },
@@ -40,54 +47,52 @@ const OPTIONS = {
   help: { type: 'boolean', short: 'h' },
 } as const
 
-/** Una lista separada por coma, tolerante con comas de mas: `path,,script`. */
+/** Una lista separada por coma, tolerante con comas de más: `path,,script`. */
 function splitList(raw: string | undefined): string[] | undefined {
   if (raw === undefined) return undefined
-  return raw
+  const entries = raw
     .split(',')
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0)
+  return entries
 }
 
 function resolveFormat(values: { format?: string; json?: boolean }): Format {
-  if (values.format !== undefined) {
-    if (!(FORMATS as readonly string[]).includes(values.format)) {
+  const explicit = values.format
+  if (explicit !== undefined) {
+    if (!isFormat(explicit)) {
       throw new UserError(
-        `formato desconocido: ${values.format}`,
-        `los formatos validos son ${FORMATS.join(', ')}`,
+        `formato desconocido: ${explicit}`,
+        `los formatos válidos son ${FORMATS.join(', ')}`,
       )
     }
-    return values.format as Format
+    return explicit
   }
   return values.json === true ? 'json' : 'pretty'
 }
 
 /**
- * parseArgs lanza mensajes en ingles y bastante largos ("place it at the end of
+ * parseArgs lanza mensajes en inglés y bastante largos ("place it at the end of
  * the command after '--'"). Los reescribimos cortos y en el idioma del CLI: el
- * mensaje de error es parte de la interfaz, no un detalle de implementacion.
+ * mensaje de error es parte de la interfaz, no un detalle de implementación.
  */
 function asUserError(cause: unknown): UserError {
-  const code = typeof cause === 'object' && cause !== null && 'code' in cause ? cause.code : undefined
-  const flag =
-    typeof cause === 'object' && cause !== null && 'message' in cause && typeof cause.message === 'string'
-      ? (/'(-{1,2}[^']+)'/u.exec(cause.message)?.[1] ?? null)
-      : null
+  const flag = /'(-{1,2}[^']+)'/u.exec(messageOf(cause))?.[1]
 
-  switch (code) {
+  switch (codeOf(cause)) {
     case 'ERR_PARSE_ARGS_UNKNOWN_OPTION':
-      return new UserError(`opcion desconocida: ${flag ?? 'la que pasaste'}`, 'corre --help')
+      return new UserError(`opción desconocida: ${flag ?? 'la que pasaste'}`, 'corré --help')
     case 'ERR_PARSE_ARGS_INVALID_OPTION_VALUE':
-      return new UserError(`la opcion ${flag ?? 'que pasaste'} tiene un valor invalido`, 'corre --help')
-    default:
       return new UserError(
-        cause instanceof Error ? cause.message : String(cause),
-        'corre --help',
+        `la opción ${flag ?? 'que pasaste'} tiene un valor inválido`,
+        'corré --help',
       )
+    default:
+      return new UserError(messageOf(cause), 'corré --help')
   }
 }
 
-/** Aisla el unico punto donde parseArgs puede lanzar, para no perder inferencia. */
+/** Aísla el único punto donde parseArgs puede lanzar, para no perder inferencia. */
 function runParse(argv: readonly string[]) {
   try {
     return parseArgs({
@@ -104,7 +109,6 @@ function runParse(argv: readonly string[]) {
 export function parseCliArgs(argv: readonly string[]): CliArgs {
   const { values, positionals } = runParse(argv)
 
-
   if (values.config !== undefined && values['no-config'] === true) {
     throw new UserError('--config y --no-config se contradicen', 'elegí uno de los dos')
   }
@@ -113,7 +117,6 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
     paths: positionals,
     format: resolveFormat(values),
     fix: values.fix === true,
-    dryRun: values['dry-run'] === true,
     strict: values.strict === true,
     quiet: values.quiet === true,
     watch: values.watch === true,

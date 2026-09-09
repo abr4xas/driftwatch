@@ -2,30 +2,43 @@ import { readFileSync } from 'node:fs'
 import { dirname, join, parse } from 'node:path'
 
 /**
- * La version se lee del package.json en tiempo de ejecucion en vez de inyectarse
+ * La versión se lee del package.json en tiempo de ejecución en vez de inyectarse
  * en build para que `--version` no dependa del bundler y siga siendo correcta
- * cuando se corre desde `src/` en desarrollo. Es un unico readFileSync, con la
- * busqueda hacia arriba acotada por la raiz del filesystem.
+ * cuando se corre desde `src/` en desarrollo. La búsqueda hacia arriba está
+ * acotada por la raíz del filesystem.
+ *
+ * Si no encuentra nada, lanza. Devolver un placeholder como '0.0.0' haría que un
+ * fallo de lectura fuera indistinguible de una versión real.
  */
 export function readVersion(from: string = import.meta.dirname): string {
   const { root } = parse(from)
   let dir = from
   while (true) {
-    try {
-      const raw = readFileSync(join(dir, 'package.json'), 'utf8')
-      const parsed: unknown = JSON.parse(raw)
-      if (
-        typeof parsed === 'object' &&
-        parsed !== null &&
-        'version' in parsed &&
-        typeof parsed.version === 'string'
-      ) {
-        return parsed.version
-      }
-    } catch {
-      // Este directorio no tiene package.json legible; seguimos subiendo.
+    const found = versionIn(dir)
+    if (found !== undefined) return found
+    if (dir === root) {
+      throw new Error(`no se encontró un package.json con version subiendo desde ${from}`)
     }
-    if (dir === root) return '0.0.0'
     dir = dirname(dir)
   }
+}
+
+function versionIn(dir: string): string | undefined {
+  let raw: string
+  try {
+    raw = readFileSync(join(dir, 'package.json'), 'utf8')
+  } catch {
+    // Este directorio no tiene package.json; el llamador sigue subiendo.
+    return undefined
+  }
+  const parsed: unknown = JSON.parse(raw)
+  if (
+    typeof parsed === 'object' &&
+    parsed !== null &&
+    'version' in parsed &&
+    typeof parsed.version === 'string'
+  ) {
+    return parsed.version
+  }
+  return undefined
 }

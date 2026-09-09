@@ -54,6 +54,10 @@ describe('parseCliArgs', () => {
     expect(args.config).toBe(false)
   })
 
+  it('no acepta flags que no estan en SPEC.md § 4', () => {
+    expect(() => parseCliArgs(['--dry-run'])).toThrow(UserError)
+  })
+
   it('--config con ruta guarda la ruta', () => {
     expect(parseCliArgs(['--config', './dw.config.ts']).config).toBe('./dw.config.ts')
   })

@@ -11,6 +11,8 @@ discover  →  parse  →  extract  →  verify  →  report
 
 Ninguna etapa conoce a la siguiente. Un check nuevo es un archivo nuevo en `extract/` y/o `verify/`, sin tocar el resto. Un formato de salida nuevo es un archivo en `report/`.
 
+El CLI queda fuera del pipeline: `cli/` traduce argumentos a una configuración y una configuración a un exit code, y no sabe nada de checks. El pipeline no importa nada de `cli/`.
+
 Esto importa para el proyecto en sí: la mayor parte del trabajo futuro es *agregar checks*, y esa operación tiene que costar un archivo.
 
 ---
@@ -19,10 +21,17 @@ Esto importa para el proyecto en sí: la mayor parte del trabajo futuro es *agre
 
 ```
 src/
-  cli.ts               parseo de args, exit codes, colores  (único que toca process)
+  cli.ts               entrypoint del bin  (único que toca process)
   index.ts             API pública: run(), defineConfig, tipos
+  cli/
+    main.ts            el cuerpo del CLI; recibe el entorno, devuelve el exit code
+    args.ts            parseo de flags sobre node:util parseArgs
+    help.ts            el texto de --help, que es el contrato de SPEC.md § 4
   core/
     types.ts           Source, Claim, Finding, Verdict, Config
+    errors.ts          UserError y los helpers de normalización de excepciones
+    exit-codes.ts      los tres exit codes y cómo se derivan de un recuento
+    version.ts         lee la versión del package.json más cercano
     discover.ts        encuentra fuentes, respeta .gitignore
     config.ts          carga y valida config, mergea con defaults
     ignores.ts         parsea directivas <!-- driftwatch-ignore -->
