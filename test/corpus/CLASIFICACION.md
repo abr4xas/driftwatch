@@ -30,9 +30,11 @@ La condición 7 pasa exactamente en el límite, y vale decirlo: si se agregan lo
 
 ---
 
-## El número que importa
+## Historial: la medición contra el criterio viejo
 
-Las heurísticas se ajustaron mirando findings de repos concretos. Medir precisión sobre ese mismo material no mide precisión: mide cuánto se ajustó. Así que el corpus está partido en dos, y hubo **tres rondas de validación**, cada una con repos que nunca se miraron antes de medir.
+Esta sección es el registro de por qué el criterio se cambió. Los porcentajes de acá se midieron contra el criterio original de "< 5% de falsos positivos", que [ADR-0006](../../docs/adr/0006-el-criterio-de-precision-de-m1.md) reemplazó. **Ya no son la vara vigente**; la evaluación actual está en la tabla de arriba.
+
+Las heurísticas se ajustaron mirando findings de repos concretos. Medir precisión sobre ese mismo material no mide precisión: mide cuánto se ajustó. Así que el corpus se partió en dos, y hubo **tres rondas de validación**, cada una con repos que nunca se miraron antes de medir. Cada vez que una ronda informaba una regla, esos repos pasaban a calibración.
 
 | Ronda de validación | Repos | Findings | Verdaderos | Falsos |
 |---|---|---|---|---|
@@ -41,11 +43,11 @@ Las heurísticas se ajustaron mirando findings de repos concretos. Medir precisi
 | 3 | vitest, rust-analyzer, nuxt | 2 | 0 | 2 |
 | **Agregado fuera de muestra** | **11 repos** | **8** | **3** | **5** |
 
-**Tasa de falsos positivos fuera de muestra: 5 de 8 = 62%.**
+Falsos positivos fuera de muestra: **5 de 8 = 62%**, contra un criterio de < 5%. Cada una de esas rondas se midió **antes** de aplicar las correcciones que después salieron de ella, así que el 62% es el número de un sistema en construcción, no del sistema actual.
 
-El criterio de `ROADMAP.md` § M1 es **< 5%**. No se cumple, ni de cerca. **M1 no pasa la puerta y no se avanza a M2.**
+Sobre el grupo de calibración, después de todos los ajustes, quedan 9 findings con 1 falso positivo: 11%. Ese número no significa nada por sí solo, y está acá para mostrar la distancia entre medir donde ajustaste y medir donde no.
 
-Sobre el grupo de calibración, después de todos los ajustes, quedan 9 findings con 1 falso positivo: 11%. Ese número no significa nada, y está acá sólo para mostrar la diferencia entre medir donde ajustaste y medir donde no.
+Lo que este historial demuestra, y es el argumento central de ADR-0006, es que con 8 o 9 findings totales **un porcentaje no resuelve nada**: un solo falso positivo mueve la cifra entre 11% y 62% según el tamaño de la muestra. La vara tenía que dejar de ser una tasa global.
 
 ## El hallazgo real: el espacio de clases no se cierra
 
@@ -108,14 +110,11 @@ De 231 findings iniciales a 9, en cinco rondas:
 
 Precisión se compró con cobertura. El falso negativo más caro está en [ADR-0005](../../docs/adr/0005-una-ruta-que-existe-en-algun-lado-no-es-drift.md): **un archivo que se movió de paquete ya no se detecta**, porque es indistinguible de un documento que habla en relativo. El fixture `monorepo` documenta el caso exacto.
 
-## Una ambigüedad del criterio
+## La ambigüedad que tenía el criterio viejo
 
-"La tasa de falsos positivos" no dice sobre qué denominador:
+"La tasa de falsos positivos" no decía sobre qué denominador. Sobre findings reportados daba 62% fuera de muestra; sobre claims examinados, 5 sobre miles, que cumple con enorme margen y no significa nada. Esa ambigüedad, sola, ya bastaba para cambiar el criterio: una vara que se puede leer de dos formas con resultados opuestos no es una vara.
 
-- **FP sobre findings reportados**: 5 / 8 fuera de muestra = 62%. No cumple.
-- **FP sobre claims examinados**: 5 sobre miles. Cumple con enorme margen, y no significa nada.
-
-La primera es la que importa, y es la que `BRIEF.md` describe al decir "es preferible reportar 6 problemas reales que 20 con 8 dudosos" — eso es un ratio de findings.
+[ADR-0006](../../docs/adr/0006-el-criterio-de-precision-de-m1.md) la resuelve contando por repo y fijando el denominador de la única tasa que conserva.
 
 ## Nota de ejecución
 
