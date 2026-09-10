@@ -4,7 +4,7 @@
 
 **Blocked by:** `02` — none of this could be configured for a package that did not exist.
 
-**Status:** ready-for-human
+**Status:** done
 
 ## What was configured on npmjs
 
@@ -72,3 +72,33 @@ The GitHub Release for `v0.1.0` had been created **by hand at 21:07:36**, and th
 It is idempotent now: an existing release is left exactly as it is, notes included, with a `::notice::` saying so. Somebody who wrote release notes by hand did not ask for them to be replaced.
 
 **What this run proves and does not.** The whole gate is proven end to end on a real tag. The staging path is still unproven, because it did not run: `npm stage publish . --provenance --access public`, the runner's npm, and provenance all wait for `NPM_PUBLISH`.
+
+### The staged release worked on the first tag that ran it
+
+[Run 34531296350](https://github.com/abr4xas/driftwatch/actions/runs/34531296350), `v0.1.1`, 34 s, green. The three things this ticket recorded as unproven all held:
+
+```
+npm notice Staging to https://registry.npmjs.org/ with tag latest and public access
+npm notice stage Signed provenance statement with source and build information from GitHub Actions
+npm notice stage Provenance statement published to transparency log:
+           https://search.sigstore.dev/?logIndex=2787320297
++ @abr4xas/driftwatch@0.1.1 (staged with id 89ed7feb-871a-41bf-b55a-a0f480a60255)
+```
+
+- **The invocation.** `npm stage publish .` was the right spec.
+- **The runner's npm.** `npm install -g npm@latest` did its job, or was never needed; either way it is deterministic now.
+- **Provenance.** Signed and in Sigstore's transparency log — the thing the manual `0.1.0` could not have. The registry shows it: `0.1.0` has no attestations, `0.1.1` carries a SLSA provenance predicate.
+
+`npm stage approve` published it, and `latest` is `0.1.1`.
+
+One thing was learned rather than confirmed: **`npm stage publish` runs `prepublishOnly`**, so the gate executes a second time inside the step. It costs a few seconds and it is the behaviour worth having — that script exists for the laptop path, and it turns out to cover this one too.
+
+### The warning it left behind
+
+Every release logged this, from pnpm reading the `.npmrc` that `setup-node`'s `registry-url` writes:
+
+```
+[WARN] Failed to replace env in config: ${NODE_AUTH_TOKEN}
+```
+
+The file exists to carry a token into npm, and trusted publishing removed the token. `registry-url` is gone, and the registry it also pinned is pinned by `publishConfig.registry` in `package.json` instead — the better place, because it holds for a publish from a laptop as well as from CI.

@@ -14,7 +14,7 @@ The release workflow is already written and already runs the whole gate on a `v*
 
 1. **`01`** — push `master`, and get CI green on the remote for the first time since M2 started. **Done**, green on the first try.
 2. **`02`** — publish by hand, once. **Done**: `@abr4xas/driftwatch@0.1.0`. The unscoped name was refused by npm for resembling `drift-watch`, an unrelated tool, so the package is scoped and the command is not.
-3. **`03`** — hand the release to CI. The trusted publisher is configured; what is left is one repository variable and the next version.
+3. **`03`** — hand the release to CI. **Done**: `v0.1.1` was staged by the workflow with signed provenance and approved by hand.
 
 Steps 2 and 3 are the owner's: `AGENTS.md` § "Decisions that require asking the user" lists publishing to npm and any outward-facing action, and nothing here changes that.
 

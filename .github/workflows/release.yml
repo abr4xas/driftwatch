@@ -35,8 +35,16 @@ jobs:
           # package claims to support.
           node-version: 24
           cache: pnpm
-          # Writes the `.npmrc` that `NODE_AUTH_TOKEN` below is read through.
-          registry-url: 'https://registry.npmjs.org'
+          # No `registry-url`. It writes an `.npmrc` holding
+          # `_authToken=${NODE_AUTH_TOKEN}`, which was how the token reached
+          # npm before trusted publishing replaced it — and with the token
+          # gone, every release logged
+          #
+          #   [WARN] Failed to replace env in config: ${NODE_AUTH_TOKEN}
+          #
+          # from pnpm reading that file. The registry it also pinned is pinned
+          # by `publishConfig.registry` in package.json instead, which is the
+          # better place for it: it holds for a publish from a laptop too.
 
       - run: pnpm install --frozen-lockfile
 
