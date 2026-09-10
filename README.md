@@ -114,4 +114,4 @@ The specification is primary source: when the code and those documents disagree,
 
 ## License
 
-MIT.
+[MIT](./LICENSE).

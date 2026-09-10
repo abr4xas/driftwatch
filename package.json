@@ -4,6 +4,12 @@
   "private": true,
   "description": "Find the parts of your CLAUDE.md, AGENTS.md and skills that are no longer true",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abr4xas/driftwatch.git"
+  },
+  "homepage": "https://github.com/abr4xas/driftwatch#readme",
+  "bugs": "https://github.com/abr4xas/driftwatch/issues",
   "type": "module",
   "bin": {
     "driftwatch": "./dist/cli.js"

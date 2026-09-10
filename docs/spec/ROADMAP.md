@@ -72,7 +72,7 @@ What turns a tool that works into a project someone adopts.
 - Published GitHub Action (`driftwatch/action@v1`)
 - One-page static site with the demo and the GIF
 - Published to npm with provenance (`npm publish --provenance`)
-- MIT license
+- MIT license (done: `LICENSE`)
 
 **Acceptance:** someone who has never seen the project understands what it does in under 15 seconds, looking only at the README.
 

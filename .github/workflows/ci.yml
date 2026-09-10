@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # The default branch is `master`. This said `main` until the first push,
+    # which is why no run exists before 2026-09-09.
+    branches: [master]
   pull_request:
 
 permissions:
