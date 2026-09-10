@@ -3,6 +3,7 @@ import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
 import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
+import { extractFrontmatterClaims } from './extract/frontmatter.ts'
 import { extractLinkClaims } from './extract/links.ts'
 import { extractPathClaims } from './extract/paths.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
@@ -66,7 +67,11 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
     const frontmatter = parseFrontmatter(source.content)
     const table = buildLineTable(source.content)
     const context = { source, doc, frontmatter, table, origin }
-    claims.push(...extractPathClaims(context), ...extractLinkClaims(context))
+    claims.push(
+      ...extractPathClaims(context),
+      ...extractLinkClaims(context),
+      ...extractFrontmatterClaims(context),
+    )
     ignores.set(source, parseIgnores(doc, table))
   }
   return { claims, ignores }

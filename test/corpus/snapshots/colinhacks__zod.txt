@@ -1,7 +1,7 @@
 # colinhacks/zod
 
 sources: 3
-errors: 0
+errors: 1
 warnings: 0
 fixable: 0
 
@@ -11,4 +11,4 @@ skill  .claude/skills/triage/SKILL.md
 cursor-rule  .cursorrules
 
 ## findings
-(none)
+.claude/skills/security-advisory/SKILL.md:3:1  [frontmatter/invalid] frontmatter  description: Triage a draft security advisory in colinhacks/zod — a private vulnerability report from the Security tab, named by GHSA id (GHSA-xxxx-xxxx-xxxx) or reached from "the draft advisories", "the security reports", "the vulnerability queue". Use instead of the `triage` skill whenever the ticket is an advisory rather than a public issue or PR, because the workflow is different: the report is private, the burden of proof is on the reporter, the fix must be LANDED before any comment is drafted, and the publish-or-decline call has its own calculus. Covers reproducing a PoC against main, the schema-vs-input test, deduplicating a cluster of reports into distinct defects, landing the fix first, the publish-vs-decline framework, per-reporter privacy rules that make a GHSA id unlinkable, and the results.md format under .triage/advisories/GHSA-xxxx-xxxx-xxxx/.

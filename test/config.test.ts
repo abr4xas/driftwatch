@@ -267,6 +267,6 @@ describe('the sources key', () => {
     const result = await audit(root)
     expect(result.config.ignore).toEqual(['**/nope/**'])
     expect(result.config.staleThreshold).toBe(30)
-    expect(result.checks).toEqual(['path/missing', 'link/broken'])
+    expect(result.checks).toEqual(['path/missing', 'link/broken', 'frontmatter/invalid'])
   })
 })

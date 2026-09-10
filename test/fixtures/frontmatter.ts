@@ -1,0 +1,197 @@
+import type { Fixture } from '../helpers/fixture.ts'
+
+/**
+ * `frontmatter/invalid`, both halves: a block that does not parse, and a known
+ * field holding the wrong type.
+ *
+ * The negative cases are the ones that matter. Every file below whose findings
+ * are absent from `expected` is a false positive class the check has to refuse:
+ * a prose block that only looks like frontmatter, a template placeholder, an
+ * empty value, a nested key, a kind with no schema, and the boolean spelled as
+ * a word.
+ */
+export const frontmatter: Fixture = {
+  name: 'frontmatter',
+  files: {
+    // The parse half. `[unclosed` never terminates, and the parser points at
+    // the end of the line it started on.
+    '.claude/skills/unparseable/SKILL.md': [
+      '---',
+      'name: [unclosed', // 2
+      '---',
+      '',
+      '# Unparseable',
+      '',
+    ].join('\n'),
+
+    // A duplicate key is a parse error to `yaml`, and real drift: one of the
+    // two values is silently lost.
+    '.claude/skills/duplicated/SKILL.md': [
+      '---',
+      'name: duplicated',
+      'description: sends the release to production',
+      'name: duplicated-again', // 4
+      '---',
+      '',
+    ].join('\n'),
+
+    // The type half, one per kind that has a table.
+    '.claude/skills/mistyped/SKILL.md': [
+      '---',
+      'name: mistyped',
+      'description:', // 3: a list where the format wants a string
+      '  - ships things',
+      '  - and other things',
+      'allowed-tools: [Read, Write]', // 6: a list is documented, so it is fine
+      'color: red', // 7: unknown key, which is ticket 07 and not this check
+      'metadata:', // 8
+      '  description: [nested]', // 9: nested, never claimed
+      '---',
+      '',
+    ].join('\n'),
+
+    '.claude/agents/reviewer.md': [
+      '---',
+      'name: reviewer',
+      'description: reviews a diff and says what is wrong with it',
+      'model: 4', // 4: a number where the alias is a string
+      'tools:', // 5: a mapping is neither of the two accepted shapes
+      '  Read: true',
+      '---',
+      '',
+    ].join('\n'),
+
+    '.claude/commands/ship.md': [
+      '---',
+      'description: ships the current branch',
+      'argument-hint: [environment]', // 3: the bracket idiom, deliberately not claimed
+      'disable-model-invocation: [true]', // 4: a list where a boolean belongs
+      '---',
+      '',
+    ].join('\n'),
+
+    '.cursor/rules/style.mdc': [
+      '---',
+      'description: how this repo writes TypeScript',
+      'globs: "*.ts"', // 3: a string is accepted, a list would be too
+      'alwaysApply: yes', // 4: a boolean under YAML 1.1, so it is accepted
+      '---',
+      '',
+      'Prefer const.',
+      '',
+    ].join('\n'),
+
+    // The fourth kind with a table. `sometimes` is not one of the words a
+    // YAML 1.1 parser reads as a boolean, so the concession does not cover it.
+    '.cursor/rules/loose.mdc': [
+      '---',
+      'description: when to reach for a rule',
+      'alwaysApply: sometimes', // 3
+      '---',
+      '',
+      'Sometimes.',
+      '',
+    ].join('\n'),
+
+    // A block that is not frontmatter: the first line is a thematic break and
+    // what follows is prose. It does not parse as YAML, and reporting it would
+    // be reporting our own slicing.
+    'CLAUDE.md': ['---', 'Some **bold** prose: [unclosed', '---', '', '# The project', ''].join(
+      '\n',
+    ),
+
+    // A skill template is not a skill. `{{name}}` parses as a mapping and the
+    // file it generates will hold a string.
+    '.claude/skills/template/SKILL.md': [
+      '---',
+      'name: {{name}}',
+      'description: {{description}}',
+      '---',
+      '',
+    ].join('\n'),
+
+    // An empty value asserts no type. "Missing" is `skill/frontmatter`'s
+    // finding, and claiming it here would double it.
+    '.claude/skills/empty/SKILL.md': ['---', 'name: empty', 'description:', '---', ''].join('\n'),
+
+    // No format defines a frontmatter for a nested CLAUDE.md, so the type of
+    // whatever is in one is not ours to judge.
+    'packages/api/CLAUDE.md': [
+      '---',
+      'description:', // no schema for this kind, and empty besides
+      '  - one',
+      'tools:',
+      '  Read: true',
+      '---',
+      '',
+      '# The api',
+      '',
+    ].join('\n'),
+  },
+  expected: [
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.claude/agents/reviewer.md',
+      line: 4,
+      column: 1,
+      text: 'model',
+      message: 'expected a string, found a number',
+    },
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.claude/agents/reviewer.md',
+      line: 5,
+      column: 1,
+      text: 'tools',
+      message: 'expected a string or a list, found a mapping',
+    },
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.claude/commands/ship.md',
+      line: 4,
+      column: 1,
+      text: 'disable-model-invocation',
+      message: 'expected a boolean, found a list',
+    },
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.claude/skills/duplicated/SKILL.md',
+      line: 4,
+      column: 1,
+      text: 'name: duplicated-again',
+      message: 'invalid YAML: Map keys must be unique',
+    },
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.claude/skills/mistyped/SKILL.md',
+      line: 3,
+      column: 1,
+      text: 'description',
+      message: 'expected a string, found a list',
+    },
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.claude/skills/unparseable/SKILL.md',
+      line: 2,
+      column: 1,
+      text: 'name: [unclosed',
+      message:
+        'invalid YAML: Flow sequence in block collection must be sufficiently indented and end with a ]',
+    },
+    {
+      check: 'frontmatter/invalid',
+      severity: 'error',
+      file: '.cursor/rules/loose.mdc',
+      line: 3,
+      column: 1,
+      text: 'alwaysApply',
+      message: 'expected a boolean, found a string',
+    },
+  ],
+}

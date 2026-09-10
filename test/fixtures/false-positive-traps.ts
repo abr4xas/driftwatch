@@ -14,6 +14,13 @@ export const falsePositiveTraps: Fixture = {
   name: 'false-positive-traps',
   files: {
     'CLAUDE.md': [
+      // Not frontmatter: a thematic break, and prose under it. The block gets
+      // sliced anyway, it does not parse as YAML, and `frontmatter/invalid`
+      // has to stay quiet — the first line is not key-shaped.
+      '---',
+      'Not frontmatter: prose with a colon and an [unclosed bracket',
+      '---',
+      '',
       '# False positive traps',
       '',
       '## Rule 1: URLs',

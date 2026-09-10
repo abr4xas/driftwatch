@@ -2,7 +2,7 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **49 public repos pinned to a commit, 15 findings.**
+Corpus: **49 public repos pinned to a commit, 16 findings.**
 Of the 49, **18 form the validation group**. Two replacements are owed, for `mattpocock/course-video-manager` and `emdash-cms/emdash`; unlike the moves in round five both leave **clean**, so no number below depends on their departure.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -29,7 +29,7 @@ That sentence was also true on 2026-09-09 and did not survive contact with fifte
 
 What remains unfixed is two false positives: a third-party convention kept by design, and one **not reachable by any prose rule**.
 
-The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **11 true of 14, 78.6%** — it just no longer decides anything.
+The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **14 true of 16, 87.5%** — it just no longer decides anything. (The figure had been left at round four's `11 of 14` through three rounds that moved it; it is derived below from the two false positives still open.)
 
 ### What happened, and why the caveat was right
 
@@ -571,3 +571,53 @@ Cross-file anchors between agent context files are simply rare today. That is a 
 ### What would change the reading
 
 A validation repo whose context files cross-reference each other by anchor. That is a narrower profile than the one condition 9 already owes two replacements for, and it is worth combining: a repo with several large sources **that link to each other** would serve both.
+
+---
+
+## Tenth round, 2026-09-10: `frontmatter/invalid` lands and finds real drift
+
+The second check added since M1 closed, and the first one whose arrival **moved a snapshot**.
+
+**One snapshot changed, one new finding, and it is true.** 49 repos, 177 sources, **15 → 16 findings**. Every false positive count is untouched, so every condition holds where round nine left it: corpus 47 of 49 = 95.9%, validation 19 of 19 = 100%, `fixable: 0`.
+
+### The finding: `colinhacks/zod` `.claude/skills/security-advisory/SKILL.md:3`
+
+```
+description: Triage a draft security advisory in colinhacks/zod — ... because the workflow is different: the report is private, ...
+```
+
+An unquoted plain scalar holding `: `. That is not valid YAML in any spec-compliant parser — `yaml` calls it `Nested mappings are not allowed in compact mappings` — so **the frontmatter of this skill does not load**, and the description that decides whether the skill is ever invoked is not read by anything.
+
+Classified **true positive**, and it is the best kind: nobody could have found it by reading the file, the document looks entirely normal, and the failure is silent. It is also the first out-of-sample true positive contributed by a check other than `path/missing`, which is the evidence round nine explicitly said `link/broken` was missing.
+
+The repo is calibration, not validation, so condition 7 still rests on `path/missing`'s three.
+
+### The quiet had to be shown not to be vacuous, again
+
+The type half produced nothing, and a check that never runs also produces nothing. Measured directly over the corpus's discovered sources:
+
+| | |
+|---|---|
+| Sources with a leading `---` block | **33** of 177 |
+| Blocks refused as not key-shaped | 0 |
+| Blocks refused for holding a template placeholder | 0 |
+| Blocks that parse | **32** |
+| Blocks that do not | **1** (the finding above) |
+| Top-level key claims extracted | **80** (74 skill, 4 subagent, 2 agents-md) |
+| Of those, keys the table types | **65** |
+| Type findings | **0** |
+
+So the table was consulted 65 times against fields other people wrote and agreed every time. The two prose gates cost nothing here — no corpus source has a leading block that is not frontmatter, and none is a template — which means they are unproven rather than unused: they exist for the classes the fixture demonstrates, and the corpus neither confirms nor denies them.
+
+### What the corpus says about the table, and what was deliberately not done with it
+
+Two observations from the 33 real blocks, both left unacted on:
+
+- **`disable-model-invocation` and `license` appear on skills** (7 and 6 times), and the table types the first only for `command`. Adding it for `skill` would type three more claims.
+- **`argument-hint` is always quoted** in the corpus (`"[pr-url] [output-dir]"`), so it is a string and the exclusion of that key cost no detection. The unquoted `argument-hint: [x]` the exclusion exists for does not appear among the discovered sources.
+
+Neither the addition nor the reversal was made, and the reason is condition 9. The files carrying those keys belong to `alpinejs/alpine` among others, which is **in the validation group**: deriving a rule from what they contain would burn the repo and owe a replacement. The table was written from the documented formats before the corpus was read, and it stays that way. What the corpus is allowed to do here is report, and it reports that the table is conservative.
+
+### The class this check cannot have
+
+`frontmatter/invalid` has no suggestion and nothing `fixable`, by construction — quoting somebody's value is an edit for M3 to decide on with this evidence in hand. Condition 2 is therefore met the way condition 2 is best met: there is nothing for it to be wrong about.

@@ -17,7 +17,7 @@ The six deliverables of `docs/spec/ROADMAP.md` § M2, split into eight tickets.
 **Then the checks**, cheapest in new machinery first:
 
 - `05` — `link/broken`, which in practice means **anchors**. See the note below; the file half is already done. **Done**, and it produced [ADR-0010](../../docs/adr/0010-anchors-match-on-a-canonical-key.md).
-- `06` — `frontmatter/invalid`: YAML that does not parse, or fields with the wrong type.
+- `06` — `frontmatter/invalid`: YAML that does not parse, or fields with the wrong type. **Done**, and it produced the first out-of-sample true positive from a check other than `path/missing`.
 - `07` — `skill/frontmatter`: the five structural rules in SPEC § 3.
 - `08` — `script/missing`: `npm run X` and friends against the nearest `package.json`, `Makefile` or `deno.json`.
 

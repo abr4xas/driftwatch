@@ -3,6 +3,7 @@ import { anchors } from './anchors.ts'
 import { brokenPaths } from './broken-paths.ts'
 import { configuredSources } from './configured-sources.ts'
 import { falsePositiveTraps } from './false-positive-traps.ts'
+import { frontmatter } from './frontmatter.ts'
 import { happyPath } from './happy-path.ts'
 import { ignores } from './ignores.ts'
 import { linksAndFrontmatter } from './links-and-frontmatter.ts'
@@ -27,4 +28,5 @@ export const ALL_FIXTURES: readonly Fixture[] = [
   configuredSources,
   ignores,
   anchors,
+  frontmatter,
 ]

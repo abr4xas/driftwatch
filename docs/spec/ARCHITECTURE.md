@@ -50,6 +50,7 @@ src/
     deps.ts            dependency Claim[]
     symbols.ts         symbol Claim[]
     links.ts           link Claim[]
+    frontmatter.ts     frontmatter Claim[] (the block parses, the fields are typed)
   verify/
     repo-index.ts      in-memory repo index (the heart)
     check.ts           the shape of a check and its context
@@ -62,6 +63,7 @@ src/
       path-missing.ts
       script-missing.ts
       skill-frontmatter.ts
+      frontmatter-invalid.ts
       link-broken.ts
       dep-missing.ts
       symbol-missing.ts
@@ -189,6 +191,24 @@ Two consequences shape the code:
 
 - **The check never claims a target that does not exist.** `path/missing` already extracts the path half of every link and already suggests a candidate for it, so one broken link produces one finding. `link/broken` requires the target to be in the index before it says anything.
 - **`Check.run` stays synchronous.** The target files a link points into are read once per run into `verify/anchor-index.ts`, before verification, the way `ignoredByGit` already is. A check that reads from disk on the hot path is how the budget in SPEC § 9 dies. Only files some claim actually targets are read; this is not an index of the repo.
+
+---
+
+## Frontmatter validation
+
+`frontmatter/invalid` is two checks wearing one id, and they carry very different risk.
+
+That the block **is** YAML is a fact: `parse/frontmatter.ts` hands it to `yaml` and the parser says. A duplicate key comes with it for free, and it is real drift — one of the two values is silently lost.
+
+That a field holds the right **type** needs a schema, and a schema we get wrong reports a field every real consumer accepts. So the table in `verify/checks/frontmatter-invalid.ts` is deliberately small: only top-level keys whose type the format fixes, only for the kinds that have a documented format, and nothing at all for `claude-md`, `agents-md` or `copilot` — no format defines a frontmatter for a `CLAUDE.md`, so whatever is in one belongs to its author.
+
+Three refusals shape the rest, and each is a false positive class:
+
+- **A leading block is not always frontmatter.** The slicer takes any `---` block at offset 0, and a document whose first line is a thematic break gives one holding prose. The block is only claimed when its first non-blank line is key-shaped.
+- **A template placeholder silences the block whole.** `description: {{DESCRIPTION}}` parses as a mapping; the file it generates will hold a string. Same direction the path extractor takes with placeholders.
+- **A boolean spelled as a word is accepted.** `alwaysApply: yes` is a string under YAML 1.2 core, which `yaml` implements, and a boolean under the 1.1 parsers half the ecosystem still loads frontmatter with. We cannot tell whose parser the author had in mind, and only the permissive reading cannot report a file that works.
+
+The extractor stays schema-free: it emits one claim per top-level key carrying the type it observed, and the table lives with the check. The division with `skill/frontmatter` follows from it — this check owns **types**, that one owns **structure**, and a `description` that is a list has no length to be too short.
 
 ---
 

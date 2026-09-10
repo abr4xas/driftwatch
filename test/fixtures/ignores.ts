@@ -47,6 +47,23 @@ export const ignores: Fixture = {
       'The writer is at `src/lib/write.ts`.', // 26
       '',
     ].join('\n'),
+    /**
+     * A frontmatter finding can only be silenced with `-ignore-file`: the
+     * directives are read from the mdast `html` nodes, and a comment inside
+     * the YAML block is not one of them. The duplicate `name` below is a real
+     * `frontmatter/invalid`, and the file form is what reaches it.
+     */
+    '.claude/skills/silenced/SKILL.md': [
+      '---',
+      'name: silenced',
+      'name: silenced-again',
+      '---',
+      '',
+      '<!-- driftwatch-ignore-file frontmatter/invalid -->',
+      '',
+      '# Silenced',
+      '',
+    ].join('\n'),
     'NOTES.md': '',
     'src/index.ts': '',
   },
