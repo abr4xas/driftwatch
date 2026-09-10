@@ -10,7 +10,7 @@ The six deliverables of `docs/spec/ROADMAP.md` § M2, split into eight tickets.
 
 **Infrastructure first**, because every check needs it:
 
-- `01` — config file, `sources` key first (`docs/spec/SPEC.md` § 7). Written.
+- `01` — config file, `sources` key first (`docs/spec/SPEC.md` § 7). **Done**, and it produced [ADR-0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
 - `03` — `--only` / `--skip` / `--no-tier2`. Today they parse and throw `notYetImplemented`.
 - `04` — inline ignore directives (`<!-- driftwatch-ignore -->`, `-ignore-next-line`, `-ignore-file`, with or without a check id).
 
@@ -46,6 +46,15 @@ So ticket `05` has two jobs, and neither is "check that link targets exist":
 
 1. Anchor resolution: parse the target file's headings, apply GitHub's slug rules, and report `#section` when no heading produces that slug. Same-file anchors (`#section` with no path) included.
 2. **Do not double-report.** A link to a missing file must produce one finding, not two. Decide whether that means `link/broken` skips targets that do not exist — leaving them to `path/missing`, which already suggests a candidate — or whether it claims them and `path/missing` yields. The first is less work and keeps the suggestion; take it unless the ticket finds a reason not to.
+
+This check is also what finally verifies the links inside `docs/spec/` and `docs/adr/`, which ADR-0008 established `path/missing` cannot. It arrives as a **second invocation** with its own config, because `sources` and the check filter are both global:
+
+```
+driftwatch                                        # sources: docs/agents/**
+driftwatch --config driftwatch.docs.ts --only link/broken
+```
+
+Which means ticket `05` depends on `03` (`--only`), not just on `04`.
 
 ## What has to change in the code
 

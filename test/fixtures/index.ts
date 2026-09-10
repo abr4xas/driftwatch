@@ -1,5 +1,6 @@
 import type { Fixture } from '../helpers/fixture.ts'
 import { brokenPaths } from './broken-paths.ts'
+import { configuredSources } from './configured-sources.ts'
 import { falsePositiveTraps } from './false-positive-traps.ts'
 import { happyPath } from './happy-path.ts'
 import { linksAndFrontmatter } from './links-and-frontmatter.ts'
@@ -21,4 +22,5 @@ export const ALL_FIXTURES: readonly Fixture[] = [
   linksAndFrontmatter,
   monorepo,
   noGit,
+  configuredSources,
 ]

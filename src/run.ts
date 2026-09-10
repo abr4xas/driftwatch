@@ -1,3 +1,4 @@
+import { loadConfig, type Config } from './core/config.ts'
 import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import type { Claim, Finding, Source } from './core/types.ts'
@@ -15,10 +16,15 @@ export type RunOptions = {
   cwd: string
   /** Positional arguments that narrow the scope. */
   paths: readonly string[]
+  /** `--config <path>`, or `false` for `--no-config`. Absent means look it up. */
+  config?: string | false
 }
 
 export type RunResult = {
   root: string
+  /** The config that was in effect, and the file it came from if there was one. */
+  config: Config
+  configPath: string | undefined
   sources: readonly Source[]
   /** The ids of the registered checks. */
   checks: readonly string[]
@@ -101,8 +107,16 @@ function countBySeverity(findings: readonly Finding[]): Counts {
 export async function run(options: RunOptions): Promise<RunResult> {
   const started = performance.now()
   const root = findRepoRoot(options.cwd)
+  const { config, path: configPath } = await loadConfig({
+    root,
+    cwd: options.cwd,
+    explicit: options.config,
+  })
   const index = await buildRepoIndex(root)
-  const sources = await discoverSources(index, { paths: options.paths })
+  const sources = await discoverSources(index, {
+    paths: options.paths,
+    ...(config.sources === undefined ? {} : { sources: config.sources }),
+  })
 
   const origin = await originSlug(root)
   const claims = sources.flatMap((source) => claimsFor(source, origin))
@@ -118,6 +132,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
   return {
     root,
+    config,
+    configPath,
     sources,
     checks: CHECK_IDS,
     findings,

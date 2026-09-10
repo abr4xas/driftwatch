@@ -1,11 +1,17 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { RepoIndex } from '../verify/repo-index.ts'
+import { UserError } from './errors.ts'
 import type { Source, SourceKind } from './types.ts'
 
 export type DiscoverOptions = {
   /** Positional arguments that narrow the scope. Empty audits the whole repo. */
   paths: readonly string[]
+  /**
+   * The config's `sources`: literal paths or globs, matched against the repo
+   * index. They are added to what discovery found, never replacing it.
+   */
+  sources?: readonly string[]
 }
 
 /** The segments of a relative path, already in posix form. */
@@ -75,6 +81,69 @@ function isInScope(rel: string, paths: readonly string[]): boolean {
   })
 }
 
+/** Whether the pattern is a glob and not a literal path. */
+const GLOB_CHARS = /[*?[\]{}!]/u
+
+/**
+ * Resolves the config's `sources` against the **repo index** instead of
+ * walking the filesystem.
+ *
+ * Two things fall out of that for free: `.gitignore` is respected, because the
+ * index already is what git lists, and a pattern cannot reach outside the repo.
+ * The alternative, globbing the disk, would duplicate discovery and lose both.
+ *
+ * A pattern that matches nothing **fails**. Declaring a source and not having
+ * it is exactly the drift this tool reports; doing it silently in our own
+ * config file would be the tool lying about itself.
+ */
+async function matchConfiguredSources(
+  index: RepoIndex,
+  patterns: readonly string[],
+): Promise<string[]> {
+  const literals: string[] = []
+  const globs: string[] = []
+  for (const raw of patterns) {
+    const pattern = raw.replace(/^\.\//u, '').replace(/\/+$/u, '')
+    if (pattern === '') continue
+    if (GLOB_CHARS.test(pattern)) globs.push(pattern)
+    else literals.push(pattern)
+  }
+
+  const matched = new Set<string>()
+  for (const literal of literals) {
+    if (!index.files.has(literal)) {
+      throw new UserError(
+        `the config declares a source that does not exist: ${literal}`,
+        'remove it from `sources`, or check the path is relative to the repo root',
+      )
+    }
+    matched.add(literal)
+  }
+
+  // `ignore` is imported only if a pattern actually needs matching: a config
+  // with literal paths must not pay for it. It is the same matcher the no-git
+  // fallback uses, and gitignore syntax is what `docs/**/*.md` already means.
+  if (globs.length > 0) {
+    const { default: ignore } = await import('ignore')
+    for (const glob of globs) {
+      const matcher = ignore().add(glob)
+      let hits = 0
+      for (const rel of index.files) {
+        if (!matcher.ignores(rel)) continue
+        matched.add(rel)
+        hits += 1
+      }
+      if (hits === 0) {
+        throw new UserError(
+          `the config declares a source pattern that matches nothing: ${glob}`,
+          'patterns are matched against the files git lists, from the repo root',
+        )
+      }
+    }
+  }
+  return [...matched]
+}
+
 export async function discoverSources(
   index: RepoIndex,
   options: DiscoverOptions,
@@ -84,6 +153,19 @@ export async function discoverSources(
     if (!isInScope(rel, options.paths)) continue
     const kind = classifySource(rel)
     if (kind !== undefined) matched.push({ path: rel, kind })
+  }
+
+  if (options.sources !== undefined && options.sources.length > 0) {
+    const found = new Set(matched.map((entry) => entry.path))
+    for (const rel of await matchConfiguredSources(index, options.sources)) {
+      // Discovery wins: a configured entry that is already an AGENTS.md keeps
+      // its real kind instead of being reported twice under two names.
+      if (found.has(rel)) continue
+      // A positional still narrows: `driftwatch src/` must not drag in a
+      // configured `docs/` source.
+      if (!isInScope(rel, options.paths)) continue
+      matched.push({ path: rel, kind: 'configured' })
+    }
   }
 
   // Stable order by path: the tool's output has to be the same run after run

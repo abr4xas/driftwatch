@@ -35,6 +35,8 @@ function finding(file: string, line: number, text: string): Finding {
 function result(over: Partial<RunResult> = {}): RunResult {
   return {
     root: '/repo',
+    config: {},
+    configPath: undefined,
     sources: [source('CLAUDE.md')],
     checks: ['path/missing'],
     findings: [],

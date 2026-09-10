@@ -5,7 +5,20 @@
  */
 
 export type SourceKind =
-  'claude-md' | 'agents-md' | 'skill' | 'subagent' | 'command' | 'cursor-rule' | 'copilot'
+  | 'claude-md'
+  | 'agents-md'
+  | 'skill'
+  | 'subagent'
+  | 'command'
+  | 'cursor-rule'
+  | 'copilot'
+  /**
+   * Declared in the config's `sources`, not found by discovery. It is a
+   * separate kind and not a lie about being an `agents-md`: the reporter names
+   * it, and a reader can tell "the tool found this" from "this repo asked for
+   * it".
+   */
+  | 'configured'
 
 /** An agent context file: the thing being audited. */
 export type Source = {

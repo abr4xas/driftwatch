@@ -94,7 +94,6 @@ describe('main', () => {
     ['--no-tier2'],
     ['--only'],
     ['--skip'],
-    ['--no-config'],
   ])('%s is not implemented yet and says so, instead of being ignored', async (flag) => {
     const c = capture()
     const argv = flag === '--only' || flag === '--skip' ? [flag, 'path'] : [flag]

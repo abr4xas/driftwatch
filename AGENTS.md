@@ -39,7 +39,9 @@ Work tickets live in `.scratch/<feature>/issues/`. See `docs/agents/issue-tracke
 
 ## Dependencies
 
-The cold-start budget (< 80 ms) is part of the product, not a nice-to-have. Before adding a dependency to the main path, check that you cannot solve it with `node:` builtins in under 40 lines. `jiti` and anything related to `.ts` config is loaded lazily, only if a config file exists.
+The cold-start budget (< 80 ms) is part of the product, not a nice-to-have. Before adding a dependency to the main path, check that you cannot solve it with `node:` builtins in under 40 lines.
+
+The config file is the worked example. It was specified expecting `jiti`, and it needs no transpiler at all: Node strips the types itself, unflagged since 22.18 and 23.6, and the floor is 24 (ADR-0002). A `.ts` config is loaded with a plain `await import()`. The dependency was avoided, not deferred. What that costs is that a config using syntax type stripping cannot erase — an `enum`, a `namespace`, a parameter property — fails with a clear error; nothing in the specification needs any of it.
 
 ## Verification
 

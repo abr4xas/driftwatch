@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { isUserError, messageOf, notYetImplemented, UserError } from '../core/errors.ts'
 import { EXIT, exitCodeFor, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
+import type { RunOptions } from '../run.ts'
 import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
@@ -36,8 +37,18 @@ function assertNotYetImplemented(args: CliArgs): void {
   if (args.format !== 'pretty') throw notYetImplemented(`--format ${args.format}`)
   if (args.only !== undefined) throw notYetImplemented('--only')
   if (args.skip !== undefined) throw notYetImplemented('--skip')
-  if (args.config !== undefined) {
-    throw notYetImplemented(args.config === false ? '--no-config' : '--config')
+}
+
+/**
+ * `--config <path>` and `--no-config` are one optional field downstream, and
+ * `exactOptionalPropertyTypes` means an absent config cannot be spelled as an
+ * explicit `undefined`.
+ */
+function runOptionsFor(args: CliArgs, cwd: string): RunOptions {
+  return {
+    cwd,
+    paths: args.paths,
+    ...(args.config === undefined ? {} : { config: args.config }),
   }
 }
 
@@ -83,7 +94,7 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
       import('../report/colors.ts'),
     ])
 
-    const result = await run({ cwd, paths: args.paths })
+    const result = await run(runOptionsFor(args, cwd))
     io.out(
       renderPretty(result, {
         color: colorEnabled(io.env, io.isTty),
