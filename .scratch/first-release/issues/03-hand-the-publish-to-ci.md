@@ -53,3 +53,22 @@ It also makes a GitHub Environment with required reviewers unnecessary — it wo
 - **The invocation.** `npm stage publish . --provenance --access public` follows `npm publish`'s convention for the package spec, read off `npm stage publish --help`. It has never been executed. If the spec is wrong the step fails and nothing is staged, which is why it is safe to find out this way.
 - **The runner's npm.** Staged publishing and OIDC both need a recent npm; `ubuntu-latest` with Node 24 does not guarantee one. The workflow installs `npm@latest` before staging, so the failure this prevents — a confusing "unknown command: stage" — cannot happen.
 - **Provenance.** The first release could not have it. This is the release that proves it: the npm page should show "Built and signed on GitHub Actions" with the commit it came from.
+
+## Comments
+
+### The first tag ran the workflow, and it failed on the accessory
+
+[Run 34530720008](https://github.com/abr4xas/driftwatch/actions/runs/34530720008), `v0.1.0`, 32 s. Everything that matters passed on the first attempt: lint, typecheck, 398 tests, build, `--help`, the tool over its own repo and its own documentation, the guard that the tag agrees with `package.json`, and `pack:check`. The two staging steps were **skipped**, correctly — `NPM_PUBLISH` is not set — and the step that explains how to release by hand ran instead.
+
+The job still went red:
+
+```
+HTTP 422: Validation Failed
+Release.tag_name already exists
+```
+
+The GitHub Release for `v0.1.0` had been created **by hand at 21:07:36**, and the workflow started at 21:10:55. So the failure is a race with a human, not a defect in the logic — but a workflow that fails after every check passed, because a page it wanted to create already exists, is a workflow that will train somebody to ignore a red run.
+
+It is idempotent now: an existing release is left exactly as it is, notes included, with a `::notice::` saying so. Somebody who wrote release notes by hand did not ask for them to be replaced.
+
+**What this run proves and does not.** The whole gate is proven end to end on a real tag. The staging path is still unproven, because it did not run: `npm stage publish . --provenance --access public`, the runner's npm, and provenance all wait for `NPM_PUBLISH`.

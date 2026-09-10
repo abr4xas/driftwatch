@@ -138,7 +138,19 @@ jobs:
       # it from the commit subjects since the previous release, which is why the
       # commit messages in this repo are written to be read: they are the
       # release notes.
+      #
+      # Idempotent, because the first time this ran the release already existed
+      # — created by hand three minutes before the tag was pushed — and the
+      # whole job failed on an HTTP 422 after every check had passed. Creating
+      # a release page is the accessory here; the package is the artifact. An
+      # existing release is left exactly as it is, notes included: somebody who
+      # wrote them by hand did not ask for them to be replaced.
       - name: create the GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "::notice::Release $GITHUB_REF_NAME already exists; its notes were left alone."
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
