@@ -6,6 +6,7 @@ import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
 import { extractFrontmatterClaims } from './extract/frontmatter.ts'
 import { extractLinkClaims } from './extract/links.ts'
 import { extractPathClaims } from './extract/paths.ts'
+import { extractScriptClaims } from './extract/scripts.ts'
 import { extractSkillClaims } from './extract/skill.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
@@ -13,6 +14,7 @@ import { buildLineTable } from './parse/positions.ts'
 import { buildAnchorIndex } from './verify/anchor-index.ts'
 import type { Check, CheckContext } from './verify/check.ts'
 import { CHECKS } from './verify/checks/index.ts'
+import { buildTaskIndex } from './verify/manifest.ts'
 import { selectChecks } from './verify/selection.ts'
 import { gitIgnoredPaths, originSlug } from './verify/git.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
@@ -70,6 +72,7 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
     const context = { source, doc, frontmatter, table, origin }
     claims.push(
       ...extractPathClaims(context),
+      ...extractScriptClaims(context),
       ...extractLinkClaims(context),
       ...extractFrontmatterClaims(context),
       ...extractSkillClaims(context),
@@ -195,6 +198,9 @@ export async function run(options: RunOptions): Promise<RunResult> {
     // enabled check consumes a link claim (`--only path`, or the config
     // turning `link/broken` off).
     anchors: consumes(checks, 'link') ? await buildAnchorIndex(root, claims) : new Map(),
+    // Same reasoning: the Makefiles and Deno configs are real I/O, so nothing
+    // is read when no enabled check consumes a script claim.
+    tasks: consumes(checks, 'script') ? await buildTaskIndex(root, index, claims) : new Map(),
   }
 
   const findings = sortFindings(applyIgnores(verify(claims, checks, ctx), ignores))

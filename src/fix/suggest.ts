@@ -1,4 +1,5 @@
 import type { Suggestion } from '../core/types.ts'
+import type { ScriptFact } from '../extract/scripts.ts'
 import type { DocumentAnchors } from '../verify/anchor-index.ts'
 import { candidatesFor, type RepoIndex } from '../verify/repo-index.ts'
 
@@ -153,4 +154,34 @@ export function suggestKey(known: readonly string[], key: string): Suggestion | 
   // Never fixable: it is a plausible correction, not the only one, and
   // rewriting somebody's key means deciding what they meant.
   return { value: only, confidence: 0.6, fixable: false }
+}
+
+/**
+ * The script a mistyped one is a near-miss of, as a whole corrected command.
+ *
+ * `SPEC.md` § 8 lists this as autofixable, and unlike the two suggestions above
+ * it really is unambiguous: one candidate, within two edits, in the manifest the
+ * command already resolves to. Nothing has to be guessed about what the author
+ * meant, so the confidence is 1 and `fixable` follows from the same threshold
+ * `suggestPath` uses.
+ *
+ * The `value` is the whole command rather than the name, because the command is
+ * what the claim's `offset` covers and therefore what `--fix` replaces. The
+ * name's position comes from the fact the extractor recorded: finding it again
+ * here would be a second parser to keep in step with the first.
+ */
+export function suggestScript(
+  available: readonly string[],
+  fact: ScriptFact,
+  command: string,
+): Suggestion | undefined {
+  const only = nearestUnique(available, fact.script)
+  if (only === undefined) return undefined
+  const { nameOffset, script } = fact
+  const confidence = 1
+  return {
+    value: `${command.slice(0, nameOffset)}${only}${command.slice(nameOffset + script.length)}`,
+    confidence,
+    fixable: confidence > FIXABLE_THRESHOLD,
+  }
 }

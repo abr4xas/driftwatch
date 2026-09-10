@@ -58,7 +58,7 @@ src/
     resolve.ts         a claim's text -> path relative to the root
     generated.ts       directories whose contents are generated, not versioned
     anchor-index.ts    the anchors of the files some link points into
-    manifest.ts        reads package.json / Makefile / pyproject / go.mod / Cargo
+    manifest.ts        the tasks each directory offers: package.json / Makefile / deno.json
     git.ts             per-file churn, a source's last commit
     checks/
       path-missing.ts
@@ -195,6 +195,28 @@ Two consequences shape the code:
 
 ---
 
+## Script resolution
+
+`script/missing` is the only check whose extractor parses a **grammar**. Everything else recognises a shape: a path looks like a path wherever it appears. `pnpm build` claims that `build` is a script, `pnpm add zod` claims nothing, and one word is the whole difference — so `extract/scripts.ts` asks three questions in order and any "I do not know" produces no claim: which manager, whether a script is being run at all, and which token is its name.
+
+Four refusals in that parser are each a false positive class, and three of them were **found by the corpus on the check's first run**, not by a fixture:
+
+- **The bare form of the npm family is not read.** `pnpm vitest run x` runs a *binary* from `node_modules/.bin`, which is deliberately outside the repo index. [ADR-0012](../adr/0012-a-bare-pnpm-x-is-not-a-script-claim.md) has the argument and what it gives up; `make X` keeps its bare form because make has no fallback.
+- **A flag before the name drops the segment.** `pnpm --filter api build` and `make -C docs html` name a script in a package we cannot identify. Every flag, not a curated list of the dangerous ones: the failure mode of a list is reading `make -j 4 build`'s `4` as the target.
+- **Two spaces in a row are a column.** A code block can be a table — `spatie/bloom` documents its `Makefile` as a two-column index — and read as a command its first line invokes a target called `list`.
+- **A trailing `#` comment is not part of the command**, in the text or in anything `--fix` would write back.
+
+This is also the only check that reads **code fences**, which § "Markdown parsing" assigns to it: a command block is how a context file tells an agent to build the project, and unlike a path in an example, a command in a fence is the normal way to write one.
+
+`verify/manifest.ts` answers the other half, and it is built once per run before verification for the reason `anchor-index.ts` is. Two decisions shape it:
+
+- **A manifest that cannot be enumerated answers nothing.** `package.json#scripts` and `deno.json#tasks` are objects, so their keys are the whole truth. A `Makefile` is a program: an `include` puts targets somewhere we did not read, and a pattern rule means the valid targets are not the literal names. Enumerability is judged on the **nearest** file only — letting a nested `include` silence the whole repo would turn the check off from one line.
+- **The script only has to exist somewhere.** [ADR-0005](../adr/0005-a-path-that-exists-somewhere-is-not-drift.md) applied to scripts: a monorepo's `packages/api/CLAUDE.md` saying `pnpm run test` with the script defined at the root is the same situation as a path written from the root. The nearest manifest is what the message names and where the suggestion comes from, because it is the file the reader will open.
+
+The claim spans the **whole command**, which is what SPEC § 5 prints, so `Claim.meta` carries where the name sits inside it: `--fix` replaces one token without re-parsing, and the parser cannot come to disagree with the fix.
+
+---
+
 ## Frontmatter validation
 
 `frontmatter/invalid` is two checks wearing one id, and they carry very different risk.
@@ -264,6 +286,8 @@ Minimum scenarios:
 - `broken-paths` — broken paths with and without a suggestion
 - `monorepo` — nested CLAUDE.md files, relative resolution, multiple package.json
 - `skills` — valid and invalid frontmatter
+- `scripts` — `script/missing` per runner, and the shapes the parser refuses
+- `no-manifest` — a repo with no `package.json`, `Makefile` or `deno.json`: nothing to verify a command against
 - `anchors` — `link/broken`, resolving and broken, plus the targets it must never claim
 - `false-positive-traps` — the most important one: URLs, globs, placeholders, versions, `node.js`, paths in example blocks, quoted text. **Expected: zero findings.**
 - `ignores` — inline directives working
@@ -297,4 +321,4 @@ export const check: Check = {
 }
 ```
 
-`ctx` exposes `index`, `manifests`, `git`, `config`. Static registry in `verify/checks/index.ts` — no dynamic plugin loading in v1. Third-party plugins are a v2 decision and must not shape the design now.
+`ctx` exposes `index` (whose `manifests` carries the parsed `package.json` of every directory), `anchors`, `tasks`, and will grow `git` and `config` when a check needs them — a field nobody reads is a field nobody maintains. Static registry in `verify/checks/index.ts` — no dynamic plugin loading in v1. Third-party plugins are a v2 decision and must not shape the design now.

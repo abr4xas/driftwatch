@@ -2,6 +2,7 @@ import type { Check } from '../check.ts'
 import { frontmatterInvalid } from './frontmatter-invalid.ts'
 import { linkBroken } from './link-broken.ts'
 import { pathMissing } from './path-missing.ts'
+import { scriptMissing } from './script-missing.ts'
 import { skillFrontmatter } from './skill-frontmatter.ts'
 
 /**
@@ -11,6 +12,7 @@ import { skillFrontmatter } from './skill-frontmatter.ts'
  */
 export const CHECKS: readonly Check[] = [
   pathMissing,
+  scriptMissing,
   linkBroken,
   frontmatterInvalid,
   skillFrontmatter,

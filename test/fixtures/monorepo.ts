@@ -37,6 +37,15 @@ export const monorepo: Fixture = {
       '',
       'The cache lives in `src/cache/redis.ts`.', // 13: exists in no form
       '',
+      // 15: the nearest manifest is `packages/api/package.json` and it has the
+      // script, so nothing is reported.
+      'Migrate with `pnpm run migrate`.',
+      '',
+      // 17: a near-miss of that same manifest, which is what proves the
+      // resolution is the nearest one and not the root's: `migrate` is defined
+      // here only.
+      'And seed with `pnpm run migrat`.',
+      '',
     ].join('\n'),
     'packages/web/CLAUDE.md': [
       '# web',
@@ -53,6 +62,8 @@ export const monorepo: Fixture = {
     'src/index.ts': '',
     'packages/api/src/db.ts': '',
     'packages/web/app.ts': '',
+    'package.json': JSON.stringify({ name: 'root', scripts: { build: 'tsdown' } }),
+    'packages/api/package.json': JSON.stringify({ name: 'api', scripts: { migrate: 'tsx x.ts' } }),
   },
   expected: [
     {
@@ -64,6 +75,16 @@ export const monorepo: Fixture = {
       text: 'src/cache/redis.ts',
       message: 'path does not exist',
       // No suggestion: there is no `redis.ts` anywhere in the repo.
+    },
+    {
+      check: 'script/missing',
+      severity: 'error',
+      file: 'packages/api/CLAUDE.md',
+      line: 17,
+      column: 16,
+      text: 'pnpm run migrat',
+      message: 'script not in packages/api/package.json',
+      suggestion: { value: 'pnpm run migrate', confidence: 1, fixable: true },
     },
   ],
 }

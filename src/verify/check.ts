@@ -1,5 +1,6 @@
 import type { Claim, ClaimKind, Finding, Severity } from '../core/types.ts'
 import type { AnchorIndex } from './anchor-index.ts'
+import type { TaskIndex } from './manifest.ts'
 import type { RepoIndex } from './repo-index.ts'
 
 export type CheckContext = {
@@ -8,6 +9,8 @@ export type CheckContext = {
   ignoredByGit: ReadonlySet<string>
   /** The anchors offered by the files some link points into. */
   anchors: AnchorIndex
+  /** The tasks each directory offers, per runner. See `buildTaskIndex`. */
+  tasks: TaskIndex
 }
 
 /**

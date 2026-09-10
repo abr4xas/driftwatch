@@ -269,6 +269,7 @@ describe('the sources key', () => {
     expect(result.config.staleThreshold).toBe(30)
     expect(result.checks).toEqual([
       'path/missing',
+      'script/missing',
       'link/broken',
       'frontmatter/invalid',
       'skill/frontmatter',

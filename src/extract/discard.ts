@@ -147,16 +147,25 @@ const PLACEHOLDER_CAMEL = [
   /(?:XXX|Xxx)(?![a-z])/u,
 ]
 
+/**
+ * Whether a name is a hole the reader is expected to fill in rather than a
+ * name.
+ *
+ * Exported because `extract/scripts.ts` asks the same question about a script
+ * name: `npm run your-script` and `foo/index.ts` are the same convention in two
+ * grammars, and a second list of fillers would drift from this one.
+ */
+export function isPlaceholderName(word: string): boolean {
+  return (
+    METASYNTACTIC.has(word.toLowerCase()) ||
+    PLACEHOLDER_UPPERCASE.test(word) ||
+    PLACEHOLDER_POSSESSIVE.test(word) ||
+    PLACEHOLDER_CAMEL.some((pattern) => pattern.test(word))
+  )
+}
+
 function hasMetasyntacticSegment(text: string): boolean {
-  return text
-    .split('/')
-    .some(
-      (segment) =>
-        METASYNTACTIC.has(segment.toLowerCase()) ||
-        PLACEHOLDER_UPPERCASE.test(segment) ||
-        PLACEHOLDER_POSSESSIVE.test(segment) ||
-        PLACEHOLDER_CAMEL.some((pattern) => pattern.test(segment)),
-    )
+  return text.split('/').some(isPlaceholderName)
 }
 
 function isNotAFile(text: string): boolean {

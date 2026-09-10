@@ -19,7 +19,7 @@ The six deliverables of `docs/spec/ROADMAP.md` § M2, split into eight tickets.
 - `05` — `link/broken`, which in practice means **anchors**. See the note below; the file half is already done. **Done**, and it produced [ADR-0010](../../docs/adr/0010-anchors-match-on-a-canonical-key.md).
 - `06` — `frontmatter/invalid`: YAML that does not parse, or fields with the wrong type. **Done**, and it produced the first out-of-sample true positive from a check other than `path/missing`.
 - `07` — `skill/frontmatter`: the five structural rules in SPEC § 3. **Done**, and it produced [ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md) and the project's first autofixable finding.
-- `08` — `script/missing`: `npm run X` and friends against the nearest `package.json`, `Makefile` or `deno.json`.
+- `08` — `script/missing`: `npm run X` and friends against the nearest `package.json`, `Makefile` or `deno.json`. **Done**, and it produced [ADR-0012](../../docs/adr/0012-a-bare-pnpm-x-is-not-a-script-claim.md) — the corpus rejected eight of the check's first nine findings, three of them `fixable`.
 
 `02` is not M2 work. It is the lint rule audit, deferred to release preparation, and it lives here because the first release happens when M2 closes.
 

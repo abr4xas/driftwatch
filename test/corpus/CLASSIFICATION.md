@@ -2,7 +2,7 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **49 public repos pinned to a commit, 16 findings.**
+Corpus: **49 public repos pinned to a commit, 17 findings.**
 Of the 49, **18 form the validation group**. Two replacements are owed, for `mattpocock/course-video-manager` and `emdash-cms/emdash`; unlike the moves in round five both leave **clean**, so no number below depends on their departure.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -29,7 +29,7 @@ That sentence was also true on 2026-09-09 and did not survive contact with fifte
 
 What remains unfixed is two false positives: a third-party convention kept by design, and one **not reachable by any prose rule**.
 
-The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **14 true of 16, 87.5%** — it just no longer decides anything. (The figure had been left at round four's `11 of 14` through three rounds that moved it; it is derived below from the two false positives still open.)
+The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **15 true of 17, 88.2%** — it just no longer decides anything. (The figure had been left at round four's `11 of 14` through three rounds that moved it; it is derived below from the two false positives still open.)
 
 ### What happened, and why the caveat was right
 
@@ -664,3 +664,75 @@ All 14 non-required keys are on the known list: `disable-model-invocation` (3), 
 Round ten recorded that `disable-model-invocation` and `license` appear on real skills while `frontmatter/invalid`'s type table only types the first for `command`. That is still true and still unacted on, for the same reason: the files are `alpinejs/alpine`'s among others, which is in the validation group.
 
 The known-key list of *this* check does include both — because it was written from the documented format, before the measurement, not from it. That ordering is the whole difference between a measurement and a mirror, and it is worth stating plainly in the one round where the two lists overlap.
+
+---
+
+## Twelfth round, 2026-09-10: `script/missing` lands, and the corpus rejects half of its first draft
+
+The fourth check added since M1 closed, and the first one to read **code fences**. Its surface is not the 33 frontmatter blocks the last three rounds moved over: it is every command in 177 sources.
+
+**One snapshot changed, one new finding, and it is true.** 49 repos, 177 sources, **16 → 17 findings**. `fixable: 0` holds, every false positive count is untouched, so every condition stands where round nine left it: corpus 47 of 49 = 95.9%, validation 18 of 18 = 100%.
+
+That is the *second* measurement. The first one produced **nine** findings across six repos, and reviewing them by hand is what this round is actually about.
+
+### What the first draft reported, and why eight of nine were false
+
+| Repo | Finding | Verdict |
+|---|---|---|
+| `unjs/h3` | `pnpm vitest run <path>      # run specific test` → **suggested `pnpm test run <path>`, `fixable`** | false |
+| `unjs/h3` | the same shape, twice more, both `fixable` | false |
+| `vercel/next.js` | `pnpm prettier --write <file>` | false |
+| `vercel/next.js` | `pnpm prettier --with-node-modules ... --write <files>` | false |
+| `calcom/cal.com` | `yarn biome check --write .  # Lint and format` | false |
+| `emdash-cms/emdash` | `pnpm wrangler types` | false |
+| `spatie/bloom` | `make            list the targets        make lint       Tools/house-rules.sh` | false |
+| `tursodatabase/turso` | `make test-mvcc` | **true** |
+
+Three root causes, and all six repos are calibration, so no validation repo was burned under condition 9.
+
+**1. A bare `pnpm X` is not a script claim.** `pnpm vitest`, `pnpm prettier`, `pnpm wrangler` and `yarn biome` all run a **binary** from `node_modules/.bin`, which we do not index and cannot verify. `SPEC.md` § 3 listed `pnpm X` and `yarn X` among the forms to detect, and the specification was wrong: the form is ambiguous by construction. It was narrowed rather than the heuristic weakened — [ADR-0012](../../docs/adr/0012-a-bare-pnpm-x-is-not-a-script-claim.md) — and only the explicit `run`/`task` keyword, plus `make`, survive. `make` keeps its bare form because make has no fallback: its argument is a target or nothing.
+
+Three of these were **`fixable`**, which is the one class ADR-0006 condition 2 admits none of. `pnpm vitest run <path>` sits one edit from the `test` script, so the tool offered to rewrite a working command into a broken one. It is the exact failure mode the condition exists for, and it was caught by the corpus rather than by a fixture — the fixtures were green.
+
+**2. A trailing comment is not part of the command.** `pnpm vitest run <path>      # run specific test` carried the comment into `Claim.text`, and would have carried it into whatever `--fix` wrote back.
+
+**3. A code block can be a table.** `spatie/bloom`'s `Makefile` is documented as a two-column index, and read as a command its first line invokes a target called `list`. Aligned arguments are the signal: two spaces in a row are a column, and a real command does not align. The rule costs the detection of `make swiftlint  Tools/swiftlint.sh` on the same page, which is a fair price for not reading a table as a program.
+
+### The one true finding: `tursodatabase/turso` `.claude/skills/mvcc/SKILL.md:91`
+
+```bash
+# TCL tests with MVCC
+make test-mvcc
+```
+
+The `Makefile` has 40-odd targets, `test-compat`, `test-single`, `test-fuzz` among them, and **no `test-mvcc`**. It has no `include` either, so the enumeration is complete rather than partial. A skill tells an agent to run a target that does not exist, and no suggestion is offered because nothing is within two edits of it.
+
+Classified **true positive**. It is the second out-of-sample true positive from a check other than `path/missing`, and the repo is calibration, so condition 7 still rests on `path/missing`'s three.
+
+### The quiet, measured
+
+A check that never fires also produces nothing, so what the 93 claims did is worth reading:
+
+| | |
+|---|---|
+| Code fences in the corpus sources | **625** |
+| Of those, shell or undeclared | **240** |
+| Script claims extracted | **93** |
+| From inline code / from fences | **67 / 26** |
+| By manager | `make` 45, `npm` 32, `pnpm` 11, `bun` 5, `yarn` 0, `deno` 0 |
+| Verified against a manifest and found | **84** |
+| Dropped: no manifest of that runner anywhere | **8** |
+| Dropped: nearest manifest not enumerable | **0** |
+| Findings | **1** |
+
+Three things follow.
+
+**84 real commands were looked up and 84 resolved.** That is not a vacuous zero: the parser reads the right token often enough that 90% of what it claims is verifiably correct, and the one miss is a genuine one.
+
+**The `include` refusal is unproven, not unused.** No Makefile in the corpus that some document points at has an `include` or a pattern rule in a position that mattered — turso's `%` characters all live in recipes, which the reader skips because a tab is what makes a recipe. The rule exists for the class the fixture demonstrates; the corpus neither confirms nor denies it.
+
+**`deno` and `yarn` contributed nothing.** The deno half of the check is therefore fixture-only evidence, and `yarn run X` — which, unlike `pnpm run X`, does accept a binary in Yarn's own resolution — has never been exercised out of sample. ADR-0012 records that as the residual risk and what to do if it ever shows up: drop `yarn run` too, on principle, rather than special-case a repo.
+
+### What this round says about the method
+
+The corpus caught a `fixable` false positive class **on its first run of a new check**, in repos whose snapshots had been green for four rounds. Nothing in the fixtures could have: we wrote them, and `pnpm vitest` is not a shape anybody invents while writing a test for their own parser. [ADR-0007](../../docs/adr/0007-the-corpus-does-not-run-in-ci.md) argues the corpus is a gate a person has to walk through; this round is the clearest evidence so far that the walk is the point.

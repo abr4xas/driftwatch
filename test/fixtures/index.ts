@@ -9,6 +9,8 @@ import { ignores } from './ignores.ts'
 import { linksAndFrontmatter } from './links-and-frontmatter.ts'
 import { monorepo } from './monorepo.ts'
 import { noGit } from './no-git.ts'
+import { noManifest } from './no-manifest.ts'
+import { scripts } from './scripts.ts'
 import { skills } from './skills.ts'
 import { suggestions } from './suggestions.ts'
 
@@ -31,4 +33,6 @@ export const ALL_FIXTURES: readonly Fixture[] = [
   anchors,
   frontmatter,
   skills,
+  scripts,
+  noManifest,
 ]

@@ -1,7 +1,7 @@
 # tursodatabase/turso
 
 sources: 14
-errors: 3
+errors: 4
 warnings: 0
 fixable: 0
 
@@ -25,3 +25,4 @@ agents-md  AGENTS.md
 .claude/skills/cdc/SKILL.md:158:24  [path/missing] inline-code  core/translate/emitter.rs
 .claude/skills/cdc/SKILL.md:242:15  [path/missing] inline-code  core/translate/emitter.rs
 .claude/skills/cdc/SKILL.md:246:15  [path/missing] inline-code  core/translate/emitter.rs
+.claude/skills/mvcc/SKILL.md:91:1  [script/missing] code-fence  make test-mvcc

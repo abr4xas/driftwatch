@@ -64,7 +64,18 @@ When it fails, a candidate is looked up by basename in the repo and suggested: `
 #### `script/missing`
 A package manager command whose script does not exist.
 
-Detects `npm run X`, `pnpm run X`, `pnpm X`, `yarn X`, `bun run X`, `deno task X`, `make X` in code blocks and in inline code. Verifies against `package.json#scripts` (the nearest one in the tree, for monorepos), `Makefile`, or `deno.json#tasks`.
+Detects `npm run S` (and `npm run-script S`), `pnpm run S`, `yarn run S`, `bun run S`, `deno task S`, `make S` in code blocks and in inline code. Verifies against `package.json#scripts` (the nearest one in the tree, for monorepos), `Makefile`, or `deno.json#tasks`.
+
+The **bare** form (`pnpm S`, `yarn S`) is deliberately not detected: it runs a script *or* a binary from `node_modules/.bin`, and the two cannot be told apart without indexing dependencies. See [ADR-0012](../adr/0012-a-bare-pnpm-x-is-not-a-script-claim.md). `make S` is bare because make has no such fallback.
+
+Nothing is reported when there is no manifest of that runner's kind, when the `Makefile` cannot be enumerated (an `include`, a pattern rule), or when the script exists in some other manifest in the repo (ADR-0005 applied to scripts: a monorepo's document is often written from the root).
+
+Nor is a command claimed at all when:
+
+- It carries a flag that moves the question elsewhere, wherever the flag sits: `--filter`, `--workspace`/`-w`, `-r`, `--prefix`, `-C`, or `--if-present`, which says the absence is already fine.
+- The name is a hole rather than a name: a placeholder (`<script>`, `{{task}}`, `$TASK`), a metavariable (`X`, `TARGET`, any all-caps or single-character name), a filler (`foo`, `your-script`), the word for the concept (`script`, `task`, `target`), or a path (`bun run ./x.ts`, which runs a file).
+- The line is a column layout rather than a command — two spaces in a row, which is how a code block holding a table reads.
+- The fence declares a non-shell language.
 
 If the script does not exist but there is one with a similar name (edit distance ≤ 2), it is suggested and autofixable.
 

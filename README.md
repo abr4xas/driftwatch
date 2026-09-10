@@ -24,9 +24,15 @@ Linters check your code. Nothing checks the document you wrote *about* your code
 
 ## What it does today
 
-One check, `path/missing`: every path a context file claims exists, verified against the repo index.
+The five tier 1 checks:
 
-That sounds small. It is the check that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong. The other checks in the [roadmap](./docs/spec/ROADMAP.md) — broken links, missing `package.json` scripts, invalid skill frontmatter — are additive; this one had to prove the tool can stay quiet on real repositories.
+- `path/missing` — every path a context file claims exists, verified against the repo index.
+- `script/missing` — the package manager commands a document tells you to run, against the nearest `package.json`, `Makefile` or `deno.json`.
+- `link/broken` — a Markdown link to an anchor no heading in the target document produces.
+- `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes.
+- `skill/frontmatter` — the structural rules a `SKILL.md` has to meet to be invocable.
+
+`path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of 49 real repositories before anything else was allowed to land. The other four are additive, and each was measured over that same corpus on arrival.
 
 ## The rule that shapes everything
 
@@ -88,9 +94,9 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 ## Status
 
-**Under construction. Not published yet.** M0 and M1 are done; `path/missing` is certified against the corpus. M2 is in progress.
+**Under construction. Not published yet.** M0 and M1 are done; `path/missing` is certified against the corpus. M2 is complete: the other four tier 1 checks have landed, each measured over the corpus as it arrived.
 
-Working today: discovery, the config file with its `sources` key, `path/missing` with suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
+Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
 
 A selection that leaves no check enabled is refused rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
