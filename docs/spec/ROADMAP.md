@@ -41,7 +41,7 @@ If it does not hold, we do not advance — we tune the heuristics, or we accept 
 
 **Re-measured on 2026-09-10, and condition 6 no longer holds.** Adding one repo to the validation group (`spatie/bloom`, Swift/macOS, 7 sources) produced a fourth validation finding, and it is false: aggregate precision went from 3 of 3 to **3 of 4 = 75%**, under the 80% bar. Nothing regressed in the code; the measurement stopped being thin, which is exactly what the original caveat said would decide it.
 
-The corpus is now 35 repos with 9 in validation, 13 findings, 11 true and 2 false. **Eight of nine conditions.** The rule above applies to us as written — tune the heuristics, or accept that the check does not get there and say so — and the three routes, with their contamination cost under ADR-0006 condition 9, are set out at the end of `CLASSIFICATION.md`. It is not resolved yet.
+The corpus is now 36 repos with 10 in validation, 13 findings, 11 true and 2 false. **Eight of nine conditions.** The rule above applies to us as written — tune the heuristics, or accept that the check does not get there and say so — and the three routes, with their contamination cost under ADR-0006 condition 9, are set out at the end of `CLASSIFICATION.md`. It is not resolved yet.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

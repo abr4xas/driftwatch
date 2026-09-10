@@ -2,23 +2,23 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; **re-measured 2026-09-10** after adding `spatie/bloom`.
 
-Corpus: **35 public repos pinned to a commit, 13 findings.**
-Of the 35, **9 form the validation group**: never inspected before measuring.
+Corpus: **36 public repos pinned to a commit, 13 findings.**
+Of the 36, **10 form the validation group**: never inspected before measuring.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md))
 
-Validation group measurement: **9 repos, 25 sources, 4 findings, 3 true and 1 false.**
+Validation group measurement: **10 repos, 26 sources, 4 findings, 3 true and 1 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 35 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (33 of 35 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 36 snapshots | **met** |
+| 3 | Median FP per repo = 0 | 0 (34 of 36 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`) | **met** |
 | 6 | Aggregate precision ≥ 80% in validation | 3 of 4 = **75%** | **NOT MET** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 35 repos, 9 in validation | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 36 repos, 10 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
 
 **Eight of nine. Condition 6 no longer holds.**
@@ -50,7 +50,7 @@ The corpus produces **13 findings, 11 true and 2 false**, so 84.6% aggregate.
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
 | `spatie/bloom` | 1 | 0 | 1 | **validation** |
-| the other 28 | 0 | — | — | — |
+| the other 29 | 0 | — | — | — |
 
 ---
 
@@ -209,6 +209,14 @@ The conditional mood. `context-prose.ts` has an `EXAMPLE` list and a `HEDGED` li
 First, the risk is real and untested: "would" is a common word, and "you would find the config in `src/config.ts`" is a sentence a document can plausibly write about a file that does exist. A marker that broad could suppress true positives across the whole corpus, and the only way to know is to measure it.
 
 Second, the price is fixed and known. ADR-0006 condition 9: deriving a rule from a validation repo's finding moves that repo to calibration and requires a new validation repo to replace it. Spending `spatie/bloom` on a heuristic guess is a bad trade when the guess has not been measured.
+
+## `spatie/laravel-flare`, added 2026-09-10
+
+PHP/Laravel, a domain the corpus also lacked. One `CLAUDE.md` of 6 KB, and **zero findings**.
+
+It changes no precision number, and that was foreseeable: every repo that has produced a finding has a context file of 9–24 KB, and this one is smaller than all of them. What it does do is widen conditions 3, 4 and 5 — the per-repo distribution now rests on 36 repos, 34 of them with no false positive at all — and it makes the corpus less monolingual.
+
+**It is the cheap kind of addition, not the useful kind.** Condition 6 needs findings in the denominator, and a silent repo contributes none. 29 of the 36 repos are silent.
 
 ## The open decision
 

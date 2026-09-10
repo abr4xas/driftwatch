@@ -45,11 +45,11 @@ Concretely, it does **not** report:
 
 ## How well it works
 
-Measured over **35 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
+Measured over **36 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**13 findings across all 35 repos. 11 true, 2 false**, so 84.6%. Nothing autofixable was wrong, in any repo, which is the number that matters most: a wrong `--fix` corrupts the document.
+**13 findings across all 36 repos. 11 true, 2 false**, so 84.6%. Nothing autofixable was wrong, in any repo, which is the number that matters most: a wrong `--fix` corrupts the document.
 
-Nine of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 4 findings, 3 real and 1 not — **75%**, which is *below* the 80% the project set itself as the bar.
+Ten of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 4 findings, 3 real and 1 not — **75%**, which is *below* the 80% the project set itself as the bar.
 
 That is stated here rather than buried because the bar is ours and it is currently unmet. The whole reasoning, every finding classified by hand, and the three routes out are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md); the criterion itself is [ADR-0006](./docs/adr/0006-the-m1-precision-criterion.md).
 

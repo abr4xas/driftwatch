@@ -1,0 +1,12 @@
+# spatie/laravel-flare
+
+sources: 1
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+claude-md  CLAUDE.md
+
+## findings
+(none)

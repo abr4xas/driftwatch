@@ -31,7 +31,7 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 35: 26 calibration and 9 validation, which is what ADR-0006
+ * There are 36: 26 calibration and 10 validation, which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -126,6 +126,9 @@ export const CORPUS: readonly CorpusRepo[] = [
    * before looking at a single finding.
    */
   { repo: 'spatie/bloom', sha: 'ec6fc210a049a77c68e3e76e9713edd46854f9b3', holdout: true },
+  // PHP/Laravel, another domain the corpus lacked. One `CLAUDE.md` of 6 KB,
+  // which is smaller than every repo that has produced a finding so far.
+  { repo: 'spatie/laravel-flare', sha: '730ebb52437e425f1d55d09008e99e3b056efe37', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */
