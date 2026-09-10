@@ -83,6 +83,10 @@ jobs:
       #   2. `npm publish` by hand, once, which creates the package
       #   3. configure the publisher on npmjs, then set NPM_PUBLISH to `true`
       #
+      # With a trusted publisher there is no token: the `id-token: write`
+      # permission above is what npm exchanges for a short-lived credential,
+      # and nothing long-lived is stored in this repository.
+      #
       # `--provenance` is the other reason the first one differs: it needs a
       # supported CI with OIDC and fails from a laptop, so the manual publish
       # ships without it and every publish after this switch flips has it.
@@ -91,24 +95,44 @@ jobs:
       # step: a step that is commented out is a step nobody can tell is
       # deliberate, and turning this on is then a settings change instead of a
       # commit.
-      - name: publish to npm
+      # **Stages, does not publish.** npm's trusted publisher is configured
+      # without "Allow npm publish", which is what npm itself recommends, so
+      # this workflow can upload a version and nothing more. Publishing it is
+      # `npm stage approve <id>` from a laptop, with the 2FA prompt npm calls
+      # proof-of-presence.
+      #
+      # That is the same shape as everything else here: the irreversible step
+      # gets a person in front of it. npm does not allow republishing a
+      # version, and `npm stage download` can pull the exact tarball for
+      # inspection before it is ever public — which is the net `pack:check`
+      # cannot be, because `pack:check` only sees what this repository built.
+      #
+      # `prepublishOnly` in package.json runs the gate a second time under
+      # this step. Deliberate: that script exists to protect a publish from
+      # somebody's laptop, the path with no CI in front of it, and ninety
+      # seconds of duplicated work is the cheapest insurance in this repo.
+      # `ubuntu-latest` with Node 24 does not guarantee an npm new enough for
+      # OIDC or for `npm stage`, and the failure it produces — an unknown
+      # command — reads like a typo rather than a version. Ten seconds buys a
+      # deterministic one.
+      - name: an npm that knows about staging
         if: vars.NPM_PUBLISH == 'true'
-        # `prepublishOnly` in package.json runs the gate a second time here.
-        # That is deliberate: the script exists to protect a publish from
-        # somebody's laptop, which is the path with no CI in front of it, and
-        # ninety seconds of duplicated work is the cheapest insurance here.
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm install -g npm@latest
 
-      - name: publishing is still manual
+      - name: stage the release on npm
+        if: vars.NPM_PUBLISH == 'true'
+        run: npm stage publish . --provenance --access public
+
+      - name: releasing is still manual
         if: vars.NPM_PUBLISH != 'true'
         run: |
-          echo "::notice::The tag is releasable; npm publishing is off."
-          echo "Everything above passed, so this tag is publishable by hand:"
-          echo "  pnpm build && npm publish --access public"
-          echo "Then configure the publisher on npmjs and set the repository"
-          echo "variable NPM_PUBLISH to 'true'. See .scratch/first-release/."
+          echo "::notice::The tag is releasable; npm staging is off."
+          echo "Everything above passed, so this tag can be published by hand:"
+          echo "  pnpm build && npm publish"
+          echo "To hand it to CI, configure the trusted publisher on npmjs"
+          echo "(GitHub Actions, abr4xas/driftwatch, release.yml, and leave"
+          echo "'Allow npm publish' unchecked) and set the repository variable"
+          echo "NPM_PUBLISH to 'true'. See .scratch/first-release/."
 
       # The changelog, generated rather than written. `--generate-notes` builds
       # it from the commit subjects since the previous release, which is why the

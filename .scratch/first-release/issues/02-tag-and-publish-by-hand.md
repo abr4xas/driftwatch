@@ -4,7 +4,7 @@
 
 **Blocked by:** `01`
 
-**Status:** ready-for-human
+**Status:** done
 
 ## The package is `@abr4xas/driftwatch`, and the reason is not ours
 
@@ -49,3 +49,25 @@ npm publish --access public
 - `npm view @abr4xas/driftwatch` shows `0.1.0` and the file list is 14 files.
 - `npx @abr4xas/driftwatch@0.1.0 --help` works from a directory that is not this repo — the `bin` path is the one thing no unit test can prove.
 - `npx @abr4xas/driftwatch@0.1.0` inside some other repo says something sensible.
+
+## Comments
+
+Closed 2026-09-10. **`@abr4xas/driftwatch@0.1.0` is on npm**, published by hand, without provenance — which is the one thing the first release cannot have.
+
+The `driftwatch` attempt is what produced this ticket's section above:
+
+```
+npm error 403 Package name too similar to existing package drift-watch
+```
+
+Verified afterwards from a directory that is not this repo, which is the check no unit test can stand in for:
+
+```
+$ npx @abr4xas/driftwatch@0.1.0 --version
+0.1.0
+$ npm view @abr4xas/driftwatch dist.fileCount dist.unpackedSize
+14
+156432
+```
+
+Fourteen files and 156 kB unpacked, matching what `pack:check` had been asserting locally all along. The `bin` resolves, so `driftwatch` is the command a user types no matter what the package is called.

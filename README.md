@@ -14,6 +14,23 @@ AGENTS.md
 1 fixable with --fix
 ```
 
+## Install
+
+```bash
+npm install -g @abr4xas/driftwatch
+driftwatch
+```
+
+Or without installing anything:
+
+```bash
+npx @abr4xas/driftwatch
+```
+
+Needs Node 24 or newer ([ADR-0002](./docs/adr/0002-node-24-floor.md)). No configuration, no API key, no network.
+
+**The package is scoped; the command is not.** npm refuses the name `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read. `bin` fixes the command at `driftwatch` whatever the package is called.
+
 ## The problem
 
 Your `AGENTS.md` says the entry point is `src/cli.ts`. Six months ago it was.
@@ -93,7 +110,9 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 ## Status
 
-**Under construction. Not published yet.** M0, M1 and **M2 are done** — M2 closed on 2026-09-10 with the five tier 1 checks, the config file, check selection and the inline ignore directives, and with all nine of the precision conditions met over 66 repositories. What is next is release preparation and then M3, `--fix`.
+**`0.1.0` is on npm, and it is early.** M0, M1 and **M2 are done** — M2 closed on 2026-09-10 with the five tier 1 checks, the config file, check selection and the inline ignore directives, and with all nine of the precision conditions met over 66 repositories. M3 is `--fix`.
+
+Early means the checks are what is finished, not the surroundings: the output is `pretty` and nothing else yet, and `--fix` reports what it *would* fix without being able to apply it.
 
 Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
 

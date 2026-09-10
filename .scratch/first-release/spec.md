@@ -12,11 +12,13 @@ The release workflow is already written and already runs the whole gate on a `v*
 
 ## The sequence
 
-1. **`01`** — push `master`, and get CI green on the remote for the first time since M2 started.
-2. **`02`** — tag `v0.1.0`, let the release workflow run with publishing off, then publish by hand.
-3. **`03`** — configure the publisher on npmjs, set `NPM_PUBLISH`, and prove the automation on the next version.
+1. **`01`** — push `master`, and get CI green on the remote for the first time since M2 started. **Done**, green on the first try.
+2. **`02`** — publish by hand, once. **Done**: `@abr4xas/driftwatch@0.1.0`. The unscoped name was refused by npm for resembling `drift-watch`, an unrelated tool, so the package is scoped and the command is not.
+3. **`03`** — hand the release to CI. The trusted publisher is configured; what is left is one repository variable and the next version.
 
 Steps 2 and 3 are the owner's: `AGENTS.md` § "Decisions that require asking the user" lists publishing to npm and any outward-facing action, and nothing here changes that.
+
+**The automation stages rather than publishes.** npm's trusted publisher is configured without "Allow npm publish", which is npm's own recommendation: CI proves the tag and uploads the version, and a person runs `npm stage approve` with their 2FA. Ticket `03` has the argument.
 
 ## What is already done
 
