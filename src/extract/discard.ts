@@ -119,6 +119,24 @@ const METASYNTACTIC = new Set(['foo', 'bar', 'baz', 'qux', 'quux', 'fulano', 'ej
 const PLACEHOLDER_UPPERCASE = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
 
 /**
+ * A word with a **trailing capital standing for a number**: the other way
+ * documentation writes "put the index here".
+ *
+ * Real case (saubakirov/KZ-IT-telegram-list), a command that counts iteration
+ * folders: "Count `research/iterN/` folders (N = highest folder number + 1, or
+ * 1 if none)". Eight findings in one document, from `research/iterN/`,
+ * `research/iterN/RES.md` and `research/iterN-1/RES.md` — the last one being
+ * the arithmetic form, which is why the suffix is part of the pattern.
+ *
+ * Narrow on purpose. The word before the capital must be **all lowercase**, so
+ * `MyModuleX` and `matrixTranspose` are untouched, and the capital has to be
+ * one of the six letters that conventionally stand for a number. What it gives
+ * up is a directory genuinely named `moduleX` or `partN`, which a tutorial repo
+ * really might have.
+ */
+const PLACEHOLDER_INDEXED = /^[a-z]+[NMKXYZ]([-+]\d+)?$/u
+
+/**
  * Filler names with a possessive prefix, which ask the reader to put in their
  * own.
  * Prevents: `perf/memory/src/profile/your_profile.rs` in tursodatabase/turso,
@@ -159,6 +177,7 @@ export function isPlaceholderName(word: string): boolean {
   return (
     METASYNTACTIC.has(word.toLowerCase()) ||
     PLACEHOLDER_UPPERCASE.test(word) ||
+    PLACEHOLDER_INDEXED.test(word) ||
     PLACEHOLDER_POSSESSIVE.test(word) ||
     PLACEHOLDER_CAMEL.some((pattern) => pattern.test(word))
   )

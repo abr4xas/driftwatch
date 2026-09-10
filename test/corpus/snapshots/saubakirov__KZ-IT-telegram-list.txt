@@ -1,7 +1,7 @@
 # saubakirov/KZ-IT-telegram-list
 
 sources: 20
-errors: 9
+errors: 1
 warnings: 0
 fixable: 0
 
@@ -29,11 +29,3 @@ command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/su
 
 ## findings
 .claude/commands/tfw-init.md:141:25  [path/missing] inline-code  .tfw/adapters/antigravity/rules/
-.claude/commands/tfw-plan.md:97:11  [path/missing] inline-code  research/iterN/RES.md  -> .tfw/templates/RES.md (0.3)
-.claude/commands/tfw-research.md:19:13  [path/missing] inline-code  research/iterN/
-.claude/commands/tfw-research.md:21:48  [path/missing] inline-code  research/iterN/RES.md  -> .tfw/templates/RES.md (0.3)
-.claude/commands/tfw-research.md:24:39  [path/missing] inline-code  research/iterN/
-.claude/commands/tfw-research.md:24:86  [path/missing] inline-code  research/iterN/RES.md  -> .tfw/templates/RES.md (0.3)
-.claude/commands/tfw-research.md:44:60  [path/missing] inline-code  research/iterN-1/RES.md  -> .tfw/templates/RES.md (0.3)
-.claude/commands/tfw-research.md:51:47  [path/missing] inline-code  research/iterN/
-.claude/commands/tfw-research.md:65:61  [path/missing] inline-code  research/iterN/

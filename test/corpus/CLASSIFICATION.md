@@ -2,7 +2,7 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **64 public repos pinned to a commit, 38 findings.**
+Corpus: **64 public repos pinned to a commit, 30 findings.**
 Of the 64, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -15,7 +15,7 @@ Validation group measurement: **32 repos, 65 sources, 16 findings, 4 true and 12
 | 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 14 |
 | 3 | Median FP per repo = 0 | 0 (58 of 64 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | **9** (`KZ-IT-telegram-list`), 4 (`aptos-ts-sdk`) | **BROKEN** |
+| 5 | No repo above 2 FP | **4** (`aptos-ts-sdk`), 2 (`edgecrab`, `aguara`) | **BROKEN** |
 | 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 58 of 64 = **90.6%**; validation **28 of 32 = 87.5%** | **BROKEN** over validation |
 | 7 | ≥ 1 true positive in validation | 4 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 64 repos, 32 in validation | **met** |
@@ -29,6 +29,7 @@ Two rounds happened on 2026-09-10 after M2's checks landed, and they are worth r
 
 - The **thirteenth** added thirteen validation repos to give condition 6 the finding mass M2 had promised it. It got the mass, and conditions 2 and 5 broke.
 - The **fourteenth** closed the class that broke condition 2 — another agent tool's configuration root — which repaired it and also silenced a false positive that had been open in `github/spec-kit` since the first round. The replacement repos it brought in then broke condition 6 over validation.
+- The **fifteenth** closed the largest class left, the index placeholder, which cost nothing: the only repo it appeared in had already been moved to calibration. Eight false positives gone, and **no condition moved**, because 5 and 6 count repos rather than findings.
 
 That sequence is the treadmill this document named in round three, running in public: closing a class costs the repo that revealed it, the replacement arrives with its own noise, and the percentage moves for reasons that have nothing to do with the code getting better or worse.
 
@@ -894,3 +895,54 @@ The honest reading is the one ADR-0009 already argued for: **the percentage of q
 Condition 5 needs the first two classes closed (`KZ-IT` to 1, `aptos-ts-sdk` to 3 — still above 2, so it needs the third as well). Condition 6 over validation needs any **one** validation repo silenced: closing the metavariable class alone takes `aguara` to zero and the group to 29 of 32 = 90.6%.
 
 None of that was done in this round. The rule that repaired condition 2 was the one worth its price; the rest is a decision about how much of the corpus to burn, and it is recorded here rather than taken quietly.
+
+---
+
+## Fifteenth round, 2026-09-10: the free one, and what "free" does not buy
+
+Eight of the nineteen false positives left after round fourteen were one class in one document, and that document belonged to a repo that had already been moved to calibration in the previous round. So this class cost nothing under condition 9: the contamination was already paid for.
+
+### The rule
+
+`discard.ts` gains one pattern: **a word with a trailing capital standing for a number**.
+
+```
+research/iterN/            "Count `research/iterN/` folders
+research/iterN/RES.md       (N = highest folder number + 1, or 1 if none)"
+research/iterN-1/RES.md
+```
+
+The document defines the placeholder in the same sentence that uses it, which is as clear as this ever gets. `PLACEHOLDER_UPPERCASE` already refused `NNNN` and `XXXX` as whole segments; this is the same convention with a word attached, and the arithmetic form (`iterN-1`) is part of the pattern because the corpus contains it.
+
+It is narrow in two ways, both of which cost detections rather than buy them. The word before the capital must be **all lowercase**, so `ModuleX` and `matrixTranspose` are untouched; and the capital must be one of `N M K X Y Z`, so `moduleA` and `partB` still get reported. A tutorial repo with a real `partN/` directory now goes unchecked, which is the price.
+
+### What it moved, and what it did not
+
+**`KZ-IT-telegram-list` goes from 9 findings to 1**, and nothing else in the corpus changed. The one left is `.tfw/adapters/antigravity/rules/`, the framework's own directory in that repo, which no general rule reaches.
+
+**64 repos · 230 sources · 30 findings — 19 true, 11 false.** The false positive count is down 42% in one round.
+
+And **not one condition moved**:
+
+| | Round 14 | Round 15 |
+|---|---|---|
+| False positives, total | 19 | **11** |
+| Condition 5 (no repo above 2 FP) | broken, max 9 | broken, max **4** |
+| Condition 6, whole corpus | 90.6% | 90.6% |
+| Condition 6, validation | 87.5% | 87.5% |
+
+That is not a disappointment, it is the criterion behaving as designed. [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced an aggregate ratio with the **percentage of repos that see no noise at all**, precisely so that eight findings in one already-noisy document could not flatter the number. Eight findings left that document and it is still not quiet, so nothing moves.
+
+The corollary is worth stating because it is the opposite of what a ratio would say: **the cheapest remaining work is worth the least**. What conditions 5 and 6 need is not fewer false positives, it is fewer *repos carrying any*, and the three repos left carrying them are all in the validation group.
+
+### The ledger after this round
+
+| Class | Findings | Repos | Cost of closing it |
+|---|---|---|---|
+| A version or date metavariable in a segment (`vX.Y.Z`, `status-YYYY-MM-DD.md`, `UPGRADE_GUIDE_X.Y.Z.md`) | 3 | `aguara`, `aptos-ts-sdk` (validation) | Two validation repos. Takes `aguara` to zero, so **condition 6 over validation is repaired**: 29 of 32 = 90.6% |
+| A dependency protocol specifier (`link:../..`) | 3 | `aptos-ts-sdk` (validation) | Shares its repo with the class above. Together they take `aptos-ts-sdk` to zero and **repair condition 5** |
+| A crate nickname (`gateway/run.rs`), a foreign project's file (`Hermes adapters/base.py`) | 2 | `edgecrab` (validation) | One validation repo, and no rule shape proposed yet |
+| A generated bundle the sentence describes as generated | 1 | `zotero-format-metadata` (validation) | One validation repo |
+| A framework's own directory (`.tfw/`) | 1 | `KZ-IT` (calibration) | Free, and no general rule reaches it |
+
+Closing the first two classes — one repo's worth of contamination, since they overlap on `aptos-ts-sdk`, plus `aguara` — would repair **both** broken conditions. That is the next decision, and it is a decision about the corpus rather than about the code: two more validation repos have to be found, and the last four that were added brought six false positives with them.

@@ -353,3 +353,30 @@ describe('class 8: CamelCase placeholders with filler', () => {
     expect(evaluatePathText(text)).toEqual({ kind: 'path', text })
   })
 })
+
+describe('class 10: a word with a trailing capital standing for a number', () => {
+  it.each([
+    // saubakirov/KZ-IT-telegram-list: "Count `research/iterN/` folders
+    // (N = highest folder number + 1, or 1 if none)".
+    'research/iterN/',
+    'research/iterN/RES.md',
+    'research/iterN-1/RES.md',
+    'docs/stepN/notes.md',
+    'src/moduleK/index.ts',
+  ])('discards %s', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'metasyntactic' })
+  })
+
+  it.each([
+    // The word before the capital has to be all lowercase, and the capital one
+    // of six letters. None of these is a hole. (`MyModuleX` is not here
+    // because the possessive CamelCase rule already discards it, for a
+    // different reason.)
+    'src/ModuleX/index.ts',
+    'src/matrixTranspose.ts',
+    'src/moduleA/index.ts',
+    'src/iter2/index.ts',
+  ])('keeps %s', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'path', text })
+  })
+})
