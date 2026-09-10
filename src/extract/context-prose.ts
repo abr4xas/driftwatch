@@ -179,6 +179,54 @@ function segmentAround(text: string, claimAt: number): string {
   return next === null ? rest : rest.slice(0, next.index)
 }
 
+/**
+ * The **conditional mood**: the sentence is about something that would be the
+ * case, not something that is.
+ *
+ * Real case (spatie/bloom), a `CLAUDE.md` arguing *against* adding an Xcode
+ * project to the repo:
+ *
+ *     XcodeGen or Tuist from a spec, or a `Tools/xcodeproj.sh` that writes one
+ *     on demand, **would** avoid the merge conflicts, but the whole benefit
+ *     above is a stamp Xcode writes back into `project.pbxproj`.
+ *
+ * `Tools/` exists with twenty-odd scripts. That one does not, and is not meant
+ * to: the paragraph introduces it in order to reject it. Any sufficiently
+ * thoughtful context file eventually explains why the repo is *not* organised
+ * some other way, and naming the road not taken means naming paths that do not
+ * exist.
+ *
+ * This list is the riskiest in the file, and it is deliberately scoped
+ * differently from the others: it is tested against the **sentence** holding
+ * the claim, never the two-line window. "would" is a word documents also write
+ * about files that do exist — "you would find the config in `src/config.ts`" —
+ * and over the whole window it would reach across a sentence boundary into a
+ * neighbouring claim.
+ *
+ * It only ever costs something when a document uses a modal *and* the path is
+ * genuinely stale, which is a narrower case than the word's frequency
+ * suggests. Measured over the 44-repo corpus it suppressed exactly the finding
+ * above and nothing else; that is evidence, not proof, and it is the reason
+ * this rule was measured before being kept rather than after.
+ */
+const CONDITIONAL = [
+  'would',
+  'could',
+  'might',
+  'wouldn',
+  'sería',
+  'seria',
+  'podría',
+  'podria',
+  'haría',
+  'haria',
+]
+
+function isConditional(segment: string): boolean {
+  const lower = segment.toLowerCase()
+  return CONDITIONAL.some((modal) => new RegExp(`\\b${modal}\\b`, 'u').test(lower))
+}
+
 const MARKERS = [...EXAMPLE, ...HEDGED]
 
 /**
@@ -271,7 +319,10 @@ export function proseDisclaims(
   const lower = window.text.toLowerCase()
   if (MARKERS.some((marker) => lower.includes(marker))) return true
   if (namesAnotherRepo(window.text, ctx.origin)) return true
-  // The imperative is tested against the sentence holding the claim, not the
-  // whole window: see `segmentAround`.
-  return isCreateInstruction(segmentAround(window.text, window.claimAt))
+  // These two are tested against the sentence holding the claim, not the whole
+  // window: see `segmentAround`. The imperative because what matters is how
+  // *that* sentence opens; the conditional because it is the broadest rule
+  // here and the window would carry it into a neighbouring claim.
+  const sentence = segmentAround(window.text, window.claimAt)
+  return isCreateInstruction(sentence) || isConditional(sentence)
 }

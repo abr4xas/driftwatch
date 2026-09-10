@@ -182,6 +182,39 @@ describe('class 6: identical copies of AGENTS.md and CLAUDE.md', () => {
   })
 })
 
+describe('class 8: the conditional mood', () => {
+  // Real case (spatie/bloom): a CLAUDE.md arguing against adding an Xcode
+  // project names the script that would generate one, in order to reject it.
+  it('a path named inside a conditional is not a claim that it exists', async () => {
+    const root = makeTempRepo({
+      files: {
+        'CLAUDE.md':
+          'A `tools/xcodeproj.sh` that writes one on demand would avoid the conflicts.\n',
+      },
+    })
+    expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
+  })
+
+  // The rule is scoped to the sentence for this reason: over the two-line
+  // window a modal would reach across a boundary into a neighbouring claim.
+  it('a conditional in one sentence does not suppress the next one', async () => {
+    const root = makeTempRepo({
+      files: {
+        'CLAUDE.md': 'A `tools/gen.sh` would avoid it. The entry point is `src/gone.ts`.\n',
+      },
+    })
+    const findings = (await run({ cwd: root, paths: [] })).findings
+    expect(findings.map((finding) => finding.claim.text)).toEqual(['src/gone.ts'])
+  })
+
+  it('a word merely containing a modal does not suppress', async () => {
+    const root = makeTempRepo({
+      files: { 'CLAUDE.md': 'The woodwork lives in `src/gone.ts`.\n' },
+    })
+    expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
+  })
+})
+
 describe('class 7: files the document declares generated', () => {
   it('a path the document says is generated is not reported', async () => {
     const root = makeTempRepo({

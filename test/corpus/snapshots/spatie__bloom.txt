@@ -1,7 +1,7 @@
 # spatie/bloom
 
 sources: 7
-errors: 1
+errors: 0
 warnings: 0
 fixable: 0
 
@@ -15,4 +15,4 @@ agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-CLAUDE.md:133:13  [path/missing] inline-code  Tools/xcodeproj.sh
+(none)

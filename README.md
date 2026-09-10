@@ -47,20 +47,20 @@ Concretely, it does **not** report:
 
 Measured over **44 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**14 findings across all 44 repos: 11 true, 3 false.** Two numbers matter more than the ratio:
+**13 findings across all 44 repos: 11 true, 2 false.** Two numbers matter more than the ratio:
 
-- **41 of the 44 repos produce no false positive at all.**
+- **42 of the 44 repos produce no false positive at all.**
 - **Zero autofixable false positives**, in any repo, in any round. `--fix` has never once been offered something wrong, which is the failure that would actually damage a document.
 
-Eighteen of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule.
+Fifteen of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
 
-The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone. It is currently **93.2%** and **88.89%** — so the criterion is *unmet*, by 1.1 points, and it says so here rather than being buried.
+The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone. It stands at **95.5%** and **100%** — and the second figure is **provisional**, because three repos left the group after their findings were used to fix the tool, and three replacements are owed. Saying so is the point: a validation group you can quietly shrink is not one.
 
-It used to be an aggregate-precision ratio. Growing the validation group from 8 repos to 18 took that ratio from 100% to 37.5%; fixing the four causes those repos exposed took it back to 60%, **removing three false positives and zero true positives** across the whole corpus. It never reached the bar again, because fixing a validation false positive deletes the observation that lowered it — a criterion that cannot be met by improving the tool. [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it, and [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) has every finding classified by hand across all four rounds.
+The criterion used to be an aggregate-precision ratio. Growing the group from 8 repos to 18 took that ratio from 100% to 37.5%, and fixing the five causes those repos exposed never brought it back to the bar — because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it. Every finding, across five rounds, is classified by hand in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md).
 
 They share a shape: **the document is not asserting that the path exists.** It argues — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". It instructs — "Write a skill in a directory in `.hod/skills/`". It names a build output, or a `#lib/` that is a Node subpath import and not a path at all.
 
-Three of those four classes are now closed, each with its case in the `false-positive-traps` fixture and a test naming the repo it came from. Every finding is classified by hand. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
+Four of those five classes are now closed, each with its case in the `false-positive-traps` fixture and a test naming the repo and line it came from. Every fix was measured over the whole corpus before being kept: together they removed **four false positives and zero true positives**. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
 
 ## What it reads
 

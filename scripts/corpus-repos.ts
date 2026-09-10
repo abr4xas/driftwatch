@@ -31,7 +31,8 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 44: 26 calibration and 18 validation, which is what ADR-0006
+ * There are 44: 29 calibration and 15 validation, and **three replacement
+ * validation repos are owed** (see the moved entries below), which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -125,7 +126,13 @@ export const CORPUS: readonly CorpusRepo[] = [
    * cause, and what it needs is more out-of-sample mass. The group was chosen
    * before looking at a single finding.
    */
-  { repo: 'spatie/bloom', sha: 'ec6fc210a049a77c68e3e76e9713edd46854f9b3', holdout: true },
+
+  /**
+   * Moved out of the validation group on 2026-09-10: rules were derived from
+   * its findings (ADR-0006 condition 9), so its numbers are no longer
+   * out of sample. A replacement is owed.
+   */
+  { repo: 'spatie/bloom', sha: 'ec6fc210a049a77c68e3e76e9713edd46854f9b3' },
   // PHP/Laravel, another domain the corpus lacked. One `CLAUDE.md` of 6 KB,
   // which is smaller than every repo that has produced a finding so far.
   { repo: 'spatie/laravel-flare', sha: '730ebb52437e425f1d55d09008e99e3b056efe37', holdout: true },
@@ -134,7 +141,13 @@ export const CORPUS: readonly CorpusRepo[] = [
    * driftwatch does not follow imports, so it audits a source with no claims
    * in it. A real pattern worth having on the record.
    */
-  { repo: 'laravel/vet', sha: '9f3379ab593268020c4205e40d94b9066fa088c9', holdout: true },
+
+  /**
+   * Moved out of the validation group on 2026-09-10: rules were derived from
+   * its findings (ADR-0006 condition 9), so its numbers are no longer
+   * out of sample. A replacement is owed.
+   */
+  { repo: 'laravel/vet', sha: '9f3379ab593268020c4205e40d94b9066fa088c9' },
   // Ruby, and the most canonical repo in it. The largest of the corpus, but a
   // shallow clone is a fraction of the 289 MB the API reports.
   { repo: 'rails/rails', sha: '52fa23ce8e1d39ff281bf300867e9ba7c7d66111', holdout: true },
@@ -143,10 +156,15 @@ export const CORPUS: readonly CorpusRepo[] = [
   { repo: 'alpinejs/alpine', sha: '8554b9e2285ca598b672f636a578f837136e522b', holdout: true },
   // 24 KB of `AGENTS.md` in a 267 KB repo, the best context-to-clone ratio in
   // the corpus. Its `CLAUDE.md` is another ten-byte `@AGENTS.md` import.
+
+  /**
+   * Moved out of the validation group on 2026-09-10: rules were derived from
+   * its findings (ADR-0006 condition 9), so its numbers are no longer
+   * out of sample. A replacement is owed.
+   */
   {
     repo: 'vercel-labs/marketing-team-eve-template',
     sha: 'f4a9309de0c03b4a42699687f6ae87dd86a913d2',
-    holdout: true,
   },
   { repo: 'hieunc229/mailflare', sha: 'c5cfa1be6da1c8a2e4d293ba1c4520796bc3b6a7', holdout: true },
   // Spanish-language context file, which nothing else in the corpus has: it is

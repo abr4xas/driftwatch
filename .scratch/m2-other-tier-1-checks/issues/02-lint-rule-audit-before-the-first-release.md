@@ -57,6 +57,14 @@ This is expected overlap: `eslint-plugin-unicorn` was written for a codebase wit
 
 Whatever is chosen, do not leave a rule silenced without a stated reason. A silenced rule with no reason is indistinguishable from an accident, and the next person to read the config will either restore it or lose an hour deciding.
 
+### Added 2026-09-10: a ninth warning
+
+`eslint(max-lines)` on `src/extract/context-prose.ts`, now 328 lines.
+
+It is mostly prose. `AGENTS.md` § Code conventions requires every discard rule to carry the false positive it prevents, and five rounds of corpus measurement added five such explanations, each citing the repo and line it came from. Cutting them to satisfy a line count would delete the reason the rules exist.
+
+The defensible move, if any, is a **split**: the marker lists (`EXAMPLE`, `HEDGED`, `CREATE_IMPERATIVES`, `CONDITIONAL`) into their own module, leaving the window and sentence logic behind. That is a structural decision, not a lint fix, which is why it is recorded here rather than done in the middle of a measurement.
+
 ## Comments
 
 Opened 2026-09-10, after the first real CI run (34422155013) surfaced the eight as GitHub annotations, which is far more visible than the local run and is what made them worth a decision.

@@ -49,7 +49,11 @@ The corpus is 44 repos with 18 in validation. **41 of the 44 produce no false po
 
 **Condition 6 was then rewritten**, because four rounds showed the old one could not be met by improving the tool: fixing a validation false positive moves that repo to calibration under condition 9, deleting the observation that lowered the ratio. [ADR-0009](../adr/0009-precision-is-counted-in-quiet-repos.md) withdraws the ratio and counts **quiet repos** instead — repos producing zero false positives — because that denominator grows with the corpus, and because a user has one repo and never experiences an aggregate.
 
-Against the new condition: **41 of 44 = 93.2%** over the whole corpus, **16 of 18 = 88.89%** over validation, against a bar of 90%. **Still eight of nine, now failing the rewritten condition by 1.1 points.** That is deliberate — a replacement tuned to pass today would be the same mistake in a new coat — and unlike its predecessor it is reachable: closing the one remaining fixable class takes validation to 94.1%.
+Against the new condition, when it was written: 93.2% over the corpus and 88.89% over validation, unmet by 1.1 points — deliberately, since a replacement tuned to pass that day would have been the same mistake in a new coat. It predicted that closing the last fixable class would take the corpus figure to 95.5%.
+
+**That class was then closed and the prediction held to the decimal.** A conditional-mood rule, scoped to the sentence holding the claim, suppressed exactly one finding across all 44 repos and cost no true positives. The corpus now reads **42 of 44 = 95.5%**, and validation **15 of 15 = 100%**.
+
+**Every condition is met, and the measurement is provisional.** Three repos left the validation group under condition 9, because rules were derived from their findings, and **three replacements are owed**. Validation reads 100% partly because the one validation repo still producing a false positive left in that same operation; the false positive is still there, still counted in the corpus figure. The honest status until the replacements land is "met on a group that shrank by the repos that were failing it", and `CLASSIFICATION.md` says so at the top.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

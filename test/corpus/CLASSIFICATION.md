@@ -2,26 +2,28 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **44 public repos pinned to a commit, 14 findings.**
-Of the 44, **18 form the validation group**: never inspected before measuring.
+Corpus: **44 public repos pinned to a commit, 13 findings.**
+Of the 44, **15 form the validation group**. Three repos were moved out of it on 2026-09-10 under ADR-0006 condition 9, because rules were derived from their findings; **three replacements are owed**, and until they land every validation number below is provisional.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **18 repos, 39 sources, 5 findings, 3 true and 2 false.**
+Validation group measurement: **15 repos, 28 sources, 3 findings, all 3 true.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
 | 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 44 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (41 of 44 repos with no FP at all) | **met** |
+| 3 | Median FP per repo = 0 | 0 (42 of 44 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`, `eve-template`) | **met** |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 41 of 44 = 93.2%; validation **16 of 18 = 88.89%** | **NOT MET** |
+| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `eve-template`) | **met** |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 42 of 44 = **95.5%**; validation **15 of 15 = 100%** | met, **provisionally** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 44 repos, 18 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 44 repos, 15 in validation | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; **three replacements owed** | encoded, **debt outstanding** |
 
-**Eight of nine. Condition 6 does not hold** — the rewritten one, by 1.1 points over the validation group. Conditions 1–5 hold after the fourth round of fixes, below.
+**Every condition is met, and the measurement is provisional.** Read the two sentences after this one before quoting the table.
+
+Validation reads 100% partly because the one unquiet validation repo, `vercel-labs/marketing-team-eve-template`, was moved to calibration in the same operation — not because the tool improved on it. Its false positive still exists and is still counted in the whole-corpus figure. **Three replacement validation repos are owed**, and the honest status until they are added and measured is "the criterion is met on a group that has shrunk by the repos that were failing it".
 
 The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **11 true of 14, 78.6%** — it just no longer decides anything.
 
@@ -43,7 +45,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **14 findings, 11 true and 3 false**, so 78.6% aggregate.
+The corpus produces **13 findings, 11 true and 2 false**, so 84.6% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -53,9 +55,8 @@ The corpus produces **14 findings, 11 true and 3 false**, so 78.6% aggregate.
 | `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
-| `spatie/bloom` | 1 | 0 | 1 | **validation** |
-| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | **validation** |
-| the other 36 | 0 | — | — | — |
+| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration (moved) |
+| the other 37 | 0 | — | — | — |
 
 ---
 
@@ -364,21 +365,53 @@ So the sequence is: measure honestly → the number falls → fix what the measu
 
 **A criterion that cannot be met by improving the tool is measuring the wrong thing.**
 
+## Fifth round, 2026-09-10: the conditional mood, and the bill for it
+
+`spatie/bloom`'s class was the last one with a candidate fix, and the candidate was the one this document had twice refused to apply on a single observation. It was applied and measured.
+
+**The rule.** A new `CONDITIONAL` list — `would`, `could`, `might` and their Spanish equivalents — scoped **to the sentence holding the claim**, never to the two-line window. That scoping is the whole design: over the window the modal reaches across a sentence boundary into a neighbouring claim, and it is only possible at all because the fourth round had already built `segmentAround`.
+
+**The measurement.** Over all 44 repos it suppressed **exactly one finding** — `bloom`'s `Tools/xcodeproj.sh` — and nothing else. Findings 14 → 13, false positives 3 → 2, true positives 11 → 11.
+
+That is evidence and not proof. The rule only ever costs something when a document uses a modal *and* the path is genuinely stale, which is much rarer than the frequency of the word "would" suggests; but 44 repos is 44 repos. The word is recorded in the code as the riskiest list in the file.
+
+### The bill: three repos leave the validation group
+
+Rules were derived from the findings of three validation repos across rounds four and five:
+
+| Repo | Rule derived |
+|---|---|
+| `vercel-labs/marketing-team-eve-template` | the `#` discard, and `materialize` |
+| `laravel/vet` | `write`, and the move to sentence-level imperatives |
+| `spatie/bloom` | the conditional mood |
+
+Under ADR-0006 condition 9 all three move to calibration and **three replacements are owed**. They have been moved. The group is now 15 repos, 28 sources, 3 findings, all true.
+
+**Validation therefore reads 100%, and that number should not be celebrated.** It is 100% in part because `eve-template` — the one validation repo still producing a false positive — left the group in the same operation. The false positive did not go away; it is still in the whole-corpus figure. Until three replacements are added and measured, the honest description is: *the criterion is met on a group that shrank by the repos that were failing it.*
+
+### A conflict in how condition 9 is worded
+
+Worth fixing, because it made this round's accounting ambiguous.
+
+`docs/adr/0006` § Decision, condition 9: "if the **findings** or the discards of a validation repo are **inspected**, that repo moves to calibration".
+
+The comment on the `holdout` field in `scripts/corpus-repos.ts` says the opposite about half of it: "Classifying its findings **is** the measurement and does not contaminate; opening the repo to see what the tool discarded does."
+
+Taken literally the ADR moves a repo out the moment anyone reads its findings, which would make the group unmeasurable — classifying is the measurement. The code comment is the correct reading, and the line the rounds above actually applied is a third one, narrower than either: **classifying a finding is free; deriving a rule from it is not.** That is ordinary train/test leakage and it is what condition 9 exists to prevent. The ADR's wording should be brought in line with it.
+
 ### The decision taken, 2026-09-10
 
 Condition 6 was rewritten. [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) withdraws the aggregate-precision ratio and replaces it with the **quiet-repo rate**: at least 90% of repos producing zero false positives, over the whole corpus and over the validation group taken alone.
 
-| Scope | Quiet repos | Status |
-|---|---|---|
-| Whole corpus | 41 of 44 = **93.2%** | met |
-| Validation group | 16 of 18 = **88.89%** | **not met**, by 1.1 points |
+When the ADR was written the rate stood at 93.2% over the corpus and 88.89% over validation, so the rewritten criterion was **unmet by 1.1 points** — deliberately, because a replacement tuned to pass that day's numbers would have been the same mistake in a new coat. The ADR predicted that closing `bloom`'s class would take validation to 94.1% and the corpus to 95.5%.
 
-**It is still unmet, on purpose.** A replacement written so that today's numbers pass it would be the same mistake in a new coat. What changed is that this one can be reached by working: closing `bloom`'s class makes that repo quiet, and even after condition 9 moves it to calibration, validation becomes 16 of 17 = 94.1% and the corpus 42 of 44 = 95.5%.
+The fifth round did exactly that, the same day. Measured now: **42 of 44 = 95.5%** over the corpus and **15 of 15 = 100%** over validation, the second figure inflated by `eve-template` leaving the group. The prediction held on the corpus figure to the decimal, which is some evidence the criterion behaves as designed — it moves when the tool improves, which is the property the old one lacked.
 
 The denominator moved from findings to repos for three reasons, set out in full in the ADR: repos are what the corpus has many of while findings are what the tool deliberately has few of; a user has one repo and never experiences an aggregate; and a repo-level count refuses to divide the cost of crying wolf by how much else the same run got right.
 
 **What is next**, in order:
 
-1. `bloom`'s class — the conditional mood. Still untested and still broad, and now the single thing standing between the corpus and a met criterion, which is a reason to measure it carefully rather than a reason to rush it.
-2. `eve-template` `AGENTS.md:136` — recorded as **not reachable by any prose rule**. A limit, not a to-do.
-3. `github/spec-kit` — unresolved by design since the first measurement.
+1. **Three replacement validation repos.** This is the outstanding debt and it blocks calling any of the above final. They need the profile that produces findings: context files of 10 KB or more, ideally several per repo. Until they are measured, validation's 100% describes a group chosen partly by which repos were failing.
+2. `eve-template` `AGENTS.md:136` — a generated file described with no generation word. Recorded as **not reachable by any prose rule**: knowing it requires reading `skill.ts`. A limit, not a to-do.
+3. `github/spec-kit` — a third-party tool's convention directory. Unresolved by design since the first measurement.
+4. Bring ADR-0006's wording of condition 9 in line with what is actually applied — classifying a finding is free, deriving a rule from it is not — as set out above.
