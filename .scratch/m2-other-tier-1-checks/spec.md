@@ -93,3 +93,19 @@ Plus: the corpus conditions above, and condition 6 re-measured rather than inher
 
 - [ADR-0005](../../docs/adr/0005-a-path-that-exists-somewhere-is-not-drift.md): a path whose shape exists somewhere in the repo is not reported. It constrains anything path-shaped that M2 adds, and the loss it accepts — a file that moved between packages goes undetected — is **not** reopened here. Recovering it is a separate tier 2 check with its own severity, not a loosening of this rule.
 - [ADR-0007](../../docs/adr/0007-the-corpus-does-not-run-in-ci.md): the corpus is a local gate with named triggers in `AGENTS.md` § Verification. Touching a heuristic means running it before and after.
+
+---
+
+## Closed 2026-09-10
+
+All eight tickets are `done` except `02`, which was never M2 work: it is the lint rule audit, it is a decision rather than code, and it belongs to the release preparation this milestone's close begins.
+
+**What shipped:** the five tier 1 checks, the config file with `sources`, `--only` / `--skip` / `--no-tier2`, and the inline ignore directives. Five ADRs came out of it — [0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md), [0010](../../docs/adr/0010-anchors-match-on-a-canonical-key.md), [0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md), [0012](../../docs/adr/0012-a-bare-pnpm-x-is-not-a-script-claim.md) — one per decision that could not be settled inside a ticket.
+
+**The obligation was discharged.** This document said condition 6 "gets re-measured" once validation carried ~10 findings, "whatever it is". It did not happen by itself: the four new checks produced two out-of-sample findings and both landed in calibration repos, so the group sat at three findings until fifteen repositories were added for the purpose. Then two conditions broke, four false-positive classes were closed to repair them, and the four rounds are written up individually rather than summarised into a pass.
+
+**What the corpus cost, in the currency this project uses.** Four repos moved from validation to calibration under condition 9 — `KZ-IT-telegram-list`, `aptos-ts-sdk`, `aguara`, and earlier `emdash` and `course-video-manager` — and every one was replaced. The corpus went from 49 repos to 66, and its clones from 2.7 GB to 3.3 GB.
+
+**What is open, and it is small:** five false positives across five repos, none of them load-bearing for a condition, each with the cost of closing it recorded in `test/corpus/CLASSIFICATION.md`'s ledger. The largest single piece of remaining work is not in them: it is that the corpus keeps needing to grow for the percentages to mean anything.
+
+Next: ticket `02`, then M3 (`--fix`), which now has two real autofixes to act on — a mismatched skill name and a near-miss script — plus the one true `fixable` finding the corpus produced, which is the first evidence that the feature will ever fire on somebody else's repo.

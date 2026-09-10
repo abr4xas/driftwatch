@@ -70,3 +70,25 @@ The defensible move, if any, is a **split**: the marker lists (`EXAMPLE`, `HEDGE
 Opened 2026-09-10, after the first real CI run (34422155013) surfaced the eight as GitHub annotations, which is far more visible than the local run and is what made them worth a decision.
 
 Also worth checking here, in the same pass: `pnpm lint` runs `oxlint src test`, so `scripts/` is not linted at all. Either include it or record why not.
+
+### Added 2026-09-10, at M2's close: the inventory is 17, not 9
+
+M2 closed, which is the moment this ticket was deferred to. The count has grown while the milestone ran, and the growth is the argument for deciding rather than against it:
+
+| Rule | Count | Where |
+|---|---|---|
+| `eslint(max-lines-per-function)` | 5 | `parseMarkdown` (75), an inner function in the same file (54), `path-missing.run` (75), `extractPathClaims` (54), `run.ts run` (51) |
+| `eslint(max-lines)` | 5 | `context-prose.ts` (427), `precision-corpus.test.ts` (424), `scripts.ts` (390), `discover.ts` (322), `discard.ts` (302) |
+| `unicorn(no-array-callback-reference)` | 3 | `repo-index.ts` ×2, `discard.ts` ×1 |
+| `unicorn(no-object-as-default-parameter)` | 2 | `discard.ts`, `context-prose.ts` |
+| `unicorn(no-useless-undefined)` | 2 | `frontmatter.test.ts`, `skill.test.ts` |
+
+Three notes for whoever takes the decision:
+
+- **The two `no-useless-undefined` are new and the rule is wrong about them.** Both are `proseGatesFor(content, undefined)`, where `origin` is a **required** parameter of type `string | undefined`. There is no `undefined` to remove; removing it is a type error. Same category as the two `no-object-as-default-parameter` warnings already classified above: a rule written for a codebase without types.
+- **The `max-lines` count went from 1 to 5**, and four of the five files are the ones carrying the corpus's reasoning — `discard.ts` at 302 lines is 302 lines because four classes closed in rounds 13–16 each added the false positive it prevents, with the repo and line it came from. `AGENTS.md` § Code conventions asks for exactly that. Cutting them to satisfy a line count deletes the reason the rules exist; splitting the marker lists into their own module remains the only defensible move.
+- **`path-missing.run` went from 64 lines to 75** in the same rounds, for the same reason.
+
+Option 1 as written above now takes the count from 17 to 10 rather than 8 to 3. The rules it silences are the three that overlap with the type system; the ten it leaves are the two `max-lines` families, which are a real signal about this codebase and are the ones worth being able to read.
+
+`pnpm lint` still does not cover `scripts/`, which is now 3 files including the corpus runner.

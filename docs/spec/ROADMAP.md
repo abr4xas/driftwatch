@@ -71,7 +71,7 @@ This is the milestone that decides whether the project is worth it. Everything e
 
 ---
 
-## M2 — The other tier 1 checks
+## M2 — The other tier 1 checks — **closed 2026-09-10**
 - `script/missing` resolving the nearest `package.json` (monorepo)
 - `skill/frontmatter` complete
 - `link/broken` including anchors
@@ -80,6 +80,15 @@ This is the milestone that decides whether the project is worth it. Everything e
 - Config file + `--only` / `--skip` / `--no-tier2`
 
 **Acceptance:** the `monorepo` fixture passes. All four checks have their own fixture with positive and negative cases.
+
+**Closed with all six delivered and the acceptance met.** The `monorepo` fixture carries a script claim in both directions; each check has its own fixture — `scripts`, `no-manifest`, `anchors`, `frontmatter`, `skills` — with the negative cases that matter more, and `false-positive-traps` is still at zero with four classes' worth of new traps in it. Verification at close: 398 tests, `pnpm build`, `--help`, the tool over its own repo and over `docs/` (both silent), and the full corpus green at 66 repos.
+
+Two things M2 also owed and paid:
+
+- **Condition 6 was re-measured, not inherited.** The milestone promised it once the validation group carried ~10 findings. Its four checks did not get it there — both findings they produced landed in calibration repos — so fifteen validation repos were added over rounds thirteen to sixteen. The group now carries **12 findings** against the three the M1 certification rested on, and all nine conditions hold: 92.4% of the corpus and 90.6% of validation produce no false positive, no repo above 2, and the one autofixable finding is correct.
+- **Four false-positive classes were closed** on the way, three of which broke a condition first: another agent tool's configuration root, an index placeholder, a dependency protocol specifier, and a version-or-date template. `test/corpus/CLASSIFICATION.md` rounds 13–16 have every finding classified by hand.
+
+**Not delivered, deliberately:** `--init` (SPEC § 4), which M2's line does not ask for and which was left out rather than squeezed in; and ticket `02`, the lint rule audit, which was always release-preparation work and is now the first item of it.
 
 ---
 

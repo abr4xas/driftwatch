@@ -96,7 +96,7 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 ## Status
 
-**Under construction. Not published yet.** M0 and M1 are done; `path/missing` is certified against the corpus. M2 is complete: the other four tier 1 checks have landed, each measured over the corpus as it arrived.
+**Under construction. Not published yet.** M0, M1 and **M2 are done** — M2 closed on 2026-09-10 with the five tier 1 checks, the config file, check selection and the inline ignore directives, and with all nine of the precision conditions met over 66 repositories. What is next is release preparation and then M3, `--fix`.
 
 Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
 
