@@ -8,12 +8,6 @@
  */
 import type { Claim } from '../core/types.ts'
 import { rangeFor } from '../parse/positions.ts'
-import {
-  externalRootSections,
-  inExternalRootSection,
-  lineAround,
-  proseDisclaims,
-} from './context-prose.ts'
 import type { ExtractContext } from './paths.ts'
 
 /** A link target whose anchor is worth verifying. */
@@ -107,14 +101,12 @@ export function splitAnchor(url: string): AnchorLink | undefined {
  * The same prose gates the path claims pass: a link inside a section
  * documenting another repository's layout is not a claim about ours.
  */
-export function extractLinkClaims({ source, doc, table, origin }: ExtractContext): Claim[] {
+export function extractLinkClaims({ source, doc, table, prose }: ExtractContext): Claim[] {
   const claims: Claim[] = []
-  const externalRoots = externalRootSections(source.content)
 
   for (const link of doc.links) {
     if (splitAnchor(link.value) === undefined) continue
-    if (inExternalRootSection(externalRoots, link.offset[0])) continue
-    if (proseDisclaims(lineAround(source.content, link.offset[0]), { origin })) continue
+    if (prose.disclaims(link.offset[0])) continue
 
     claims.push({
       kind: 'link',

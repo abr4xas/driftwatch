@@ -12,12 +12,6 @@
 import type { Claim } from '../core/types.ts'
 import type { FenceSpan } from '../parse/markdown.ts'
 import { rangeFor } from '../parse/positions.ts'
-import {
-  externalRootSections,
-  inExternalRootSection,
-  lineAround,
-  proseDisclaims,
-} from './context-prose.ts'
 import { isPlaceholderName } from './discard.ts'
 import type { ExtractContext } from './paths.ts'
 
@@ -336,15 +330,13 @@ function isShellFence(fence: FenceSpan): boolean {
  * path inside an example is part of the example, but a command block *is* how a
  * context file tells an agent how to build the project.
  */
-export function extractScriptClaims({ source, doc, table, origin }: ExtractContext): Claim[] {
+export function extractScriptClaims({ source, doc, table, prose }: ExtractContext): Claim[] {
   const claims: Claim[] = []
-  const externalRoots = externalRootSections(source.content)
 
   const push = (text: string, offset: [number, number], context: Claim['context']): void => {
     const command = parseCommand(text)
     if (command === undefined) return
-    if (inExternalRootSection(externalRoots, offset[0])) return
-    if (proseDisclaims(lineAround(source.content, offset[0]), { origin })) return
+    if (prose.disclaims(offset[0])) return
     claims.push({
       kind: 'script',
       source,

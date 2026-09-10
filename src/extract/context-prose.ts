@@ -262,13 +262,13 @@ function opensItsOwnItem(line: string): boolean {
  * claim. That is why the window only opens when the current line does not open
  * an item of its own.
  */
-export type ProseWindow = {
+type ProseWindow = {
   text: string
   /** Where the claim starts inside `text`. Locates the sentence to test. */
   claimAt: number
 }
 
-export function lineAround(content: string, offset: number): ProseWindow {
+function lineAround(content: string, offset: number): ProseWindow {
   const lineStart = content.lastIndexOf('\n', offset) + 1
   const end = content.indexOf('\n', offset)
   const lineEnd = end === -1 ? content.length : end
@@ -339,7 +339,7 @@ function sectionBoundaries(content: string): number[] {
  * hundred claims would otherwise rescan itself two hundred times, and the
  * end-to-end budget is 500 ms.
  */
-export function externalRootSections(content: string): Array<[number, number]> {
+function externalRootSections(content: string): Array<[number, number]> {
   if (!content.includes('`~/')) return []
   const bounds = sectionBoundaries(content)
   const ranges: Array<[number, number]> = []
@@ -351,14 +351,14 @@ export function externalRootSections(content: string): Array<[number, number]> {
   return ranges
 }
 
-export function inExternalRootSection(
+function inExternalRootSection(
   ranges: ReadonlyArray<readonly [number, number]>,
   offset: number,
 ): boolean {
   return ranges.some(([start, end]) => offset >= start && offset < end)
 }
 
-export type ProseContext = {
+type ProseContext = {
   /** `owner/repo` of this repo, to recognize when another one is meant. */
   origin: string | undefined
 }
@@ -383,10 +383,7 @@ function namesAnotherRepo(line: string, origin: string | undefined): boolean {
   return false
 }
 
-export function proseDisclaims(
-  window: ProseWindow,
-  ctx: ProseContext = { origin: undefined },
-): boolean {
+function proseDisclaims(window: ProseWindow, ctx: ProseContext = { origin: undefined }): boolean {
   const lower = window.text.toLowerCase()
   if (MARKERS.some((marker) => lower.includes(marker))) return true
   if (namesAnotherRepo(window.text, ctx.origin)) return true
@@ -396,4 +393,35 @@ export function proseDisclaims(
   // here and the window would carry it into a neighbouring claim.
   const sentence = segmentAround(window.text, window.claimAt)
   return isCreateInstruction(sentence) || isConditional(sentence)
+}
+
+/**
+ * The prose gates a claim has to pass, closed over one source.
+ *
+ * Every extractor asks the same question — "does the prose around this offset
+ * disclaim a claim there?" — and three of them used to ask it in three steps,
+ * each recomputing `externalRootSections` over the whole document. The steps
+ * are the interesting part of this module and the sequence is not, so the
+ * sequence is what it exports.
+ *
+ * Closing over the content is what makes the section scan happen once per
+ * source instead of once per extractor: a document with two hundred claims is
+ * scanned for `~/` roots once, and the end-to-end budget in `SPEC.md` § 9 is
+ * 500 ms.
+ */
+export type ProseGates = {
+  /** Whether the prose around `offset` says there is no claim here. */
+  disclaims(offset: number): boolean
+}
+
+export function proseGatesFor(content: string, origin: string | undefined): ProseGates {
+  const externalRoots = externalRootSections(content)
+  return {
+    disclaims(offset) {
+      // Section first, then line: the section scope is the broader answer, and
+      // it is a lookup against a list computed once.
+      if (inExternalRootSection(externalRoots, offset)) return true
+      return proseDisclaims(lineAround(content, offset), { origin })
+    },
+  }
 }

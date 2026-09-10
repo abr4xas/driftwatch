@@ -24,7 +24,7 @@ A line is split on `&&`, `;`, `|` first, so `pnpm build && pnpm test` is two cla
 
 ## Where it reads from
 
-- [x] **Inline code**, with the same two prose gates the path claims pass (`externalRootSections`, `proseDisclaims`).
+- [x] **Inline code**, with the same two prose gates the path claims pass — now one call, `prose.disclaims(offset)`, see the comments.
 - [x] **Code fences**, which `path/missing` deliberately does not read — `ARCHITECTURE.md` § "Markdown parsing" assigns fences to the script and command claims, and a command block is the normal way a context file tells an agent how to build the project. A fence declaring a non-shell language is skipped, and so is a `#` comment line inside one.
 
 ## ~~`test` and `start` are given up on purpose~~
@@ -145,4 +145,4 @@ The sentence in ADR-0012 explaining why `bun run` is kept uses `bun run vitest` 
 
 It carries a `<!-- driftwatch-ignore-next-line script/missing -->` and says so in the text. That is the directive from ticket `04` doing the job it exists for: a document naming a command it does not run. The README's example line was reworded instead, because a bullet list of five checks is not the place to explain a comment nobody can see rendered.
 
-**Left undone, deliberately:** the two prose gates (`externalRootSections` plus `proseDisclaims`) are now copied in three extractors and recomputed once per extractor per source. Hoisting them onto `ExtractContext` is the right shape and touches `paths.ts`, `links.ts` and `run.ts` — three modules this ticket has no other reason to open. It belongs to the next ticket that touches extraction, not to this one.
+**Left undone at first, then done on request:** the two prose gates were copied in three extractors and recomputed once per extractor per source. `context-prose.ts` now exports `proseGatesFor(content, origin)` and nothing else — the four steps are unexported — and `ExtractContext` carries a `prose` gate in place of `origin`. Every extractor asks `prose.disclaims(offset)`, `run.ts` builds the gates once per source, and the `~/` section scan happens once instead of three times. Corpus re-run: **unchanged, 17 findings**, which is what a refactor of a heuristic's plumbing has to show.

@@ -45,7 +45,7 @@ src/
   extract/
     paths.ts           path Claim[]
     discard.ts         the discard rules of the path extractor
-    context-prose.ts   the prose markers that disclaim a nearby claim
+    context-prose.ts   the prose gates: markers that disclaim a nearby claim
     scripts.ts         script Claim[] (npm/pnpm/make/deno)
     deps.ts            dependency Claim[]
     symbols.ts         symbol Claim[]
@@ -161,6 +161,8 @@ Four node types matter from the tree:
 - `yaml` (frontmatter) → frontmatter claims
 
 Raw prose (`text`) is **not** scanned by default, with one exception: `dep/missing` looks at it hunting for usage verbs. Scanning prose in general is the number one source of noise.
+
+What *is* read from the prose is whether it disclaims a claim standing next to it — an example, a hedge, another repository's root. Every extractor asks that question, so `context-prose.ts` exports the question and not its steps: `proseGatesFor(content, origin)` returns a `disclaims(offset)` closed over one source, and `ExtractContext` carries it. The `~/` section scan it starts with is over the whole document, and it happens once per source rather than once per extractor.
 
 ---
 

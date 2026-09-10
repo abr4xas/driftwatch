@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Claim, Source, SourceKind } from '../src/core/types.ts'
+import { proseGatesFor } from '../src/extract/context-prose.ts'
 import { extractSkillClaims, skillFactOf } from '../src/extract/skill.ts'
 import { suggestKey } from '../src/fix/suggest.ts'
 import { parseFrontmatter } from '../src/parse/frontmatter.ts'
@@ -24,7 +25,7 @@ function claimsOf(
     doc: parseMarkdown(content),
     frontmatter: parseFrontmatter(content),
     table: buildLineTable(content),
-    origin: undefined,
+    prose: proseGatesFor(content, undefined),
   })
 }
 
