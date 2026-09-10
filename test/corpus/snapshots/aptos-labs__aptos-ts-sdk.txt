@@ -1,7 +1,7 @@
 # aptos-labs/aptos-ts-sdk
 
 sources: 4
-errors: 4
+errors: 0
 warnings: 0
 fixable: 0
 
@@ -12,7 +12,4 @@ agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-.claude/skills/release-ts-sdk/SKILL.md:26:31  [path/missing] inline-code  upgrade-guides/UPGRADE_GUIDE_X.Y.Z.md
-AGENTS.md:38:73  [path/missing] inline-code  link:../
-AGENTS.md:199:54  [path/missing] inline-code  link:../
-CLAUDE.md:101:59  [path/missing] inline-code  link:../
+(none)

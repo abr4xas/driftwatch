@@ -38,21 +38,39 @@ function isUrl(text: string): boolean {
 const GLOB_OR_PLACEHOLDER = /[*?{}<>$[\]]/u
 
 /**
- * A text opening with `#` is a **module specifier or an anchor**, never a
- * relative path.
+ * A **specifier**, in one of the two syntaxes that exist to not be a path.
  *
- * Real case (vercel-labs/marketing-team-eve-template): "Imports use the `#*`
- * subpath from `package.json` (`#lib/...` maps to `agent/lib/...`)". Node
- * subpath imports are declared under `imports` in `package.json` and are
- * required to start with `#` precisely so they cannot be confused with a path.
- * The other thing that starts with `#` is a URL fragment.
+ * `#` opens a Node subpath import or a URL fragment. Real case
+ * (vercel-labs/marketing-team-eve-template): "Imports use the `#*` subpath from
+ * `package.json` (`#lib/...` maps to `agent/lib/...`)". Subpath imports are
+ * declared under `imports` in `package.json` and are *required* to start with
+ * `#` precisely so they cannot be confused with a path.
  *
- * A file literally named `#thing` is legal and nobody has one. This is not a
- * heuristic about likelihood, it is the extractor being told about a syntax it
- * did not know.
+ * A leading `scheme:` is a protocol. `isUrl` above already takes the `://`
+ * forms; the ones without slashes are the package-manager protocols. Real case
+ * (aptos-labs/aptos-ts-sdk): "`examples/typescript`, `examples/javascript` use
+ * a **linked** SDK (`link:../..`)" — three findings from a `package.json`
+ * dependency value, and the normalizer made it worse by trimming the trailing
+ * dots and reporting `link:../` for text that says `link:../..`. The family is
+ * `link:`, `file:`, `workspace:`, `portal:`, `npm:`, `jsr:`, `catalog:`,
+ * `patch:`, `git:`, `github:`.
+ *
+ * The scheme is matched **generally** rather than from a list of protocol
+ * names, for the reason [ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md)
+ * gives inverted: a list of somebody else's vocabulary falls behind, and here
+ * falling behind can only produce a finding. What a general rule costs instead
+ * is a file whose *first* segment holds a colon, which is illegal on Windows
+ * and which nobody has on POSIX either. The colon a real path does carry is a
+ * `:12` line suffix, and that one comes after a slash — `SCHEME` is anchored,
+ * so it cannot reach it.
+ *
+ * Neither is a heuristic about likelihood. Both are the extractor being told
+ * about a syntax it did not know.
  */
-function isModuleSpecifier(text: string): boolean {
-  return text.startsWith('#')
+const SCHEME = /^[a-z][a-z\d+.-]*:/u
+
+function isSpecifier(text: string): boolean {
+  return text.startsWith('#') || SCHEME.test(text)
 }
 
 /**
@@ -137,6 +155,26 @@ const PLACEHOLDER_UPPERCASE = /^(N{2,}|X{2,}|Y{2,}|Z{2,}|ID|NNN?N?)$/u
 const PLACEHOLDER_INDEXED = /^[a-z]+[NMKXYZ]([-+]\d+)?$/u
 
 /**
+ * A **version or date template** inside a segment: the placeholder convention
+ * for "the one for that release" and "the one for that day".
+ *
+ * Real cases, three findings across two repos:
+ *
+ * - garagon/aguara: "confirm links in `product/vX.Y.Z/_index.md`" and "Create
+ *   status file - `product/vX.Y.Z/status-YYYY-MM-DD.md` for significant
+ *   milestones".
+ * - aptos-labs/aptos-ts-sdk: "remind the maintainer to write an upgrade guide
+ *   at `upgrade-guides/UPGRADE_GUIDE_X.Y.Z.md`", where the real files are
+ *   `UPGRADE_GUIDE_6.0.0.md` and `UPGRADE_GUIDE_7.0.0.md`.
+ *
+ * `VERSION` above discards a segment that *is* a number (`1.0`, `v2.1`); this
+ * discards one that is the **shape** of a number. The letters are required
+ * uppercase and in order, so `x.y.z` and a file genuinely called `a.b.c` are
+ * untouched, and `YYYY` is a spelling nobody uses for anything else.
+ */
+const PLACEHOLDER_TEMPLATE = [/(?:^|[^A-Za-z])v?X\.Y(\.Z)?(?![A-Za-z])/u, /YYYY[-_]?MM([-_]?DD)?/u]
+
+/**
  * Filler names with a possessive prefix, which ask the reader to put in their
  * own.
  * Prevents: `perf/memory/src/profile/your_profile.rs` in tursodatabase/turso,
@@ -178,6 +216,7 @@ export function isPlaceholderName(word: string): boolean {
     METASYNTACTIC.has(word.toLowerCase()) ||
     PLACEHOLDER_UPPERCASE.test(word) ||
     PLACEHOLDER_INDEXED.test(word) ||
+    PLACEHOLDER_TEMPLATE.some((pattern) => pattern.test(word)) ||
     PLACEHOLDER_POSSESSIVE.test(word) ||
     PLACEHOLDER_CAMEL.some((pattern) => pattern.test(word))
   )
@@ -251,7 +290,7 @@ export function discardReason(
 ): DiscardReason | undefined {
   if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text)) return 'url'
-  if (isModuleSpecifier(text)) return 'module-specifier'
+  if (isSpecifier(text)) return 'module-specifier'
   if (isHomePath(text)) return 'home-path'
   if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
   if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'

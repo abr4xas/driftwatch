@@ -380,3 +380,45 @@ describe('class 10: a word with a trailing capital standing for a number', () =>
     expect(evaluatePathText(text)).toEqual({ kind: 'path', text })
   })
 })
+
+describe('class 11: a dependency protocol specifier', () => {
+  it.each([
+    // aptos-labs/aptos-ts-sdk: "`examples/typescript` ... use a linked SDK
+    // (`link:../..`)". The trailing dots used to be trimmed, so the finding
+    // reported text the document does not contain.
+    'link:../..',
+    'file:../shared',
+    'workspace:packages/api',
+    'portal:../local/pkg',
+    'catalog:default/react',
+  ])('discards %s', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'module-specifier' })
+  })
+
+  it('a line suffix is not a scheme, because a scheme is anchored', () => {
+    expect(evaluatePathText('src/index.ts:12')).toEqual({ kind: 'path', text: 'src/index.ts' })
+  })
+})
+
+describe('class 12: a version or date template inside a segment', () => {
+  it.each([
+    // garagon/aguara and aptos-labs/aptos-ts-sdk.
+    'product/vX.Y.Z/_index.md',
+    'product/vX.Y.Z/status-YYYY-MM-DD.md',
+    'upgrade-guides/UPGRADE_GUIDE_X.Y.Z.md',
+    'releases/X.Y/notes.md',
+    'logs/YYYYMMDD/run.txt',
+  ])('discards %s', (text) => {
+    expect(evaluatePathText(text)).toEqual({ kind: 'discarded', reason: 'metasyntactic' })
+  })
+
+  it.each([
+    // The shape is required uppercase and in order: a real version, a
+    // lowercase spelling and an unrelated dotted name all stay claims.
+    'product/v1.2.3/_index.md',
+    'src/x.y.z/index.ts',
+    'src/a.b.c/index.ts',
+  ])('keeps %s', (text) => {
+    expect(evaluatePathText(text).kind).toBe('path')
+  })
+})

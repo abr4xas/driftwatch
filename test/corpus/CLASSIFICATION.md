@@ -2,34 +2,35 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **64 public repos pinned to a commit, 30 findings.**
-Of the 64, **32 form the validation group**. No replacement is outstanding.
+Corpus: **66 public repos pinned to a commit, 26 findings.**
+Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 65 sources, 16 findings, 4 true and 12 false.**
+Validation group measurement: **32 repos, 65 sources, 12 findings, 5 true and 7 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
 | 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 14 |
-| 3 | Median FP per repo = 0 | 0 (58 of 64 repos with no FP at all) | **met** |
+| 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | **4** (`aptos-ts-sdk`), 2 (`edgecrab`, `aguara`) | **BROKEN** |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 58 of 64 = **90.6%**; validation **28 of 32 = 87.5%** | **BROKEN** over validation |
-| 7 | ≥ 1 true positive in validation | 4 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 64 repos, 32 in validation | **met** |
+| 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 61 of 66 = **92.4%**; validation **29 of 32 = 90.6%** | **met**, repaired in round 16 |
+| 7 | ≥ 1 true positive in validation | 5 | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
 Fixable findings: **1**, of which **0 are false**.
 
-**Seven of nine conditions are met. Conditions 5 and 6 are broken**, the second one over the validation group only.
+**All nine conditions are met**, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
 
-Two rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together:
+Four rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together, because two of them broke conditions and two repaired them:
 
 - The **thirteenth** added thirteen validation repos to give condition 6 the finding mass M2 had promised it. It got the mass, and conditions 2 and 5 broke.
 - The **fourteenth** closed the class that broke condition 2 — another agent tool's configuration root — which repaired it and also silenced a false positive that had been open in `github/spec-kit` since the first round. The replacement repos it brought in then broke condition 6 over validation.
 - The **fifteenth** closed the largest class left, the index placeholder, which cost nothing: the only repo it appeared in had already been moved to calibration. Eight false positives gone, and **no condition moved**, because 5 and 6 count repos rather than findings.
+- The **sixteenth** closed the two classes that did move them — a dependency protocol specifier and a version-or-date template — which emptied `aptos-ts-sdk` and `aguara`, cost both of them to calibration, and **repaired conditions 5 and 6**. The two replacements brought one false positive and one true finding between them.
 
 That sequence is the treadmill this document named in round three, running in public: closing a class costs the repo that revealed it, the replacement arrives with its own noise, and the percentage moves for reasons that have nothing to do with the code getting better or worse.
 
@@ -946,3 +947,75 @@ The corollary is worth stating because it is the opposite of what a ratio would 
 | A framework's own directory (`.tfw/`) | 1 | `KZ-IT` (calibration) | Free, and no general rule reaches it |
 
 Closing the first two classes — one repo's worth of contamination, since they overlap on `aptos-ts-sdk`, plus `aguara` — would repair **both** broken conditions. That is the next decision, and it is a decision about the corpus rather than about the code: two more validation repos have to be found, and the last four that were added brought six false positives with them.
+
+---
+
+## Sixteenth round, 2026-09-10: the two classes that were worth their price
+
+Round fifteen ended with the arithmetic laid out: conditions 5 and 6 needed **repos** to go quiet, not findings to go away, and the two classes that would empty a repo were the ones with a price — two validation repos, because they overlapped on `aptos-ts-sdk`.
+
+Both are closed.
+
+### A specifier exists in order not to be a path
+
+`discard.ts` already refused a leading `#` because a Node subpath import is *required* to start with one, so it cannot be confused with a path. A leading `scheme:` is the same statement in the other syntax: `link:`, `file:`, `workspace:`, `portal:`, `npm:`, `jsr:`, `catalog:`, `patch:`.
+
+Real case, `aptos-labs/aptos-ts-sdk`, three findings: "`examples/typescript`, `examples/javascript` use a **linked** SDK (`link:../..`)". It is a `package.json` dependency value quoted in prose, and the normalizer made the report worse than the claim — the trailing-punctuation trim trimmed `..` and printed `link:../` for text that says `link:../..`.
+
+The scheme is matched **generally** rather than from a list of protocol names, which is [ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md)'s argument inverted: a list of somebody else's vocabulary falls behind, and falling behind *here* would produce findings rather than miss them. What a general rule costs instead is a file whose **first** segment holds a colon — illegal on Windows, and absent from any repo in this corpus. The colon a real path does carry is a `:12` line suffix, which comes after a slash, and the pattern is anchored.
+
+### A version or a date standing in for the real one
+
+`VERSION` in `discard.ts` refuses a segment that **is** a number (`1.0`, `v2.1`). This refuses one that is the **shape** of a number:
+
+- `garagon/aguara`: "confirm links in `product/vX.Y.Z/_index.md`", "Create status file - `product/vX.Y.Z/status-YYYY-MM-DD.md`".
+- `aptos-labs/aptos-ts-sdk`: "write an upgrade guide at `upgrade-guides/UPGRADE_GUIDE_X.Y.Z.md`", where the real files are `UPGRADE_GUIDE_6.0.0.md` and `UPGRADE_GUIDE_7.0.0.md`.
+
+The letters are required uppercase and in order, so `x.y.z` and a file genuinely called `a.b.c` are untouched, and `YYYY` is a spelling nobody uses for anything else.
+
+### What it cost and what it bought
+
+`aptos-ts-sdk` and `aguara` both go to **zero findings** and both move to calibration under condition 9. Unlike `KZ-IT-telegram-list` in round fourteen, both leave **clean**: the rules fixed them rather than the move hiding them.
+
+Two replacements were added on the same metadata-only basis — `ckotzbauer/vulnerability-operator` (Go) and `fancy1108/Clutch` (TypeScript/Python) — and between them they brought **one false positive and one true finding**, which is the best a replacement pair has done in four rounds.
+
+**66 repos · 236 sources · 26 findings — 20 true, 6 false.** Every condition is met:
+
+| | Round 13 | Round 14 | Round 15 | Round 16 |
+|---|---|---|---|---|
+| False positives | 23 | 19 | 11 | **6** |
+| Condition 2 (no false autofix) | broken | met | met | **met** |
+| Condition 5 (max 2 FP per repo) | broken, 16 | broken, 9 | broken, 4 | **met, 2** |
+| Condition 6, corpus | 91.9% | 90.6% | 90.6% | **92.4%** |
+| Condition 6, validation | 90.3% | 87.5% | 87.5% | **90.6%** |
+
+Validation carries **12 findings** now, four times the three the M1 certification rested on, and the caveat ADR-0006 wrote about its own condition 6 is finally spent.
+
+### The new repos, classified
+
+**`ckotzbauer/vulnerability-operator`: silent.**
+
+**`fancy1108/Clutch`: two findings, one of each.**
+
+- `CLAUDE.md:190` — "Single-context repo: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`." `docs/agents/domain.md` exists and is not reported; **`docs/adr/` does not exist**. Classified **true**, and the doubt is worth recording: the sentence could be read as stating a convention that materialises when the first ADR is written, in which case it is noise. The strict reading is that a declarative sentence about the repo's layout is wrong, and that is the reading taken. It changes no condition either way — the repo carries a false positive regardless — so it only moves the ratio.
+- `.cursor/rules/cli-whitelist-docs.mdc:3` — **false**, and a class nobody had seen. The frontmatter is Cursor's:
+
+  ```
+  globs: services/orchestrator/src/tools_status.py,apps/desktop/src/services/cliInstallGuides.ts,services/orchestrator/src/engine_router.py
+  ```
+
+  A **comma-separated list**, which the frontmatter extractor claims as one path. All three files exist; the joined string does not. The suggestion even names the third one, which is the tool almost getting there.
+
+  It is left open on purpose. The fix is to split a comma-separated frontmatter value into one claim per item — which would *raise* detection rather than lower it, since all three of these verify — and it would burn `Clutch` the round after it arrived, owing a fifth replacement. It goes in the ledger instead.
+
+### The ledger
+
+| Class | Findings | Repos | Cost of closing it |
+|---|---|---|---|
+| A comma-separated frontmatter value read as one path (`globs:`) | 1 | `Clutch` (validation) | One validation repo. The fix **adds** detection: three real paths become three claims |
+| A crate nickname (`gateway/run.rs`), a foreign project's file (`Hermes adapters/base.py`) | 2 | `edgecrab` (validation) | One validation repo, and no rule shape proposed yet |
+| A generated bundle the sentence describes as generated | 1 | `zotero-format-metadata` (validation) | One validation repo |
+| A framework's own directory (`.tfw/`) | 1 | `KZ-IT` (calibration) | Free, and no general rule reaches it |
+| A third-party convention no prose rule reaches | 1 | `eve-template` (calibration) | Open since round one |
+
+Nothing here is load-bearing for a condition: the maximum per repo is 2, and closing any of them would move condition 6 by at most 1.5 points. The four remaining rounds' worth of work is in the corpus growing, not in these five findings.

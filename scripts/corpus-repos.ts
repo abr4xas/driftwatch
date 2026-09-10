@@ -31,7 +31,7 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 64: 32 calibration and 32 validation, and no replacement is
+ * There are 66: 34 calibration and 32 validation, and no replacement is
  * outstanding, which is what ADR-0006 condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -249,11 +249,14 @@ export const CORPUS: readonly CorpusRepo[] = [
     sha: '5fd49dbb496f74216c8c464d7c0cf84c9a9bd848',
     holdout: true,
   },
-  {
-    repo: 'aptos-labs/aptos-ts-sdk',
-    sha: 'da6319287572e8f62f38c73be0e2346ca7447e21',
-    holdout: true,
-  },
+  /**
+   * Moved out of the validation group on 2026-09-10, fifteenth round: both the
+   * specifier rule (`link:../..`) and the version-template rule
+   * (`UPGRADE_GUIDE_X.Y.Z.md`) were derived from its four findings. It leaves
+   * **clean** — the rules fixed it rather than the move hiding it. One
+   * replacement owed.
+   */
+  { repo: 'aptos-labs/aptos-ts-sdk', sha: 'da6319287572e8f62f38c73be0e2346ca7447e21' },
   { repo: 'hughjonesd/huxtable', sha: '6dcac79c2c6132efdfde8de21408cd2f840cd11e', holdout: true },
   { repo: 'securego/gosec', sha: '8075fd2e520d33330afe168f26fc7a91f57f2cbc', holdout: true },
   {
@@ -301,7 +304,24 @@ export const CORPUS: readonly CorpusRepo[] = [
     sha: 'ed3330703bc91f498062451136b89592c9ee098a',
     holdout: true,
   },
-  { repo: 'garagon/aguara', sha: 'b98d63554228dce7f6a3b578ffb5e3676115e1d4', holdout: true },
+  /**
+   * Moved out of the validation group on 2026-09-10, fifteenth round: the
+   * version and date template rule was derived from its two findings. Leaves
+   * clean. One replacement owed.
+   */
+  { repo: 'garagon/aguara', sha: 'b98d63554228dce7f6a3b578ffb5e3676115e1d4' },
+
+  /**
+   * The two added 2026-09-10, sixteenth round, replacing `aptos-ts-sdk` and
+   * `aguara`. Same selection as every addition since the thirteenth: metadata
+   * only, nothing read first.
+   */
+  {
+    repo: 'ckotzbauer/vulnerability-operator',
+    sha: 'a03ed2801d0467c1832d49de462676afca8ccff4',
+    holdout: true,
+  },
+  { repo: 'fancy1108/Clutch', sha: 'da61f6f85dcf0c3043b998a3ab024b5a4333dab4', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

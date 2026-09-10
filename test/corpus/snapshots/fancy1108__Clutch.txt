@@ -1,0 +1,17 @@
+# fancy1108/Clutch
+
+sources: 5
+errors: 2
+warnings: 0
+fixable: 0
+
+## sources
+cursor-rule  .cursor/rules/base.mdc
+cursor-rule  .cursor/rules/cli-whitelist-docs.mdc
+copilot  .github/copilot-instructions.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+.cursor/rules/cli-whitelist-docs.mdc:3:8  [path/missing] frontmatter  services/orchestrator/src/tools_status.py,apps/desktop/src/services/cliInstallGuides.ts,services/orchestrator/src/engine_router.py  -> services/orchestrator/src/engine_router.py (0.6)
+CLAUDE.md:190:42  [path/missing] inline-code  docs/adr/
