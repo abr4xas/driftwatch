@@ -18,6 +18,7 @@ export type DiscardReason =
   | 'bare-directory'
   | 'metasyntactic'
   | 'not-path-shaped'
+  | 'module-specifier'
 
 /**
  * Rule 1. A text with a protocol points outside the repo.
@@ -34,6 +35,24 @@ function isUrl(text: string): boolean {
  * `$HOME/.config/app.json`, `packages/[name]/src`.
  */
 const GLOB_OR_PLACEHOLDER = /[*?{}<>$[\]]/u
+
+/**
+ * A text opening with `#` is a **module specifier or an anchor**, never a
+ * relative path.
+ *
+ * Real case (vercel-labs/marketing-team-eve-template): "Imports use the `#*`
+ * subpath from `package.json` (`#lib/...` maps to `agent/lib/...`)". Node
+ * subpath imports are declared under `imports` in `package.json` and are
+ * required to start with `#` precisely so they cannot be confused with a path.
+ * The other thing that starts with `#` is a URL fragment.
+ *
+ * A file literally named `#thing` is legal and nobody has one. This is not a
+ * heuristic about likelihood, it is the extractor being told about a syntax it
+ * did not know.
+ */
+function isModuleSpecifier(text: string): boolean {
+  return text.startsWith('#')
+}
 
 /**
  * Rule 3. A single word is not a claim about a path in the repo, not even with
@@ -188,6 +207,7 @@ export function discardReason(
 ): DiscardReason | undefined {
   if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text)) return 'url'
+  if (isModuleSpecifier(text)) return 'module-specifier'
   if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
   if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'
   if (isBareWord(text)) return 'bare-word'

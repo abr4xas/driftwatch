@@ -1,7 +1,7 @@
 # laravel/vet
 
 sources: 2
-errors: 1
+errors: 0
 warnings: 0
 fixable: 0
 
@@ -10,4 +10,4 @@ agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-AGENTS.md:5:219  [path/missing] inline-code  .hod/skills/
+(none)

@@ -43,9 +43,11 @@ If it does not hold, we do not advance — we tune the heuristics, or we accept 
 
 Nothing regressed in the code. The 100% had rested on three observations from a single root cause, and every enlargement moved the number the same way, which is what the original caveat said would decide it.
 
-The corpus is now 44 repos with 18 in validation, 17 findings, 11 true and 6 false. **40 of the 44 repos produce no false positive at all, and zero findings have ever been wrongly autofixable.**
+**The four fixes it exposed were then applied and the whole corpus re-run.** Findings went 17 → 14, false positives 6 → 3, and **true positives stayed at 11**: three findings disappeared across 44 repos and all three were the targets. Validation recovered to **3 of 5 = 60%**, aggregate to 78.6%, and condition 5 holds again. **Eight of nine conditions.**
 
-Adding mass is finished as a route — it is now confirming rather than informing. What it bought is six classified false positives across five distinct classes, four of which have a known narrow fix. `CLASSIFICATION.md` sets out those fixes, their cost under ADR-0006 condition 9, and the argument that condition 6 is the wrong shape of criterion: fixing a validation false positive deletes the observation that lowered the number, so no amount of improving the tool can raise it. **Awaiting a decision.**
+The corpus is 44 repos with 18 in validation. **41 of the 44 produce no false positive at all, and zero findings have ever been wrongly autofixable.**
+
+Condition 6 is still unmet and, on this method, cannot be met: paying ADR-0006 condition 9 for those fixes moves two repos to calibration, which puts validation at 3 of 4 = 75% with two fewer repos and no work left to do. `CLASSIFICATION.md` demonstrates that treadmill across four rounds and recommends **rewriting condition 6 into a per-repo cap plus an absolute cap on the fixable subset** — the numbers a user experiences, and the ones that stayed stable as the corpus tripled. **Awaiting a decision.**
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

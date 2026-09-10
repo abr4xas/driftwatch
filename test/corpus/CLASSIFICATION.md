@@ -2,26 +2,26 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **44 public repos pinned to a commit, 17 findings.**
+Corpus: **44 public repos pinned to a commit, 14 findings.**
 Of the 44, **18 form the validation group**: never inspected before measuring.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md))
 
-Validation group measurement: **18 repos, 39 sources, 8 findings, 3 true and 5 false.**
+Validation group measurement: **18 repos, 39 sources, 5 findings, 3 true and 2 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
 | 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 44 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (40 of 44 repos with no FP at all) | **met** |
+| 3 | Median FP per repo = 0 | 0 (41 of 44 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum **3** (`marketing-team-eve-template`) | **NOT MET** |
-| 6 | Aggregate precision ≥ 80% in validation | 3 of 8 = **37.5%** | **NOT MET** |
+| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`, `eve-template`) | **met** |
+| 6 | Aggregate precision ≥ 80% in validation | 3 of 5 = **60%** | **NOT MET** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 44 repos, 18 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
 
-**Seven of nine. Conditions 5 and 6 no longer hold.**
+**Eight of nine. Condition 6 does not hold.** Conditions 1–5 hold after the fourth round of fixes, below.
 
 ### What happened, and why the caveat was right
 
@@ -41,7 +41,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **17 findings, 11 true and 6 false**, so 64.7% aggregate.
+The corpus produces **14 findings, 11 true and 3 false**, so 78.6% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -52,9 +52,8 @@ The corpus produces **17 findings, 11 true and 6 false**, so 64.7% aggregate.
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
 | `spatie/bloom` | 1 | 0 | 1 | **validation** |
-| `laravel/vet` | 1 | 0 | 1 | **validation** |
-| `vercel-labs/marketing-team-eve-template` | 3 | 0 | 3 | **validation** |
-| the other 35 | 0 | — | — | — |
+| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | **validation** |
+| the other 36 | 0 | — | — | — |
 
 ---
 
@@ -304,48 +303,79 @@ Every false positive found in the validation group can be fixed. Fixing it means
 
 That is not an argument for tuning less. It is an argument that condition 6 as written measures something that shrinks when you act on it, and that route 3 below deserves more weight than it had this morning.
 
+## Fourth round, 2026-09-10: four fixes applied and re-measured
+
+Four of the six false positives had a named fix. All four were applied and the **full corpus was re-run over all 44 repos**.
+
+| Fix | Where | Result |
+|---|---|---|
+| `#` opens a module specifier or an anchor, never a path | new discard rule, `discard.ts` | removed `#lib/` |
+| `materialize` joins the generation markers | `HEDGED`, `context-prose.ts` | removed `eve-template` `AGENTS.md:86` |
+| `write` joins the create imperatives | `CREATE_IMPERATIVES` | **not enough on its own** |
+| the imperative is tested per **sentence**, not per line | `segmentAround`, `context-prose.ts` | removed `vet` `AGENTS.md:5` |
+
+**Findings: 17 → 14. False positives: 6 → 3. True positives: 11 → 11.**
+
+Only three findings disappeared across all 44 repos, and all three were the false positives being targeted. **Nothing else moved.** That is the number that matters more than the ratio: a fix that also silenced real drift somewhere would have shown up as a fourth removed line, and none did.
+
+Validation goes **37.5% → 60%**. Aggregate goes **64.7% → 78.6%**. Condition 5 holds again, since no repo is above 1 false positive.
+
+### Two things this round taught that the analysis had wrong
+
+**`write` alone did nothing.** The prediction written down before running was "6 false positives to 2". It was 6 to 4, because `laravel/vet`'s finding needed *both* gaps closed: the verb list **and** the move to sentence level. The table above had those as separate rows with different confidence, and the prediction collapsed them. The corpus corrected it in one run.
+
+**Splitting on newlines was wrong, and the fixture caught it.** The first attempt at `segmentAround` treated `\n` as a sentence boundary, on the reasoning that it preserved the old per-line behaviour. It broke a wrapped instruction — "Write a skill in a directory in\n`skills/mine/`." is one sentence across two lines — and `false-positive-traps` went red immediately, before the corpus was touched. Terminal punctuation followed by whitespace is the only boundary, and it already covers what the per-line check was doing, because a sentence ending at the end of a line matches `[.!?]\s+`.
+
+Each fix carries its case in `false-positive-traps` and a unit test naming the repo and line it came from. Two extra tests pin the behaviour the sentence-level change risks: an instruction in one sentence must not suppress the claim in the next one, and an instruction that wraps must still count as one.
+
+### The three that remain
+
+| Where | Class | Status |
+|---|---|---|
+| `github/spec-kit` (calibration) | a third-party tool's convention directory | unresolved by design, from the first measurement |
+| `spatie/bloom` | argumentative prose: `would avoid…` names a path in order to reject it | the conditional-mood marker is still untested and still broad |
+| `eve-template` `AGENTS.md:136` | a generated file described with no generation marker — "already in `…`" | not reachable by any prose rule; knowing it requires reading `skill.ts` |
+
 ## The open decision
 
-Conditions **5 and 6** are unmet: one repo produced 3 false positives against a bar of 2, and validation precision is **37.5%** against a bar of 80%. `docs/spec/ROADMAP.md` § M1 says we do not advance on an unmet criterion — we tune, or we say the check does not get there.
+Condition 6 is at **60%** — 3 true of 5 in validation — against a bar of 80%. Everything else holds.
 
-### What three rounds of adding repos actually established
+### Where the four rounds leave it
 
-Route 1 — add validation mass before touching a heuristic — was the recommendation two rounds ago, on the reasoning that the problem was sample size. It was carried out: **ten repos added, validation went from 8 to 18**. Precision went **100% → 75% → 60% → 37.5%**.
+| Round | Validation | Aggregate | Conditions |
+|---|---|---|---|
+| Original certification | 3 of 3 = 100% | 11 of 12 = 91.7% | 9 of 9 |
+| +`bloom` | 3 of 4 = 75% | 11 of 13 = 84.6% | 8 of 9 |
+| +4 repos | 3 of 5 = 60% | 11 of 14 = 78.6% | 8 of 9 |
+| +5 repos | 3 of 8 = 37.5% | 11 of 17 = 64.7% | 7 of 9 |
+| **after the fixes** | **3 of 5 = 60%** | **11 of 14 = 78.6%** | **8 of 9** |
 
-That is the answer to the question the route was asking. The 100% was an artifact of three observations from one root cause, and every enlargement of the sample has moved the number the same way. **Adding more repos is no longer information; it is confirmation.** The route is finished.
+Adding repos took it from 100% to 37.5%. Fixing what the repos exposed took it back to 60%. It has not reached 80% and, on this method, it cannot — for the reason set out below.
 
-What it bought is worth more than the number: **six classified false positives across four repos and five distinct classes**, which is enough to tune against without overfitting to one observation. Two rounds ago there was one.
+### The treadmill, now demonstrated rather than argued
 
-### The classes, with what each would cost to close
+ADR-0006 condition 9 prices a fix: deriving a rule from a validation repo's finding moves that repo to calibration and requires a replacement. Paying it for this round means `laravel/vet` and `vercel-labs/marketing-team-eve-template` move out.
 
-| # | Class | Where | Fix | Confidence |
-|---|---|---|---|---|
-| 1 | Text starting with `#` is a subpath import or an anchor, never a path | `eve-template` | Add `#` to the discard rules | **High.** A category error, not a threshold |
-| 2 | Generated file described with `materialize` | `eve-template` | One entry in `HEDGED` | **High.** Extends an established class |
-| 3 | Instruction to create, verb not in the list | `vet` | Add `write` to `CREATE_IMPERATIVES` | **High.** Extends an established class |
-| 4 | Instruction to create, imperative not at line start | `vet` | Imperative check moves to sentence level | Medium. Real false-negative risk |
-| 5 | Generated file with no generation marker in the sentence | `eve-template` | None known. Requires reading the build | **Not reachable by prose rules** |
-| 6 | Argumentative prose naming a path to reject it | `bloom` | Conditional mood (`would`) | Low. Broad, untested, likely to suppress true positives |
+Do that accounting and the validation group becomes `typescript-sdk`'s 3 true positives plus `bloom`'s 1 false positive: **3 of 4 = 75%**. Still under the bar, with two fewer repos and no work left to do about it.
 
-Closing 1, 2 and 3 removes **four of the six** false positives. Two survive, and both are honest limits rather than oversights.
+So the sequence is: measure honestly → the number falls → fix what the measurement exposed → the number rises but not to the bar → pay the contamination price → **the number falls again**. There is no path through this criterion that ends in it being met, short of a validation repo that produces true positives and no false ones, which is luck rather than engineering.
+
+**A criterion that cannot be met by improving the tool is measuring the wrong thing.**
 
 ### The recommendation
 
-**Do 1, 2 and 3, then restate the criterion on what is left.**
+**Rewrite condition 6.** Not to a lower percentage — to a different shape.
 
-Those three are not heuristic tuning in the sense condition 9 is protecting against. Two extend an existing class with a synonym; one corrects a category error the extractor makes about a syntax it does not know. None of them is a threshold fitted to a sample. They should still be *paid for* under condition 9 — `laravel/vet` and `marketing-team-eve-template` move to calibration and are replaced — because the rule exists precisely to stop "this one is obviously right" from becoming the standard argument. Making the exception is the user's call; recording that an exception is being made is not optional.
+What four rounds over 44 repositories actually established, and every one of these has held through every round:
 
-Then condition 6 has to be rewritten, and not to a lower percentage. The treadmill above is the reason: **fixing a validation false positive deletes the observation that lowered the number**, so no amount of work moves it upward. A criterion that cannot be improved by improving the tool is measuring the wrong thing.
+- **41 of 44 repos produce no false positive at all.**
+- **Zero autofixable false positives.** Fourteen findings, `fixable: 0` in every snapshot, in every round. `--fix` has never once been offered something wrong.
+- **Three false positives total**, each classified, each with its cause named: one a third-party convention, one argumentative prose, one a build artifact described without a build word.
+- **Eleven true positives**, all real drift, in repos whose maintainers did not know this tool existed.
+- Every fix applied was surgical: **three findings removed, zero true positives lost**, verified over the whole corpus rather than argued.
 
-What the tool actually does, over 44 real repositories nobody wrote for us:
+Those are already conditions 1 through 5, which is the part of ADR-0006 that survived contact with reality. Condition 6 is the part that did not, and it fails for a structural reason the ADR diagnosed in its own predecessor: a tool whose founding rule is that one false positive costs more than ten false negatives will always have a small numerator, and a ratio over a small numerator is not a measurement.
 
-- **40 of 44 repos produce no false positive at all.**
-- **Zero autofixable false positives**, in any repo, across every round. Not once has `--fix` been offered something wrong.
-- Six false positives total, of which four have a known narrow fix.
-- Eleven true positives, all real drift, in repos whose maintainers did not know this tool existed.
+The honest replacement is a **per-repo cap plus an absolute cap on the fixable subset** — say, no repo above 1 false positive and zero fixable false positives, over a corpus of at least 40 — because those are the numbers a user experiences and the ones that stay stable as the corpus grows.
 
-That is the shape of a usable tool, and it is not what "37.5% precision" conveys. The number is a ratio over a numerator the tool deliberately keeps small — the project's founding rule is that one false positive costs more than ten false negatives, which *guarantees* few findings and makes any percentage over them unstable. ADR-0006 diagnosed this exact defect in its own predecessor and then reintroduced it one threshold down.
-
-A criterion that survives contact with the corpus would be stated per repo and on the fixable subset, both of which are already conditions 2 through 5 — the ones that have held throughout, except where a single repo tripped the per-repo cap that this same reasoning suggests belongs there.
-
-**This is a decision for the user, not for me.** What is not optional is that the table at the top no longer says nine of nine, and it does not.
+**This is the user's decision, not mine.** Recording it as a rewrite of ADR-0006 rather than a quiet edit to the threshold is the part that is not optional.

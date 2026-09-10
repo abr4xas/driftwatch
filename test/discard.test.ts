@@ -19,6 +19,21 @@ describe('rule 1: URLs', () => {
   })
 })
 
+describe('module specifiers, which start with a hash', () => {
+  // Real case (vercel-labs/marketing-team-eve-template): `#lib/` is the `#*`
+  // subpath declared under `imports` in package.json, not a directory.
+  it.each(['#lib/', '#lib/format.ts', '#evals/run.ts', '#internal/deep/thing.ts'])(
+    'discards %s',
+    (text) => {
+      expect(discardReason(text)).toBe('module-specifier')
+    },
+  )
+
+  it('does not discard a path that merely contains a hash later on', () => {
+    expect(discardReason('docs/guide.md#section')).toBeUndefined()
+  })
+})
+
 describe('rule 2: globs and placeholders', () => {
   it.each([
     'src/**/*.test.ts',
