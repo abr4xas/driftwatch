@@ -1,0 +1,14 @@
+# alpinejs/alpine
+
+sources: 3
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+skill  .claude/skills/review-pr/SKILL.md
+skill  .claude/skills/summarize-activity/SKILL.md
+claude-md  CLAUDE.md
+
+## findings
+(none)

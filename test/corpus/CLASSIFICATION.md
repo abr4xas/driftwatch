@@ -1,24 +1,24 @@
 # Corpus classification
 
-Hand review of every finding against the real repo. First measured 2026-09-09; **re-measured 2026-09-10** after adding `spatie/bloom`.
+Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **36 public repos pinned to a commit, 13 findings.**
-Of the 36, **10 form the validation group**: never inspected before measuring.
+Corpus: **39 public repos pinned to a commit, 14 findings.**
+Of the 39, **13 form the validation group**: never inspected before measuring.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md))
 
-Validation group measurement: **10 repos, 26 sources, 4 findings, 3 true and 1 false.**
+Validation group measurement: **13 repos, 32 sources, 5 findings, 3 true and 2 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 36 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (34 of 36 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 39 snapshots | **met** |
+| 3 | Median FP per repo = 0 | 0 (36 of 39 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`) | **met** |
-| 6 | Aggregate precision ≥ 80% in validation | 3 of 4 = **75%** | **NOT MET** |
+| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`, `vet`) | **met** |
+| 6 | Aggregate precision ≥ 80% in validation | 3 of 5 = **60%** | **NOT MET** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 36 repos, 10 in validation | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 39 repos, 13 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
 
 **Eight of nine. Condition 6 no longer holds.**
@@ -28,6 +28,8 @@ Validation group measurement: **10 repos, 26 sources, 4 findings, 3 true and 1 f
 The first measurement recorded a caveat about condition 6: it had passed on **3 findings**, all from one repo and one root cause, and the document said the honest number to cite was not "100% precision" but "3 of 3, with 7 of 8 repos silent". It also said the condition had to be reconfirmed once the validation group accumulated more mass.
 
 **One repo was enough.** `spatie/bloom` contributed a fourth validation finding and it is false, so precision went from 3 of 3 to 3 of 4, and 75% is below the bar. At this sample size an 80% threshold admits zero false positives, which is exactly the defect ADR-0006 diagnosed in its own predecessor.
+
+Four more repos were then added, and **75% was not a fluke**: `laravel/vet` produced a fifth validation finding, also false, taking it to **3 of 5 = 60%**. `rails/rails`, `alpinejs/alpine` and `spatie/laravel-flare` came out silent.
 
 Nothing regressed in the code. The measurement got one observation less thin.
 
@@ -39,7 +41,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **13 findings, 11 true and 2 false**, so 84.6% aggregate.
+The corpus produces **14 findings, 11 true and 3 false**, so 78.6% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -50,7 +52,8 @@ The corpus produces **13 findings, 11 true and 2 false**, so 84.6% aggregate.
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
 | `spatie/bloom` | 1 | 0 | 1 | **validation** |
-| the other 29 | 0 | — | — | — |
+| `laravel/vet` | 1 | 0 | 1 | **validation** |
+| the other 31 | 0 | — | — | — |
 
 ---
 
@@ -218,14 +221,70 @@ It changes no precision number, and that was foreseeable: every repo that has pr
 
 **It is the cheap kind of addition, not the useful kind.** Condition 6 needs findings in the denominator, and a silent repo contributes none. 29 of the 36 repos are silent.
 
+## The four repos added 2026-09-10, second round
+
+| Repo | Domain | Sources | Findings | Clone |
+|---|---|---|---|---|
+| `spatie/laravel-flare` | PHP/Laravel | 1 | 0 | 1 MB |
+| `laravel/vet` | PHP | 2 | **1, false** | 8 MB |
+| `rails/rails` | Ruby | 1 | 0 | 64 MB |
+| `alpinejs/alpine` | JS, skills-heavy | 3 | 0 | 8 MB |
+
+`rails/rails` is the largest repo in the corpus, but a shallow clone is 64 MB and not the 289 MB the API reports, so the total clone cost stays near 2.8 GB.
+
+`laravel/vet` also carries a pattern the corpus did not have: its `CLAUDE.md` is ten bytes, `@AGENTS.md`, which is Claude Code's **import** syntax. driftwatch does not follow imports, so it audits a second source with no claims in it. Not a finding, but worth knowing before someone reports it as a bug.
+
+### The finding: `laravel/vet` `AGENTS.md:5` — `.hod/skills/`
+
+**False positive.**
+
+Line 5 is one long line of five sentences, all of them instructions about where to put things:
+
+> `hod` writes this file. Write no sentence in it, because `hod update` writes it again. Write the intention of the project in `.hod/PROJECT.md`. Write a rule in a file in `.hod/rules/`. **Write a skill in a directory in `.hod/skills/`.**
+
+`.hod/` exists. `.hod/PROJECT.md` exists. `.hod/rules/` exists with four rule files. `.hod/skills/` does not, because nobody has written a skill yet — and the sentence is telling you where to put one when you do.
+
+### Why this one is different from `bloom`'s
+
+`bloom`'s false positive was a **new class**: argumentative prose naming a path in order to reject it. No rule covers it.
+
+This one is a **known class with a rule that has a gap**. `context-prose.ts` has `CREATE_IMPERATIVES` for exactly this — an instruction to create, where the path is a destination and not a claim — derived from `tursodatabase/turso`'s "1. Create `perf/memory/src/profile/your_profile.rs`". It escapes through two identifiable holes:
+
+1. **`write` is not in the verb list.** It has `create`, `add`, `new`, `generate`, `scaffold`, `touch`, `mkdir`. Adding `write` is a one-line, narrow change.
+2. **The imperative has to open the line.** `isCreateInstruction` strips list markers and then checks `startsWith`, so the fourth sentence of a five-sentence line never matches. That restriction is deliberate and documented — it is what stops "add" and "create" mid-sentence from suppressing everything — but it assumes one claim per line, and a paragraph written as a single long line breaks the assumption.
+
+The second hole is the interesting one, and it is a design question rather than a list entry: the imperative check would have to move from line-level to **sentence-level**, splitting on terminal punctuation. That is a real change with its own false-negative risk.
+
+## The treadmill this measurement has built into it
+
+Worth stating plainly, because it is a property of the method and not of this round.
+
+Every false positive found in the validation group can be fixed. Fixing it means deriving a rule from that repo's finding, and ADR-0006 condition 9 prices that: the repo moves to calibration and a replacement has to be added. So:
+
+- Fix `vet`'s and the group is 3 of 4 again — **75%**, still under the bar, with one fewer repo.
+- Fix both and the group is 3 of 3 — **100%**, which is the thin sample the first measurement already warned was not worth citing.
+
+**Tuning cannot raise the measured precision, because tuning removes the observations that lowered it.** The number only moves by adding repos, and adding repos has now lowered it twice.
+
+That is not an argument for tuning less. It is an argument that condition 6 as written measures something that shrinks when you act on it, and that route 3 below deserves more weight than it had this morning.
+
 ## The open decision
+
 
 Condition 6 is at 75% and the project's own rule (`docs/spec/ROADMAP.md` § M1) is that we do not advance on an unmet criterion — we tune, or we say the check does not get there.
 
-Three routes, in the order I would take them:
+Condition 6 is at 60% and the project's own rule (`docs/spec/ROADMAP.md` § M1) is that we do not advance on an unmet criterion — we tune, or we say the check does not get there.
 
-1. **Add validation repos before touching anything.** The problem is as much sample size as precision: at 4 findings, 80% and 100% are the same threshold. Getting the validation group to ~10 findings makes condition 6 a measurement again. This costs nothing in contamination and is what ADR-0006's own reasoning points at.
-2. **Then evaluate a conditional-mood marker**, measured over the whole corpus, counting what it suppresses that was true. If it holds, it is a real improvement and `spatie/bloom` moves to calibration with a replacement added.
-3. **Or accept it and change the criterion**, having said plainly that `path/missing` reports hypotheticals in argumentative prose. That is the honest version of "the check does not get there", and it is not obviously wrong — one false positive per twenty repos is a tool people keep installed.
+Route 1 was tried first, on the reasoning that the problem was sample size. It was carried out — five repos added — and it **did not help**: the group went 75% → 60%, because two of the five produced a finding and both were false. That is a result, not a failure of the route. The 80% was resting on three observations from one root cause.
+
+What is left, and this is where a decision is needed:
+
+1. **Close `vet`'s gap only.** Add `write` to `CREATE_IMPERATIVES` and decide whether the imperative check moves to sentence level. It is a known class with an existing rule, so this is maintenance rather than a new heuristic. Costs `laravel/vet`, which moves to calibration. Leaves the group at 75%.
+2. **Also attack `bloom`'s class**, the conditional mood. Untested and broad — "would" is a word documents write about files that do exist — and it needs measuring over the whole corpus, counting true positives suppressed. Costs `spatie/bloom` too.
+3. **Accept it and restate the criterion.** Say plainly that `path/missing` reports paths named by documents that instruct or argue rather than assert, quantify it — **3 false positives across 39 real repositories, 36 of them with none at all, and zero autofixable** — and set the bar on the number that survives contact with reality rather than on a percentage of a five-item sample.
+
+My recommendation changed with this round. It was 1-then-2-then-3; it is now **1, then 3**, with 2 held back until there is a corpus wide enough to measure it against. Route 1's narrow version is genuine maintenance and worth doing. Route 2 is a broad heuristic justified by a single observation, which is the definition of overfitting. And the treadmill above means route 3 is not capitulation — it may be the only statement about precision this method can honestly support.
+
+What is **not** an option is leaving the table above saying "nine of nine".
 
 What is **not** an option is leaving the table above saying "nine of nine".

@@ -39,9 +39,11 @@ If it does not hold, we do not advance — we tune the heuristics, or we accept 
 
 **Certified on 2026-09-09**: nine of nine conditions, over a corpus of 34 repos with 8 in validation. The record and the classification of every finding are in `test/corpus/CLASSIFICATION.md`.
 
-**Re-measured on 2026-09-10, and condition 6 no longer holds.** Adding one repo to the validation group (`spatie/bloom`, Swift/macOS, 7 sources) produced a fourth validation finding, and it is false: aggregate precision went from 3 of 3 to **3 of 4 = 75%**, under the 80% bar. Nothing regressed in the code; the measurement stopped being thin, which is exactly what the original caveat said would decide it.
+**Re-measured on 2026-09-10, and condition 6 no longer holds.** Five repos were added to the validation group; two produced a finding and both are false. Precision went 3 of 3 → 3 of 4 (**75%**) → **3 of 5 = 60%**, under the 80% bar. Nothing regressed in the code: the measurement stopped being thin, which is exactly what the original caveat said would decide it.
 
-The corpus is now 36 repos with 10 in validation, 13 findings, 11 true and 2 false. **Eight of nine conditions.** The rule above applies to us as written — tune the heuristics, or accept that the check does not get there and say so — and the three routes, with their contamination cost under ADR-0006 condition 9, are set out at the end of `CLASSIFICATION.md`. It is not resolved yet.
+The corpus is now 39 repos with 13 in validation, 14 findings, 11 true and 3 false — 36 of the 39 repos with no false positive at all, and zero autofixable. **Eight of nine conditions.**
+
+Adding validation mass was tried first and made the number worse rather than better, which is a result. Both false positives share a shape — the document instructs or argues instead of asserting — and `CLASSIFICATION.md` sets out what is left, including the reason tuning cannot raise this particular number: under ADR-0006 condition 9, fixing a validation finding removes the observation that lowered it. Not resolved yet.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

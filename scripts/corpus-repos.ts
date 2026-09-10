@@ -31,7 +31,7 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 36: 26 calibration and 10 validation, which is what ADR-0006
+ * There are 39: 26 calibration and 13 validation, which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -129,6 +129,18 @@ export const CORPUS: readonly CorpusRepo[] = [
   // PHP/Laravel, another domain the corpus lacked. One `CLAUDE.md` of 6 KB,
   // which is smaller than every repo that has produced a finding so far.
   { repo: 'spatie/laravel-flare', sha: '730ebb52437e425f1d55d09008e99e3b056efe37', holdout: true },
+  /**
+   * Its `CLAUDE.md` is ten bytes: `@AGENTS.md`, Claude Code's import syntax.
+   * driftwatch does not follow imports, so it audits a source with no claims
+   * in it. A real pattern worth having on the record.
+   */
+  { repo: 'laravel/vet', sha: '9f3379ab593268020c4205e40d94b9066fa088c9', holdout: true },
+  // Ruby, and the most canonical repo in it. The largest of the corpus, but a
+  // shallow clone is a fraction of the 289 MB the API reports.
+  { repo: 'rails/rails', sha: '52fa23ce8e1d39ff281bf300867e9ba7c7d66111', holdout: true },
+  // Three sources -- a `CLAUDE.md` and two skills -- for 23 KB of context in a
+  // 9 MB repo, which is the profile that actually adds finding mass.
+  { repo: 'alpinejs/alpine', sha: '8554b9e2285ca598b672f636a578f837136e522b', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

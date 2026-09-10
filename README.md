@@ -45,15 +45,17 @@ Concretely, it does **not** report:
 
 ## How well it works
 
-Measured over **36 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
+Measured over **39 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**13 findings across all 36 repos. 11 true, 2 false**, so 84.6%. Nothing autofixable was wrong, in any repo, which is the number that matters most: a wrong `--fix` corrupts the document.
+**14 findings across all 39 repos. 11 true, 3 false**, so 78.6%. **36 of the 39 repos have no false positive at all**, and nothing autofixable was wrong in any of them — which is the number that matters most, because a wrong `--fix` corrupts the document.
 
-Ten of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 4 findings, 3 real and 1 not — **75%**, which is *below* the 80% the project set itself as the bar.
+Thirteen of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 5 findings, 3 real and 2 not — **60%**, which is *below* the 80% the project set itself as the bar.
 
 That is stated here rather than buried because the bar is ours and it is currently unmet. The whole reasoning, every finding classified by hand, and the three routes out are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md); the criterion itself is [ADR-0006](./docs/adr/0006-the-m1-precision-criterion.md).
 
-The known cause is a single class: a document that **argues**, naming a path as part of a case it is making — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…" — about a file that is not supposed to exist. Any sufficiently thoughtful context file eventually explains why the repo is *not* organised some other way. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
+Both false positives share a shape: **the document is not asserting**. One argues, naming a path in order to reject it — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". The other instructs, naming a destination — "Write a skill in a directory in `.hod/skills/`", where the directory does not exist because nobody has written one yet.
+
+Both are diagnosed, one has a fix and one does not, and neither is being papered over. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
 
 ## What it reads
 
