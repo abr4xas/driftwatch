@@ -88,9 +88,11 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 ## Status
 
-**Under construction. Not published yet.** M0 and M1 are done; `path/missing` is certified against the corpus.
+**Under construction. Not published yet.** M0 and M1 are done; `path/missing` is certified against the corpus. M2 is in progress.
 
-Working today: discovery, `path/missing` with suggestions, the `pretty` reporter, `--quiet`, positional path arguments, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
+Working today: discovery, the config file with its `sources` key, `path/missing` with suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
+
+A selection that leaves no check enabled is refused rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
 ```console
 $ node ./dist/cli.js --json

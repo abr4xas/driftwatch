@@ -107,22 +107,22 @@ describe('discoverSources', () => {
   })
 })
 
-describe('a symlinked source is the same file, not a second one', () => {
-  /**
-   * Real case (emdash-cms/emdash): `.claude/CLAUDE.md` is a symlink to
-   * `../AGENTS.md`, so one stale claim was reported twice.
-   */
-  function repoWithSymlink(): string {
-    const root = makeTempRepo({
-      files: { 'AGENTS.md': '# Agents\n\nThe entry point is `src/gone.ts`.\n' },
-      git: false,
-    })
-    symlinkSync('../AGENTS.md', join(root, '.claude', 'CLAUDE.md'))
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: root })
-    execFileSync('git', ['add', '-A'], { cwd: root })
-    return root
-  }
+/**
+ * Real case (emdash-cms/emdash): `.claude/CLAUDE.md` is a symlink to
+ * `../AGENTS.md`, so one stale claim was reported twice.
+ */
+function repoWithSymlink(): string {
+  const root = makeTempRepo({
+    files: { 'AGENTS.md': '# Agents\n\nThe entry point is `src/gone.ts`.\n' },
+    git: false,
+  })
+  symlinkSync('../AGENTS.md', join(root, '.claude', 'CLAUDE.md'))
+  execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: root })
+  execFileSync('git', ['add', '-A'], { cwd: root })
+  return root
+}
 
+describe('a symlinked source is the same file, not a second one', () => {
   it('audits it once, with the link as an alias', async () => {
     const root = repoWithSymlink()
     const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })

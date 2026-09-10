@@ -6,18 +6,25 @@ import { extractPathClaims } from './extract/paths.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
-import type { CheckContext } from './verify/check.ts'
-import { CHECKS, CHECK_IDS } from './verify/checks/index.ts'
+import type { Check, CheckContext } from './verify/check.ts'
+import { CHECKS } from './verify/checks/index.ts'
+import { selectChecks } from './verify/selection.ts'
 import { gitIgnoredPaths, originSlug } from './verify/git.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
 import { resolveInRepo } from './verify/resolve.ts'
 
 export type RunOptions = {
   cwd: string
-  /** Positional arguments that narrow the scope. */
-  paths: readonly string[]
+  /** Positional arguments that narrow the scope. Absent means the whole repo. */
+  paths?: readonly string[]
   /** `--config <path>`, or `false` for `--no-config`. Absent means look it up. */
   config?: string | false
+  /** `--only`. Absent means every check. */
+  only?: readonly string[]
+  /** `--skip`. Absent means none. */
+  skip?: readonly string[]
+  /** `false` when `--no-tier2` was passed. Absent means tier 2 runs. */
+  tier2?: boolean
 }
 
 export type RunResult = {
@@ -26,7 +33,10 @@ export type RunResult = {
   config: Config
   configPath: string | undefined
   sources: readonly Source[]
-  /** The ids of the registered checks. */
+  /**
+   * The ids of the checks that ran. Not the registry: it is the only thing
+   * that distinguishes a clean audit from a vacuous one.
+   */
   checks: readonly string[]
   findings: readonly Finding[]
   counts: Counts
@@ -41,10 +51,10 @@ function claimsFor(source: Source, origin: string | undefined): Claim[] {
   return extractPathClaims({ source, doc, frontmatter, table, origin })
 }
 
-function verify(claims: readonly Claim[], ctx: CheckContext): Finding[] {
+function verify(claims: readonly Claim[], checks: readonly Check[], ctx: CheckContext): Finding[] {
   const findings: Finding[] = []
   for (const claim of claims) {
-    for (const check of CHECKS) {
+    for (const check of checks) {
       if (!check.claimKinds.includes(claim.kind)) continue
       const finding = check.run(claim, ctx)
       if (finding !== null) findings.push(finding)
@@ -112,9 +122,16 @@ export async function run(options: RunOptions): Promise<RunResult> {
     cwd: options.cwd,
     explicit: options.config,
   })
+  const checks = selectChecks(CHECKS, {
+    ...(options.only === undefined ? {} : { only: options.only }),
+    ...(options.skip === undefined ? {} : { skip: options.skip }),
+    tier2: options.tier2 !== false,
+    ...(config.checks === undefined ? {} : { configured: config.checks }),
+  })
+
   const index = await buildRepoIndex(root)
   const sources = await discoverSources(index, {
-    paths: options.paths,
+    paths: options.paths ?? [],
     ...(config.sources === undefined ? {} : { sources: config.sources }),
   })
 
@@ -128,14 +145,14 @@ export async function run(options: RunOptions): Promise<RunResult> {
     ignoredByGit: await gitIgnoredPaths(root, candidatePaths(claims)),
   }
 
-  const findings = sortFindings(verify(claims, ctx))
+  const findings = sortFindings(verify(claims, checks, ctx))
 
   return {
     root,
     config,
     configPath,
     sources,
-    checks: CHECK_IDS,
+    checks: checks.map((check) => check.id),
     findings,
     counts: countBySeverity(findings),
     fixable: findings.filter((finding) => finding.suggestion?.fixable === true).length,

@@ -86,20 +86,42 @@ describe('main', () => {
     await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
 
-  it.each([
-    ['--fix'],
-    ['--watch'],
-    ['--init'],
-    ['--strict'],
-    ['--no-tier2'],
-    ['--only'],
-    ['--skip'],
-  ])('%s is not implemented yet and says so, instead of being ignored', async (flag) => {
+  it.each([['--fix'], ['--watch'], ['--init'], ['--strict']])(
+    '%s is not implemented yet and says so, instead of being ignored',
+    async (flag) => {
+      const c = capture()
+      await expect(main([flag], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+      expect(c.stderr()).toContain(flag)
+      expect(c.stderr()).toContain('is not implemented yet')
+    },
+  )
+
+  it('--only reaches the pipeline: a known id runs, and the audit is clean', async () => {
+    const root = makeTempRepo({
+      files: { 'AGENTS.md': '# A\n\nSee `src/cli.ts`.\n', 'src/cli.ts': '' },
+    })
     const c = capture()
-    const argv = flag === '--only' || flag === '--skip' ? [flag, 'path'] : [flag]
-    await expect(main(argv, c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain(flag)
-    expect(c.stderr()).toContain('is not implemented yet')
+    await expect(main(['--only', 'path'], c.io, root)).resolves.toBe(EXIT.ok)
+    expect(c.stderr()).toBe('')
+  })
+
+  it('--only with an unknown id says so instead of auditing nothing', async () => {
+    const c = capture()
+    await expect(main(['--only', 'nope'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain("unknown check 'nope'")
+    expect(c.stderr()).toContain('path/missing')
+  })
+
+  it('--skip that empties the registry is refused, not reported as no drift', async () => {
+    const c = capture()
+    await expect(main(['--skip', 'path/missing'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain('no checks enabled')
+    expect(c.stdout()).not.toContain('no drift')
+  })
+
+  it('--no-tier2 is accepted: every check there is today is tier 1', async () => {
+    const c = capture()
+    await expect(main(['--no-tier2'], c.io, CWD)).resolves.toBe(EXIT.ok)
   })
 
   it('a format other than pretty is not implemented yet', async () => {

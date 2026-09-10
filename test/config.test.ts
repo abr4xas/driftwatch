@@ -261,13 +261,12 @@ describe('the sources key', () => {
     const root = repo({
       'driftwatch.config.json': JSON.stringify({
         ignore: ['**/nope/**'],
-        checks: { 'path/missing': 'off' },
         staleThreshold: 30,
       }),
     })
     const result = await audit(root)
     expect(result.config.ignore).toEqual(['**/nope/**'])
-    // `checks` is parsed but does nothing yet: path/missing is still on.
+    expect(result.config.staleThreshold).toBe(30)
     expect(result.checks).toEqual(['path/missing'])
   })
 })

@@ -33,22 +33,22 @@ function assertNotYetImplemented(args: CliArgs): void {
   for (const [key, flag] of UNIMPLEMENTED_BOOLEANS) {
     if (args[key]) throw notYetImplemented(flag)
   }
-  if (!args.tier2) throw notYetImplemented('--no-tier2')
   if (args.format !== 'pretty') throw notYetImplemented(`--format ${args.format}`)
-  if (args.only !== undefined) throw notYetImplemented('--only')
-  if (args.skip !== undefined) throw notYetImplemented('--skip')
 }
 
 /**
- * `--config <path>` and `--no-config` are one optional field downstream, and
- * `exactOptionalPropertyTypes` means an absent config cannot be spelled as an
- * explicit `undefined`.
+ * `--config`/`--no-config` and `--only`/`--skip` are optional fields
+ * downstream, and `exactOptionalPropertyTypes` means an absent one cannot be
+ * spelled as an explicit `undefined`.
  */
 function runOptionsFor(args: CliArgs, cwd: string): RunOptions {
   return {
     cwd,
     paths: args.paths,
+    tier2: args.tier2,
     ...(args.config === undefined ? {} : { config: args.config }),
+    ...(args.only === undefined ? {} : { only: args.only }),
+    ...(args.skip === undefined ? {} : { skip: args.skip }),
   }
 }
 

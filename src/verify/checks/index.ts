@@ -7,5 +7,3 @@ import { pathMissing } from './path-missing.ts'
  * entry here.
  */
 export const CHECKS: readonly Check[] = [pathMissing]
-
-export const CHECK_IDS: readonly string[] = CHECKS.map((check) => check.id)
