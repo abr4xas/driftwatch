@@ -6,6 +6,7 @@ import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
 import { extractFrontmatterClaims } from './extract/frontmatter.ts'
 import { extractLinkClaims } from './extract/links.ts'
 import { extractPathClaims } from './extract/paths.ts'
+import { extractSkillClaims } from './extract/skill.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
@@ -71,6 +72,7 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
       ...extractPathClaims(context),
       ...extractLinkClaims(context),
       ...extractFrontmatterClaims(context),
+      ...extractSkillClaims(context),
     )
     ignores.set(source, parseIgnores(doc, table))
   }

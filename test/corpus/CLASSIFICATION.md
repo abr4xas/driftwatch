@@ -621,3 +621,46 @@ Neither the addition nor the reversal was made, and the reason is condition 9. T
 ### The class this check cannot have
 
 `frontmatter/invalid` has no suggestion and nothing `fixable`, by construction — quoting somebody's value is an edit for M3 to decide on with this evidence in hand. Condition 2 is therefore met the way condition 2 is best met: there is nothing for it to be wrong about.
+
+---
+
+## Eleventh round, 2026-09-10: `skill/frontmatter` reads 30 real skills and agrees with all of them
+
+The third check added since M1 closed, and the one with the largest new surface: five rules over every `SKILL.md` in the corpus.
+
+**Not one snapshot changed.** 49 repos, 177 sources, 16 findings, identical to the tenth round. Every condition holds where it was — corpus 47 of 49 = 95.9%, validation 19 of 19 = 100%, `fixable: 0`.
+
+That last number matters more than usual this time. `skill/frontmatter` carries **the first `fixable` finding the project can produce** (a `name` corrected to its directory, SPEC § 8), and `corpus-bookkeeping.test.ts` asserts `fixable: 0` across the corpus. The assertion survived because the rule never fired, not because it cannot.
+
+### The quiet, measured
+
+| | |
+|---|---|
+| `skill` sources discovered | **31** |
+| Blocks claimed by the check | **30** |
+| The 31st | `colinhacks/zod`'s unparseable block — `frontmatter/invalid`'s finding, and this check stays silent on it |
+| `name` fields read | **30** |
+| Of those, matching their directory | **30** |
+| `description` fields read | **30** |
+| Shortest description | **70 characters** |
+| Median description | **151 characters** |
+| Other top-level keys read | **14**, in 8 distinct names |
+| Findings | **0** |
+
+Two things are worth reading off that table rather than out of the zero.
+
+**The division with `frontmatter/invalid` is visible in it.** 31 skill sources, 30 blocks claimed: the one that is missing is precisely the one whose YAML does not parse, and it produces exactly one finding, from the other check. That is the rule ticket `06` wrote down, working on a real file rather than on a fixture.
+
+**The description-length rule has a 50-character margin.** The shortest real description in the corpus is 70 characters against a floor of 20. It is the rule least likely to ever fire on a maintained repository, and also the only one of the five that is an *opinion* — the other four are arithmetic over two strings, this one is a judgement about what makes a skill discoverable, inherited from SPEC § 3. Worth knowing that it is not what the check earns its keep with.
+
+### The corpus cannot adjudicate the unknown-key narrowing
+
+All 14 non-required keys are on the known list: `disable-model-invocation` (3), `license` (3), `metadata` (3), `allowed-tools` (2), `argument-hint` (2), `user-invocable` (1). So there is no near-miss in the corpus, and **the wide rule and the narrow one both produce zero here**.
+
+[ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md) is therefore a shape argument, like ADR-0010 before it, and it says so: a key added to the format after our list was written is a new word rather than a typo of an old one, so a stale list can only cost detections. The corpus neither confirms nor denies it. What the corpus does say is that the list, written from the documented format before these repos were read, covers every key 30 real skills use.
+
+### What was not done, again
+
+Round ten recorded that `disable-model-invocation` and `license` appear on real skills while `frontmatter/invalid`'s type table only types the first for `command`. That is still true and still unacted on, for the same reason: the files are `alpinejs/alpine`'s among others, which is in the validation group.
+
+The known-key list of *this* check does include both — because it was written from the documented format, before the measurement, not from it. That ordering is the whole difference between a measurement and a mirror, and it is worth stating plainly in the one round where the two lists overlap.

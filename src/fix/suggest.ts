@@ -80,12 +80,12 @@ export function suggestPath(index: RepoIndex, rel: string): Suggestion | undefin
 }
 
 /** Two edits is the whole budget: past that the "suggestion" is a new word. */
-const MAX_ANCHOR_DISTANCE = 2
+const MAX_SUGGESTION_DISTANCE = 2
 
 /** Levenshtein, over two keys that are short by construction. */
 export function editDistance(a: string, b: string): number {
   if (a === b) return 0
-  if (Math.abs(a.length - b.length) > MAX_ANCHOR_DISTANCE) return MAX_ANCHOR_DISTANCE + 1
+  if (Math.abs(a.length - b.length) > MAX_SUGGESTION_DISTANCE) return MAX_SUGGESTION_DISTANCE + 1
 
   let previous = Array.from({ length: b.length + 1 }, (_, i) => i)
   for (let i = 1; i <= a.length; i += 1) {
@@ -100,7 +100,23 @@ export function editDistance(a: string, b: string): number {
     }
     previous = current
   }
-  return previous[b.length] ?? MAX_ANCHOR_DISTANCE + 1
+  return previous[b.length] ?? MAX_SUGGESTION_DISTANCE + 1
+}
+
+/**
+ * The one candidate within the edit budget, or `undefined` when there are none
+ * or several.
+ *
+ * "Two candidates is no candidate" is the rule both callers below need: saying
+ * "did you mean one of these three" is how a reader learns to skim past the
+ * suggestion column, and naming the wrong one of them is worse than saying
+ * nothing.
+ */
+function nearestUnique(candidates: readonly string[], to: string): string | undefined {
+  const near = candidates.filter(
+    (candidate) => editDistance(to, candidate) <= MAX_SUGGESTION_DISTANCE,
+  )
+  return near.length === 1 ? near[0] : undefined
 }
 
 /**
@@ -115,13 +131,26 @@ export function editDistance(a: string, b: string): number {
  * this check does not claim.
  */
 export function suggestAnchor(anchors: DocumentAnchors, key: string): Suggestion | undefined {
-  const near = [...anchors]
-    .map(([candidate, display]) => ({ display, distance: editDistance(key, candidate) }))
-    .filter((scored) => scored.distance <= MAX_ANCHOR_DISTANCE)
-
-  // Two plausible targets is no target. Saying "did you mean one of these
-  // three" is how a reader learns to skim past the suggestion column.
-  const only = near.length === 1 ? near[0] : undefined
+  const only = nearestUnique([...anchors.keys()], key)
   if (only === undefined) return undefined
-  return { value: `#${only.display}`, confidence: 0.6, fixable: false }
+  // The suggestion carries the readable heading, never the key: an anchor that
+  // reads `thefixflag` helps nobody.
+  return { value: `#${anchors.get(only) ?? only}`, confidence: 0.6, fixable: false }
+}
+
+/**
+ * The known key an unknown one is a near-miss of.
+ *
+ * This is what narrows `skill/frontmatter`'s unknown-key rule from "not on our
+ * list" to "a misspelling of something on our list" ([ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md)):
+ * the key set is not ours, Claude Code adds fields between releases, and a list
+ * one release behind would report a valid `SKILL.md`. A field added later is
+ * not two edits from an older one, so the divergence can only cost a detection.
+ */
+export function suggestKey(known: readonly string[], key: string): Suggestion | undefined {
+  const only = nearestUnique(known, key)
+  if (only === undefined) return undefined
+  // Never fixable: it is a plausible correction, not the only one, and
+  // rewriting somebody's key means deciding what they meant.
+  return { value: only, confidence: 0.6, fixable: false }
 }

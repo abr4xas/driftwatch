@@ -140,7 +140,7 @@ describe('extractFrontmatterClaims', () => {
     const [start, end] = claims[0]?.offset ?? [0, 0]
     expect(content.slice(start, end)).toBe('name: [unclosed')
     expect(frontmatterFactOf(claims[0]!)).toEqual({
-      problem: 'parse',
+      subject: 'parse',
       reason: 'Flow sequence in block collection must be sufficiently indented and end with a ]',
     })
   })
@@ -161,10 +161,15 @@ describe('extractFrontmatterClaims', () => {
     }
   })
 
-  it('an empty value asserts no type', () => {
-    expect(claimsOf(block('name: deploy', 'description:')).map((claim) => claim.text)).toEqual([
-      'name',
-    ])
+  it('an empty value is still claimed, because another check reads it', () => {
+    const claims = claimsOf(block('name: deploy', 'description:'))
+    expect(claims.map((claim) => claim.text)).toEqual(['name', 'description'])
+    expect(frontmatterFactOf(claims[1]!)).toEqual({
+      subject: 'key',
+      key: 'description',
+      type: 'empty',
+      scalar: undefined,
+    })
   })
 
   it('one claim per top-level key, pointing at the key', () => {
@@ -174,7 +179,7 @@ describe('extractFrontmatterClaims', () => {
     expect(claims.map((claim) => claim.range.line)).toEqual([2, 3])
     expect(claims.every((claim) => claim.kind === 'frontmatter')).toBe(true)
     expect(frontmatterFactOf(claims[1]!)).toEqual({
-      problem: 'type',
+      subject: 'key',
       key: 'tools',
       type: 'list',
       scalar: undefined,
@@ -184,7 +189,7 @@ describe('extractFrontmatterClaims', () => {
   it('the string value travels with the fact, which is what keeps a `yes` a boolean', () => {
     const claims = claimsOf(block('alwaysApply: yes'), 'cursor-rule')
     expect(frontmatterFactOf(claims[0]!)).toEqual({
-      problem: 'type',
+      subject: 'key',
       key: 'alwaysApply',
       type: 'string',
       scalar: 'yes',

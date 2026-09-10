@@ -8,13 +8,20 @@
  * type it observed, so nothing here has to know what a `SKILL.md` is.
  */
 import type { Claim } from '../core/types.ts'
-import { FRONTMATTER_TYPES, type FrontmatterField } from '../parse/frontmatter.ts'
+import { FRONTMATTER_TYPES, type Frontmatter, type FrontmatterField } from '../parse/frontmatter.ts'
 import { rangeFor } from '../parse/positions.ts'
 import type { ExtractContext } from './paths.ts'
 
-/** What a frontmatter claim asserts. It travels in `Claim.meta`. */
+/**
+ * What a frontmatter claim asserts. It travels in `Claim.meta`.
+ *
+ * `subject` and not `problem`: a key claim is emitted for **every** top-level
+ * key, and most of them turn out to be fine. What the claim carries is what it
+ * is about, and whether that is a problem is the check's answer, not the
+ * extractor's.
+ */
 export type FrontmatterFact =
-  { problem: 'parse'; reason: string } | ({ problem: 'type' } & FrontmatterField)
+  { subject: 'parse'; reason: string } | ({ subject: 'key' } & FrontmatterField)
 
 /**
  * The block is only claimed when its first non-blank line is key-shaped.
@@ -64,21 +71,53 @@ function firstMeaningfulLine(raw: string): string {
   return ''
 }
 
-export function extractFrontmatterClaims({ source, frontmatter, table }: ExtractContext): Claim[] {
-  if (frontmatter === undefined) return []
-  if (!KEY_SHAPED.test(firstMeaningfulLine(frontmatter.raw))) return []
-  if (PLACEHOLDER.test(frontmatter.raw)) return []
+/**
+ * The block a check may reason about, or `undefined` when a gate refuses it.
+ *
+ * Exported because `extract/skill.ts` asks the same question about the same
+ * bytes, and a second copy of these two rules drifting from the first is
+ * exactly what this tool exists to find.
+ */
+export function claimableFrontmatter(
+  frontmatter: Frontmatter | undefined,
+): Frontmatter | undefined {
+  if (frontmatter === undefined) return undefined
+  if (!KEY_SHAPED.test(firstMeaningfulLine(frontmatter.raw))) return undefined
+  if (PLACEHOLDER.test(frontmatter.raw)) return undefined
+  return frontmatter
+}
 
-  const claim = (text: string, offset: [number, number], meta: FrontmatterFact): Claim => ({
+/**
+ * A claim about a frontmatter block, positioned by a byte range in the source.
+ *
+ * Shared with `extract/skill.ts`, which claims the same kind about the same
+ * bytes: `text` is always the fragment `offset` covers, and every caller gets
+ * that for free rather than restating it.
+ */
+export function frontmatterClaim(
+  { source, table }: Pick<ExtractContext, 'source' | 'table'>,
+  offset: [number, number],
+  meta: Record<string, unknown>,
+): Claim {
+  const raw = source.content.slice(offset[0], offset[1])
+  return {
     kind: 'frontmatter',
     source,
-    text,
-    raw: source.content.slice(offset[0], offset[1]),
+    text: raw.trim(),
+    raw,
     range: rangeFor(table, offset[0], offset[1]),
     offset,
     context: 'frontmatter',
     meta,
-  })
+  }
+}
+
+export function extractFrontmatterClaims(context: ExtractContext): Claim[] {
+  const frontmatter = claimableFrontmatter(context.frontmatter)
+  if (frontmatter === undefined) return []
+
+  const claim = (offset: [number, number], meta: FrontmatterFact): Claim =>
+    frontmatterClaim(context, offset, meta)
 
   const { error } = frontmatter
   if (error !== undefined) {
@@ -90,28 +129,14 @@ export function extractFrontmatterClaims({ source, frontmatter, table }: Extract
      * `Claim.offset` covers (`core/types.ts`). The column is given up; the
      * reporter does not print one, and nothing here is ever `fixable`.
      */
-    const offset = lineSpanAt(source.content, error.offset[0])
-    return [
-      claim(source.content.slice(offset[0], offset[1]).trim(), offset, {
-        problem: 'parse',
-        reason: error.reason,
-      }),
-    ]
+    const offset = lineSpanAt(context.source.content, error.offset[0])
+    return [claim(offset, { subject: 'parse', reason: error.reason })]
   }
 
-  return (
-    frontmatter.keys
-      // A key written with nothing after it asserts no type. "Missing" is
-      // `skill/frontmatter`'s finding, and claiming it here would double it.
-      .filter((key) => key.type !== 'empty')
-      .map((key) =>
-        claim(key.key, key.offset, {
-          problem: 'type',
-          key: key.key,
-          type: key.type,
-          scalar: key.scalar,
-        }),
-      )
+  // Every top-level key, `empty` ones included: `skill/frontmatter` reads
+  // these same claims and an empty `description:` is one of its rules.
+  return frontmatter.keys.map((key) =>
+    claim(key.offset, { subject: 'key', key: key.key, type: key.type, scalar: key.scalar }),
   )
 }
 
@@ -130,13 +155,13 @@ function isFrontmatterType(value: unknown): value is FrontmatterField['type'] {
 export function frontmatterFactOf(claim: Claim): FrontmatterFact | undefined {
   const meta = claim.meta
   if (meta === undefined) return undefined
-  if (meta.problem === 'parse') {
-    return typeof meta.reason === 'string' ? { problem: 'parse', reason: meta.reason } : undefined
+  if (meta.subject === 'parse') {
+    return typeof meta.reason === 'string' ? { subject: 'parse', reason: meta.reason } : undefined
   }
-  if (meta.problem !== 'type') return undefined
+  if (meta.subject !== 'key') return undefined
   if (typeof meta.key !== 'string' || !isFrontmatterType(meta.type)) return undefined
   return {
-    problem: 'type',
+    subject: 'key',
     key: meta.key,
     type: meta.type,
     scalar: typeof meta.scalar === 'string' ? meta.scalar : undefined,

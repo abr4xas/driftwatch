@@ -93,7 +93,7 @@ export const frontmatterInvalid: Check = {
     const fact = frontmatterFactOf(claim)
     if (fact === undefined) return null
 
-    if (fact.problem === 'parse') {
+    if (fact.subject === 'parse') {
       return {
         check: frontmatterInvalid.id,
         severity: frontmatterInvalid.defaultSeverity,
@@ -104,6 +104,13 @@ export const frontmatterInvalid: Check = {
         message: `invalid YAML: ${fact.reason}`,
       }
     }
+
+    /**
+     * A key written with nothing after it asserts no type, so there is no
+     * type to be wrong. "Missing" and "empty" are `skill/frontmatter`'s
+     * rules, and reporting them here would double them.
+     */
+    if (fact.type === 'empty') return null
 
     const accepted = SCHEMAS[claim.source.kind]?.[fact.key]
     if (accepted === undefined) return null

@@ -255,7 +255,7 @@ It only applies when the correction is **unambiguous**: there is exactly one can
 Autofixable:
 - `path/missing` with a single candidate by basename.
 - `script/missing` with a single script at edit distance ≤ 2.
-- `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's).
+- `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's). Withheld when the directory name is not itself kebab-case: applying it would trade the finding for the kebab-case one, and a fix whose output is a finding is not a fix.
 - `link/broken` with a single candidate target.
 
 Never autofixable: any tier 2 check, and any case with more than one candidate.

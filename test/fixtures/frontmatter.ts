@@ -110,9 +110,22 @@ export const frontmatter: Fixture = {
       '',
     ].join('\n'),
 
-    // An empty value asserts no type. "Missing" is `skill/frontmatter`'s
-    // finding, and claiming it here would double it.
-    '.claude/skills/empty/SKILL.md': ['---', 'name: empty', 'description:', '---', ''].join('\n'),
+    /**
+     * An empty value asserts no type. "Missing" and "empty" are
+     * `skill/frontmatter`'s rules, and reporting them here would double them.
+     *
+     * The empty key is `license` and not `description` on purpose: an empty
+     * `description` is a real `skill/frontmatter` finding, and this fixture is
+     * about the other check.
+     */
+    '.claude/skills/empty/SKILL.md': [
+      '---',
+      'name: empty',
+      'description: A description long enough to say something',
+      'license:',
+      '---',
+      '',
+    ].join('\n'),
 
     // No format defines a frontmatter for a nested CLAUDE.md, so the type of
     // whatever is in one is not ours to judge.

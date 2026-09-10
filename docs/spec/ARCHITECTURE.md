@@ -50,6 +50,7 @@ src/
     deps.ts            dependency Claim[]
     symbols.ts         symbol Claim[]
     links.ts           link Claim[]
+    skill.ts           the claim a SKILL.md makes by having a frontmatter block
     frontmatter.ts     frontmatter Claim[] (the block parses, the fields are typed)
   verify/
     repo-index.ts      in-memory repo index (the heart)
@@ -212,6 +213,24 @@ The extractor stays schema-free: it emits one claim per top-level key carrying t
 
 ---
 
+## Skill frontmatter
+
+`skill/frontmatter` reads a `SKILL.md`'s frontmatter as a **structure**, and only that: a field whose *type* is wrong is `frontmatter/invalid`'s finding, and a `description` that is a list has no length to be too short. A block that does not parse therefore produces one finding rather than six.
+
+Four of the five rules read the claims `extract/frontmatter.ts` already emits — one per top-level key, positioned at the key token. The fifth thing needed is the block itself, because "there is no `name`" is not a fact about any key; `extract/skill.ts` claims it at the opening `---`, and claims the first line of the file when there is no block at all.
+
+`Check.run` returns one finding per claim, which turns out to shape the output for the better rather than constrain it:
+
+- A block missing both required fields says so on **one** line.
+- A `name` that disagrees with its directory is reported as the disagreement, not also as its own spelling. The directory finding carries the fix, and complaining about the case of a name that is about to be replaced wholesale is noise. The kebab-case rule therefore fires when the name **agrees** with the directory and both are wrong — the shape where the two really do have to change together.
+
+Two decisions constrain the rest:
+
+- **The one autofix in the project so far.** SPEC § 8 lists a `name` corrected to its directory, and it is unambiguous by construction: there is one directory, and it is the identity Claude Code invokes. The fix is withheld when the directory is not itself kebab-case, because applying it would trade this finding for the next one.
+- **An unknown key is only reported as a near-miss** of a known one, never as "not on our list". [ADR-0011](../adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md) has the argument: the key set belongs to Claude Code, a list that falls one release behind would report a valid document, and a field added later is not two edits from an older one.
+
+---
+
 ## Stack
 
 | Decision | Choice | Why |
@@ -258,7 +277,9 @@ It is the only way to measure false positives in practice.
 How it is run, what a snapshot claims and why the commits are pinned is in [test/corpus/README.md](../../test/corpus/README.md). It is a **local** gate, not a CI job, and the reason is in [ADR-0007](../adr/0007-the-corpus-does-not-run-in-ci.md): CI can detect that a snapshot changed but cannot rule on whether the change is an improvement.
 
 ### 3. Unit
-Only for the path extractor and the suggestion scoring. The rest is covered by fixtures.
+For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, and the guards that read a claim's `meta` back out. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
+
+The line is not "small enough to unit-test", it is **"wrong in a way a fixture would not localise"**. Three of these earned their place by catching something a fixture would only have reported as a missing finding somewhere: the symlink comparison in discovery, the canonical key's handling of duplicate headings, and a parse-error offset landing on a newline.
 
 ---
 
