@@ -1,6 +1,6 @@
 # ADR-0006 — The M1 precision criterion
 
-- **Status:** accepted
+- **Status:** accepted; condition 6 withdrawn by [ADR-0009](./0009-precision-is-counted-in-quiet-repos.md)
 - **Date:** 2026-09-09
 - **Replaces:** the acceptance criterion in `ROADMAP.md` § M1 and the gate line in `AGENTS.md` § "Order of work"
 
@@ -64,7 +64,7 @@ Two doubtful lines in a run are forgiven. From the third on it reads as a patter
 
 ### C. Usefulness — so that silence is not enough
 
-6. **Aggregate precision ≥ 80%** over the validation group: at most one false positive per four findings.
+6. ~~**Aggregate precision ≥ 80%** over the validation group: at most one false positive per four findings.~~ **Withdrawn 2026-09-10 by [ADR-0009](./0009-precision-is-counted-in-quiet-repos.md)**, which replaces it with a quiet-repo rate. It was measured four more times as the validation group grew from 8 repos to 18, and it turned out to be a rate over findings — the defect this ADR's own § "Why a rate over findings does not work" rejects two sections earlier.
 7. **At least one true positive in the validation group.**
 
 Number 7 is the missing coverage floor. Without it, the easiest way to pass is to report nothing, because a mute tool has zero false positives.

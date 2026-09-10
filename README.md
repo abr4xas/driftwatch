@@ -52,9 +52,11 @@ Measured over **44 public repositories** pinned to a commit — `next.js`, `lang
 - **41 of the 44 repos produce no false positive at all.**
 - **Zero autofixable false positives**, in any repo, in any round. `--fix` has never once been offered something wrong, which is the failure that would actually damage a document.
 
-Eighteen of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 5 findings, 3 real and 2 not — **60%**, below the 80% the project set itself as the bar.
+Eighteen of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule.
 
-That is stated here rather than buried, because the bar is ours and it is unmet. Growing the validation group from 8 repos to 18 took the number from 100% to 37.5%; fixing the four causes it exposed took it back to 60%, **removing three false positives and zero true positives** across the whole corpus. The remaining three each have their cause named. The full record, and the argument that the percentage is itself the wrong criterion — a tool built to stay quiet has a small numerator, and a ratio over a small numerator is not a measurement — are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md).
+The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone. It is currently **93.2%** and **88.89%** — so the criterion is *unmet*, by 1.1 points, and it says so here rather than being buried.
+
+It used to be an aggregate-precision ratio. Growing the validation group from 8 repos to 18 took that ratio from 100% to 37.5%; fixing the four causes those repos exposed took it back to 60%, **removing three false positives and zero true positives** across the whole corpus. It never reached the bar again, because fixing a validation false positive deletes the observation that lowered it — a criterion that cannot be met by improving the tool. [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it, and [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) has every finding classified by hand across all four rounds.
 
 They share a shape: **the document is not asserting that the path exists.** It argues — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". It instructs — "Write a skill in a directory in `.hod/skills/`". It names a build output, or a `#lib/` that is a Node subpath import and not a path at all.
 

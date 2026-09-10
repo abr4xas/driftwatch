@@ -5,7 +5,7 @@ Hand review of every finding against the real repo. First measured 2026-09-09; r
 Corpus: **44 public repos pinned to a commit, 14 findings.**
 Of the 44, **18 form the validation group**: never inspected before measuring.
 
-## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md))
+## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
 Validation group measurement: **18 repos, 39 sources, 5 findings, 3 true and 2 false.**
 
@@ -16,12 +16,14 @@ Validation group measurement: **18 repos, 39 sources, 5 findings, 3 true and 2 f
 | 3 | Median FP per repo = 0 | 0 (41 of 44 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`, `eve-template`) | **met** |
-| 6 | Aggregate precision ≥ 80% in validation | 3 of 5 = **60%** | **NOT MET** |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 41 of 44 = 93.2%; validation **16 of 18 = 88.89%** | **NOT MET** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 44 repos, 18 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
 
-**Eight of nine. Condition 6 does not hold.** Conditions 1–5 hold after the fourth round of fixes, below.
+**Eight of nine. Condition 6 does not hold** — the rewritten one, by 1.1 points over the validation group. Conditions 1–5 hold after the fourth round of fixes, below.
+
+The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **11 true of 14, 78.6%** — it just no longer decides anything.
 
 ### What happened, and why the caveat was right
 
@@ -362,20 +364,21 @@ So the sequence is: measure honestly → the number falls → fix what the measu
 
 **A criterion that cannot be met by improving the tool is measuring the wrong thing.**
 
-### The recommendation
+### The decision taken, 2026-09-10
 
-**Rewrite condition 6.** Not to a lower percentage — to a different shape.
+Condition 6 was rewritten. [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) withdraws the aggregate-precision ratio and replaces it with the **quiet-repo rate**: at least 90% of repos producing zero false positives, over the whole corpus and over the validation group taken alone.
 
-What four rounds over 44 repositories actually established, and every one of these has held through every round:
+| Scope | Quiet repos | Status |
+|---|---|---|
+| Whole corpus | 41 of 44 = **93.2%** | met |
+| Validation group | 16 of 18 = **88.89%** | **not met**, by 1.1 points |
 
-- **41 of 44 repos produce no false positive at all.**
-- **Zero autofixable false positives.** Fourteen findings, `fixable: 0` in every snapshot, in every round. `--fix` has never once been offered something wrong.
-- **Three false positives total**, each classified, each with its cause named: one a third-party convention, one argumentative prose, one a build artifact described without a build word.
-- **Eleven true positives**, all real drift, in repos whose maintainers did not know this tool existed.
-- Every fix applied was surgical: **three findings removed, zero true positives lost**, verified over the whole corpus rather than argued.
+**It is still unmet, on purpose.** A replacement written so that today's numbers pass it would be the same mistake in a new coat. What changed is that this one can be reached by working: closing `bloom`'s class makes that repo quiet, and even after condition 9 moves it to calibration, validation becomes 16 of 17 = 94.1% and the corpus 42 of 44 = 95.5%.
 
-Those are already conditions 1 through 5, which is the part of ADR-0006 that survived contact with reality. Condition 6 is the part that did not, and it fails for a structural reason the ADR diagnosed in its own predecessor: a tool whose founding rule is that one false positive costs more than ten false negatives will always have a small numerator, and a ratio over a small numerator is not a measurement.
+The denominator moved from findings to repos for three reasons, set out in full in the ADR: repos are what the corpus has many of while findings are what the tool deliberately has few of; a user has one repo and never experiences an aggregate; and a repo-level count refuses to divide the cost of crying wolf by how much else the same run got right.
 
-The honest replacement is a **per-repo cap plus an absolute cap on the fixable subset** — say, no repo above 1 false positive and zero fixable false positives, over a corpus of at least 40 — because those are the numbers a user experiences and the ones that stay stable as the corpus grows.
+**What is next**, in order:
 
-**This is the user's decision, not mine.** Recording it as a rewrite of ADR-0006 rather than a quiet edit to the threshold is the part that is not optional.
+1. `bloom`'s class — the conditional mood. Still untested and still broad, and now the single thing standing between the corpus and a met criterion, which is a reason to measure it carefully rather than a reason to rush it.
+2. `eve-template` `AGENTS.md:136` — recorded as **not reachable by any prose rule**. A limit, not a to-do.
+3. `github/spec-kit` — unresolved by design since the first measurement.

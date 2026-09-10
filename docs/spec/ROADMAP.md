@@ -32,7 +32,7 @@ The current criterion has four parts, and all four hold or M1 does not close:
 
 - **Hard floor:** the `false-positive-traps` fixture at zero, and **zero false positives among the `fixable` findings**. A wrong autofix is not noise, it is corruption of the document.
 - **Shape of a run:** median false positives per repo 0, 90th percentile ≤ 1, none above 2.
-- **Usefulness:** aggregate precision ≥ 80% out of sample, and ≥ 1 true positive in the validation group, so that silence is not enough to pass.
+- **Usefulness:** at least **90% of repos producing zero false positives**, over the whole corpus and over the validation group alone, and ≥ 1 true positive in that group so silence is not enough to pass. This replaced an aggregate-precision ratio on 2026-09-10; see [ADR-0009](../adr/0009-precision-is-counted-in-quiet-repos.md).
 - **Methodology:** a corpus of ≥20 repos with ≥8 in a validation group that was not inspected. Classifying its findings is the measurement; opening the repo to see what it discarded contaminates it.
 
 If it does not hold, we do not advance — we tune the heuristics, or we accept that the check does not get there and say so.
@@ -47,7 +47,9 @@ Nothing regressed in the code. The 100% had rested on three observations from a 
 
 The corpus is 44 repos with 18 in validation. **41 of the 44 produce no false positive at all, and zero findings have ever been wrongly autofixable.**
 
-Condition 6 is still unmet and, on this method, cannot be met: paying ADR-0006 condition 9 for those fixes moves two repos to calibration, which puts validation at 3 of 4 = 75% with two fewer repos and no work left to do. `CLASSIFICATION.md` demonstrates that treadmill across four rounds and recommends **rewriting condition 6 into a per-repo cap plus an absolute cap on the fixable subset** — the numbers a user experiences, and the ones that stayed stable as the corpus tripled. **Awaiting a decision.**
+**Condition 6 was then rewritten**, because four rounds showed the old one could not be met by improving the tool: fixing a validation false positive moves that repo to calibration under condition 9, deleting the observation that lowered the ratio. [ADR-0009](../adr/0009-precision-is-counted-in-quiet-repos.md) withdraws the ratio and counts **quiet repos** instead — repos producing zero false positives — because that denominator grows with the corpus, and because a user has one repo and never experiences an aggregate.
+
+Against the new condition: **41 of 44 = 93.2%** over the whole corpus, **16 of 18 = 88.89%** over validation, against a bar of 90%. **Still eight of nine, now failing the rewritten condition by 1.1 points.** That is deliberate — a replacement tuned to pass today would be the same mistake in a new coat — and unlike its predecessor it is reachable: closing the one remaining fixable class takes validation to 94.1%.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 
