@@ -36,6 +36,7 @@ src/
     discover.ts        finds sources, respects .gitignore
     config.ts          loads and validates config, merges with defaults
     ignores.ts         parses <!-- driftwatch-ignore --> directives
+    check-id.ts        how a check id is matched by --only, --skip and the ignores
   parse/
     markdown.ts        mdast + positions, extracts inline code / links / code fences
     positions.ts       absolute offset -> 1-indexed line and column

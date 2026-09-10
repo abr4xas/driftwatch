@@ -27,6 +27,13 @@ export type ParsedDoc = {
   inlineCode: readonly Span[]
   fences: readonly FenceSpan[]
   links: readonly LinkSpan[]
+  /**
+   * Raw HTML, which in a Markdown context means comments. It is where the
+   * ignore directives live. Taking them from mdast rather than from the text
+   * is what keeps a directive shown inside a code fence an example: the fence
+   * parses as `code`, never as `html`.
+   */
+  html: readonly Span[]
 }
 
 /** Whether a url points outside the repo. */
@@ -61,6 +68,7 @@ export function parseMarkdown(content: string): ParsedDoc {
   const inlineCode: Span[] = []
   const fences: FenceSpan[] = []
   const links: LinkSpan[] = []
+  const html: Span[] = []
   /** inlineCode ranges that are the label of an external link. */
   const externalLabels: Array<[number, number]> = []
 
@@ -84,6 +92,11 @@ export function parseMarkdown(content: string): ParsedDoc {
         // used instead.
         offset: offsetOfValue(content, start, end, node.value) ?? [start, end],
       })
+      return
+    }
+
+    if (node.type === 'html') {
+      html.push({ value: node.value, offset: [start, end] })
       return
     }
 
@@ -121,5 +134,6 @@ export function parseMarkdown(content: string): ParsedDoc {
     inlineCode: inlineCode.filter((span) => !isExternalLabel(span.offset)),
     fences,
     links,
+    html,
   }
 }

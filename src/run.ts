@@ -1,6 +1,7 @@
 import { loadConfig, type Config } from './core/config.ts'
 import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
+import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
 import type { Claim, Finding, Source } from './core/types.ts'
 import { extractPathClaims } from './extract/paths.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
@@ -44,11 +45,44 @@ export type RunResult = {
   durationMs: number
 }
 
-function claimsFor(source: Source, origin: string | undefined): Claim[] {
-  const doc = parseMarkdown(source.content)
-  const frontmatter = parseFrontmatter(source.content)
-  const table = buildLineTable(source.content)
-  return extractPathClaims({ source, doc, frontmatter, table, origin })
+/** What the sources contribute to the run: their claims and what they silence. */
+type Analysis = {
+  claims: readonly Claim[]
+  ignores: ReadonlyMap<Source, IgnoreIndex>
+}
+
+/**
+ * One parse per source feeds both the extractor and the ignore directives.
+ * They come from the same mdast tree, so parsing twice would be the only cost
+ * of keeping them apart.
+ */
+function analyze(sources: readonly Source[], origin: string | undefined): Analysis {
+  const claims: Claim[] = []
+  const ignores = new Map<Source, IgnoreIndex>()
+  for (const source of sources) {
+    const doc = parseMarkdown(source.content)
+    const frontmatter = parseFrontmatter(source.content)
+    const table = buildLineTable(source.content)
+    claims.push(...extractPathClaims({ source, doc, frontmatter, table, origin }))
+    ignores.set(source, parseIgnores(doc, table))
+  }
+  return { claims, ignores }
+}
+
+/**
+ * Ignores are applied to **findings**, not to claims: a directive naming a
+ * check can only be honoured once the check that fired is known, and doing it
+ * here keeps every check ignorant of the mechanism.
+ */
+function applyIgnores(
+  findings: readonly Finding[],
+  ignores: ReadonlyMap<Source, IgnoreIndex>,
+): Finding[] {
+  return findings.filter((finding) => {
+    const index = ignores.get(finding.claim.source)
+    if (index === undefined) return true
+    return !isIgnored(index, finding.check, finding.claim.range.line)
+  })
 }
 
 function verify(claims: readonly Claim[], checks: readonly Check[], ctx: CheckContext): Finding[] {
@@ -135,8 +169,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     ...(config.sources === undefined ? {} : { sources: config.sources }),
   })
 
-  const origin = await originSlug(root)
-  const claims = sources.flatMap((source) => claimsFor(source, origin))
+  const { claims, ignores } = analyze(sources, await originSlug(root))
 
   // git is asked about every candidate path in one go, before running the
   // checks: a path git ignores cannot be claimed to be missing.
@@ -145,7 +178,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     ignoredByGit: await gitIgnoredPaths(root, candidatePaths(claims)),
   }
 
-  const findings = sortFindings(verify(claims, checks, ctx))
+  const findings = sortFindings(applyIgnores(verify(claims, checks, ctx), ignores))
 
   return {
     root,

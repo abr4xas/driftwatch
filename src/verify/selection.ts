@@ -3,6 +3,7 @@
  * key). Nothing here can produce a finding; what it can do is leave the tool
  * with nothing to verify, which is why the empty selection is an error.
  */
+import { matchesCheckId } from '../core/check-id.ts'
 import type { CheckSeverity } from '../core/config.ts'
 import { UserError } from '../core/errors.ts'
 import type { Check } from './check.ts'
@@ -19,15 +20,6 @@ export type CheckSelection = {
 }
 
 /**
- * A selector matches an id exactly, or as a **namespace prefix**: `path`
- * matches `path/missing`. Deliberately not an arbitrary string prefix, so
- * `--only pat` matches nothing and gets told so.
- */
-function matches(selector: string, id: string): boolean {
-  return id === selector || id.startsWith(`${selector}/`)
-}
-
-/**
  * A selector that matches nothing is a user error, not a silent no-op. Same
  * rule `matchConfiguredSources` applies to a glob in `sources`: a typo that
  * quietly narrows an audit is worse than a red run.
@@ -39,7 +31,7 @@ function assertKnown(
 ): void {
   if (selectors === undefined) return
   for (const selector of selectors) {
-    if (checks.some((check) => matches(selector, check.id))) continue
+    if (checks.some((check) => matchesCheckId(selector, check.id))) continue
     throw new UserError(
       `${flag}: unknown check '${selector}'`,
       `the known checks are ${checks.map((check) => check.id).join(', ')}`,
@@ -48,7 +40,7 @@ function assertKnown(
 }
 
 function selected(selectors: readonly string[], id: string): boolean {
-  return selectors.some((selector) => matches(selector, id))
+  return selectors.some((selector) => matchesCheckId(selector, id))
 }
 
 export function selectChecks(
