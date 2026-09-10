@@ -529,3 +529,45 @@ The denominator moved from findings to repos for three reasons, set out in full 
 1. **Two replacement validation repos**, owed for `course-video-manager` and `emdash`. The profile that produces findings: context files of 10 KB or more, ideally several sources per repo. The group is at 18 repos but only 3 findings, which is thin again — replacing them matters more for condition 7 than for condition 6.
 2. Bring ADR-0006's wording of condition 9 in line with what is actually applied — classifying a finding is free, deriving a rule from it is not — as set out above.
 3. Keep adding repos. Eight rounds have shown that the number moves when the corpus grows, and that is the only way this measurement stays honest. It has been wrong twice by being too small, and round eight showed the corpus catching a regression that no amount of reading the diff would have.
+
+---
+
+## Ninth round, 2026-09-10: `link/broken` lands and moves nothing
+
+The first check added since M1 closed. `AGENTS.md` § Verification and `.scratch/m2-other-tier-1-checks/spec.md` § "The obligation nobody should skip" both say the same thing: new finding surface over 49 repositories, so the nine conditions get re-checked aggregate rather than inherited.
+
+**Not one snapshot changed.** 49 repos, 177 sources, 15 findings, identical to the eighth round. Every condition therefore holds exactly where it was — corpus 47 of 49 = 95.9%, validation 19 of 19 = 100%, zero fixable.
+
+### That zero had to be shown not to be vacuous
+
+A check that never runs also changes no snapshot, so the number that matters is not the findings, it is the claims. Measured directly over the corpus:
+
+| | |
+|---|---|
+| Link claims extracted from discovered sources | **112** |
+| Of those, same-file anchors (`#section`) | 110 |
+| Anchors actually resolved against a parsed document | **110** |
+| Targets skipped because the file is not in the index (`path/missing`'s) | 2 |
+| Findings | **0** |
+
+So the check read 110 anchors written by other people and agreed with all of them. That is a real quiet, not an absent one.
+
+### What the corpus does not say
+
+**It contains no true positive for this check**, and therefore no out-of-sample evidence that it detects anything. What fires it is the `anchors` fixture and a scratch repo, both of which we wrote. ADR-0006 condition 7 requires at least one true positive in the validation group and the corpus still meets it — on `path/missing`'s findings, not on this one's.
+
+The honest reading is that `link/broken` is proven **quiet** and unproven **useful**, and that the two need different evidence.
+
+### Why there was so little to find
+
+Across all 377 context files in the 49 clones there are 183 links carrying a fragment, and they break down almost entirely the wrong way for this check:
+
+- **148 are same-file** (`](#section)`), overwhelmingly tables of contents, and a TOC is usually generated from the headings it points at.
+- **27 are external**, which the check refuses by construction.
+- **6 are cross-file relative Markdown** — `CONTRIBUTING.md#contribution-policy` and four others — and all six resolve.
+
+Cross-file anchors between agent context files are simply rare today. That is a fact about the material, not a defect in the check, and it is the reason the second invocation over this repo's own `docs/` (`driftwatch.docs.config.ts`) is currently vacuous too: not one document here writes a `](...#...)` link either.
+
+### What would change the reading
+
+A validation repo whose context files cross-reference each other by anchor. That is a narrower profile than the one condition 9 already owes two replacements for, and it is worth combining: a repo with several large sources **that link to each other** would serve both.

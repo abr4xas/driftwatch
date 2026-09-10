@@ -41,6 +41,7 @@ src/
     markdown.ts        mdast + positions, extracts inline code / links / code fences
     positions.ts       absolute offset -> 1-indexed line and column
     frontmatter.ts     YAML of the leading block
+    anchors.ts         the anchors a document offers, keyed for matching
   extract/
     paths.ts           path Claim[]
     discard.ts         the discard rules of the path extractor
@@ -54,6 +55,7 @@ src/
     check.ts           the shape of a check and its context
     resolve.ts         a claim's text -> path relative to the root
     generated.ts       directories whose contents are generated, not versioned
+    anchor-index.ts    the anchors of the files some link points into
     manifest.ts        reads package.json / Makefile / pyproject / go.mod / Cargo
     git.ts             per-file churn, a source's last commit
     checks/
@@ -177,6 +179,19 @@ If it fails, generate a suggestion: look up `basename` in `index.byBasename`. Co
 
 ---
 
+## Anchor resolution
+
+`link/broken` answers one question: does `#the-fix-flag` name a heading in the target document? The rendered id comes from GitHub's slug algorithm, and reproducing it — or depending on `github-slugger` — makes every divergence in a generated character class a reported finding on a link that works.
+
+So both sides are reduced to a **canonical key** instead: lowercase, then drop everything that is not a letter or a number. It is strictly more permissive than the slug, so the divergence can cost a detection and cannot produce a report. [ADR-0010](../adr/0010-anchors-match-on-a-canonical-key.md) has the argument and what it gives up.
+
+Two consequences shape the code:
+
+- **The check never claims a target that does not exist.** `path/missing` already extracts the path half of every link and already suggests a candidate for it, so one broken link produces one finding. `link/broken` requires the target to be in the index before it says anything.
+- **`Check.run` stays synchronous.** The target files a link points into are read once per run into `verify/anchor-index.ts`, before verification, the way `ignoredByGit` already is. A check that reads from disk on the hot path is how the budget in SPEC § 9 dies. Only files some claim actually targets are read; this is not an index of the repo.
+
+---
+
 ## Stack
 
 | Decision | Choice | Why |
@@ -210,6 +225,7 @@ Minimum scenarios:
 - `broken-paths` — broken paths with and without a suggestion
 - `monorepo` — nested CLAUDE.md files, relative resolution, multiple package.json
 - `skills` — valid and invalid frontmatter
+- `anchors` — `link/broken`, resolving and broken, plus the targets it must never claim
 - `false-positive-traps` — the most important one: URLs, globs, placeholders, versions, `node.js`, paths in example blocks, quoted text. **Expected: zero findings.**
 - `ignores` — inline directives working
 - `no-git` — repo with no `.git`, glob fallback

@@ -1,4 +1,5 @@
 import type { Fixture } from '../helpers/fixture.ts'
+import { anchors } from './anchors.ts'
 import { brokenPaths } from './broken-paths.ts'
 import { configuredSources } from './configured-sources.ts'
 import { falsePositiveTraps } from './false-positive-traps.ts'
@@ -25,4 +26,5 @@ export const ALL_FIXTURES: readonly Fixture[] = [
   noGit,
   configuredSources,
   ignores,
+  anchors,
 ]

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parentSimilarity, suggestPath } from '../src/fix/suggest.ts'
+import { editDistance, parentSimilarity, suggestAnchor, suggestPath } from '../src/fix/suggest.ts'
 import { buildRepoIndex } from '../src/verify/repo-index.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
@@ -77,5 +77,55 @@ describe('suggestPath', () => {
   it('suggests for a directory, not only for a file', async () => {
     const index = await indexWith({ 'src/images/logo.png': '' })
     expect(suggestPath(index, 'public/images')).toBeUndefined()
+  })
+})
+
+describe('editDistance', () => {
+  it('counts substitutions, insertions and deletions', () => {
+    expect(editDistance('instal', 'install')).toBe(1)
+    expect(editDistance('setup', 'setup')).toBe(0)
+    expect(editDistance('nope', 'notes')).toBe(2)
+  })
+
+  it('gives up as soon as the lengths cannot meet the budget', () => {
+    // The value past the budget is never compared, only rejected, so all it
+    // has to be is "more than two".
+    expect(editDistance('a', 'abcdefgh')).toBeGreaterThan(2)
+  })
+})
+
+describe('suggestAnchor', () => {
+  const anchors = new Map([
+    ['install', 'install'],
+    ['rationale', 'rationale'],
+    ['thefixflag', 'the-fix-flag'],
+  ])
+
+  it('proposes the single anchor within two edits, with its readable form', () => {
+    expect(suggestAnchor(anchors, 'instal')).toEqual({
+      value: '#install',
+      confidence: 0.6,
+      fixable: false,
+    })
+  })
+
+  it('says nothing when nothing is close', () => {
+    expect(suggestAnchor(anchors, 'teardown')).toBeUndefined()
+  })
+
+  it('says nothing when two anchors are equally plausible', () => {
+    // Two candidates is no candidate: "did you mean one of these" is how a
+    // reader learns to skim past the suggestion column.
+    const twins = new Map([
+      ['setup', 'setup'],
+      ['setups', 'setups'],
+    ])
+    expect(suggestAnchor(twins, 'setupz')).toBeUndefined()
+  })
+
+  it('is never fixable, whatever the confidence', () => {
+    // ADR-0006's hard floor. Every case where the fix is obvious is one the
+    // canonical key already accepts and never reports.
+    expect(suggestAnchor(anchors, 'installl')?.fixable).toBe(false)
   })
 })

@@ -58,7 +58,7 @@ The route is a **second invocation** with its own config, once `link/broken` lan
 
 ```
 driftwatch                                        # sources: docs/agents/**
-driftwatch --config driftwatch.docs.ts --only link/broken
+driftwatch --config driftwatch.docs.config.ts --only link/broken
 ```
 
 Two runs rather than one, because `sources` and the check filter are both global. That is a limitation worth knowing before someone tries to express it as a single run.

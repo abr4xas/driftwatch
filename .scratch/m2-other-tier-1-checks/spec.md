@@ -16,7 +16,7 @@ The six deliverables of `docs/spec/ROADMAP.md` § M2, split into eight tickets.
 
 **Then the checks**, cheapest in new machinery first:
 
-- `05` — `link/broken`, which in practice means **anchors**. See the note below; the file half is already done.
+- `05` — `link/broken`, which in practice means **anchors**. See the note below; the file half is already done. **Done**, and it produced [ADR-0010](../../docs/adr/0010-anchors-match-on-a-canonical-key.md).
 - `06` — `frontmatter/invalid`: YAML that does not parse, or fields with the wrong type.
 - `07` — `skill/frontmatter`: the five structural rules in SPEC § 3.
 - `08` — `script/missing`: `npm run X` and friends against the nearest `package.json`, `Makefile` or `deno.json`.
@@ -51,7 +51,7 @@ This check is also what finally verifies the links inside `docs/spec/` and `docs
 
 ```
 driftwatch                                        # sources: docs/agents/**
-driftwatch --config driftwatch.docs.ts --only link/broken
+driftwatch --config driftwatch.docs.config.ts --only link/broken
 ```
 
 Which means ticket `05` depends on `03` (`--only`), not just on `04`.

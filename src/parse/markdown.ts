@@ -44,6 +44,16 @@ function isExternal(url: string): boolean {
 const processor = unified().use(remarkParse)
 
 /**
+ * The parsed tree, for the callers that want the nodes rather than the spans
+ * `ParsedDoc` collects. It is exported so there is **one** configured
+ * processor in the project: two of them would drift the day one gains a
+ * plugin.
+ */
+export function parseToTree(content: string): Root {
+  return processor.parse(content) as Root
+}
+
+/**
  * Locates `value` inside a node's raw text. It is needed because the mdast
  * position includes the syntax (the backticks of an inlineCode, the parentheses
  * of a link), and what we want to point at is the content.

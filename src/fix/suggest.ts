@@ -1,4 +1,5 @@
 import type { Suggestion } from '../core/types.ts'
+import type { DocumentAnchors } from '../verify/anchor-index.ts'
 import { candidatesFor, type RepoIndex } from '../verify/repo-index.ts'
 
 /**
@@ -76,4 +77,51 @@ export function suggestPath(index: RepoIndex, rel: string): Suggestion | undefin
     confidence,
     fixable: confidence > FIXABLE_THRESHOLD,
   }
+}
+
+/** Two edits is the whole budget: past that the "suggestion" is a new word. */
+const MAX_ANCHOR_DISTANCE = 2
+
+/** Levenshtein, over two keys that are short by construction. */
+export function editDistance(a: string, b: string): number {
+  if (a === b) return 0
+  if (Math.abs(a.length - b.length) > MAX_ANCHOR_DISTANCE) return MAX_ANCHOR_DISTANCE + 1
+
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i]
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      current[j] = Math.min(
+        (current[j - 1] ?? 0) + 1,
+        (previous[j] ?? 0) + 1,
+        (previous[j - 1] ?? 0) + cost,
+      )
+    }
+    previous = current
+  }
+  return previous[b.length] ?? MAX_ANCHOR_DISTANCE + 1
+}
+
+/**
+ * The closest anchor to one that matched nothing.
+ *
+ * **Never `fixable`, and not by omission.** ADR-0006's hard floor is zero false
+ * positives among the fixable findings, and every case where the correction is
+ * obvious — wrong case, wrong punctuation — is already accepted by the
+ * canonical key and never reported. What is left to report is a real typo, and
+ * choosing its target is a guess. `SPEC.md` § 8 lists `link/broken` as
+ * autofixable "with a single candidate target"; that is the *file* half, which
+ * this check does not claim.
+ */
+export function suggestAnchor(anchors: DocumentAnchors, key: string): Suggestion | undefined {
+  const near = [...anchors]
+    .map(([candidate, display]) => ({ display, distance: editDistance(key, candidate) }))
+    .filter((scored) => scored.distance <= MAX_ANCHOR_DISTANCE)
+
+  // Two plausible targets is no target. Saying "did you mean one of these
+  // three" is how a reader learns to skim past the suggestion column.
+  const only = near.length === 1 ? near[0] : undefined
+  if (only === undefined) return undefined
+  return { value: `#${only.display}`, confidence: 0.6, fixable: false }
 }

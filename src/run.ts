@@ -2,11 +2,13 @@ import { loadConfig, type Config } from './core/config.ts'
 import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
-import type { Claim, Finding, Source } from './core/types.ts'
+import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
+import { extractLinkClaims } from './extract/links.ts'
 import { extractPathClaims } from './extract/paths.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
+import { buildAnchorIndex } from './verify/anchor-index.ts'
 import type { Check, CheckContext } from './verify/check.ts'
 import { CHECKS } from './verify/checks/index.ts'
 import { selectChecks } from './verify/selection.ts'
@@ -63,7 +65,8 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
     const doc = parseMarkdown(source.content)
     const frontmatter = parseFrontmatter(source.content)
     const table = buildLineTable(source.content)
-    claims.push(...extractPathClaims({ source, doc, frontmatter, table, origin }))
+    const context = { source, doc, frontmatter, table, origin }
+    claims.push(...extractPathClaims(context), ...extractLinkClaims(context))
     ignores.set(source, parseIgnores(doc, table))
   }
   return { claims, ignores }
@@ -124,6 +127,11 @@ function candidatePaths(claims: readonly Claim[]): string[] {
   return [...paths]
 }
 
+/** Whether any enabled check reads claims of this kind. */
+function consumes(checks: readonly Check[], kind: ClaimKind): boolean {
+  return checks.some((check) => check.claimKinds.includes(kind))
+}
+
 /** Stable order: by file, and within the file by position. */
 function sortFindings(findings: Finding[]): Finding[] {
   return findings.toSorted((a, b) => {
@@ -176,6 +184,10 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const ctx: CheckContext = {
     index,
     ignoredByGit: await gitIgnoredPaths(root, candidatePaths(claims)),
+    // Reading the target files is real I/O, so it is skipped entirely when no
+    // enabled check consumes a link claim (`--only path`, or the config
+    // turning `link/broken` off).
+    anchors: consumes(checks, 'link') ? await buildAnchorIndex(root, claims) : new Map(),
   }
 
   const findings = sortFindings(applyIgnores(verify(claims, checks, ctx), ignores))

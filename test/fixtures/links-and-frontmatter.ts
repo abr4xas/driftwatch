@@ -55,5 +55,17 @@ export const linksAndFrontmatter: Fixture = {
       // `deploy.md` is not a candidate because the search starts from the
       // basename, not from resemblance.
     },
+    {
+      // Broken since this fixture was written, and nothing reported it until
+      // `link/broken` existed: `guides/deploy.md` holds one heading, `# guide`.
+      // No suggestion, because `guide` is four edits away from `steps`.
+      check: 'link/broken',
+      severity: 'error',
+      file: '.claude/skills/deploy/SKILL.md',
+      line: 16,
+      column: 42,
+      text: './guides/deploy.md#steps',
+      message: 'anchor does not exist',
+    },
   ],
 }

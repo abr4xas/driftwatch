@@ -1,10 +1,13 @@
 import type { Claim, ClaimKind, Finding, Severity } from '../core/types.ts'
+import type { AnchorIndex } from './anchor-index.ts'
 import type { RepoIndex } from './repo-index.ts'
 
 export type CheckContext = {
   index: RepoIndex
   /** Paths git ignores. See `gitIgnoredPaths`. */
   ignoredByGit: ReadonlySet<string>
+  /** The anchors offered by the files some link points into. */
+  anchors: AnchorIndex
 }
 
 /**
