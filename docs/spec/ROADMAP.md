@@ -108,7 +108,7 @@ What turns a tool that works into a project someone adopts.
 - `--json`, `--github`, `--sarif` formats
 - Published GitHub Action (`driftwatch/action@v1`)
 - One-page static site with the demo and the GIF
-- Published to npm with provenance (`npm publish --provenance`)
+- Published to npm with provenance (`npm publish --provenance`) — **a state, not a schedule.** § "Suggested release order" puts the first publish at M2's close, and `.github/workflows/release.yml` already publishes with provenance, so M4 inherits this rather than waiting for it. What M4 adds is the audience, not the package.
 - MIT license (done: `LICENSE`)
 
 **Acceptance:** someone who has never seen the project understands what it does in under 15 seconds, looking only at the README.
@@ -144,6 +144,8 @@ What turns a tool that works into a project someone adopts.
 ## Suggested release order
 
 Do not wait for M6 to show the project. Visible cadence is part of what makes someone trust the tool.
+
+**This section decides the timing, and the milestone lists do not.** M3 to M6 are inventories of what has to be true, in the order the work makes sense; the numbering is not a release calendar. Where a milestone lists something this section has already scheduled — npm, in M4 — the milestone inherits it.
 
 1. Publish to npm when **M2** closes — it is already useful. **Prepared 2026-09-10, not published.** The package is out of `private` at `0.1.0`, the tarball is 14 files and 54 kB (`pnpm pack:check` fails the build if anything outside `dist/` ever enters it), and `.github/workflows/release.yml` runs the whole gate on a `v*` tag, publishes with `--provenance`, and generates the release notes from the commits since the previous tag. What is left is not code: an `NPM_TOKEN` secret, pushing the branch so CI runs, and pushing the tag — all three are the owner's to do.
 2. Launch post with the GIF when **M4** closes.
