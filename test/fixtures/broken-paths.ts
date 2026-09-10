@@ -15,8 +15,14 @@ export const brokenPaths: Fixture = {
       '', // 8
       'The assets are in `public/images/`.', // 9
       '',
+      // 11: this repo *does* use Cursor, so a path under `.cursor/` is a claim
+      // and a missing one is drift. It is the counterpart of the suppression in
+      // `false-positive-traps`: the rule is gated on the root being absent.
+      'The Cursor rules are in `.cursor/rules/gone.mdc`.',
+      '',
     ].join('\n'),
     'src/index.ts': 'export const x = 1\n',
+    '.cursor/rules/present.mdc': '# a rule\n',
   },
   expected: [
     {
@@ -46,6 +52,16 @@ export const brokenPaths: Fixture = {
       column: 20,
       text: 'public/images/',
       message: 'path does not exist',
+    },
+    {
+      check: 'path/missing',
+      severity: 'error',
+      file: 'CLAUDE.md',
+      line: 11,
+      column: 26,
+      text: '.cursor/rules/gone.mdc',
+      message: 'path does not exist',
+      // No suggestion: nothing in the repo is called `gone.mdc`.
     },
   ],
 }

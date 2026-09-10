@@ -2,30 +2,35 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **62 public repos pinned to a commit, 42 findings.**
-Of the 62, **31 form the validation group**. The two replacements owed for `mattpocock/course-video-manager` and `emdash-cms/emdash` are paid by the thirteen repos added in the thirteenth round.
+Corpus: **64 public repos pinned to a commit, 38 findings.**
+Of the 64, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **31 repos, 82 sources, 28 findings, 7 true and 21 false.**
+Validation group measurement: **32 repos, 65 sources, 16 findings, 4 true and 12 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | 3 fixable, **2 of them false** (`KZ-IT-telegram-list`) | **BROKEN** |
-| 3 | Median FP per repo = 0 | 0 (57 of 62 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 14 |
+| 3 | Median FP per repo = 0 | 0 (58 of 64 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | **16** (`KZ-IT-telegram-list`), 4 (`aptos-ts-sdk`) | **BROKEN** |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 57 of 62 = **91.9%**; validation **28 of 31 = 90.3%** | **met** |
-| 7 | ≥ 1 true positive in validation | 7 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 62 repos, 31 in validation | **met** |
+| 5 | No repo above 2 FP | **9** (`KZ-IT-telegram-list`), 4 (`aptos-ts-sdk`) | **BROKEN** |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 58 of 64 = **90.6%**; validation **28 of 32 = 87.5%** | **BROKEN** over validation |
+| 7 | ≥ 1 true positive in validation | 4 | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 64 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **3**, of which **2 are false**.
+Fixable findings: **1**, of which **0 are false**.
 
-**Seven of nine conditions are met. Conditions 2 and 5 are broken**, and condition 6 — the one M2 promised to re-measure — is now measured on 28 validation findings instead of 3, and passes at 90.3%.
+**Seven of nine conditions are met. Conditions 5 and 6 are broken**, the second one over the validation group only.
 
-The thirteenth round below is the measurement and the hand classification of all 25 new findings. It is the first round in which the corpus was extended **for the purpose of measuring**, rather than to close a class, and the first in which a condition broke on a `fixable` finding.
+Two rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together:
+
+- The **thirteenth** added thirteen validation repos to give condition 6 the finding mass M2 had promised it. It got the mass, and conditions 2 and 5 broke.
+- The **fourteenth** closed the class that broke condition 2 — another agent tool's configuration root — which repaired it and also silenced a false positive that had been open in `github/spec-kit` since the first round. The replacement repos it brought in then broke condition 6 over validation.
+
+That sequence is the treadmill this document named in round three, running in public: closing a class costs the repo that revealed it, the replacement arrives with its own noise, and the percentage moves for reasons that have nothing to do with the code getting better or worse.
 
 That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **18**, and the two conditions that decide precision rest on **49 and 18 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
@@ -825,3 +830,67 @@ Twenty-one false positives, three root causes, and **no rule was changed in this
 - **Aggregate precision is 19 true of 42 = 45.2%**, and over validation alone **7 of 28 = 25%**. [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) withdrew that ratio as a criterion precisely because one document can carry sixteen findings from two root causes, and this round is the clearest illustration the corpus has produced: one repo of 62 holds 16 of the 23 false positives. It is reported and it decides nothing.
 - **The quiet repos are the real result.** Seven of thirteen new repos, in seven languages the corpus had barely seen, produced nothing at all. That is what condition 6 is designed to count.
 - **Two conditions broke, and both broke on documents nobody wrote for us.** That is the corpus working. `fixable: 0` across the corpus was never a property of the rules, only of what the corpus happened to contain — ticket 07 said so when it shipped the first autofix, and ticket 08 repeated it. It is no longer true.
+
+---
+
+## Fourteenth round, 2026-09-10: another tool's directory is not our repo's
+
+Condition 2 broke in the thirteenth round on two autofixable false positives, and it is the one condition with no rate modulating it: a `--fix` that rewrites a document to point at the wrong file makes the next agent act on a lie with confidence. So it was the class to close first.
+
+### The rule
+
+`verify/foreign-tools.ts`: **a path inside an agent tool's configuration root, in a repo that does not have that root, is a statement about the tool and not about the repo.**
+
+The gate is the whole rule. A repo that has `.cursor/` uses Cursor, so a path under it either exists or is real drift and is reported exactly as before. A repo with no `.cursor/` anywhere does not use Cursor, and a mention of `.cursor/rules/tfw.mdc` is documentation.
+
+The list is somebody else's vocabulary — `.claude`, `.agent`, `.cursor`, `.windsurf`, `.aider`, `.continue`, `.cline`, `.roo`, `.kilocode`, `.gemini`, `.codex`, `.opencode`, `.junie`, `.trae`, `.qodo`, `.amazonq`, `.augment`, `.crush`, `.goose`, `.zed` — which [ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md) argues a tool should not be holding. The direction is what makes this one safe: the list can only make driftwatch **quieter**. An assistant nobody has added keeps producing findings; one added next year costs a detection. Falling behind is free, and being wrong is not available.
+
+`.claude` is on the list too, which is the entry worth arguing about. It is ours, and the gate is what decides: a repo with no `.claude/` directory at all is being audited through its `CLAUDE.md` alone, and a `CLAUDE.md` saying "skills live in `.claude/skills/`" there is saying where they *would* go. What it costs is a repo that deleted its whole `.claude/` and still describes the contents.
+
+### What it moved
+
+**Seven of the eight class-2 findings in `KZ-IT-telegram-list`, including both autofixable ones.** The repo goes from 16 findings to 9 and from 2 fixable to 0, so **condition 2 is repaired**: the one fixable finding left in the corpus is `fireSeqSearch`'s, and it is true.
+
+**And one finding in `github/spec-kit`, which is a calibration repo the rule was not derived from.** `AGENTS.md:464` claimed `.goose/recipes/`; the repo does not use Goose. That finding had been open since the first round and this document had it recorded as "a third-party convention kept by design" — the class was known and thought unfixable. The list was written from the tools' own vocabulary before the corpus was consulted, and `.goose` was on it because Goose is an agent, not because of `spec-kit`. A rule that closes a false positive in a repo it never saw is the only evidence available that a class is general rather than fitted.
+
+The eighth class-2 finding survives: `.tfw/adapters/antigravity/rules/` is the *framework's own* directory in that one repo, and adding `.tfw` to a list of published assistants would be fitting the rule to a single document.
+
+### The bill: one validation repo, and two replacements that are not quiet
+
+The rule was derived from `KZ-IT-telegram-list`'s findings, so ADR-0006 condition 9 moves it to **calibration**. It leaves with nine false positives still open, so unlike rounds eight and nine this one does not leave clean.
+
+Two replacements were added on the same metadata-only basis as the thirteen before them, and **both arrived with two false positives**:
+
+- **`raphaelmansuy/edgecrab`** `AGENTS.md:508`, `gateway/run.rs`. The document names modules as `wire/sse.rs`, `backend/provider.rs`, `backend/adapter.rs` — and those are **real directory suffixes** (`crates/edgecrab-proxy/src/wire/sse.rs`), which is why the suffix rule from round eight passes them. `gateway/run.rs` is the same convention applied to a *crate* nickname: the file is `crates/edgecrab-gateway/src/run.rs` and there is no `gateway/` directory. False, and a harder class than the one already closed — the shorthand is a name for a crate, not a suffix of a path.
+- **`raphaelmansuy/edgecrab`** `AGENTS.md:614`, `adapters/base.py` in the cell "`UpstreamAdapter` trait (Hermes `adapters/base.py`)". A Python file in a Rust repo, belonging to a project named in the same cell. `namesAnotherRepo` recognises another repository when it is a `github.com` URL and not when it is a bare product name.
+- **`garagon/aguara`** `CLAUDE.md:156` and `:161`, `product/vX.Y.Z/_index.md` and `product/vX.Y.Z/status-YYYY-MM-DD.md`. Version and date metavariables, in two lines that ask you to *create* the file. `discard.ts` refuses `NNNN` and `XXXX` as whole segments; `vX.Y.Z` and `status-YYYY-MM-DD.md` are the same convention inside one.
+
+That third item is the same class as `aptos-ts-sdk`'s `upgrade-guides/UPGRADE_GUIDE_X.Y.Z.md` from the thirteenth round: **three findings, two repos, one root cause**, and both repos are validation.
+
+### Where the conditions stand, and the treadmill in plain sight
+
+**64 repos · 230 sources · 38 findings — 19 true, 19 false.**
+
+| | Round 13 | Round 14 |
+|---|---|---|
+| Condition 2 (no false autofix) | **broken**, 2 of 3 | **met**, 0 of 1 |
+| Condition 5 (no repo above 2 FP) | broken, max 16 | broken, max 9 |
+| Condition 6, whole corpus | 91.9% | 90.6% |
+| Condition 6, validation | 90.3% | **87.5%, broken** |
+
+Condition 6 did not break because the tool got worse. It broke because the repo carrying nine false positives moved to calibration, where it no longer counts against validation, and the two repos that replaced it brought four between them. Round three named this treadmill; this is the first round where it is visible in a single table.
+
+The honest reading is the one ADR-0009 already argued for: **the percentage of quiet repos is the right measurement and it is noisy at this sample size**, one repo in thirty-two being worth 3.1%. What is not noisy is the ledger of open classes.
+
+### The four open classes, and what each one costs
+
+| Class | Findings | Repos | Cost of closing it |
+|---|---|---|---|
+| An index placeholder (`research/iterN/`) | 8 | `KZ-IT` (calibration) | **Free.** The repo is already burnt. |
+| A version or date metavariable in a segment (`vX.Y.Z`, `status-YYYY-MM-DD.md`, `UPGRADE_GUIDE_X.Y.Z.md`) | 3 | `aguara`, `aptos-ts-sdk` (both validation) | Two validation repos, two replacements |
+| A dependency protocol specifier (`link:../..`) | 3 | `aptos-ts-sdk` (validation) | One validation repo (shared with the above) |
+| A crate nickname, a foreign project's file, a generated bundle | 3 | `edgecrab`, `zotero` (validation) | Two validation repos, and no rule shape proposed yet |
+
+Condition 5 needs the first two classes closed (`KZ-IT` to 1, `aptos-ts-sdk` to 3 — still above 2, so it needs the third as well). Condition 6 over validation needs any **one** validation repo silenced: closing the metavariable class alone takes `aguara` to zero and the group to 29 of 32 = 90.6%.
+
+None of that was done in this round. The rule that repaired condition 2 was the one worth its price; the rest is a decision about how much of the corpus to burn, and it is recorded here rather than taken quietly.

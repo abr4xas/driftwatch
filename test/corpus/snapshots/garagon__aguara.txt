@@ -1,0 +1,14 @@
+# garagon/aguara
+
+sources: 2
+errors: 2
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+CLAUDE.md:156:90  [path/missing] inline-code  product/vX.Y.Z/_index.md
+CLAUDE.md:161:30  [path/missing] inline-code  product/vX.Y.Z/status-YYYY-MM-DD.md

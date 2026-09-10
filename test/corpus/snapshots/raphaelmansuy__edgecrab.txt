@@ -1,0 +1,13 @@
+# raphaelmansuy/edgecrab
+
+sources: 1
+errors: 2
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+
+## findings
+AGENTS.md:508:41  [path/missing] inline-code  gateway/run.rs  -> crates/edgecrab-gateway/src/run.rs (0.6)
+AGENTS.md:614:59  [path/missing] inline-code  adapters/base.py

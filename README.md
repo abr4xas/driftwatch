@@ -51,16 +51,16 @@ Concretely, it does **not** report:
 
 ## How well it works
 
-Measured over **62 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable` and others, in nine languages — running over the context files their authors wrote without knowing driftwatch exists.
+Measured over **64 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable` and others, in nine languages — running over the context files their authors wrote without knowing driftwatch exists.
 
-**42 findings: 19 true, 23 false.** The ratio is the least useful number here, and one repository is why: a single document contributes 16 of the 23 false positives, from two root causes. So two other numbers are the ones the project holds itself to:
+**38 findings: 19 true, 19 false.** The ratio is the least useful number here, and one repository is why: a single document contributes 9 of the 19 false positives, from one root cause. So these are the numbers the project holds itself to:
 
-- **57 of the 62 repos produce no false positive at all** — 91.9%. Over the validation group alone, 90.3%.
-- **Three findings are autofixable, and two of them are wrong.** That is a broken bar, not a passing one, and it is written down as broken: [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) § "Criterion status" names the two and the class they come from.
+- **58 of the 64 repos produce no false positive at all** — 90.6%. Over the validation group alone, 87.5%.
+- **One finding is autofixable, and it is correct.** `--fix` has been offered something wrong exactly once, in the round that added thirteen repositories at once; the class that caused it is closed and the two findings are gone.
 
-Thirty-one of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
+Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
 
-The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone, with **no single repo above 2** and **no autofixable false positive at all**. The first holds at 91.9% and 90.3%. The other two do not, as of the thirteenth round: one repo sits at 16, and two of the three autofixes are wrong.
+The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone, with **no single repo above 2** and **no autofixable false positive at all**. The first holds at 90.6% over the corpus and **fails at 87.5% over validation**; the second fails, at 9; the third holds. [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) classifies every finding by hand and keeps a ledger of the four open false-positive classes with what closing each one would cost.
 
 They are reported that way on purpose. A tool that publishes only the bars it clears is a tool whose numbers mean nothing.
 

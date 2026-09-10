@@ -1,9 +1,9 @@
 # saubakirov/KZ-IT-telegram-list
 
 sources: 20
-errors: 16
+errors: 9
 warnings: 0
-fixable: 2
+fixable: 0
 
 ## sources
 command  .claude/commands/kz-add.md
@@ -28,12 +28,7 @@ command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/su
 command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.claude/commands/kz-stats.md
 
 ## findings
-.claude/commands/tfw-config.md:105:71  [path/missing] inline-code  .agent/workflows/
-.claude/commands/tfw-config.md:123:36  [path/missing] inline-code  .agent/workflows/tfw-task.md  -> .claude/commands/tfw-task.md (1, fixable)
-.claude/commands/tfw-init.md:140:41  [path/missing] inline-code  .cursor/rules/tfw.mdc
 .claude/commands/tfw-init.md:141:25  [path/missing] inline-code  .tfw/adapters/antigravity/rules/
-.claude/commands/tfw-init.md:141:62  [path/missing] inline-code  .agent/rules/
-.claude/commands/tfw-init.md:184:19  [path/missing] inline-code  .agent/workflows/tfw-plan.md  -> .claude/commands/tfw-plan.md (1, fixable)
 .claude/commands/tfw-plan.md:97:11  [path/missing] inline-code  research/iterN/RES.md  -> .tfw/templates/RES.md (0.3)
 .claude/commands/tfw-research.md:19:13  [path/missing] inline-code  research/iterN/
 .claude/commands/tfw-research.md:21:48  [path/missing] inline-code  research/iterN/RES.md  -> .tfw/templates/RES.md (0.3)
@@ -42,5 +37,3 @@ command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/su
 .claude/commands/tfw-research.md:44:60  [path/missing] inline-code  research/iterN-1/RES.md  -> .tfw/templates/RES.md (0.3)
 .claude/commands/tfw-research.md:51:47  [path/missing] inline-code  research/iterN/
 .claude/commands/tfw-research.md:65:61  [path/missing] inline-code  research/iterN/
-.claude/commands/tfw-update.md:123:55  [path/missing] inline-code  .agent/rules/
-.claude/commands/tfw-update.md:125:39  [path/missing] inline-code  .cursor/rules/

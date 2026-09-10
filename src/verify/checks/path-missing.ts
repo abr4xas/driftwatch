@@ -1,5 +1,6 @@
 import { suggestPath } from '../../fix/suggest.ts'
 import type { Check, CheckContext } from '../check.ts'
+import { belongsToAbsentTool } from '../foreign-tools.ts'
 import { passesThroughGenerated } from '../generated.ts'
 import { hasDir, hasFile, someEntryEndsWith } from '../repo-index.ts'
 import { resolveInRepo } from '../resolve.ts'
@@ -48,6 +49,18 @@ export const pathMissing: Check = {
     if (local === undefined || local === '') return null
     if (pointsOutsideRepo(ctx, claim.text, local)) return null
 
+    /**
+     * The path as the document writes it, from the root. Two rules need it
+     * rather than the baseDir resolution: another tool's configuration root
+     * means that root wherever the document sits, and the suffix search below
+     * asks whether this sequence of segments appears anywhere.
+     */
+    const asWritten = resolveInRepo('', claim.text)
+
+    // Another assistant's directory, in a repo that does not use that
+    // assistant. See `belongsToAbsentTool`.
+    if (asWritten !== undefined && belongsToAbsentTool(ctx.index, asWritten)) return null
+
     // A generated artifact is not tracked, so from the index it is
     // indistinguishable from a nonexistent path. Let it through. The fixed
     // list is the fallback for when there is no git; `ignoredByGit` is the
@@ -90,7 +103,6 @@ export const pathMissing: Check = {
     // The suffix searched for is the **claimed text**, normalized, not the path
     // already resolved against the baseDir: the question is whether that
     // sequence of segments appears anywhere in the repo.
-    const asWritten = resolveInRepo('', claim.text)
     if (asWritten !== undefined && asWritten !== '' && someEntryEndsWith(ctx.index, asWritten)) {
       return null
     }

@@ -31,9 +31,8 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 62: 31 calibration and 31 validation. The two replacements owed
- * for `course-video-manager` and `emdash` are paid by the thirteen added in
- * the twelfth round, which is what ADR-0006 condition 8 requires.
+ * There are 64: 32 calibration and 32 validation, and no replacement is
+ * outstanding, which is what ADR-0006 condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
  * new additions are chosen small. `oven-sh/bun` and `supabase/supabase` have
@@ -275,11 +274,34 @@ export const CORPUS: readonly CorpusRepo[] = [
     sha: 'fef2539535ff71dedb30990c30fb668abdfd77b8',
     holdout: true,
   },
+  /**
+   * Twenty sources, sixteen findings, all false — the noisiest repo the corpus
+   * has ever held, and the one that broke ADR-0006 conditions 2 and 5 in the
+   * thirteenth round.
+   *
+   * Moved out of the validation group on 2026-09-10, fourteenth round: the
+   * foreign-tool rule in `verify/foreign-tools.ts` was derived from its seven
+   * `.agent/` and `.cursor/` findings, two of which were autofixable. It leaves
+   * with **nine** findings still false, not clean: the `research/iterN/`
+   * placeholder class and one `.tfw/` path are open. One replacement owed, and
+   * two were added.
+   */
   {
     repo: 'saubakirov/KZ-IT-telegram-list',
     sha: '13a88a07544e3d13617461f2aa1687df6f76125b',
+  },
+
+  /**
+   * The two added 2026-09-10, fourteenth round, replacing
+   * `KZ-IT-telegram-list` in the validation group. Same selection as the
+   * thirteen before them: metadata only, nothing read first.
+   */
+  {
+    repo: 'raphaelmansuy/edgecrab',
+    sha: 'ed3330703bc91f498062451136b89592c9ee098a',
     holdout: true,
   },
+  { repo: 'garagon/aguara', sha: 'b98d63554228dce7f6a3b578ffb5e3676115e1d4', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

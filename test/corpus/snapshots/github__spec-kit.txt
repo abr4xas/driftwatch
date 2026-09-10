@@ -1,7 +1,7 @@
 # github/spec-kit
 
 sources: 1
-errors: 1
+errors: 0
 warnings: 0
 fixable: 0
 
@@ -9,4 +9,4 @@ fixable: 0
 agents-md  AGENTS.md
 
 ## findings
-AGENTS.md:464:9  [path/missing] inline-code  .goose/recipes/
+(none)
