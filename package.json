@@ -1,9 +1,24 @@
 {
   "name": "driftwatch",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Find the parts of your CLAUDE.md, AGENTS.md and skills that are no longer true",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "claude-md",
+    "agents-md",
+    "agents",
+    "skills",
+    "cli",
+    "lint",
+    "documentation",
+    "drift",
+    "ai",
+    "codex",
+    "cursor"
+  ],
   "license": "MIT",
+  "author": "abr4xas (https://github.com/abr4xas)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/abr4xas/driftwatch.git"
@@ -11,11 +26,11 @@
   "homepage": "https://github.com/abr4xas/driftwatch#readme",
   "bugs": "https://github.com/abr4xas/driftwatch/issues",
   "type": "module",
-  "bin": {
-    "driftwatch": "./dist/cli.js"
-  },
   "exports": {
     ".": "./dist/index.js"
+  },
+  "bin": {
+    "driftwatch": "./dist/cli.js"
   },
   "files": [
     "dist"
@@ -25,12 +40,14 @@
   },
   "scripts": {
     "build": "tsdown",
+    "pack:check": "node --experimental-strip-types scripts/check-tarball.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint src test && prettier --check .",
+    "lint": "oxlint src test scripts && prettier --check .",
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "corpus": "node --experimental-strip-types scripts/corpus.ts"
+    "corpus": "node --experimental-strip-types scripts/corpus.ts",
+    "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {

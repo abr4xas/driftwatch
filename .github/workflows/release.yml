@@ -1,0 +1,91 @@
+name: Release
+
+# Pushing a tag is the authorization. Nothing here runs on a branch push, so
+# `master` moving cannot publish anything by itself.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  # Creating the GitHub Release, which is where the changelog lives.
+  contents: write
+  # npm provenance: the registry verifies that this tarball was built by this
+  # workflow from this commit, and there is no way to get that from a laptop.
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The release notes are generated from the commits since the previous
+          # tag, so the whole history and every tag has to be here. This is the
+          # one workflow that cannot use a shallow clone.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          # ADR-0002: the floor. Publishing from the floor rather than from
+          # *current* means the tarball is built by the oldest runtime the
+          # package claims to support.
+          node-version: 24
+          cache: pnpm
+          # Writes the `.npmrc` that `NODE_AUTH_TOKEN` below is read through.
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      # The same gate CI runs on every push. It is repeated rather than trusted
+      # because a tag can point at a commit CI never saw.
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: node ./dist/cli.js --help
+      - name: driftwatch on driftwatch
+        run: node ./dist/cli.js
+      - name: driftwatch on its own documentation
+        run: node ./dist/cli.js --config driftwatch.docs.config.ts
+
+      # A tag that disagrees with `package.json` publishes a version nobody
+      # asked for, and the mistake is unfixable afterwards: npm does not allow
+      # republishing a version. So it is checked before anything is sent.
+      - name: the tag matches the version in package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          declared=$(npm pkg get version | tr -d '"')
+          if [ "$tag" != "$declared" ]; then
+            echo "tag $GITHUB_REF_NAME says $tag, package.json says $declared" >&2
+            exit 1
+          fi
+          echo "publishing $declared"
+
+      # What the tarball would hold, checked rather than eyeballed. The corpus
+      # is 3.3 GB of clones and a hundred committed snapshots; a `files` field
+      # that widens by accident is the one packaging mistake that cannot be
+      # undone, because npm does not allow republishing a version.
+      - run: pnpm pack:check
+
+      # `prepublishOnly` in package.json runs the gate a second time here. That
+      # is deliberate and not worth removing: the script exists to protect a
+      # publish from somebody's laptop, which is the path with no CI in front
+      # of it, and ninety seconds of duplicated work is the cheapest insurance
+      # in this repository.
+      - name: publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # The changelog, generated rather than written. `--generate-notes` builds
+      # it from the commit subjects since the previous release, which is why the
+      # commit messages in this repo are written to be read: they are the
+      # release notes.
+      - name: create the GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -4,7 +4,7 @@
 
 **Blocked by:** nothing, but **deliberately deferred**: this is done as part of preparing the first release, not before. `docs/spec/ROADMAP.md` § "Suggested release order" puts that at the close of M2.
 
-**Status:** ready-for-human
+**Status:** done
 
 The decision is the user's, and it was postponed on purpose — the analysis below is already done so it does not have to be redone.
 
@@ -92,3 +92,29 @@ Three notes for whoever takes the decision:
 Option 1 as written above now takes the count from 17 to 10 rather than 8 to 3. The rules it silences are the three that overlap with the type system; the ten it leaves are the two `max-lines` families, which are a real signal about this codebase and are the ones worth being able to read.
 
 `pnpm lint` still does not cover `scripts/`, which is now 3 files including the corpus runner.
+
+## Comments
+
+Closed 2026-09-10, at M2's close, with **option 1**.
+
+### What was decided
+
+The three rules that overlap with the type system are off in `.oxlintrc.json`, **each with its reason written next to it** — which turned out to be possible because oxlint tolerates comments in `.oxlintrc.json` (verified on a scratch config: a rule silenced next to a `//` comment stops reporting, and oxlint does not complain about the file).
+
+- `unicorn/no-array-callback-reference`: every callback passed by reference here takes exactly one parameter, so the `parseInt` trap the rule guards cannot fire, and a second argument would be a type error.
+- `unicorn/no-object-as-default-parameter`: the partial override it fears is TS2741, a required property missing.
+- `unicorn/no-useless-undefined`: `proseGatesFor(content, undefined)` passes a *required* parameter; there is nothing useless to remove.
+
+The `max-lines` and `max-lines-per-function` families stay **visible**, which was the recommendation's point: they are the signal about this codebase worth being able to read, and four of the five long files are long because they carry the false positive each rule prevents, which `AGENTS.md` § Code conventions asks for.
+
+### `scripts/` is linted now
+
+The ticket's last line asked to include it or record why not. It is included: `pnpm lint` is `oxlint src test scripts && prettier --check .`.
+
+That surfaced three warnings in a file nobody had ever linted, and all three were worth fixing rather than silencing — a `dirname(fileURLToPath(import.meta.url))` that is `import.meta.dirname` on our floor, and two negated conditions. Fixed, and `pnpm corpus --check` is unchanged afterwards.
+
+### The count
+
+**17 → 12**, and the twelve are all `max-lines` or `max-lines-per-function`. Five silenced by decision with a reason; three fixed in `scripts/`; two of the seventeen were the new `no-useless-undefined` pair.
+
+The three long *functions* and the six long *files* are unchanged and on purpose. The defensible move for `context-prose.ts` is still the split recorded above — the marker lists into their own module — and it is still a structural decision rather than a lint fix.

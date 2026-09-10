@@ -18,11 +18,10 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { run } from '../src/run.ts'
 import { CORPUS, slugOf, type CorpusRepo } from './corpus-repos.ts'
 
-const HERE = dirname(fileURLToPath(import.meta.url))
+const HERE = import.meta.dirname
 const CORPUS_DIR = join(HERE, '..', 'test', 'corpus')
 const REPOS_DIR = join(CORPUS_DIR, 'repos')
 const SNAPSHOTS_DIR = join(CORPUS_DIR, 'snapshots')
@@ -139,11 +138,11 @@ async function main(): Promise<number> {
 
     if (check) {
       const previous = existsSync(path) ? readFileSync(path, 'utf8') : ''
-      if (previous !== snapshot) {
+      if (previous === snapshot) {
+        process.stderr.write(`ok (${n})\n`)
+      } else {
         differing += 1
         process.stderr.write('CHANGED\n')
-      } else {
-        process.stderr.write(`ok (${n})\n`)
       }
       continue
     }

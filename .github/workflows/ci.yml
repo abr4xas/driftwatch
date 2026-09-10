@@ -66,3 +66,15 @@ jobs:
       # `docs/` is not an agent context file, so discovery does not reach it.
       - name: driftwatch on driftwatch
         run: node ./dist/cli.js
+
+      # ADR-0008: `docs/spec/` and `docs/adr/` are not agent context files, so
+      # discovery does not reach them. They are audited as a second invocation
+      # with their own config, and it is blocking for the same reason the first
+      # one is: this repo's documentation is the tool's first test subject.
+      - name: driftwatch on its own documentation
+        run: node ./dist/cli.js --config driftwatch.docs.config.ts
+
+      # The published tarball must hold the build and nothing else. Checked
+      # here as well as in the release workflow, so a `files` mistake fails on
+      # the commit that makes it rather than at the tag.
+      - run: pnpm pack:check

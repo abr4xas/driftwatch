@@ -145,6 +145,6 @@ What turns a tool that works into a project someone adopts.
 
 Do not wait for M6 to show the project. Visible cadence is part of what makes someone trust the tool.
 
-1. Publish to npm when **M2** closes — it is already useful.
+1. Publish to npm when **M2** closes — it is already useful. **Prepared 2026-09-10, not published.** The package is out of `private` at `0.1.0`, the tarball is 14 files and 54 kB (`pnpm pack:check` fails the build if anything outside `dist/` ever enters it), and `.github/workflows/release.yml` runs the whole gate on a `v*` tag, publishes with `--provenance`, and generates the release notes from the commits since the previous tag. What is left is not code: an `NPM_TOKEN` secret, pushing the branch so CI runs, and pushing the tag — all three are the owner's to do.
 2. Launch post with the GIF when **M4** closes.
 3. Sustain commits over months, not a one-week sprint.

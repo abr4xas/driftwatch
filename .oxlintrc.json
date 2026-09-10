@@ -9,7 +9,31 @@
     "typescript/no-explicit-any": "error",
     "typescript/consistent-type-imports": "error",
     "no-console": "off",
-    "eslint/require-await": "off"
+    "eslint/require-await": "off",
+
+    // The three below are off because strict TypeScript already answers them,
+    // and a warning nobody can act on trains everyone to skim past the next
+    // one. Ticket 02 of the M2 batch has the full analysis; the reasons are
+    // repeated here because a silenced rule with no reason next to it is
+    // indistinguishable from an accident.
+
+    // `['1','2','3'].map(parseInt)` is the real trap: array callbacks get
+    // (element, index, array), so `parseInt` reads the index as its radix. It
+    // cannot fire here — every callback we pass by reference (`matches`,
+    // `isPlaceholderName`, `isCreateInstruction`) is declared with exactly one
+    // parameter, and a second argument would be a type error.
+    "unicorn/no-array-callback-reference": "off",
+
+    // The fear is a partial override: a default object is replaced whole, not
+    // merged, so `discardReason('x', {})` would silently drop
+    // `couldBeCommand`. It is a type error instead — TS2741, the property is
+    // required and not optional.
+    "unicorn/no-object-as-default-parameter": "off",
+
+    // `proseGatesFor(content, undefined)` passes a *required* parameter of
+    // type `string | undefined`. There is no useless `undefined` to remove;
+    // removing it does not compile.
+    "unicorn/no-useless-undefined": "off"
   },
   "ignorePatterns": ["dist", "test/corpus", "test/fixtures"],
   "overrides": [
