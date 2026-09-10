@@ -89,10 +89,32 @@ describe('corpus bookkeeping', () => {
     expect(VALIDATION.length).toBeGreaterThanOrEqual(8)
   })
 
-  // ADR-0006 condition 2. A wrong autofix is not noise, it is corruption of
-  // the document, so this one has no rate modulating it.
-  it('no finding in the whole corpus is fixable', () => {
-    expect(totalsOver(CORPUS).fixable).toBe(0)
+  /**
+   * ADR-0006 condition 2 — zero **false positives** among the fixable findings
+   * — cannot be checked here: whether a finding is false is a hand judgement
+   * and this file clones nothing (ADR-0007).
+   *
+   * What is mechanical is the count, so the count is what is pinned. It read
+   * `0` for twelve rounds because no rule had ever fired on a real repo, not
+   * because none could; the thirteenth round produced three, two of them
+   * false, and the condition is **broken** in `CLASSIFICATION.md` § "Criterion
+   * status". A change to this number means a `--fix` somebody could apply to
+   * somebody's document, which is the one thing that must never move by
+   * accident.
+   */
+  it('the fixable count is the one CLASSIFICATION.md cites', () => {
+    const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
+    const match = /Fixable findings: \*\*(\d+)\*\*, of which \*\*(\d+) (?:is|are) false\*\*/u.exec(
+      doc,
+    )
+    if (match === null) throw new Error('CLASSIFICATION.md does not cite the fixable count')
+    const [cited = 0, false_ = 0] = match.slice(1).map(Number)
+    expect(totalsOver(CORPUS).fixable).toBe(cited)
+    // The false count is read back too, so the sentence stating condition 2's
+    // verdict cannot be reworded into agreeing with itself. It is not asserted
+    // against anything: a test that goes red when the false positives get
+    // fixed is the gate ADR-0007 argues against.
+    expect(false_).toBeLessThanOrEqual(cited)
   })
 })
 

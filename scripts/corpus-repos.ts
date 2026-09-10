@@ -31,9 +31,9 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 49: 31 calibration and 18 validation, and **two replacements are
- * owed**, for `course-video-manager` and `emdash` (see their entries), which is what ADR-0006
- * condition 8 requires.
+ * There are 62: 31 calibration and 31 validation. The two replacements owed
+ * for `course-video-manager` and `emdash` are paid by the thirteen added in
+ * the twelfth round, which is what ADR-0006 condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
  * new additions are chosen small. `oven-sh/bun` and `supabase/supabase` have
@@ -213,6 +213,73 @@ export const CORPUS: readonly CorpusRepo[] = [
   },
   { repo: 'awcodes/mason', sha: '258ce9fd2a03e771bea846db3654b75f6d137e23', holdout: true },
   { repo: 'mattpocock/sandcastle', sha: 'e99f832f26dc9d245c019a9ddd19fa5dee792427', holdout: true },
+
+  /**
+   * The thirteen added 2026-09-10, twelfth round, all **validation**.
+   *
+   * M2 set itself the obligation of re-measuring ADR-0006 condition 6 once the
+   * validation group carried ~10 findings. Four new checks did not get it
+   * there: the group still holds 3, because every finding the new checks
+   * produced landed in a calibration repo. Finding mass has to come from
+   * repositories, not from checks, so these are repositories.
+   *
+   * They also settle the two replacements owed for `course-video-manager` and
+   * `emdash`.
+   *
+   * **Selected on metadata only**, before any of their content was read:
+   * public, not archived, not a fork, under ~65 MB of history, and holding
+   * more than 1.5 KB of agent context files. Nothing was inspected to guess
+   * whether a repo would produce a finding — selecting on the outcome is the
+   * one thing a validation group cannot survive.
+   *
+   * The language spread is deliberate. The corpus was TypeScript-heavy, and
+   * `path/missing` sees a different document in a Go, Rust, R, Swift, Kotlin,
+   * Zig, Java or C repository: different path shapes, different build
+   * commands, different conventions for naming a file in prose.
+   *
+   * `HorusGoul/eslint-plugin-react-render-types` was the largest candidate by
+   * context bytes (72 files, 221 KB) and was **not** taken: at that ratio to
+   * its 444 KB of history it is a skill collection rather than a repo with
+   * skills, and dozens of findings from one templated root cause would move
+   * the percentage without adding evidence.
+   */
+  { repo: '1amageek/SwiftAgent', sha: 'cdeb70357a8d8e50bfe98fdf2de61636962583a1', holdout: true },
+  { repo: 'Endle/fireSeqSearch', sha: 'ef8888bb9d0d8371621f75ae033e3e09692fd0c9', holdout: true },
+  {
+    repo: 'manusa/podman-mcp-server',
+    sha: '5fd49dbb496f74216c8c464d7c0cf84c9a9bd848',
+    holdout: true,
+  },
+  {
+    repo: 'aptos-labs/aptos-ts-sdk',
+    sha: 'da6319287572e8f62f38c73be0e2346ca7447e21',
+    holdout: true,
+  },
+  { repo: 'hughjonesd/huxtable', sha: '6dcac79c2c6132efdfde8de21408cd2f840cd11e', holdout: true },
+  { repo: 'securego/gosec', sha: '8075fd2e520d33330afe168f26fc7a91f57f2cbc', holdout: true },
+  {
+    repo: 'CrossPaste/crosspaste-desktop',
+    sha: 'b5c4b8b20476184b751f59ba9d1de851c8c57038',
+    holdout: true,
+  },
+  {
+    repo: 'northword/zotero-format-metadata',
+    sha: '2b747409e8c3df866fca327a8ad859d770694a5b',
+    holdout: true,
+  },
+  { repo: 'semos-labs/attyx', sha: '12c06ec7f8ff63a6fee3590a15dc1c9ecbfb68e9', holdout: true },
+  { repo: 'pktgen/Pktgen-DPDK', sha: 'c0f11bba974036ee6b69f0e9c734da9325033e99', holdout: true },
+  { repo: 'exoscale/cli', sha: '63ca41e1848b12fbdf879938c7900e6aaab2ab62', holdout: true },
+  {
+    repo: 'digitalpetri/opc-ua-demo-server',
+    sha: 'fef2539535ff71dedb30990c30fb668abdfd77b8',
+    holdout: true,
+  },
+  {
+    repo: 'saubakirov/KZ-IT-telegram-list',
+    sha: '13a88a07544e3d13617461f2aa1687df6f76125b',
+    holdout: true,
+  },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

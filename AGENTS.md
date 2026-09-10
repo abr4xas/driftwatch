@@ -55,7 +55,7 @@ Also, **run the tool against itself and against real repos**. This repo has its 
 
 ### The corpus is a local gate
 
-It clones ~2.7 GB and **does not run in CI** — [ADR-0007](docs/adr/0007-the-corpus-does-not-run-in-ci.md) explains why: CI can detect that a snapshot changed, but the verdict on whether the change is an improvement or a regression requires reading the diff. What runs in CI is `test/corpus-bookkeeping.test.ts`, which checks the corpus's bookkeeping and clones nothing.
+It clones ~3.3 GB and **does not run in CI** — [ADR-0007](docs/adr/0007-the-corpus-does-not-run-in-ci.md) explains why: CI can detect that a snapshot changed, but the verdict on whether the change is an improvement or a regression requires reading the diff. What runs in CI is `test/corpus-bookkeeping.test.ts`, which checks the corpus's bookkeeping and clones nothing.
 
 So it is on you to run it. Read [test/corpus/README.md](test/corpus/README.md) first, then run `pnpm corpus --check` at these four moments:
 

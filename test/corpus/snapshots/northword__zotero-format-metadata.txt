@@ -1,0 +1,12 @@
+# northword/zotero-format-metadata
+
+sources: 1
+errors: 1
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+
+## findings
+AGENTS.md:44:89  [path/missing] inline-code  content/scripts/linter.js

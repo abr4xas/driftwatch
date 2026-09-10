@@ -1,0 +1,15 @@
+# 1amageek/SwiftAgent
+
+sources: 3
+errors: 2
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+claude-md  Samples/AgentCLI/CLAUDE.md
+
+## findings
+AGENTS.md:701:34  [path/missing] link  docs/SECURITY.md  -> Docs/SECURITY.md (0.6)
+CLAUDE.md:701:34  [path/missing] link  docs/SECURITY.md  -> Docs/SECURITY.md (0.6)

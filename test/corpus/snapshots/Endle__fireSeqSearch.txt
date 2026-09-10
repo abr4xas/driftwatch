@@ -1,0 +1,17 @@
+# Endle/fireSeqSearch
+
+sources: 6
+errors: 1
+warnings: 0
+fixable: 1
+
+## sources
+subagent  .claude/agents/ask-smoke.md
+subagent  .claude/agents/fsq-smoke.md
+subagent  .claude/agents/model-compare.md
+subagent  .claude/agents/obsidian-smoke.md
+subagent  .claude/agents/strip-audit.md
+claude-md  CLAUDE.md
+
+## findings
+CLAUDE.md:145:16  [path/missing] inline-code  fire_seq_search_server/src/query_engine/semantic_query.rs  -> fire_seq_search_server/src/semantic_query.rs (1, fixable)

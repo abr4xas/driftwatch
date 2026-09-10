@@ -1,0 +1,16 @@
+# securego/gosec
+
+sources: 5
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+command  .claude/commands/create-gosec-rule.md
+command  .claude/commands/fix-gosec-bug.md
+command  .claude/commands/update-action-version.md
+command  .claude/commands/update-go-versions.md
+claude-md  CLAUDE.md
+
+## findings
+(none)

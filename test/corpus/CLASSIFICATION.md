@@ -2,26 +2,30 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **49 public repos pinned to a commit, 17 findings.**
-Of the 49, **18 form the validation group**. Two replacements are owed, for `mattpocock/course-video-manager` and `emdash-cms/emdash`; unlike the moves in round five both leave **clean**, so no number below depends on their departure.
+Corpus: **62 public repos pinned to a commit, 42 findings.**
+Of the 62, **31 form the validation group**. The two replacements owed for `mattpocock/course-video-manager` and `emdash-cms/emdash` are paid by the thirteen repos added in the thirteenth round.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **18 repos, 32 sources, 3 findings, all 3 true.**
+Validation group measurement: **31 repos, 82 sources, 28 findings, 7 true and 21 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 49 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (47 of 49 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | 3 fixable, **2 of them false** (`KZ-IT-telegram-list`) | **BROKEN** |
+| 3 | Median FP per repo = 0 | 0 (57 of 62 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `eve-template`) | **met** |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 47 of 49 = **95.9%**; validation **18 of 18 = 100%** | **met** |
-| 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 49 repos, 18 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; **two replacements owed** | **met**, debt recorded |
+| 5 | No repo above 2 FP | **16** (`KZ-IT-telegram-list`), 4 (`aptos-ts-sdk`) | **BROKEN** |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 57 of 62 = **91.9%**; validation **28 of 31 = 90.3%** | **met** |
+| 7 | ≥ 1 true positive in validation | 7 | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 62 repos, 31 in validation | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-**All nine conditions are met.**
+Fixable findings: **3**, of which **2 are false**.
+
+**Seven of nine conditions are met. Conditions 2 and 5 are broken**, and condition 6 — the one M2 promised to re-measure — is now measured on 28 validation findings instead of 3, and passes at 90.3%.
+
+The thirteenth round below is the measurement and the hand classification of all 25 new findings. It is the first round in which the corpus was extended **for the purpose of measuring**, rather than to close a class, and the first in which a condition broke on a `fixable` finding.
 
 That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **18**, and the two conditions that decide precision rest on **49 and 18 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
@@ -744,3 +748,80 @@ Rounds nine, ten and eleven cite the validation group as **19 of 19**, and the c
 So it was a miscount, not a membership change, and it is corrected above rather than left standing. It changes no verdict: every validation repo produces zero false positives, so the percentage is 100% at either denominator. The historical rounds are left as written, because rewriting a measurement after the fact is worse than recording that its denominator was off by one.
 
 Worth noting where the hole was: the test reads the header sentence and the validation measurement line out of this prose, so those cannot drift, but the criterion table is not read by anything. The number that decides condition 6 was the one nobody was checking.
+
+---
+
+## Thirteenth round, 2026-09-10: thirteen validation repos, and the measurement M2 owed
+
+M2 set itself one obligation beyond its checks: **re-measure condition 6** once the validation group carried around ten findings, "and write the result down, whatever it is". Four new checks did not get it there. Rounds nine to twelve added two findings between them and **both landed in calibration repos**, so the group stayed at the same three findings ADR-0006 had already flagged as too thin to carry a percentage.
+
+Finding mass comes from repositories, not from checks. So thirteen repositories were added, all **validation**.
+
+### How they were chosen, and why that matters here
+
+On metadata only, before a single line of their content was read: public, not archived, not a fork, under ~65 MB of history, and holding more than 1.5 KB of agent context files. GitHub code search for `AGENTS.md` and `CLAUDE.md` gave 200 candidates; 60 survived the size filter; 13 were taken.
+
+Nothing was inspected to guess whether a repo would produce a finding. That is not fastidiousness: a validation group selected on the outcome measures the selection, and the whole reason this document exists is that the calibration group's number already suffers from it.
+
+The language spread is deliberate. The corpus was TypeScript-heavy, and `path/missing` reads a different document in a **Go, Rust, R, Swift, Kotlin, Zig, Java or C** repository — different path shapes, different build commands, different habits for naming a file in prose.
+
+One candidate was refused: `HorusGoul/eslint-plugin-react-render-types` had the most context bytes of all (72 files, 221 KB against 444 KB of history), which makes it a skill collection rather than a repo with skills. Dozens of findings from one templated root cause would have moved the percentage without adding evidence.
+
+### The result
+
+**62 repos · 227 sources · 42 findings.** The validation group goes from 18 repos and 3 findings to **31 repos and 28 findings**, and the two replacements owed since round five are paid.
+
+| Repo | Findings | True | False |
+|---|---|---|---|
+| `1amageek/SwiftAgent` | 2 | 2 | 0 |
+| `Endle/fireSeqSearch` | 1 | 1 | 0 |
+| `CrossPaste/crosspaste-desktop` | 1 | 1 | 0 |
+| `aptos-labs/aptos-ts-sdk` | 4 | 0 | 4 |
+| `northword/zotero-format-metadata` | 1 | 0 | 1 |
+| `saubakirov/KZ-IT-telegram-list` | 16 | 0 | 16 |
+| `podman-mcp-server`, `huxtable`, `gosec`, `attyx`, `Pktgen-DPDK`, `exoscale/cli`, `opc-ua-demo-server` | 0 | — | — |
+
+Seven of the thirteen are silent. Four of the four true positives are the kind worth having.
+
+### The four true positives
+
+- **`SwiftAgent` `AGENTS.md:701` and `CLAUDE.md:701`** — `[docs/SECURITY.md](docs/SECURITY.md)`, and the file is `Docs/SECURITY.md`. The link works on the author's case-insensitive filesystem and 404s on GitHub. The suggestion names the right file. Two findings because the two documents are not byte-identical, so neither is an alias of the other.
+- **`fireSeqSearch` `CLAUDE.md:145`** — "Query path: `fire_seq_search_server/src/query_engine/semantic_query.rs`". There is no `query_engine/` directory; the file is `fire_seq_search_server/src/semantic_query.rs`. **The project's first `fixable` corpus finding, and it is correct**: one candidate, same basename, parent one segment off.
+- **`crosspaste-desktop` `CLAUDE.md:41`** — a list of four source directories, three of which exist. The fourth says `app/src/commonMain/sqldelight/`; `app/src/commonMain/` holds `composeResources` and `kotlin` only, and the schema lives in `shared/src/commonMain/sqldelight`. An agent told to look for schema definitions under `app/` finds nothing.
+
+### Condition 2 is broken, and by exactly the shape it was written for
+
+Three `fixable` findings in the corpus now. One is the `fireSeqSearch` one above. The other two are false:
+
+```
+.claude/commands/tfw-config.md:123  .agent/workflows/tfw-task.md  -> .claude/commands/tfw-task.md (1, fixable)
+.claude/commands/tfw-init.md:184    .agent/workflows/tfw-plan.md  -> .claude/commands/tfw-plan.md (1, fixable)
+```
+
+The source is a table row and a bullet describing **where a workflow file is copied for another agent tool**:
+
+```
+| `.claude/commands/tfw-task.md`, `.agent/workflows/tfw-task.md` | Adapter-only meta-workflow; ... |
+  - Antigravity: `.agent/workflows/tfw-plan.md`, `tfw-handoff.md`, `tfw-review.md` (+ others)
+```
+
+`.agent/workflows/` is Antigravity's directory, not this repo's. The suggestion is not merely useless, it is **actively wrong**: applying it would rewrite the Antigravity path into the Claude Code one and destroy the distinction the table exists to draw. ADR-0006 condition 2 has no rate modulating it for this exact reason, and this is the first time the corpus has produced the failure.
+
+### The three false-positive classes, unfixed
+
+Twenty-one false positives, three root causes, and **no rule was changed in this round** — deliberately. Condition 9 prices a fix against a validation repo at moving that repo to calibration plus a replacement, and the point of this round was the measurement. What to do about them is the next decision, not this one.
+
+**A. An index placeholder — 7 findings, `KZ-IT-telegram-list`.** `research/iterN/` and `research/iterN/RES.md`, where the document says outright "(N = highest folder number + 1, or 1 if none)". `discard.ts` already refuses `NNNN`, `XXXX` and `ID` as segments; `iterN` is the same convention with a prefix, and no `research/` directory exists at all.
+
+**B. Another tool's layout, and copy instructions into it — 9 findings, `KZ-IT-telegram-list`.** `.agent/rules/`, `.agent/workflows/`, `.cursor/rules/`, `.cursor/rules/tfw.mdc`, `.tfw/adapters/antigravity/rules/`. The lines are of the form "Cursor: copy `tfw.mdc.template` → `.cursor/rules/tfw.mdc`" — a target that will exist after the copy, in a directory belonging to a different agent tool. Two mechanisms in the extractor already cover halves of this (`isCreateInstruction` for what a document asks you to create, `namesAnotherRepo` for what belongs elsewhere) and neither reaches an arrow in a table row.
+
+**C. A dependency protocol specifier — 3 findings, `aptos-ts-sdk`.** `` `link:../..` `` in prose about how the examples resolve the SDK. It is npm's `link:` protocol, the same family as `file:`, `workspace:` and `portal:`, and it is not a path any more than `#lib/x` or `~/x` is — both of which `discard.ts` already refuses **as syntax classes**. The normalizer also mangles it: the trailing-punctuation trim turns `link:../..` into `link:../`, so the reported text is not even what the document says.
+
+**D. Two singletons.** `aptos-ts-sdk`'s `upgrade-guides/UPGRADE_GUIDE_X.Y.Z.md` is a version metavariable in a filename, in a sentence that asks the maintainer to *write* the file (the real ones are `UPGRADE_GUIDE_6.0.0.md` and `7.0.0`). `zotero-format-metadata`'s `content/scripts/linter.js` is an esbuild bundle, and the same sentence says so — "(from `src/index.ts` via esbuild)".
+
+### What the numbers say, read honestly
+
+- **Condition 6 is finally a measurement.** 28 validation findings, not 3. It passes: 28 of 31 validation repos are entirely silent, 90.3%, against a 90% floor. It passes *by one repo* — a fourth noisy validation repo would break it.
+- **Aggregate precision is 19 true of 42 = 45.2%**, and over validation alone **7 of 28 = 25%**. [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) withdrew that ratio as a criterion precisely because one document can carry sixteen findings from two root causes, and this round is the clearest illustration the corpus has produced: one repo of 62 holds 16 of the 23 false positives. It is reported and it decides nothing.
+- **The quiet repos are the real result.** Seven of thirteen new repos, in seven languages the corpus had barely seen, produced nothing at all. That is what condition 6 is designed to count.
+- **Two conditions broke, and both broke on documents nobody wrote for us.** That is the corpus working. `fixable: 0` across the corpus was never a property of the rules, only of what the corpus happened to contain — ticket 07 said so when it shipped the first autofix, and ticket 08 repeated it. It is no longer true.

@@ -1,0 +1,13 @@
+# digitalpetri/opc-ua-demo-server
+
+sources: 2
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+(none)

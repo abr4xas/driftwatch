@@ -1,0 +1,14 @@
+# hughjonesd/huxtable
+
+sources: 3
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+agents-md  docs/AGENTS.md
+claude-md  docs/CLAUDE.md
+
+## findings
+(none)

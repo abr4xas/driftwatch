@@ -1,0 +1,13 @@
+# semos-labs/attyx
+
+sources: 2
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+cursor-rule  .cursor/rules/clean-code.mdc
+claude-md  CLAUDE.md
+
+## findings
+(none)
