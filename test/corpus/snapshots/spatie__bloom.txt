@@ -1,0 +1,18 @@
+# spatie/bloom
+
+sources: 7
+errors: 1
+warnings: 0
+fixable: 0
+
+## sources
+skill  .claude/skills/bloom-dev-build/SKILL.md
+skill  .claude/skills/bloom-release/SKILL.md
+skill  .claude/skills/swift-concurrency-pro/SKILL.md
+skill  .claude/skills/swift-testing-pro/SKILL.md
+skill  .claude/skills/swiftui-pro/SKILL.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+CLAUDE.md:133:13  [path/missing] inline-code  Tools/xcodeproj.sh

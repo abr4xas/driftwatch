@@ -31,7 +31,7 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 34: 26 calibration and 8 validation, which is what ADR-0006
+ * There are 35: 26 calibration and 9 validation, which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -118,6 +118,14 @@ export const CORPUS: readonly CorpusRepo[] = [
   },
   { repo: 'openai/openai-python', sha: 'f348ec87b934c98889102668913e0a3ae7fc303d', holdout: true },
   { repo: 'railwayapp/cli', sha: 'dee356855b6a88ed52cb3fac42956da7a9200474', holdout: true },
+  /**
+   * Swift/macOS, a domain the rest of the corpus does not have, and seven
+   * sources of which five are skills. Added to the validation group on
+   * purpose: ADR-0006's condition 6 passed with three findings from one root
+   * cause, and what it needs is more out-of-sample mass. The group was chosen
+   * before looking at a single finding.
+   */
+  { repo: 'spatie/bloom', sha: 'ec6fc210a049a77c68e3e76e9713edd46854f9b3', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

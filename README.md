@@ -45,13 +45,15 @@ Concretely, it does **not** report:
 
 ## How well it works
 
-Measured over **34 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
+Measured over **35 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**12 findings across all 34 repos. 11 true, 1 false.** Nothing autofixable was wrong.
+**13 findings across all 35 repos. 11 true, 2 false**, so 84.6%. Nothing autofixable was wrong, in any repo, which is the number that matters most: a wrong `--fix` corrupts the document.
 
-Eight of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 3 findings, all real. The honest way to state that is *3 of 3, with 7 of the 8 repos silent* — not "100% precision", because three findings is too small a sample to carry a percentage. The full reasoning, every finding classified by hand, and the caveat are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md).
+Nine of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 4 findings, 3 real and 1 not — **75%**, which is *below* the 80% the project set itself as the bar.
 
-The gate the project had to pass before adding a second check is [ADR-0006](./docs/adr/0006-the-m1-precision-criterion.md).
+That is stated here rather than buried because the bar is ours and it is currently unmet. The whole reasoning, every finding classified by hand, and the three routes out are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md); the criterion itself is [ADR-0006](./docs/adr/0006-the-m1-precision-criterion.md).
+
+The known cause is a single class: a document that **argues**, naming a path as part of a case it is making — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…" — about a file that is not supposed to exist. Any sufficiently thoughtful context file eventually explains why the repo is *not* organised some other way. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
 
 ## What it reads
 

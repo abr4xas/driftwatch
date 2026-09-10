@@ -76,3 +76,13 @@ The confusion here is worth recording, because the reasoning error was mine. I s
 - **Reporting a new number as certified**: invalid, if it was taken over the sample that decided the fix.
 
 The validation discipline does not exist to block improvements, it exists to keep a figure from being inflated. The correct sentence was: "I fix it, and the 75% stands as the last valid measurement".
+
+### Later note, 2026-09-10: condition 6 fell when one repo was added
+
+`spatie/bloom` was added to the validation group at the user's request. It produced one finding, and hand review classified it **false**: `CLAUDE.md:133` names `Tools/xcodeproj.sh` inside a paragraph arguing *against* generating an Xcode project, so the path is a hypothetical the document introduces in order to reject.
+
+Validation precision went from 3 of 3 to **3 of 4 = 75%**, below the 80% of condition 6. **Eight of nine conditions now.** The corpus is 35 repos, 9 in validation, 13 findings, 11 true and 2 false.
+
+The caveat this ticket closed with was right, and faster than expected: it said the honest number was "3 of 3, with 7 of 8 repos silent" rather than "100% precision", and that condition 6 had to be reconfirmed once the group gained mass. One repo was enough mass.
+
+Not resolved here. The heuristic that would suppress it — the conditional mood, "would" — is untested and broad enough to risk suppressing true positives, and deriving it from a validation repo's finding costs that repo under condition 9. The three routes are at the end of `test/corpus/CLASSIFICATION.md`.

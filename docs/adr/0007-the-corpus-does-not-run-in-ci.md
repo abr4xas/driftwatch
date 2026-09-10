@@ -5,7 +5,7 @@
 
 ## Context
 
-The corpus (`scripts/corpus.ts`, see [test/corpus/README.md](../../test/corpus/README.md)) is the only false positive measurement the project has. It clones 34 public repos pinned to a commit, runs driftwatch over their context files and stores the output as a snapshot. The snapshots are committed, 136 KB of diffable text; the clones are gitignored and weigh ~2.7 GB.
+The corpus (`scripts/corpus.ts`, see [test/corpus/README.md](../../test/corpus/README.md)) is the only false positive measurement the project has. It clones 35 public repos pinned to a commit, runs driftwatch over their context files and stores the output as a snapshot. The snapshots are committed, 136 KB of diffable text; the clones are gitignored and weigh ~2.7 GB.
 
 Nothing in `.github/workflows/` runs it. That is deliberate and it is not obvious, so it needs to be on the record: "the precision measurement is not automated" reads like an oversight, and adding `pnpm corpus --check` to CI is going to be proposed again.
 

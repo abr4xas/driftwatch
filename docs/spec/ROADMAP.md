@@ -37,7 +37,11 @@ The current criterion has four parts, and all four hold or M1 does not close:
 
 If it does not hold, we do not advance — we tune the heuristics, or we accept that the check does not get there and say so.
 
-**Certified on 2026-09-09**: nine of nine conditions, over a corpus of 34 repos with 8 in validation. The record, the classification of every finding and the caveat about sample size are in `test/corpus/CLASSIFICATION.md`. The caveat matters: condition 6 passed with 3 findings from a single root cause, so it has to be reconfirmed once M2 adds checks and the validation group accumulates more mass.
+**Certified on 2026-09-09**: nine of nine conditions, over a corpus of 34 repos with 8 in validation. The record and the classification of every finding are in `test/corpus/CLASSIFICATION.md`.
+
+**Re-measured on 2026-09-10, and condition 6 no longer holds.** Adding one repo to the validation group (`spatie/bloom`, Swift/macOS, 7 sources) produced a fourth validation finding, and it is false: aggregate precision went from 3 of 3 to **3 of 4 = 75%**, under the 80% bar. Nothing regressed in the code; the measurement stopped being thin, which is exactly what the original caveat said would decide it.
+
+The corpus is now 35 repos with 9 in validation, 13 findings, 11 true and 2 false. **Eight of nine conditions.** The rule above applies to us as written — tune the heuristics, or accept that the check does not get there and say so — and the three routes, with their contamination cost under ADR-0006 condition 9, are set out at the end of `CLASSIFICATION.md`. It is not resolved yet.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

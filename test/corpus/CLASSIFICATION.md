@@ -1,33 +1,37 @@
 # Corpus classification
 
-Hand review of every finding against the real repo. Date: 2026-09-09.
+Hand review of every finding against the real repo. First measured 2026-09-09; **re-measured 2026-09-10** after adding `spatie/bloom`.
 
-Corpus: **34 public repos pinned to a commit, 12 findings.**
-Of the 34, **8 form the validation group**: never inspected before measuring.
+Corpus: **35 public repos pinned to a commit, 13 findings.**
+Of the 35, **9 form the validation group**: never inspected before measuring.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md))
 
-Validation group measurement: **8 repos, 18 sources, 3 findings, all 3 true.**
+Validation group measurement: **9 repos, 25 sources, 4 findings, 3 true and 1 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 34 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (33 of 34 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 35 snapshots | **met** |
+| 3 | Median FP per repo = 0 | 0 (33 of 35 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum 1 (`spec-kit`) | **met** |
-| 6 | Aggregate precision ≥ 80% in validation | 3 of 3 = **100%** | **met** |
+| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`) | **met** |
+| 6 | Aggregate precision ≥ 80% in validation | 3 of 4 = **75%** | **NOT MET** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 34 repos, 8 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus.ts` | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 35 repos, 9 in validation | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
 
-**Nine of nine. M1 passes the gate.**
+**Eight of nine. Condition 6 no longer holds.**
 
-### The caveat, which has to be read alongside the 100%
+### What happened, and why the caveat was right
 
-The 100% in condition 6 rests on **3 findings**, and all three come from the same repo and the **same root cause**: a package rename in `modelcontextprotocol/typescript-sdk` (`server` → `server-legacy`) that its `CLAUDE.md` did not follow. Counted as drift events, it is **one**, found three times.
+The first measurement recorded a caveat about condition 6: it had passed on **3 findings**, all from one repo and one root cause, and the document said the honest number to cite was not "100% precision" but "3 of 3, with 7 of 8 repos silent". It also said the condition had to be reconfirmed once the validation group accumulated more mass.
 
-The other **7 of 8 validation repos produced no findings at all**.
+**One repo was enough.** `spatie/bloom` contributed a fourth validation finding and it is false, so precision went from 3 of 3 to 3 of 4, and 75% is below the bar. At this sample size an 80% threshold admits zero false positives, which is exactly the defect ADR-0006 diagnosed in its own predecessor.
+
+Nothing regressed in the code. The measurement got one observation less thin.
+
+`docs/spec/ROADMAP.md` says what to do when a criterion does not hold: tune the heuristics, or accept that the check does not get there and say so. **It is not resolved in this document**, because the fix is a heuristic change and ADR-0006 condition 9 prices that: tuning against a validation repo's finding moves `spatie/bloom` to calibration and requires a new validation repo. See "The open decision" at the end.
 
 And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md) argues that a 5% threshold is not measurable because it demands ~20 findings, and picks 80% because "with 10 findings it admits 2 false ones, and that is a difference you can check by hand". With **3** findings, an 80% threshold admits no false ones — it is "zero false positives" again, dressed up as a percentage. The criterion is met by its letter, but at this sample size it suffers exactly the defect it criticized in its predecessor.
 
@@ -35,7 +39,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **12 findings, 11 true and 1 false**. The only false one is `github/spec-kit`'s, in calibration.
+The corpus produces **13 findings, 11 true and 2 false**, so 84.6% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -45,6 +49,7 @@ The corpus produces **12 findings, 11 true and 1 false**. The only false one is 
 | `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
+| `spatie/bloom` | 1 | 0 | 1 | **validation** |
 | the other 28 | 0 | — | — | — |
 
 ---
@@ -169,3 +174,50 @@ Worth noting that the three true positives in `typescript-sdk` survived that rul
 ## Execution note
 
 The clones are deleted after generating the snapshots: they are a cache rebuildable with `pnpm corpus` and take ~2.7 GB. `pnpm corpus --only <pattern>` runs a subset without re-downloading the rest.
+
+
+---
+
+## `spatie/bloom`, added 2026-09-10
+
+Swift/macOS, a domain the rest of the corpus does not cover, and **7 sources**: five `SKILL.md` under `.claude/skills/`, plus an `AGENTS.md` and a `CLAUDE.md` that are not byte-identical, so both are audited.
+
+Placed in the **validation** group, and the group was chosen before a single finding was looked at.
+
+### The finding: `CLAUDE.md:133` — `Tools/xcodeproj.sh`
+
+**False positive.**
+
+The document is arguing *against* adding an Xcode project file to the repo, and the surrounding sentence is:
+
+> **Generating it instead does not rescue the argument, it kills it.** XcodeGen or Tuist from a spec, or a `Tools/xcodeproj.sh` that writes one on demand, **would** avoid the merge conflicts, but the whole benefit above is a stamp Xcode writes back into `project.pbxproj` […]
+
+`Tools/` exists and holds twenty-odd scripts. `Tools/xcodeproj.sh` is not one of them, and is not supposed to be: it is a **hypothetical** the document introduces in order to reject it. An agent reading that paragraph would not go looking for the file.
+
+### Why this one is interesting
+
+It is the same class ADR-0008 found in this project's own `docs/`: a document that **argues** rather than asserts, quoting a path as part of a case it is making. What is new is *where*. ADR-0008 could conclude "a specification is not an agent context file" and exclude `docs/`; that escape does not exist here. This is a `CLAUDE.md`, the exact file type the tool is built for, and it contains a paragraph of design argument.
+
+So the class is not confined to specifications. Any sufficiently thoughtful `CLAUDE.md` will at some point explain why the repo is *not* organised some other way, and naming the road not taken means naming paths that do not exist.
+
+### What would suppress it
+
+The conditional mood. `context-prose.ts` has an `EXAMPLE` list and a `HEDGED` list, and neither covers "would". The two-line window around the claim does contain `would avoid`, so a marker would fire.
+
+**It is not applied here**, for two reasons.
+
+First, the risk is real and untested: "would" is a common word, and "you would find the config in `src/config.ts`" is a sentence a document can plausibly write about a file that does exist. A marker that broad could suppress true positives across the whole corpus, and the only way to know is to measure it.
+
+Second, the price is fixed and known. ADR-0006 condition 9: deriving a rule from a validation repo's finding moves that repo to calibration and requires a new validation repo to replace it. Spending `spatie/bloom` on a heuristic guess is a bad trade when the guess has not been measured.
+
+## The open decision
+
+Condition 6 is at 75% and the project's own rule (`docs/spec/ROADMAP.md` § M1) is that we do not advance on an unmet criterion — we tune, or we say the check does not get there.
+
+Three routes, in the order I would take them:
+
+1. **Add validation repos before touching anything.** The problem is as much sample size as precision: at 4 findings, 80% and 100% are the same threshold. Getting the validation group to ~10 findings makes condition 6 a measurement again. This costs nothing in contamination and is what ADR-0006's own reasoning points at.
+2. **Then evaluate a conditional-mood marker**, measured over the whole corpus, counting what it suppresses that was true. If it holds, it is a real improvement and `spatie/bloom` moves to calibration with a replacement added.
+3. **Or accept it and change the criterion**, having said plainly that `path/missing` reports hypotheticals in argumentative prose. That is the honest version of "the check does not get there", and it is not obviously wrong — one false positive per twenty repos is a tool people keep installed.
+
+What is **not** an option is leaving the table above saying "nine of nine".
