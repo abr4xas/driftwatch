@@ -55,9 +55,13 @@ Against the new condition, when it was written: 93.2% over the corpus and 88.89%
 
 **The replacements were then added — three owed, five given — and the debt is paid.** The corpus is 49 repos with 20 in validation, 21 findings, 14 true and 7 false. Against the rewritten condition 6: **46 of 49 = 93.9%** over the corpus and **19 of 20 = 95%** over validation, both above the bar, on 11 validation findings rather than the three-from-one-cause the original certification rested on.
 
-**Condition 5 is now the one that fails.** `mattpocock/course-video-manager` produces five false positives against a per-repo cap of two — all five from one cause, a skill file documenting a *different* project with every path written relative to it.
+Condition 5 then failed on one repo, `mattpocock/course-video-manager`, with five false positives against a cap of two — all five from one cause, a skill file documenting a *different* project with every path written relative to an external root. That split was the design working: the quiet-repo rate measures how many users would see noise, the per-repo cap how bad it gets for the unlucky one.
 
-That split is the design working. The quiet-repo rate measures how many users would see noise; the per-repo cap measures how bad it gets for the unlucky one. A single aggregate would have averaged them into 66.7% and said nothing useful about either. **Eight of nine**, and `CLASSIFICATION.md` lists what closes condition 5, in order.
+**Both classes behind it were closed and the corpus re-run.** One snapshot changed, from 6 findings to 1: the five false positives gone, the true one kept, nothing moved across the other 48 repos.
+
+**All nine conditions are met.** Corpus 47 of 49 = 95.9%, validation 19 of 19 = 100%, maximum 1 false positive in any repo, zero autofixable. That sentence was also true on 2026-09-09 and did not survive fifteen more repositories, so what matters is what changed: the corpus went from 34 repos to 49 and the validation group from 8 to 19, and the conditions now rest on those rather than on three findings from a single root cause.
+
+One replacement validation repo is owed for `course-video-manager`. Unlike the moves in round five it leaves **clean** — fixed rather than removed — so no figure depends on its departure. `CLASSIFICATION.md` has all seven rounds.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

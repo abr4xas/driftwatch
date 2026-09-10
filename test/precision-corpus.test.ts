@@ -182,6 +182,45 @@ describe('class 6: identical copies of AGENTS.md and CLAUDE.md', () => {
   })
 })
 
+describe('class 9: a section rooted somewhere else', () => {
+  const SKILL = [
+    '## Scan the API',
+    '',
+    'Read the other API source at `~/repos/other/apps/api/src/`. Focus on:',
+    '',
+    '- **REST endpoints**: `src/app/api/`',
+    '- **Schema**: `src/db/schema.ts`',
+    '',
+  ].join('\n')
+
+  it('the paths under an external root are not claims about this repo', async () => {
+    const root = makeTempRepo({ files: { 'CLAUDE.md': SKILL } })
+    expect((await run({ cwd: root, paths: [] })).findings).toEqual([])
+  })
+
+  // The scope is one section, not the rest of the document. Without this the
+  // rule would silence a whole file from a single mention of a home path.
+  it('the next section is not silenced by it', async () => {
+    const root = makeTempRepo({
+      files: { 'CLAUDE.md': `${SKILL}\n## This repo\n\nThe entry point is \`src/gone.ts\`.\n` },
+    })
+    const findings = (await run({ cwd: root, paths: [] })).findings
+    expect(findings.map((finding) => finding.claim.text)).toEqual(['src/gone.ts'])
+  })
+
+  // The root has to be a directory: a dotfile someone mentions in passing is
+  // not something other paths are relative to.
+  it('a home file mentioned in passing silences nothing', async () => {
+    const root = makeTempRepo({
+      files: {
+        'CLAUDE.md':
+          '## Setup\n\nPut the token in `~/.config/app.json`. The client is `src/gone.ts`.\n',
+      },
+    })
+    expect((await run({ cwd: root, paths: [] })).findings).toHaveLength(1)
+  })
+})
+
 describe('class 8: the conditional mood', () => {
   // Real case (spatie/bloom): a CLAUDE.md arguing against adding an Xcode
   // project names the script that would generate one, in order to reject it.

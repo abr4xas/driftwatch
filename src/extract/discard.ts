@@ -19,6 +19,7 @@ export type DiscardReason =
   | 'metasyntactic'
   | 'not-path-shaped'
   | 'module-specifier'
+  | 'home-path'
 
 /**
  * Rule 1. A text with a protocol points outside the repo.
@@ -52,6 +53,21 @@ const GLOB_OR_PLACEHOLDER = /[*?{}<>$[\]]/u
  */
 function isModuleSpecifier(text: string): boolean {
   return text.startsWith('#')
+}
+
+/**
+ * A text opening with `~/` is on **the reader's machine**, not in the repo.
+ *
+ * Real case (mattpocock/course-video-manager): "Read the AI Hero API source at
+ * `~/repos/ai/course-builder/apps/ai-hero/src/`". The tilde is the shell's
+ * home directory; nothing under it can be verified against a repo index, and
+ * nothing in a repo is named `~`.
+ *
+ * Same category as `isModuleSpecifier`: a syntax the extractor is being told
+ * about, not a guess about likelihood.
+ */
+function isHomePath(text: string): boolean {
+  return text === '~' || text.startsWith('~/')
 }
 
 /**
@@ -208,6 +224,7 @@ export function discardReason(
   if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text)) return 'url'
   if (isModuleSpecifier(text)) return 'module-specifier'
+  if (isHomePath(text)) return 'home-path'
   if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
   if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'
   if (isBareWord(text)) return 'bare-word'

@@ -1,6 +1,11 @@
 import type { Claim, Source } from '../core/types.ts'
 import type { Frontmatter } from '../parse/frontmatter.ts'
-import { lineAround, proseDisclaims } from './context-prose.ts'
+import {
+  externalRootSections,
+  inExternalRootSection,
+  lineAround,
+  proseDisclaims,
+} from './context-prose.ts'
 import type { ParsedDoc } from '../parse/markdown.ts'
 import { rangeFor, type LineTable } from '../parse/positions.ts'
 import {
@@ -186,6 +191,8 @@ export function extractPathClaims({
   origin,
 }: ExtractContext): Claim[] {
   const claims: Claim[] = []
+  // Once per source, not once per claim: see `externalRootSections`.
+  const externalRoots = externalRootSections(source.content)
 
   const push = (
     raw: string,
@@ -213,6 +220,7 @@ export function extractPathClaims({
   for (const span of doc.inlineCode) {
     // Rule 8: the line may be saying that this is an example, or that the
     // path may not exist. In both cases there is no claim to verify.
+    if (inExternalRootSection(externalRoots, span.offset[0])) continue
     if (proseDisclaims(lineAround(source.content, span.offset[0]), { origin })) continue
     push(span.value, span.value, span.offset, 'inline-code')
   }
@@ -220,6 +228,7 @@ export function extractPathClaims({
   for (const link of doc.links) {
     const target = withoutAnchor(link.value)
     if (target === undefined) continue
+    if (inExternalRootSection(externalRoots, link.offset[0])) continue
     if (proseDisclaims(lineAround(source.content, link.offset[0]), { origin })) continue
     // The offset still points at the full url, anchor included, because that
     // is what is written in the file and what --fix would have to replace.

@@ -31,8 +31,8 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 49: 29 calibration and 20 validation. The three replacements owed
- * after rounds four and five were added on 2026-09-10, with two more, which is what ADR-0006
+ * There are 49: 30 calibration and 19 validation, and **one replacement is
+ * owed** for `mattpocock/course-video-manager` (see its entry), which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -189,11 +189,17 @@ export const CORPUS: readonly CorpusRepo[] = [
   // per package and per template. Four of those are byte-identical but in
   // different directories, so they stay four sources.
   { repo: 'emdash-cms/emdash', sha: '44114afd391ea0738bf95b4688d59513d2cb6347', holdout: true },
-  // Ten skills under `.claude/skills/` plus a 5 KB `CLAUDE.md`.
+  /**
+   * Ten skills under `.claude/skills/` plus a 5 KB `CLAUDE.md`.
+   *
+   * Moved out of the validation group on 2026-09-10: the `~/` discard and the
+   * external-root section rule were both derived from its findings. Unlike
+   * the three moved in round five, it leaves **clean** — the rules fixed it
+   * rather than the move hiding it. One replacement is owed.
+   */
   {
     repo: 'mattpocock/course-video-manager',
     sha: 'a20151178efe153b5cc3313f972947a05c4042b6',
-    holdout: true,
   },
   {
     repo: 'Universal-Commerce-Protocol/ucp',

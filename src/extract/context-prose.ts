@@ -287,6 +287,77 @@ export function lineAround(content: string, offset: number): ProseWindow {
  * uncertain. The whole line is inspected, not just what comes before it: an
  * "(if exists)" arrives after the path.
  */
+/**
+ * A section that **roots its paths somewhere else**, so the paths under it are
+ * not claims about this repo.
+ *
+ * Real case (mattpocock/course-video-manager), a skill documenting the API of
+ * a different project:
+ *
+ *     ### 1. Scan API Source
+ *
+ *     Read the AI Hero API source at `~/repos/ai/.../ai-hero/src/`. Focus on:
+ *
+ *     - **REST endpoints**: `src/app/api/` — each folder is a route segment.
+ *     - **tRPC routers**: `src/trpc/api/routers/`
+ *     - **Database schema**: `src/db/schema.ts`
+ *
+ * The repo has no `src/` at all. One sentence establishes the root and four
+ * bullets are written relative to it, so the existing rules see four
+ * independent claims and report all four.
+ *
+ * `namesAnotherRepo` already covers this when the other repo is named as a
+ * `github.com` URL. It does not when the root is a filesystem path, and it
+ * cannot reach the following bullets in any case: it works over the two-line
+ * window, and this needs the **section**.
+ *
+ * Two things keep the scope from swallowing whole documents:
+ *
+ * - The root has to be a **directory**. `~/.config/gh/hosts.yml` is a file
+ *   somebody mentions in passing; only a directory is something other paths
+ *   can be relative to. Without this, one mention of a dotfile in a long
+ *   section would silence every real claim below it.
+ * - The scope is one markdown section, heading to heading, not the document.
+ */
+const EXTERNAL_ROOT = /`~\/[^`\s]*\/`/u
+
+/** Where each heading starts, plus the end of the content. */
+function sectionBoundaries(content: string): number[] {
+  const starts: number[] = [0]
+  for (const match of content.matchAll(/^#{1,6} .*$/gmu)) {
+    const start = match.index ?? 0
+    if (start !== 0) starts.push(start)
+  }
+  starts.push(content.length)
+  return starts
+}
+
+/**
+ * The offset ranges of the sections that establish an external root.
+ *
+ * Computed once per source rather than once per claim: a document with two
+ * hundred claims would otherwise rescan itself two hundred times, and the
+ * end-to-end budget is 500 ms.
+ */
+export function externalRootSections(content: string): Array<[number, number]> {
+  if (!content.includes('`~/')) return []
+  const bounds = sectionBoundaries(content)
+  const ranges: Array<[number, number]> = []
+  for (let i = 0; i + 1 < bounds.length; i += 1) {
+    const start = bounds[i] ?? 0
+    const end = bounds[i + 1] ?? content.length
+    if (EXTERNAL_ROOT.test(content.slice(start, end))) ranges.push([start, end])
+  }
+  return ranges
+}
+
+export function inExternalRootSection(
+  ranges: ReadonlyArray<readonly [number, number]>,
+  offset: number,
+): boolean {
+  return ranges.some(([start, end]) => offset >= start && offset < end)
+}
+
 export type ProseContext = {
   /** `owner/repo` of this repo, to recognize when another one is meant. */
   origin: string | undefined

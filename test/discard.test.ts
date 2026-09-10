@@ -34,6 +34,18 @@ describe('module specifiers, which start with a hash', () => {
   })
 })
 
+describe('paths on the reader own machine', () => {
+  // Real case (mattpocock/course-video-manager): the skill roots its reading
+  // at `~/repos/ai/course-builder/apps/ai-hero/src/`.
+  it.each(['~', '~/', '~/repos/other/src/', '~/.config/app/token.json'])('discards %s', (text) => {
+    expect(discardReason(text)).toBe('home-path')
+  })
+
+  it('does not discard a path that merely contains a tilde', () => {
+    expect(discardReason('src/~backup/file.ts')).toBeUndefined()
+  })
+})
+
 describe('rule 2: globs and placeholders', () => {
   it.each([
     'src/**/*.test.ts',

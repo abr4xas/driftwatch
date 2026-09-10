@@ -1,7 +1,7 @@
 # mattpocock/course-video-manager
 
 sources: 8
-errors: 6
+errors: 1
 warnings: 0
 fixable: 0
 
@@ -16,9 +16,4 @@ skill  .claude/skills/to-prd-project/SKILL.md
 claude-md  CLAUDE.md
 
 ## findings
-.claude/skills/document-ai-hero-api/SKILL.md:23:33  [path/missing] inline-code  ~/repos/ai/course-builder/apps/ai-hero/src/
-.claude/skills/document-ai-hero-api/SKILL.md:25:24  [path/missing] inline-code  src/app/api/
-.claude/skills/document-ai-hero-api/SKILL.md:26:22  [path/missing] inline-code  src/trpc/api/routers/
-.claude/skills/document-ai-hero-api/SKILL.md:27:25  [path/missing] inline-code  src/db/schema.ts  -> packages/core/db/schema.ts (0.6)
-.claude/skills/document-ai-hero-api/SKILL.md:28:14  [path/missing] inline-code  src/app/api/auth/
 CLAUDE.md:27:252  [path/missing] inline-code  .github/workflows/test.yml

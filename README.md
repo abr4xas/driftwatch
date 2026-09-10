@@ -47,22 +47,24 @@ Concretely, it does **not** report:
 
 Measured over **44 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**21 findings across all 49 repos: 14 true, 7 false.** Two numbers matter more than the ratio:
+**16 findings across all 49 repos: 14 true, 2 false.** Two numbers matter more than the ratio:
 
-- **46 of the 49 repos produce no false positive at all.** Five of the seven false positives are in a single repo, from a single cause: one skill file documenting a *different* project, with every path relative to it.
+- **47 of the 49 repos produce no false positive at all.**
 - **Zero autofixable false positives**, in any repo, in any round. `--fix` has never once been offered something wrong, which is the failure that would actually damage a document.
 
-Twenty of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
+Nineteen of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
 
-The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone. It stands at **93.9%** and **95%**, on a group that owes nothing — three repos left it after their findings were used to fix the tool, and three replacements were added and measured.
+The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone, with **no single repo above 2**. It stands at **95.9%**, **100%**, and a maximum of 1.
 
-A second bar, **no repo above 2 false positives, is currently unmet**: the one noisy repo has five. Both bars are reported because they measure different things — how many users would see noise, and how bad it gets for the unlucky one.
+Both bars are reported because they measure different things: how many users would see noise, and how bad it gets for the unlucky one. A single aggregate hides both.
 
-The criterion used to be an aggregate-precision ratio. Growing the group from 8 repos to 18 took that ratio from 100% to 37.5%, and fixing the five causes those repos exposed never brought it back to the bar — because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it. Every finding, across five rounds, is classified by hand in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md).
+The criterion used to be an aggregate-precision ratio, and it was withdrawn after growing the validation group took it from 100% to 37.5% and no amount of fixing brought it back — because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it.
+
+Seven rounds of measurement, every finding classified by hand, are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) — including the two rounds where the tool looked worse afterwards.
 
 They share a shape: **the document is not asserting that the path exists.** It argues — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". It instructs — "Write a skill in a directory in `.hod/skills/`". It names a build output, or a `#lib/` that is a Node subpath import and not a path at all.
 
-Four of those five classes are now closed, each with its case in the `false-positive-traps` fixture and a test naming the repo and line it came from. Every fix was measured over the whole corpus before being kept: together they removed **four false positives and zero true positives**. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
+Seven such classes have been found and closed, each with its case in the `false-positive-traps` fixture and a test naming the repo and line it came from. Every fix was measured over the whole corpus before being kept: together they removed **nine false positives and zero true positives**. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
 
 ## What it reads
 
