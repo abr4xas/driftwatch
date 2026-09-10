@@ -1,0 +1,27 @@
+# emdash-cms/emdash
+
+sources: 15
+errors: 2
+warnings: 0
+fixable: 0
+
+## sources
+claude-md  .claude/CLAUDE.md
+agents-md  AGENTS.md
+agents-md  infra/blog-demo/AGENTS.md
+agents-md  infra/cache-demo/AGENTS.md
+agents-md  infra/do-demo/AGENTS.md
+agents-md  infra/do-solo-demo/AGENTS.md
+agents-md  templates/blank/AGENTS.md
+agents-md  templates/blog-cloudflare/AGENTS.md
+agents-md  templates/blog/AGENTS.md
+agents-md  templates/marketing-cloudflare/AGENTS.md
+agents-md  templates/marketing/AGENTS.md
+agents-md  templates/portfolio-cloudflare/AGENTS.md
+agents-md  templates/portfolio/AGENTS.md
+agents-md  templates/starter-cloudflare/AGENTS.md
+agents-md  templates/starter/AGENTS.md
+
+## findings
+.claude/CLAUDE.md:398:56  [path/missing] inline-code  tests/e2e/
+AGENTS.md:398:56  [path/missing] inline-code  tests/e2e/

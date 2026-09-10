@@ -2,28 +2,28 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **44 public repos pinned to a commit, 13 findings.**
-Of the 44, **15 form the validation group**. Three repos were moved out of it on 2026-09-10 under ADR-0006 condition 9, because rules were derived from their findings; **three replacements are owed**, and until they land every validation number below is provisional.
+Corpus: **49 public repos pinned to a commit, 21 findings.**
+Of the 49, **20 form the validation group**. The three replacements owed after rounds four and five were added in round six, with two more, so **the validation debt is paid** and the numbers below are no longer provisional.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **15 repos, 28 sources, 3 findings, all 3 true.**
+Validation group measurement: **20 repos, 55 sources, 11 findings, 6 true and 5 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 44 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (42 of 44 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 49 snapshots | **met** |
+| 3 | Median FP per repo = 0 | 0 (46 of 49 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `eve-template`) | **met** |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 42 of 44 = **95.5%**; validation **15 of 15 = 100%** | met, **provisionally** |
-| 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 44 repos, 15 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; **three replacements owed** | encoded, **debt outstanding** |
+| 5 | No repo above 2 FP | maximum **5** (`course-video-manager`) | **NOT MET** |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 46 of 49 = **93.9%**; validation **19 of 20 = 95%** | **met** |
+| 7 | ≥ 1 true positive in validation | 6 | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 49 repos, 20 in validation | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; the three replacements were added | **met** |
 
-**Every condition is met, and the measurement is provisional.** Read the two sentences after this one before quoting the table.
+**Eight of nine. Condition 5 does not hold**, and the debt that made the previous measurement provisional is paid.
 
-Validation reads 100% partly because the one unquiet validation repo, `vercel-labs/marketing-team-eve-template`, was moved to calibration in the same operation — not because the tool improved on it. Its false positive still exists and is still counted in the whole-corpus figure. **Three replacement validation repos are owed**, and the honest status until they are added and measured is "the criterion is met on a group that has shrunk by the repos that were failing it".
+The two conditions now say different things, which is the division of labour [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) designed. The **quiet-repo rate holds comfortably** — 93.9% and 95% — because the tool is silent on almost every repo. The **per-repo cap catches the one repo where it is badly noisy**: `mattpocock/course-video-manager`, five false positives against a bar of two. A single aggregate would have hidden that inside a 66.7%.
 
 The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **11 true of 14, 78.6%** — it just no longer decides anything.
 
@@ -45,18 +45,20 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **13 findings, 11 true and 2 false**, so 84.6% aggregate.
+The corpus produces **21 findings, 14 true and 7 false**, so 66.7% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
 | `openai/codex` | 3 | 3 | 0 | calibration |
 | `tursodatabase/turso` | 3 | 3 | 0 | calibration |
 | `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | **validation** |
+| `mattpocock/course-video-manager` | 6 | 1 | 5 | **validation** |
+| `emdash-cms/emdash` | 2 | 2 | 0 | **validation** |
 | `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
 | `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration (moved) |
-| the other 37 | 0 | — | — | — |
+| the other 40 | 0 | — | — | — |
 
 ---
 
@@ -399,19 +401,79 @@ The comment on the `holdout` field in `scripts/corpus-repos.ts` says the opposit
 
 Taken literally the ADR moves a repo out the moment anyone reads its findings, which would make the group unmeasurable — classifying is the measurement. The code comment is the correct reading, and the line the rounds above actually applied is a third one, narrower than either: **classifying a finding is free; deriving a rule from it is not.** That is ordinary train/test leakage and it is what condition 9 exists to prevent. The ADR's wording should be brought in line with it.
 
+## Sixth round, 2026-09-10: the debt is paid, and condition 5 breaks
+
+Five repos added to the validation group, chosen for the profile that produces findings and, as always, assigned before any finding was looked at. Three of them are the replacements owed under condition 9; the other two are extra.
+
+| Repo | Domain | Sources | Findings |
+|---|---|---|---|
+| `emdash-cms/emdash` | TS monorepo | **15** | 2, both **true** |
+| `mattpocock/course-video-manager` | TS, 10 skills | 11 | 6 — **1 true, 5 false** |
+| `Universal-Commerce-Protocol/ucp` | Python | 2 | 0 |
+| `awcodes/mason` | PHP | 1 | 0 |
+| `mattpocock/sandcastle` | TypeScript | 2 | 0 |
+
+The validation group is now **20 repos, 55 sources, 11 findings** — the mass it has been missing since the first measurement, when condition 6 rested on three findings from one root cause.
+
+### `emdash-cms/emdash`: a true positive, reported twice through a symlink
+
+Both findings are the same claim, `AGENTS.md:398` and `.claude/CLAUDE.md:398`:
+
+> **Structure:** `tests/unit/`, `tests/integration/`, `tests/e2e/` (Playwright).
+
+`tests/unit/` and `tests/integration/` exist under `infra/emdash-bot/` and `packages/core/`, and ADR-0005's suffix rule correctly stays quiet on both. **`tests/e2e/` exists nowhere**: the end-to-end tests live at `e2e/` in the root and at `apps/release-service/e2e`. The document states a three-part convention and one third of it is no longer true. **Real drift**, and a subtle catch — the tool found the odd one out of a list where the neighbours check out.
+
+It is reported twice because `.claude/CLAUDE.md` is a **symlink** to `../AGENTS.md` (git mode `120000`). `readFile` follows it, so the same bytes are audited under two paths, and `collapseDuplicates` does not merge them because it keys on the directory as well as the content — deliberately, as `harehare/mq` confirmed two rounds ago.
+
+Counted as findings it is two; counted as drift events it is **one, found twice**, the same shape as `typescript-sdk`'s three-from-one-cause. It is not a false positive — the claim is stale in both files — but it is noise of exactly the kind `collapseDuplicates` exists to prevent, and **following a symlink to a file already audited is a defect worth its own fix**.
+
+### `mattpocock/course-video-manager`: five false positives from one cause
+
+`.claude/skills/document-ai-hero-api/SKILL.md` documents the API of **a different project**. Its section opens:
+
+> Read the AI Hero API source at `~/repos/ai/course-builder/apps/ai-hero/src/`. Focus on:
+>
+> - **REST endpoints**: `src/app/api/` — each folder is a route segment.
+> - **tRPC routers**: `src/trpc/api/routers/`
+> - **Database schema**: `src/db/schema.ts`
+> - **Auth**: `src/app/api/auth/`
+
+This repo has no `src/` directory at all. Every one of those paths is relative to the external root named in the first line. **Five false positives, one mistake.**
+
+Two classes, and they are not equally hard:
+
+1. **`~/` is a home-directory path**, pointing outside the repo to the reader's own machine. Exactly the same category error as `#`: a syntax the extractor does not know, with a one-line fix and no judgement involved. It closes 1 of the 5.
+2. **A section rooted at an external path.** `namesAnotherRepo` already handles this when the other repo is named as a `github.com` URL; here the root is a filesystem path, and the four remaining claims are relative to it. Closing this needs the rule to carry a *section* scope rather than a sentence or a two-line window, which is a larger change than anything attempted so far. It closes the other 4.
+
+The sixth finding, `CLAUDE.md:27` — "the full unfiltered suite runs in CI on every PR (`.github/workflows/test.yml`)" — is **real drift**. `.github/workflows/` holds eight files and none of them is `test.yml`.
+
+### What this round says about the criteria
+
+Condition 5 breaks and condition 6 holds, and that is the design working rather than a contradiction. The quiet-repo rate measures **how many users would see noise** — 46 of 49 repos see none. The per-repo cap measures **how bad it gets for the unlucky one** — five spurious findings in a single run, which is the experience that gets a tool uninstalled.
+
+A single aggregate would have averaged those into 66.7% and said nothing useful about either.
+
 ### The decision taken, 2026-09-10
 
 Condition 6 was rewritten. [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) withdraws the aggregate-precision ratio and replaces it with the **quiet-repo rate**: at least 90% of repos producing zero false positives, over the whole corpus and over the validation group taken alone.
 
 When the ADR was written the rate stood at 93.2% over the corpus and 88.89% over validation, so the rewritten criterion was **unmet by 1.1 points** — deliberately, because a replacement tuned to pass that day's numbers would have been the same mistake in a new coat. The ADR predicted that closing `bloom`'s class would take validation to 94.1% and the corpus to 95.5%.
 
-The fifth round did exactly that, the same day. Measured now: **42 of 44 = 95.5%** over the corpus and **15 of 15 = 100%** over validation, the second figure inflated by `eve-template` leaving the group. The prediction held on the corpus figure to the decimal, which is some evidence the criterion behaves as designed — it moves when the tool improves, which is the property the old one lacked.
+The fifth round did exactly that, the same day, and the corpus figure landed on 95.5% to the decimal.
+
+The sixth round then replaced the three repos owed under condition 9, with two more. Measured now over a group that owes nothing: **46 of 49 = 93.9%** over the corpus and **19 of 20 = 95%** over validation. Both above the bar, on 20 validation repos and 11 validation findings rather than the three-from-one-cause the original certification rested on.
+
+The rate dipped from 95.5% to 93.9% when five real repos were added and one of them was noisy, which is what a measurement is supposed to do.
 
 The denominator moved from findings to repos for three reasons, set out in full in the ADR: repos are what the corpus has many of while findings are what the tool deliberately has few of; a user has one repo and never experiences an aggregate; and a repo-level count refuses to divide the cost of crying wolf by how much else the same run got right.
 
-**What is next**, in order:
+**What is next**, in order. Condition 5 is the open one now, and the first two items are what closes it.
 
-1. **Three replacement validation repos.** This is the outstanding debt and it blocks calling any of the above final. They need the profile that produces findings: context files of 10 KB or more, ideally several per repo. Until they are measured, validation's 100% describes a group chosen partly by which repos were failing.
-2. `eve-template` `AGENTS.md:136` — a generated file described with no generation word. Recorded as **not reachable by any prose rule**: knowing it requires reading `skill.ts`. A limit, not a to-do.
-3. `github/spec-kit` — a third-party tool's convention directory. Unresolved by design since the first measurement.
-4. Bring ADR-0006's wording of condition 9 in line with what is actually applied — classifying a finding is free, deriving a rule from it is not — as set out above.
+1. **`~/` is a home-directory path.** A one-line discard rule, the same category error as `#`, no judgement involved. Closes 1 of `course-video-manager`'s 5.
+2. **A section rooted at an external path.** `namesAnotherRepo` handles this when the root is a `github.com` URL; here it is a filesystem path and the claims below it are relative. Needs a *section* scope, which is larger than anything attempted so far, and it closes the other 4 — and with them condition 5.
+3. **Do not follow a symlink to a file already audited.** `emdash`'s single piece of drift is reported twice because `.claude/CLAUDE.md` is a symlink to `../AGENTS.md`. Not a false positive, but noise of the kind `collapseDuplicates` exists to prevent.
+4. `eve-template` `AGENTS.md:136` — a generated file described with no generation word. Recorded as **not reachable by any prose rule**: knowing it requires reading `skill.ts`. A limit, not a to-do.
+5. `github/spec-kit` — a third-party tool's convention directory. Unresolved by design since the first measurement.
+6. Bring ADR-0006's wording of condition 9 in line with what is actually applied — classifying a finding is free, deriving a rule from it is not — as set out above.
+
+Note that 1, 2 and 3 all derive from validation repos, so closing them costs `course-video-manager` and `emdash` under condition 9, and two more replacements. That is the cost of the method and it is now a familiar one.

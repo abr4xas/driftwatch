@@ -47,14 +47,16 @@ Concretely, it does **not** report:
 
 Measured over **44 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**13 findings across all 44 repos: 11 true, 2 false.** Two numbers matter more than the ratio:
+**21 findings across all 49 repos: 14 true, 7 false.** Two numbers matter more than the ratio:
 
-- **42 of the 44 repos produce no false positive at all.**
+- **46 of the 49 repos produce no false positive at all.** Five of the seven false positives are in a single repo, from a single cause: one skill file documenting a *different* project, with every path relative to it.
 - **Zero autofixable false positives**, in any repo, in any round. `--fix` has never once been offered something wrong, which is the failure that would actually damage a document.
 
-Fifteen of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
+Twenty of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one.
 
-The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone. It stands at **95.5%** and **100%** — and the second figure is **provisional**, because three repos left the group after their findings were used to fix the tool, and three replacements are owed. Saying so is the point: a validation group you can quietly shrink is not one.
+The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone. It stands at **93.9%** and **95%**, on a group that owes nothing — three repos left it after their findings were used to fix the tool, and three replacements were added and measured.
+
+A second bar, **no repo above 2 false positives, is currently unmet**: the one noisy repo has five. Both bars are reported because they measure different things — how many users would see noise, and how bad it gets for the unlucky one.
 
 The criterion used to be an aggregate-precision ratio. Growing the group from 8 repos to 18 took that ratio from 100% to 37.5%, and fixing the five causes those repos exposed never brought it back to the bar — because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it. Every finding, across five rounds, is classified by hand in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md).
 

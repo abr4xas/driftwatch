@@ -53,7 +53,11 @@ Against the new condition, when it was written: 93.2% over the corpus and 88.89%
 
 **That class was then closed and the prediction held to the decimal.** A conditional-mood rule, scoped to the sentence holding the claim, suppressed exactly one finding across all 44 repos and cost no true positives. The corpus now reads **42 of 44 = 95.5%**, and validation **15 of 15 = 100%**.
 
-**Every condition is met, and the measurement is provisional.** Three repos left the validation group under condition 9, because rules were derived from their findings, and **three replacements are owed**. Validation reads 100% partly because the one validation repo still producing a false positive left in that same operation; the false positive is still there, still counted in the corpus figure. The honest status until the replacements land is "met on a group that shrank by the repos that were failing it", and `CLASSIFICATION.md` says so at the top.
+**The replacements were then added — three owed, five given — and the debt is paid.** The corpus is 49 repos with 20 in validation, 21 findings, 14 true and 7 false. Against the rewritten condition 6: **46 of 49 = 93.9%** over the corpus and **19 of 20 = 95%** over validation, both above the bar, on 11 validation findings rather than the three-from-one-cause the original certification rested on.
+
+**Condition 5 is now the one that fails.** `mattpocock/course-video-manager` produces five false positives against a per-repo cap of two — all five from one cause, a skill file documenting a *different* project with every path written relative to it.
+
+That split is the design working. The quiet-repo rate measures how many users would see noise; the per-repo cap measures how bad it gets for the unlucky one. A single aggregate would have averaged them into 66.7% and said nothing useful about either. **Eight of nine**, and `CLASSIFICATION.md` lists what closes condition 5, in order.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

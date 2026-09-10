@@ -31,8 +31,8 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 44: 29 calibration and 15 validation, and **three replacement
- * validation repos are owed** (see the moved entries below), which is what ADR-0006
+ * There are 49: 29 calibration and 20 validation. The three replacements owed
+ * after rounds four and five were added on 2026-09-10, with two more, which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -178,6 +178,30 @@ export const CORPUS: readonly CorpusRepo[] = [
    */
   { repo: 'harehare/mq', sha: 'e9d12c0844ba0161853540192d892e14500e4e95', holdout: true },
   { repo: 'thatseoagent/mcp', sha: '5145a8d53a328b68086bd43f88a2f3b5e3d9677b', holdout: true },
+
+  /**
+   * The three replacements owed after rounds four and five, plus two more.
+   * Chosen for the profile that actually produces findings — large context
+   * files, several sources per repo — and, as always, the group was decided
+   * before a single finding was looked at.
+   */
+  // 28.6 KB of root `AGENTS.md`, the largest in the corpus, plus nested ones
+  // per package and per template. Four of those are byte-identical but in
+  // different directories, so they stay four sources.
+  { repo: 'emdash-cms/emdash', sha: '44114afd391ea0738bf95b4688d59513d2cb6347', holdout: true },
+  // Ten skills under `.claude/skills/` plus a 5 KB `CLAUDE.md`.
+  {
+    repo: 'mattpocock/course-video-manager',
+    sha: 'a20151178efe153b5cc3313f972947a05c4042b6',
+    holdout: true,
+  },
+  {
+    repo: 'Universal-Commerce-Protocol/ucp',
+    sha: 'ee07e9f0219b4ef1a9332ba6082f446b967788f7',
+    holdout: true,
+  },
+  { repo: 'awcodes/mason', sha: '258ce9fd2a03e771bea846db3654b75f6d137e23', holdout: true },
+  { repo: 'mattpocock/sandcastle', sha: 'e99f832f26dc9d245c019a9ddd19fa5dee792427', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */
