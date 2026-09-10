@@ -31,7 +31,7 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 39: 26 calibration and 13 validation, which is what ADR-0006
+ * There are 44: 26 calibration and 18 validation, which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -141,6 +141,25 @@ export const CORPUS: readonly CorpusRepo[] = [
   // Three sources -- a `CLAUDE.md` and two skills -- for 23 KB of context in a
   // 9 MB repo, which is the profile that actually adds finding mass.
   { repo: 'alpinejs/alpine', sha: '8554b9e2285ca598b672f636a578f837136e522b', holdout: true },
+  // 24 KB of `AGENTS.md` in a 267 KB repo, the best context-to-clone ratio in
+  // the corpus. Its `CLAUDE.md` is another ten-byte `@AGENTS.md` import.
+  {
+    repo: 'vercel-labs/marketing-team-eve-template',
+    sha: 'f4a9309de0c03b4a42699687f6ae87dd86a913d2',
+    holdout: true,
+  },
+  { repo: 'hieunc229/mailflare', sha: 'c5cfa1be6da1c8a2e4d293ba1c4520796bc3b6a7', holdout: true },
+  // Spanish-language context file, which nothing else in the corpus has: it is
+  // what the Spanish entries in `context-prose.ts` were written for.
+  { repo: 'ecrespo/vigia-eew', sha: 'fa90f3c39b667c42c4ebeb4d079c7a02b35363de', holdout: true },
+  /**
+   * `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`, all three
+   * 4112 bytes. The first two collapse into one source with an alias; the
+   * third does not, because `collapseDuplicates` keys on the directory too.
+   * The corpus had no case of that.
+   */
+  { repo: 'harehare/mq', sha: 'e9d12c0844ba0161853540192d892e14500e4e95', holdout: true },
+  { repo: 'thatseoagent/mcp', sha: '5145a8d53a328b68086bd43f88a2f3b5e3d9677b', holdout: true },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

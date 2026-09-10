@@ -45,17 +45,20 @@ Concretely, it does **not** report:
 
 ## How well it works
 
-Measured over **39 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
+Measured over **44 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma` and others — running over the context files their authors wrote without knowing driftwatch exists.
 
-**14 findings across all 39 repos. 11 true, 3 false**, so 78.6%. **36 of the 39 repos have no false positive at all**, and nothing autofixable was wrong in any of them — which is the number that matters most, because a wrong `--fix` corrupts the document.
+**17 findings across all 44 repos: 11 true, 6 false.** Two numbers matter more than the ratio:
 
-Thirteen of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 5 findings, 3 real and 2 not — **60%**, which is *below* the 80% the project set itself as the bar.
+- **40 of the 44 repos produce no false positive at all.**
+- **Zero autofixable false positives**, in any repo, in any round. `--fix` has never once been offered something wrong, which is the failure that would actually damage a document.
 
-That is stated here rather than buried because the bar is ours and it is currently unmet. The whole reasoning, every finding classified by hand, and the three routes out are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md); the criterion itself is [ADR-0006](./docs/adr/0006-the-m1-precision-criterion.md).
+Eighteen of those repos are a **validation group**: added after the heuristics were frozen, never opened to derive a rule. They produced 8 findings, 3 real and 5 not — **37.5%**, far below the 80% the project set itself as the bar.
 
-Both false positives share a shape: **the document is not asserting**. One argues, naming a path in order to reject it — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". The other instructs, naming a destination — "Write a skill in a directory in `.hod/skills/`", where the directory does not exist because nobody has written one yet.
+That is stated here rather than buried, because the bar is ours and it is unmet. Four of the six false positives have a known, narrow fix; the other two are honest limits. The full classification and the argument that the percentage itself is the wrong criterion — a tool built to stay quiet produces few findings, and a ratio over few findings is unstable — are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md).
 
-Both are diagnosed, one has a fix and one does not, and neither is being papered over. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
+They share a shape: **the document is not asserting that the path exists.** It argues — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". It instructs — "Write a skill in a directory in `.hod/skills/`". It names a build output, or a `#lib/` that is a Node subpath import and not a path at all.
+
+Every one is diagnosed and classified by hand. See [ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md).
 
 ## What it reads
 

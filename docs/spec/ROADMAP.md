@@ -39,11 +39,13 @@ If it does not hold, we do not advance — we tune the heuristics, or we accept 
 
 **Certified on 2026-09-09**: nine of nine conditions, over a corpus of 34 repos with 8 in validation. The record and the classification of every finding are in `test/corpus/CLASSIFICATION.md`.
 
-**Re-measured on 2026-09-10, and condition 6 no longer holds.** Five repos were added to the validation group; two produced a finding and both are false. Precision went 3 of 3 → 3 of 4 (**75%**) → **3 of 5 = 60%**, under the 80% bar. Nothing regressed in the code: the measurement stopped being thin, which is exactly what the original caveat said would decide it.
+**Re-measured on 2026-09-10 over three rounds, and the certification does not survive a larger sample.** Ten repos were added to the validation group, taking it from 8 to 18. Validation precision went **100% → 75% → 60% → 37.5%**, and one repo produced 3 false positives against a per-repo cap of 2. **Seven of nine conditions: 5 and 6 are unmet.**
 
-The corpus is now 39 repos with 13 in validation, 14 findings, 11 true and 3 false — 36 of the 39 repos with no false positive at all, and zero autofixable. **Eight of nine conditions.**
+Nothing regressed in the code. The 100% had rested on three observations from a single root cause, and every enlargement moved the number the same way, which is what the original caveat said would decide it.
 
-Adding validation mass was tried first and made the number worse rather than better, which is a result. Both false positives share a shape — the document instructs or argues instead of asserting — and `CLASSIFICATION.md` sets out what is left, including the reason tuning cannot raise this particular number: under ADR-0006 condition 9, fixing a validation finding removes the observation that lowered it. Not resolved yet.
+The corpus is now 44 repos with 18 in validation, 17 findings, 11 true and 6 false. **40 of the 44 repos produce no false positive at all, and zero findings have ever been wrongly autofixable.**
+
+Adding mass is finished as a route — it is now confirming rather than informing. What it bought is six classified false positives across five distinct classes, four of which have a known narrow fix. `CLASSIFICATION.md` sets out those fixes, their cost under ADR-0006 condition 9, and the argument that condition 6 is the wrong shape of criterion: fixing a validation false positive deletes the observation that lowered the number, so no amount of improving the tool can raise it. **Awaiting a decision.**
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 

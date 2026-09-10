@@ -1,0 +1,15 @@
+# vercel-labs/marketing-team-eve-template
+
+sources: 2
+errors: 3
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+AGENTS.md:68:52  [path/missing] inline-code  #lib/
+AGENTS.md:86:57  [path/missing] inline-code  references/ai-phrases-to-avoid.md
+AGENTS.md:136:169  [path/missing] inline-code  writing-quality/references/ai-phrases-to-avoid.md

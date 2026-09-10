@@ -1,0 +1,13 @@
+# harehare/mq
+
+sources: 2
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+copilot  .github/copilot-instructions.md
+agents-md  AGENTS.md
+
+## findings
+(none)

@@ -2,26 +2,26 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **39 public repos pinned to a commit, 14 findings.**
-Of the 39, **13 form the validation group**: never inspected before measuring.
+Corpus: **44 public repos pinned to a commit, 17 findings.**
+Of the 44, **18 form the validation group**: never inspected before measuring.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md))
 
-Validation group measurement: **13 repos, 32 sources, 5 findings, 3 true and 2 false.**
+Validation group measurement: **18 repos, 39 sources, 8 findings, 3 true and 5 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 39 snapshots | **met** |
-| 3 | Median FP per repo = 0 | 0 (36 of 39 repos with no FP at all) | **met** |
+| 2 | Zero false positives among `fixable` findings | `fixable: 0` across the 44 snapshots | **met** |
+| 3 | Median FP per repo = 0 | 0 (40 of 44 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `bloom`, `vet`) | **met** |
-| 6 | Aggregate precision ≥ 80% in validation | 3 of 5 = **60%** | **NOT MET** |
+| 5 | No repo above 2 FP | maximum **3** (`marketing-team-eve-template`) | **NOT MET** |
+| 6 | Aggregate precision ≥ 80% in validation | 3 of 8 = **37.5%** | **NOT MET** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 39 repos, 13 in validation | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 44 repos, 18 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts` | **met** |
 
-**Eight of nine. Condition 6 no longer holds.**
+**Seven of nine. Conditions 5 and 6 no longer hold.**
 
 ### What happened, and why the caveat was right
 
@@ -41,7 +41,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **14 findings, 11 true and 3 false**, so 78.6% aggregate.
+The corpus produces **17 findings, 11 true and 6 false**, so 64.7% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -53,7 +53,8 @@ The corpus produces **14 findings, 11 true and 3 false**, so 78.6% aggregate.
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
 | `spatie/bloom` | 1 | 0 | 1 | **validation** |
 | `laravel/vet` | 1 | 0 | 1 | **validation** |
-| the other 31 | 0 | — | — | — |
+| `vercel-labs/marketing-team-eve-template` | 3 | 0 | 3 | **validation** |
+| the other 35 | 0 | — | — | — |
 
 ---
 
@@ -255,6 +256,41 @@ This one is a **known class with a rule that has a gap**. `context-prose.ts` has
 
 The second hole is the interesting one, and it is a design question rather than a list entry: the imperative check would have to move from line-level to **sentence-level**, splitting on terminal punctuation. That is a real change with its own false-negative risk.
 
+## The five repos added 2026-09-10, third round
+
+| Repo | Domain | Sources | Findings | Context |
+|---|---|---|---|---|
+| `vercel-labs/marketing-team-eve-template` | TS, agent template | 2 | **3, all false** | 24 KB |
+| `hieunc229/mailflare` | TypeScript | 1 | 0 | 11 KB |
+| `ecrespo/vigia-eew` | Python, **Spanish** | 1 | 0 | 7.5 KB |
+| `harehare/mq` | Rust | 2 | 0 | 4 KB ×3 |
+| `thatseoagent/mcp` | TypeScript | 1 | 0 | 1 KB |
+
+`ecrespo/vigia-eew` is the first context file in Spanish, which is what the Spanish entries in `context-prose.ts` were written for; it came out silent. `harehare/mq` ships `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md` all at 4112 bytes, and the snapshot confirms the intended behaviour: the two at the root collapse into one source with an alias, and the one under `.github/` does not, because `collapseDuplicates` keys on the directory as well as the content.
+
+### `marketing-team-eve-template`, three findings, three false positives
+
+**1. `AGENTS.md:68` — `#lib/`.** A **new class, and the cleanest fix in the whole list.**
+
+> Imports use the `#*` subpath from `package.json` (`#lib/...` maps to `agent/lib/...`)
+
+`package.json` has `"imports": { "#*": "./agent/*" }`. `#lib/` is a Node **subpath import specifier**, not a filesystem path, and the sentence says so while it says it. Nothing that starts with `#` is a relative path — it is an import specifier or a URL anchor. `GLOB_OR_PLACEHOLDER` does not cover `#`.
+
+**2. `AGENTS.md:86` — `references/ai-phrases-to-avoid.md`** and **3. `AGENTS.md:136` — `writing-quality/references/ai-phrases-to-avoid.md`.**
+
+The file exists nowhere in the tree, and it is not supposed to. `agent/lib/writing-quality/skill.ts:34` declares it:
+
+```ts
+"references/ai-phrases-to-avoid.md": AI_PHRASES_TO_AVOID,
+```
+
+It is **generated when the skill compiles**, from a TypeScript constant. This is the class `vitest-dev/vitest`'s `contributor-names.json` established and that the project already classifies as a false positive: a file that is neither committed nor gitignored, and only appears after a build step.
+
+Why the existing rules missed it, and the two are not the same:
+
+- **Line 86 is reachable.** It says the entries "**materialize** as real siblings". `HEDGED` has `is generated`, `are generated`, `generated by`, `generated from`, `se genera` — but not `materialize`. Adding it is the same kind of one-word fix as `write` for the imperatives.
+- **Line 136 is not.** It says the content is "already in `writing-quality/references/…`" — no generation marker of any kind, because the sentence is about *content duplication*, not about the build. Knowing this path is generated requires reading `skill.ts`. No prose rule reaches it.
+
 ## The treadmill this measurement has built into it
 
 Worth stating plainly, because it is a property of the method and not of this round.
@@ -270,21 +306,46 @@ That is not an argument for tuning less. It is an argument that condition 6 as w
 
 ## The open decision
 
+Conditions **5 and 6** are unmet: one repo produced 3 false positives against a bar of 2, and validation precision is **37.5%** against a bar of 80%. `docs/spec/ROADMAP.md` § M1 says we do not advance on an unmet criterion — we tune, or we say the check does not get there.
 
-Condition 6 is at 75% and the project's own rule (`docs/spec/ROADMAP.md` § M1) is that we do not advance on an unmet criterion — we tune, or we say the check does not get there.
+### What three rounds of adding repos actually established
 
-Condition 6 is at 60% and the project's own rule (`docs/spec/ROADMAP.md` § M1) is that we do not advance on an unmet criterion — we tune, or we say the check does not get there.
+Route 1 — add validation mass before touching a heuristic — was the recommendation two rounds ago, on the reasoning that the problem was sample size. It was carried out: **ten repos added, validation went from 8 to 18**. Precision went **100% → 75% → 60% → 37.5%**.
 
-Route 1 was tried first, on the reasoning that the problem was sample size. It was carried out — five repos added — and it **did not help**: the group went 75% → 60%, because two of the five produced a finding and both were false. That is a result, not a failure of the route. The 80% was resting on three observations from one root cause.
+That is the answer to the question the route was asking. The 100% was an artifact of three observations from one root cause, and every enlargement of the sample has moved the number the same way. **Adding more repos is no longer information; it is confirmation.** The route is finished.
 
-What is left, and this is where a decision is needed:
+What it bought is worth more than the number: **six classified false positives across four repos and five distinct classes**, which is enough to tune against without overfitting to one observation. Two rounds ago there was one.
 
-1. **Close `vet`'s gap only.** Add `write` to `CREATE_IMPERATIVES` and decide whether the imperative check moves to sentence level. It is a known class with an existing rule, so this is maintenance rather than a new heuristic. Costs `laravel/vet`, which moves to calibration. Leaves the group at 75%.
-2. **Also attack `bloom`'s class**, the conditional mood. Untested and broad — "would" is a word documents write about files that do exist — and it needs measuring over the whole corpus, counting true positives suppressed. Costs `spatie/bloom` too.
-3. **Accept it and restate the criterion.** Say plainly that `path/missing` reports paths named by documents that instruct or argue rather than assert, quantify it — **3 false positives across 39 real repositories, 36 of them with none at all, and zero autofixable** — and set the bar on the number that survives contact with reality rather than on a percentage of a five-item sample.
+### The classes, with what each would cost to close
 
-My recommendation changed with this round. It was 1-then-2-then-3; it is now **1, then 3**, with 2 held back until there is a corpus wide enough to measure it against. Route 1's narrow version is genuine maintenance and worth doing. Route 2 is a broad heuristic justified by a single observation, which is the definition of overfitting. And the treadmill above means route 3 is not capitulation — it may be the only statement about precision this method can honestly support.
+| # | Class | Where | Fix | Confidence |
+|---|---|---|---|---|
+| 1 | Text starting with `#` is a subpath import or an anchor, never a path | `eve-template` | Add `#` to the discard rules | **High.** A category error, not a threshold |
+| 2 | Generated file described with `materialize` | `eve-template` | One entry in `HEDGED` | **High.** Extends an established class |
+| 3 | Instruction to create, verb not in the list | `vet` | Add `write` to `CREATE_IMPERATIVES` | **High.** Extends an established class |
+| 4 | Instruction to create, imperative not at line start | `vet` | Imperative check moves to sentence level | Medium. Real false-negative risk |
+| 5 | Generated file with no generation marker in the sentence | `eve-template` | None known. Requires reading the build | **Not reachable by prose rules** |
+| 6 | Argumentative prose naming a path to reject it | `bloom` | Conditional mood (`would`) | Low. Broad, untested, likely to suppress true positives |
 
-What is **not** an option is leaving the table above saying "nine of nine".
+Closing 1, 2 and 3 removes **four of the six** false positives. Two survive, and both are honest limits rather than oversights.
 
-What is **not** an option is leaving the table above saying "nine of nine".
+### The recommendation
+
+**Do 1, 2 and 3, then restate the criterion on what is left.**
+
+Those three are not heuristic tuning in the sense condition 9 is protecting against. Two extend an existing class with a synonym; one corrects a category error the extractor makes about a syntax it does not know. None of them is a threshold fitted to a sample. They should still be *paid for* under condition 9 — `laravel/vet` and `marketing-team-eve-template` move to calibration and are replaced — because the rule exists precisely to stop "this one is obviously right" from becoming the standard argument. Making the exception is the user's call; recording that an exception is being made is not optional.
+
+Then condition 6 has to be rewritten, and not to a lower percentage. The treadmill above is the reason: **fixing a validation false positive deletes the observation that lowered the number**, so no amount of work moves it upward. A criterion that cannot be improved by improving the tool is measuring the wrong thing.
+
+What the tool actually does, over 44 real repositories nobody wrote for us:
+
+- **40 of 44 repos produce no false positive at all.**
+- **Zero autofixable false positives**, in any repo, across every round. Not once has `--fix` been offered something wrong.
+- Six false positives total, of which four have a known narrow fix.
+- Eleven true positives, all real drift, in repos whose maintainers did not know this tool existed.
+
+That is the shape of a usable tool, and it is not what "37.5% precision" conveys. The number is a ratio over a numerator the tool deliberately keeps small — the project's founding rule is that one false positive costs more than ten false negatives, which *guarantees* few findings and makes any percentage over them unstable. ADR-0006 diagnosed this exact defect in its own predecessor and then reintroduced it one threshold down.
+
+A criterion that survives contact with the corpus would be stated per repo and on the fixable subset, both of which are already conditions 2 through 5 — the ones that have held throughout, except where a single repo tripped the per-repo cap that this same reasoning suggests belongs there.
+
+**This is a decision for the user, not for me.** What is not optional is that the table at the top no longer says nine of nine, and it does not.
