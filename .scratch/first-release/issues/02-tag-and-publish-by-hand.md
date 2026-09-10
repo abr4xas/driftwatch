@@ -6,6 +6,22 @@
 
 **Status:** ready-for-human
 
+## The package is `@abr4xas/driftwatch`, and the reason is not ours
+
+The first attempt at `driftwatch` was refused:
+
+```
+npm error 403 Package name too similar to existing package drift-watch
+```
+
+`drift-watch` is real and it is not a squat: published 2026-03-08, three versions, ten downloads in the last month, and its own niche — it scans **Claude Code, Codex and Gemini CLI conversations** for behavioural patterns, stores them in a Dolt database and asks Claude for corrective strategies. It watches *the agent*; this watches *the document*, offline and with no inference at all. Nothing overlaps except the word.
+
+npm normalises punctuation, so `driftwatch` and `drift-watch` are one name to that check, and the check runs at publish time — a name showing as free in the registry is not a name that can be published.
+
+**Scoping is the only guaranteed answer**, because scoped packages skip the similarity check entirely. What it costs is one longer `npx` invocation; what it does not touch is the command, which `bin` fixes at `driftwatch` regardless of the package name. The repository, the CLI and every document stay as they are.
+
+`publishConfig.access` is `public` in `package.json`, so `npm publish` alone does the right thing — a scoped package is private by default and that default is a footgun on the manual path.
+
 ## The tag first, publishing second
 
 ```
@@ -30,6 +46,6 @@ npm publish --access public
 
 ## What to check afterwards
 
-- `npm view driftwatch` shows `0.1.0` and the file list is 14 files.
-- `npx driftwatch@0.1.0 --help` works from a directory that is not this repo — the `bin` path is the one thing no unit test can prove.
-- `npx driftwatch@0.1.0` inside some other repo says something sensible.
+- `npm view @abr4xas/driftwatch` shows `0.1.0` and the file list is 14 files.
+- `npx @abr4xas/driftwatch@0.1.0 --help` works from a directory that is not this repo — the `bin` path is the one thing no unit test can prove.
+- `npx @abr4xas/driftwatch@0.1.0` inside some other repo says something sensible.

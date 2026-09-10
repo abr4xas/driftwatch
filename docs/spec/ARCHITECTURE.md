@@ -270,7 +270,7 @@ Two decisions constrain the rest:
 | Config | `jiti` or dynamic import | To load `.ts` config; **lazy**, only if a config exists |
 | Tests | `vitest` | Ecosystem standard |
 
-**Hard constraint:** the `npx driftwatch` path with no config cannot load more than ~6 dependencies. Cold start is part of the product.
+**Hard constraint:** the `npx @abr4xas/driftwatch` path with no config cannot load more than ~6 dependencies. Cold start is part of the product.
 
 ---
 

@@ -5,7 +5,7 @@ Every milestone has verifiable acceptance criteria. We do not move to the next o
 ---
 
 ## M0 — Executable skeleton
-**Goal:** `npx driftwatch` runs and does nothing useful, but it runs.
+**Goal:** `npx @abr4xas/driftwatch` runs and does nothing useful, but it runs.
 
 - TS/ESM repo, build with tsdown, `bin` pointing at the compiled CLI
 - `--help`, `--version`, exit codes 0/1/2

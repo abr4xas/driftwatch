@@ -15,7 +15,7 @@ And unlike code, these files have no compiler, no tests, no linter. They are the
 A zero-configuration CLI that reads a repo's agent context files, extracts the **verifiable claims** they contain (paths, commands, dependencies, symbols, links) and checks which ones are already false.
 
 ```
-$ npx driftwatch
+$ npx @abr4xas/driftwatch
 
 CLAUDE.md
   ✗ 12  src/lib/auth.ts                  path does not exist  → src/auth/index.ts?
@@ -39,7 +39,7 @@ This is a tool, not a platform. Skills and agent context files are already a for
 
 Signals that it has the right shape:
 - A single verb, runnable daily in a real work loop.
-- `npx driftwatch` with no configuration, visible result in seconds.
+- `npx @abr4xas/driftwatch` with no configuration, visible result in seconds.
 - A demo that lands in a 10-second GIF.
 - Hard to generate from a prompt: the value is in the extraction heuristics and in the false positive rate, not in the scaffolding.
 

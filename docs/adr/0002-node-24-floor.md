@@ -19,7 +19,7 @@ Node 20 reached end of life in April 2026 and Node 22 is in maintenance. Holding
 
 ## Consequences
 
-- Anyone running `npx driftwatch` on Node 22 or lower gets npm's `engines` error rather than a crash. It is a clear error, which is what `AGENTS.md` asks for user errors.
+- Anyone running `npx @abr4xas/driftwatch` on Node 22 or lower gets npm's `engines` error rather than a crash. It is a clear error, which is what `AGENTS.md` asks for user errors.
 - `node:` builtins can be used without version guards.
 - If concrete demand for Node 22 shows up, lowering the floor is a reversible and cheap decision; raising it later would not be. This ADR reopens on that signal, not before.
 
