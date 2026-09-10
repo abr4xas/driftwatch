@@ -29,4 +29,10 @@ Without a fixed `sha`, the snapshot would change every time the upstream repo mo
 
 ## Why it does not run in CI
 
-The clones are over a gigabyte. The corpus is a local gate, run before touching the extraction heuristics and before publishing, not on every push.
+Because the verdict requires a person. CI can detect that a snapshot changed; it cannot rule on whether the change is an improvement or a regression, and that ruling *is* the measurement. Most legitimate changes are intended — a discard rule got sharper — so a gate on this would go red on improvements and need adjudicating every time. That is noise, not a gate.
+
+The 2.7 GB of clones is the secondary reason, and it is secondary on purpose: caching them would not touch the real objection.
+
+The full argument is in [ADR-0007](../../docs/adr/0007-the-corpus-does-not-run-in-ci.md), and the four moments at which to run this by hand are in [AGENTS.md](../../AGENTS.md) § Verification.
+
+What *does* run in CI is `test/corpus-bookkeeping.test.ts`: it clones nothing and checks the corpus's bookkeeping — every repo has its snapshot, no snapshot is an orphan, the validation group still meets ADR-0006 condition 8, and the totals `CLASSIFICATION.md` cites match the snapshots.

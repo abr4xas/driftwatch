@@ -1,6 +1,6 @@
 node_modules/
 dist/
 .DS_Store
-# Los clones son cache local; los snapshots si se commitean.
+# The clones are a local cache; the snapshots are committed.
 test/corpus/repos/
 *.tsbuildinfo

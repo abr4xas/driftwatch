@@ -75,7 +75,10 @@ src/
     sarif.ts
 test/
   fixtures/            complete synthetic repos, one per scenario
-  corpus/              cloned real repos (gitignored, see §Corpus)
+  corpus/              the real-repo corpus (see §Corpus)
+    repos/             shallow clones pinned to a commit (gitignored, local cache)
+    snapshots/         driftwatch's output per repo (committed)
+    CLASSIFICATION.md  every finding reviewed by hand, true or false positive
 ```
 
 ---
@@ -214,6 +217,8 @@ Minimum scenarios:
 A `scripts/corpus.ts` script clones a list of public repos with real `CLAUDE.md`/`AGENTS.md` files, runs driftwatch and **stores the output as a snapshot**. It is not claimed to be correct — it is claimed not to change without intent. Every change in the snapshot is reviewed by hand.
 
 It is the only way to measure false positives in practice.
+
+How it is run, what a snapshot claims and why the commits are pinned is in [test/corpus/README.md](../../test/corpus/README.md). It is a **local** gate, not a CI job, and the reason is in [ADR-0007](../adr/0007-the-corpus-does-not-run-in-ci.md): CI can detect that a snapshot changed but cannot rule on whether the change is an improvement.
 
 ### 3. Unit
 Only for the path extractor and the suggestion scoring. The rest is covered by fixtures.

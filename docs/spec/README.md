@@ -15,4 +15,6 @@ This directory is the project's **reference specification**. It is primary sourc
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Pipeline, data model, stack, testing strategy |
 | [ROADMAP.md](./ROADMAP.md) | Milestones M0–M6 with acceptance criteria |
 
+Two decision records sit outside this directory and are read alongside it: the ADRs in [docs/adr/](../adr/), and [test/corpus/README.md](../../test/corpus/README.md) — how the real-repo corpus is run, which is the project's only false positive measurement.
+
 The handoff for the agent doing the building lives at the repo root: [AGENTS.md](../../AGENTS.md).
