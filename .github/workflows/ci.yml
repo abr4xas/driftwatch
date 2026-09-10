@@ -19,21 +19,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ADR-0002: the floor is Node 24 (active LTS). 25 is current.
-        node: [24, 25]
+        # ADR-0002: the floor is Node 24 (active LTS until 2026-10-20).
+        # The upper end tracks *current*, which is 26 since 2026-05-05. Node 25
+        # reached end of life on 2026-06-01 and was removed from the matrix.
+        node: [24, 26]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # driftwatch uses `git ls-files` to build its index, so it needs a
           # real working tree, not just the commit.
           fetch-depth: 1
 
-      - uses: pnpm/action-setup@v4
+      # v6 is the first release that supports pnpm 11, which is what
+      # package.json pins in `packageManager`. Older majors do not put the
+      # binary on PATH, because pnpm 11 moved it to $PNPM_HOME/bin.
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
+          # Explicit: since setup-node v6, automatic caching only kicks in for
+          # npm, so naming pnpm here is what keeps the store cached.
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -52,7 +59,8 @@ jobs:
         run: node ./dist/cli.js --help
 
       # The tool run against its own repo: the first real test subject, and now
-      # blocking. The run is clean, so any path that breaks in AGENTS.md or in
-      # docs/ takes CI down.
+      # blocking. The run is clean, so any path that breaks in a discovered
+      # source takes CI down. Today that means AGENTS.md and nothing else:
+      # `docs/` is not an agent context file, so discovery does not reach it.
       - name: driftwatch on driftwatch
         run: node ./dist/cli.js
