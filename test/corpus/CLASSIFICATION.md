@@ -16,14 +16,14 @@ Validation group measurement: **18 repos, 32 sources, 3 findings, all 3 true.**
 | 3 | Median FP per repo = 0 | 0 (47 of 49 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `eve-template`) | **met** |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 47 of 49 = **95.9%**; validation **19 of 19 = 100%** | **met** |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 47 of 49 = **95.9%**; validation **18 of 18 = 100%** | **met** |
 | 7 | ≥ 1 true positive in validation | 3 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 49 repos, 18 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; **two replacements owed** | **met**, debt recorded |
 
 **All nine conditions are met.**
 
-That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **19**, and the two conditions that decide precision rest on **49 and 19 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
+That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **18**, and the two conditions that decide precision rest on **49 and 18 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
 **Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`. Round five's warning does not apply to either: that round's 100% was flattered by the failing repo leaving the group, and both of these leave **clean**, fixed rather than removed. Validation reads 100% with them or without them.
 
@@ -736,3 +736,11 @@ Three things follow.
 ### What this round says about the method
 
 The corpus caught a `fixable` false positive class **on its first run of a new check**, in repos whose snapshots had been green for four rounds. Nothing in the fixtures could have: we wrote them, and `pnpm vitest` is not a shape anybody invents while writing a test for their own parser. [ADR-0007](../../docs/adr/0007-the-corpus-does-not-run-in-ci.md) argues the corpus is a gate a person has to walk through; this round is the clearest evidence so far that the walk is the point.
+
+### A counting error in the record, corrected here
+
+Rounds nine, ten and eleven cite the validation group as **19 of 19**, and the criterion table above said the same. The group has held **18** repos — `holdout: true` appears 18 times in `scripts/corpus-repos.ts`, and the header of this document has said 18 throughout, which is the figure `corpus-bookkeeping.test.ts` pins.
+
+So it was a miscount, not a membership change, and it is corrected above rather than left standing. It changes no verdict: every validation repo produces zero false positives, so the percentage is 100% at either denominator. The historical rounds are left as written, because rewriting a measurement after the fact is worse than recording that its denominator was off by one.
+
+Worth noting where the hole was: the test reads the header sentence and the validation measurement line out of this prose, so those cannot drift, but the criterion table is not read by anything. The number that decides condition 6 was the one nobody was checking.
