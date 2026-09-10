@@ -31,8 +31,8 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 49: 30 calibration and 19 validation, and **one replacement is
- * owed** for `mattpocock/course-video-manager` (see its entry), which is what ADR-0006
+ * There are 49: 31 calibration and 18 validation, and **two replacements are
+ * owed**, for `course-video-manager` and `emdash` (see their entries), which is what ADR-0006
  * condition 8 requires.
  *
  * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
@@ -185,10 +185,15 @@ export const CORPUS: readonly CorpusRepo[] = [
    * files, several sources per repo — and, as always, the group was decided
    * before a single finding was looked at.
    */
-  // 28.6 KB of root `AGENTS.md`, the largest in the corpus, plus nested ones
-  // per package and per template. Four of those are byte-identical but in
-  // different directories, so they stay four sources.
-  { repo: 'emdash-cms/emdash', sha: '44114afd391ea0738bf95b4688d59513d2cb6347', holdout: true },
+  /**
+   * 28.6 KB of root `AGENTS.md`, the largest in the corpus, plus nested ones
+   * per package and per template.
+   *
+   * Moved out of the validation group on 2026-09-10: the symlink collapse in
+   * `discover.ts` was derived from its findings. Like
+   * `course-video-manager`, it leaves clean. One more replacement owed.
+   */
+  { repo: 'emdash-cms/emdash', sha: '44114afd391ea0738bf95b4688d59513d2cb6347' },
   /**
    * Ten skills under `.claude/skills/` plus a 5 KB `CLAUDE.md`.
    *

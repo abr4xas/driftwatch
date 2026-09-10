@@ -1,3 +1,4 @@
+import { lstatSync, realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { RepoIndex } from '../verify/repo-index.ts'
@@ -144,6 +145,100 @@ async function matchConfiguredSources(
   return [...matched]
 }
 
+/**
+ * Collapses sources that are **the same file on disk**, reached through a
+ * symlink.
+ *
+ * Real case (emdash-cms/emdash): `.claude/CLAUDE.md` is a symlink to
+ * `../AGENTS.md`, git mode `120000`. `readFile` follows it, so one stale claim
+ * was reported twice.
+ *
+ * This is not what `collapseDuplicates` does and it cannot be folded into it.
+ * That one merges byte-identical **copies within a directory**, and keys on
+ * the directory on purpose: `harehare/mq` ships the same 4112 bytes as
+ * `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`, and the one
+ * under `.github/` is a separate document that resolves its relative paths
+ * from a different place. A symlink has no such defence — there is one file,
+ * one `baseDir` that actually applies, and reporting it twice is noise.
+ *
+ * The real file wins over the link, rather than alphabetical order. In emdash
+ * `.claude/CLAUDE.md` sorts first, and naming the symlink as the source while
+ * the file it points at becomes the alias would be exactly backwards.
+ *
+ * Which one is the link is decided with `lstat` on the entry, **not** by
+ * comparing its path against its own realpath. Those differ whenever an
+ * ancestor directory is itself a symlink — `/tmp` on macOS is the case that
+ * caught it — and the comparison would then call every file a link.
+ *
+ * It only acts **across directories**. A symlink next to its target is
+ * already handled by `collapseDuplicates`, which merges them by content and
+ * prefers `AGENTS.md` alphabetically. Four corpus repos link `AGENTS.md` to a
+ * `CLAUDE.md` beside it, and an earlier version of this function changed which
+ * of the two was reported for no gain: same directory, same `baseDir`, nothing
+ * to correct. The cross-directory case is the one that matters, because there
+ * the two paths disagree about where relative paths resolve from.
+ */
+function dirOf(rel: string): string {
+  const slash = rel.lastIndexOf('/')
+  return slash === -1 ? '' : rel.slice(0, slash)
+}
+
+function isSymlink(absPath: string): boolean {
+  try {
+    return lstatSync(absPath).isSymbolicLink()
+  } catch {
+    return false
+  }
+}
+
+function collapseSymlinks(
+  entries: ReadonlyArray<{ path: string; kind: SourceKind; absPath: string }>,
+): Array<{ path: string; kind: SourceKind; absPath: string; aliases: string[] }> {
+  const byRealPath = new Map<
+    string,
+    { path: string; kind: SourceKind; absPath: string; aliases: string[] }
+  >()
+  const out: Array<{ path: string; kind: SourceKind; absPath: string; aliases: string[] }> = []
+
+  for (const entry of entries) {
+    let real: string
+    try {
+      real = realpathSync(entry.absPath)
+    } catch {
+      // A broken link, or a race with something deleting it. Left alone:
+      // whatever happens next is what would have happened before this rule.
+      out.push({ ...entry, aliases: [] })
+      continue
+    }
+
+    const first = byRealPath.get(real)
+    if (first === undefined) {
+      const copy = { ...entry, aliases: [] as string[] }
+      byRealPath.set(real, copy)
+      out.push(copy)
+      continue
+    }
+
+    // Same directory: leave it to `collapseDuplicates` and its documented
+    // preference for `AGENTS.md`.
+    if (dirOf(first.path) === dirOf(entry.path)) {
+      out.push({ ...entry, aliases: [] })
+      continue
+    }
+
+    // The link found first, the real file found second: swap them, so the
+    // source is the file and the alias is the link.
+    if (isSymlink(first.absPath) && !isSymlink(entry.absPath)) {
+      first.aliases.push(first.path)
+      Object.assign(first, { path: entry.path, kind: entry.kind, absPath: entry.absPath })
+      continue
+    }
+    first.aliases.push(entry.path)
+  }
+
+  return out
+}
+
 export async function discoverSources(
   index: RepoIndex,
   options: DiscoverOptions,
@@ -172,9 +267,12 @@ export async function discoverSources(
   // for a corpus snapshot to mean anything.
   matched.sort((a, b) => a.path.localeCompare(b.path))
 
+  const unique = collapseSymlinks(
+    matched.map((entry) => ({ ...entry, absPath: join(index.root, entry.path) })),
+  )
+
   const read = await Promise.all(
-    matched.map(async ({ path, kind }) => {
-      const absPath = join(index.root, path)
+    unique.map(async ({ path, kind, absPath, aliases }) => {
       const slash = path.lastIndexOf('/')
       return {
         path,
@@ -182,7 +280,7 @@ export async function discoverSources(
         kind,
         content: await readFile(absPath, 'utf8'),
         baseDir: slash === -1 ? '' : path.slice(0, slash),
-        aliases: [] as string[],
+        aliases,
       }
     }),
   )
@@ -210,7 +308,9 @@ function collapseDuplicates(sources: readonly Source[]): Source[] {
     const key = `${source.baseDir}\u0000${source.content}`
     const first = byContent.get(key)
     if (first === undefined) {
-      const copy = { ...source, aliases: [] as string[] }
+      // The aliases already collected by `collapseSymlinks` are carried, not
+      // reset: a source can be both a symlink target and have a copy.
+      const copy = { ...source, aliases: [...source.aliases] }
       byContent.set(key, copy)
       out.push(copy)
       continue

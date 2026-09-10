@@ -1,3 +1,6 @@
+import { execFileSync } from 'node:child_process'
+import { symlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { classifySource, discoverSources } from '../src/core/discover.ts'
 import { buildRepoIndex } from '../src/verify/repo-index.ts'
@@ -101,5 +104,37 @@ describe('discoverSources', () => {
     })
     const sources = await discoverSources(await buildRepoIndex(root), { paths: ['pack'] })
     expect(sources.map((s) => s.path)).toEqual(['pack/CLAUDE.md'])
+  })
+})
+
+describe('a symlinked source is the same file, not a second one', () => {
+  /**
+   * Real case (emdash-cms/emdash): `.claude/CLAUDE.md` is a symlink to
+   * `../AGENTS.md`, so one stale claim was reported twice.
+   */
+  function repoWithSymlink(): string {
+    const root = makeTempRepo({
+      files: { 'AGENTS.md': '# Agents\n\nThe entry point is `src/gone.ts`.\n' },
+      git: false,
+    })
+    symlinkSync('../AGENTS.md', join(root, '.claude', 'CLAUDE.md'))
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: root })
+    execFileSync('git', ['add', '-A'], { cwd: root })
+    return root
+  }
+
+  it('audits it once, with the link as an alias', async () => {
+    const root = repoWithSymlink()
+    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    expect(sources.map((source) => source.path)).toEqual(['AGENTS.md'])
+    expect(sources[0]?.aliases).toEqual(['.claude/CLAUDE.md'])
+  })
+
+  // `.claude/CLAUDE.md` sorts before `AGENTS.md`, so first-wins would name the
+  // link as the source and the real file as its alias, which is backwards.
+  it('the real file wins over the link, not alphabetical order', async () => {
+    const root = repoWithSymlink()
+    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    expect(sources[0]?.path).toBe('AGENTS.md')
   })
 })

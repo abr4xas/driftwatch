@@ -16,6 +16,9 @@ export type TempRepoOptions = {
  */
 export function makeTempRepo({ files, git = true }: TempRepoOptions): string {
   const root = mkdtempSync(join(tmpdir(), 'driftwatch-'))
+  // `.claude/` is created up front so a caller can drop a symlink into it
+  // before git sees the tree.
+  mkdirSync(join(root, '.claude'), { recursive: true })
   for (const [rel, content] of Object.entries(files)) {
     const abs = join(root, rel)
     mkdirSync(dirname(abs), { recursive: true })

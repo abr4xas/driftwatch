@@ -2,12 +2,12 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **49 public repos pinned to a commit, 16 findings.**
-Of the 49, **19 form the validation group**. One replacement is owed, for `mattpocock/course-video-manager`; unlike the moves in round five it leaves **clean**, so no number below depends on its departure.
+Corpus: **49 public repos pinned to a commit, 15 findings.**
+Of the 49, **18 form the validation group**. Two replacements are owed, for `mattpocock/course-video-manager` and `emdash-cms/emdash`; unlike the moves in round five both leave **clean**, so no number below depends on their departure.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **19 repos, 47 sources, 5 findings, all 5 true.**
+Validation group measurement: **18 repos, 32 sources, 3 findings, all 3 true.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
@@ -17,17 +17,17 @@ Validation group measurement: **19 repos, 47 sources, 5 findings, all 5 true.**
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum 1 (`spec-kit`, `eve-template`) | **met** |
 | 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 47 of 49 = **95.9%**; validation **19 of 19 = 100%** | **met** |
-| 7 | ≥ 1 true positive in validation | 5 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 49 repos, 19 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; **one replacement owed** | **met**, debt recorded |
+| 7 | ≥ 1 true positive in validation | 3 | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | 49 repos, 18 in validation | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; **two replacements owed** | **met**, debt recorded |
 
 **All nine conditions are met.**
 
 That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **19**, and the two conditions that decide precision rest on **49 and 19 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
-**One replacement validation repo is owed** for `mattpocock/course-video-manager`. Round five's warning does not apply to it: that round's 100% was flattered by the one failing repo leaving the group, and this one leaves **clean**, fixed rather than removed. Validation reads 19 of 19 either way.
+**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`. Round five's warning does not apply to either: that round's 100% was flattered by the failing repo leaving the group, and both of these leave **clean**, fixed rather than removed. Validation reads 100% with them or without them.
 
-What remains unfixed is recorded and small: two false positives, one a third-party convention kept by design and one **not reachable by any prose rule**, plus a duplicate report through a symlink that is noise rather than a wrong claim.
+What remains unfixed is two false positives: a third-party convention kept by design, and one **not reachable by any prose rule**.
 
 The old condition 6 (aggregate precision ≥ 80% over the validation group) was withdrawn on 2026-09-10 by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), after four rounds showed it could not be met by improving the tool. Aggregate precision is still reported here — **11 true of 14, 78.6%** — it just no longer decides anything.
 
@@ -49,7 +49,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **16 findings, 14 true and 2 false**, so 87.5% aggregate.
+The corpus produces **15 findings, 13 true and 2 false**, so 86.7% aggregate.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -57,7 +57,7 @@ The corpus produces **16 findings, 14 true and 2 false**, so 87.5% aggregate.
 | `tursodatabase/turso` | 3 | 3 | 0 | calibration |
 | `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | **validation** |
 | `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration (moved) |
-| `emdash-cms/emdash` | 2 | 2 | 0 | **validation** |
+| `emdash-cms/emdash` | 1 | 1 | 0 | calibration (moved) |
 | `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
 | `calcom/cal.com` | 1 | 1 | 0 | calibration |
 | `github/spec-kit` | 1 | 0 | 1 | calibration |
@@ -488,7 +488,27 @@ Round five's caution does not carry over. There, validation reached 100% partly 
 |---|---|---|
 | `github/spec-kit` | a third-party tool's convention directory | unresolved **by design**, since the first measurement |
 | `eve-template` `AGENTS.md:136` | a generated file described with no generation word | **not reachable by any prose rule**; knowing it requires reading `skill.ts` |
-| `emdash` `AGENTS.md:398` | real drift, reported twice through a symlinked `.claude/CLAUDE.md` | a **defect**, not a false positive: noise of the kind `collapseDuplicates` exists to prevent |
+| `emdash` `AGENTS.md:398` | real drift, reported twice through a symlinked `.claude/CLAUDE.md` | **fixed in round eight** |
+
+## Eighth round, 2026-09-10: the symlink, and a bug the corpus caught
+
+`emdash`'s single piece of drift was reported twice because `.claude/CLAUDE.md` is a symlink to `../AGENTS.md`. Fixed in discovery rather than in `collapseDuplicates`, because the two are not the same problem: that function merges byte-identical **copies within a directory** and keys on the directory on purpose, which `harehare/mq` confirmed. A symlink has no such defence — one file, one `baseDir` that actually applies.
+
+**Findings 16 → 15.** True positives go 14 → 13, and no detection was lost: those 14 covered 13 distinct drift events, and now 13 findings cover the same 13.
+
+### Two things went wrong on the way, and both were caught before the corpus
+
+**Comparing a path to its own realpath is not how you find a symlink.** The first version decided which entry was the link by testing `absPath === realpathSync(absPath)`. Those differ whenever an *ancestor* directory is a symlink — `/tmp` on macOS — so every file looked like a link. The unit test caught it immediately. In production it would have misfired on any repo living under a symlinked path.
+
+**And the corpus caught an unintended behaviour change.** The second version collapsed symlinks in *any* directory, and four repos changed which file they reported: `zod`, `git-mcp-server`, `sandcastle` and `rust-analyzer` all link `AGENTS.md` to a `CLAUDE.md` beside it, and promoting "the real file" flipped the reported source from `agents-md` to `claude-md`.
+
+That is a regression with no upside. Same directory means same `baseDir`, so there is nothing to correct, and `collapseDuplicates` already merges them with a documented preference for `AGENTS.md`. The rule now only acts **across directories**, which is the case where the two paths genuinely disagree about where relative paths resolve from. After the restriction, one snapshot changed instead of five.
+
+Neither mistake would have been visible from reading the diff of the change itself. The first needed a test, the second needed 49 real repositories.
+
+### The bill
+
+`emdash` moves to calibration under condition 9, so two replacements are now owed. Like `course-video-manager`, it leaves clean.
 
 ### The decision taken, 2026-09-10
 
@@ -506,7 +526,6 @@ The denominator moved from findings to repos for three reasons, set out in full 
 
 **What is next.** Every condition is met, so none of these blocks anything; they are the honest to-do list of a passing measurement.
 
-1. **One replacement validation repo**, owed for `course-video-manager`. The profile that produces findings: context files of 10 KB or more, ideally several sources per repo.
-2. **Do not follow a symlink to a file already audited.** `emdash`'s single piece of drift is reported twice because `.claude/CLAUDE.md` is a symlink to `../AGENTS.md`. A defect rather than a false positive, and it costs `emdash` under condition 9 when fixed.
-3. Bring ADR-0006's wording of condition 9 in line with what is actually applied — classifying a finding is free, deriving a rule from it is not — as set out above.
-4. Keep adding repos. Seven rounds have shown that the number moves when the corpus grows, and that is the only way this measurement stays honest. It has been wrong twice by being too small.
+1. **Two replacement validation repos**, owed for `course-video-manager` and `emdash`. The profile that produces findings: context files of 10 KB or more, ideally several sources per repo. The group is at 18 repos but only 3 findings, which is thin again — replacing them matters more for condition 7 than for condition 6.
+2. Bring ADR-0006's wording of condition 9 in line with what is actually applied — classifying a finding is free, deriving a rule from it is not — as set out above.
+3. Keep adding repos. Eight rounds have shown that the number moves when the corpus grows, and that is the only way this measurement stays honest. It has been wrong twice by being too small, and round eight showed the corpus catching a regression that no amount of reading the diff would have.

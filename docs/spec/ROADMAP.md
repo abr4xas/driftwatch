@@ -61,7 +61,9 @@ Condition 5 then failed on one repo, `mattpocock/course-video-manager`, with fiv
 
 **All nine conditions are met.** Corpus 47 of 49 = 95.9%, validation 19 of 19 = 100%, maximum 1 false positive in any repo, zero autofixable. That sentence was also true on 2026-09-09 and did not survive fifteen more repositories, so what matters is what changed: the corpus went from 34 repos to 49 and the validation group from 8 to 19, and the conditions now rest on those rather than on three findings from a single root cause.
 
-One replacement validation repo is owed for `course-video-manager`. Unlike the moves in round five it leaves **clean** — fixed rather than removed — so no figure depends on its departure. `CLASSIFICATION.md` has all seven rounds.
+An eighth round then fixed the last recorded defect: `emdash`'s drift was reported twice through a symlinked `.claude/CLAUDE.md`. Findings 16 to 15, with no detection lost — those 16 covered 15 distinct drift events and now 15 findings cover the same 15.
+
+Two replacement validation repos are owed, for `course-video-manager` and `emdash`. Unlike the moves in round five both leave **clean**, fixed rather than removed, so no figure depends on their departure. `CLASSIFICATION.md` has all eight rounds, including the two where a fix regressed something and the corpus caught it.
 
 This is the milestone that decides whether the project is worth it. Everything else is incremental.
 
