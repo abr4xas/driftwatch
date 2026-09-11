@@ -328,9 +328,11 @@ It is the only way to measure false positives in practice.
 How it is run, what a snapshot claims and why the commits are pinned is in [test/corpus/README.md](../../test/corpus/README.md). It is a **local** gate, not a CI job, and the reason is in [ADR-0007](../adr/0007-the-corpus-does-not-run-in-ci.md): CI can detect that a snapshot changed but cannot rule on whether the change is an improvement.
 
 ### 3. Unit
-For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, and the guards that narrow a claim's `fact`. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
+For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, the guards that narrow a claim's `fact`, and the prose gates. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
 
 The line is not "small enough to unit-test", it is **"wrong in a way a fixture would not localise"**. Three of these earned their place by catching something a fixture would only have reported as a missing finding somewhere: the symlink comparison in discovery, the canonical key's handling of duplicate headings, and a parse-error offset landing on a newline.
+
+The prose gates are the late addition and the reason is worth writing down. `proseGatesFor(content, origin)` is asked about an **offset**, and building one by hand is the awkward part — not reaching the module — so every assertion about the six gates went through `run()` over a temporary repo, and the module carrying the most false-positive risk in the project had no case of its own. `test/context-prose.test.ts` marks the claim with `‸` in the document and strips it, which makes a case read as the document it is about. The two regressions the module has had — a table row bleeding into the next one, and a sentence split on a newline — have a case each.
 
 ---
 
