@@ -100,7 +100,7 @@ async function audit(args: CliArgs, io: Io, cwd: string): Promise<ExitCode> {
   }
 
   const { applyFixes } = await import('../fix/session.ts')
-  const { after, outcome } = await applyFixes(result, options)
+  const { after, outcome } = await applyFixes(result, options, args.dryRun)
   render(after, outcome)
   return exitCodeFor(after.counts, args.strict)
 }

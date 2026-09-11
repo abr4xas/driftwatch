@@ -10,10 +10,21 @@ export type PrettyOptions = {
   fixes?: FixOutcome
 }
 
-/** What a `--fix` run applied, as the summary needs to say it. */
+/** One replacement, as the diff prints it. */
+export type FixEntry = {
+  file: string
+  line: number
+  before: string
+  after: string
+}
+
+/** What a `--fix` run applied, or would apply, as the report needs to say it. */
 export type FixOutcome = {
   applied: number
   files: number
+  /** `--dry-run`: nothing was written, and the wording says so. */
+  dryRun: boolean
+  entries: readonly FixEntry[]
 }
 
 /** SPEC.md § 5: the quoted fragment is truncated to 40 characters with '…'. */
@@ -87,9 +98,55 @@ function renderGroup(findings: readonly Finding[], c: Colors): string {
  * count of what was applied.
  */
 function fixLine(outcome: FixOutcome, c: Colors): string {
+  const where = count(outcome.files, 'file', 'files')
+  if (outcome.dryRun) {
+    if (outcome.applied === 0) return c.dim('nothing to fix\n')
+    return c.dim(`${count(outcome.applied, 'fix', 'fixes')} would apply in ${where}\n`)
+  }
   if (outcome.applied === 0) return c.dim('nothing applied\n')
-  const what = count(outcome.applied, 'fix', 'fixes')
-  return c.dim(`${what} applied in ${count(outcome.files, 'file', 'files')}\n`)
+  return c.dim(`${count(outcome.applied, 'fix', 'fixes')} applied in ${where}\n`)
+}
+
+/**
+ * The diff: one line per edit, grouped by file, in the order they appear in it.
+ *
+ * Summarized and not unified, because the three lines around a claim in an
+ * `AGENTS.md` carry no information. What a reader wants is where it lands and
+ * what it becomes.
+ *
+ * A dry run prints **no symbol**, and the header says `would fix`: a `✓` on a
+ * line describing something that has not happened is how somebody applies a fix
+ * twice. SPEC.md § 5 allows three symbols and this adds none.
+ */
+function renderFixes(outcome: FixOutcome, c: Colors): string {
+  if (outcome.entries.length === 0) return ''
+
+  const groups = new Map<string, FixEntry[]>()
+  for (const entry of outcome.entries) {
+    const existing = groups.get(entry.file)
+    if (existing === undefined) groups.set(entry.file, [entry])
+    else existing.push(entry)
+  }
+
+  const mark = outcome.dryRun ? ' ' : c.green('✓')
+  const body = [...groups]
+    .map(([file, entries]) => {
+      const lineWidth = Math.max(...entries.map((entry) => String(entry.line).length))
+      // The same column discipline the findings use: the arrows line up, so
+      // the eye reads down the replacements rather than hunting for them.
+      const textWidth = Math.max(...entries.map((entry) => truncate(entry.before).length))
+      const rows = entries
+        .map((entry) => {
+          const line = String(entry.line).padStart(lineWidth)
+          const before = truncate(entry.before).padEnd(textWidth)
+          return `  ${mark} ${line}  ${before}  ${c.dim('→')}  ${truncate(entry.after)}\n`
+        })
+        .join('')
+      return `${c.bold(file)}\n${rows}`
+    })
+    .join('')
+
+  return `${c.dim(outcome.dryRun ? 'would fix' : 'fixed')}\n${body}\n`
 }
 
 function summary(result: RunResult, c: Colors, fixes: FixOutcome | undefined): string {
@@ -115,5 +172,7 @@ export function renderPretty(result: RunResult, options: PrettyOptions): string 
   const body = [...groupByFile(result.findings)]
     .map(([, findings]) => renderGroup(findings, c))
     .join('')
-  return options.quiet ? body : `${body}${summary(result, c, options.fixes)}`
+  if (options.quiet) return body
+  const fixes = options.fixes === undefined ? '' : renderFixes(options.fixes, c)
+  return `${body}${fixes}${summary(result, c, options.fixes)}`
 }

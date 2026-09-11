@@ -42,6 +42,7 @@ describe('main', () => {
     const help = c.stdout()
     for (const flag of [
       '--fix',
+      '--dry-run',
       '--json',
       '--format',
       '--only',
@@ -191,6 +192,31 @@ describe('main', () => {
     const fixed = 'The entry point is `src/helpers/date.ts`.\n'
     expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toBe(fixed)
     expect(readFileSync(join(root, 'CLAUDE.md'), 'utf8')).toBe(fixed)
+  })
+
+  it('--fix --dry-run says what it would change and writes nothing', async () => {
+    const root = makeTempRepo({
+      files: {
+        'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    const before = readFileSync(join(root, 'AGENTS.md'), 'utf8')
+    const c = capture()
+    // The finding is still there, because nothing was fixed: exit 1.
+    await expect(main(['--fix', '--dry-run'], c.io, root)).resolves.toBe(EXIT.findings)
+    // On bytes, not on mtime: the file must be untouched, not merely unchanged.
+    expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toBe(before)
+    expect(c.stdout()).toContain('would fix')
+    expect(c.stdout()).toContain('src/util/date.ts')
+    expect(c.stdout()).toContain('src/helpers/date.ts')
+    expect(c.stdout()).toContain('1 fix would apply in 1 file')
+  })
+
+  it('--dry-run without --fix is a user error, not a silent no-op', async () => {
+    const c = capture()
+    await expect(main(['--dry-run'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain('--dry-run only means something with --fix')
   })
 
   it('there are no emojis in any output', async () => {

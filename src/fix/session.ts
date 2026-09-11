@@ -5,10 +5,25 @@
  * interesting decision, and a decision buried in a branch of the CLI is one
  * nobody reads before changing it.
  */
-import type { FixOutcome } from '../report/pretty.ts'
+import type { FixEntry, FixOutcome } from '../report/pretty.ts'
 import { run, type RunOptions, type RunResult } from '../run.ts'
-import { planFixes } from './apply.ts'
+import { planFixes, type FixPlan } from './apply.ts'
 import { writePlans } from './write.ts'
+
+/**
+ * One line of the diff per edit: where it lands and what it replaces.
+ *
+ * It is built here and not in the reporter because only the plan knows which
+ * finding each edit came from, and the line number is the finding's.
+ */
+function entriesOf(plan: FixPlan): FixEntry[] {
+  return plan.edits.map((edit, i) => ({
+    file: plan.source.path,
+    line: plan.findings[i]?.claim.range.line ?? 0,
+    before: plan.source.content.slice(edit.range[0], edit.range[1]),
+    after: edit.replacement,
+  }))
+}
 
 export type FixSession = {
   /** The state the exit code and the report come from. */
@@ -30,13 +45,29 @@ export type FixSession = {
  * written means nothing changed, so that case keeps the first run and pays
  * nothing.
  */
-export async function applyFixes(result: RunResult, options: RunOptions): Promise<FixSession> {
+export async function applyFixes(
+  result: RunResult,
+  options: RunOptions,
+  dryRun: boolean,
+): Promise<FixSession> {
   const { plans } = planFixes(result.findings)
+  const entries = plans.flatMap((plan) => entriesOf(plan))
+
+  /**
+   * A dry run stops here, before the only irreversible step. It also keeps the
+   * first run's findings: re-running would report the same ones, since nothing
+   * changed, and paying for a second pass to prove it is waste.
+   */
+  if (dryRun) {
+    const applied = plans.reduce((total, plan) => total + plan.edits.length, 0)
+    return { after: result, outcome: { applied, files: plans.length, dryRun, entries } }
+  }
+
   const writes = await writePlans(result.root, plans)
   const applied = writes.reduce((total, write) => total + write.plan.edits.length, 0)
 
   return {
     after: writes.length === 0 ? result : await run(options),
-    outcome: { applied, files: writes.length },
+    outcome: { applied, files: writes.length, dryRun, entries },
   }
 }

@@ -128,6 +128,7 @@ driftwatch [paths...] [options]
 
 Options
   --fix                  Apply the unambiguous fixes
+  --dry-run              With --fix, show what it would change without writing
   --json                 JSON output on stdout (see §6)
   --format <fmt>         pretty | json | github | sarif   (default: pretty)
   --only <ids>           Only these checks (comma-separated, accepts a prefix: --only path)
