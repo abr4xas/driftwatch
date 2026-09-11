@@ -12,6 +12,17 @@ AGENTS.md
 
 1 file · 2 problems (2 errors) · 59ms
 1 fixable with --fix
+
+$ driftwatch --fix
+AGENTS.md
+  ✗ 5  src/cli.ts  path does not exist
+
+fixed
+AGENTS.md
+  ✓ 3  src/util/date.ts  →  src/helpers/date.ts
+
+1 file · 1 problem (1 error) · 61ms
+1 fix applied in 1 file
 ```
 
 ## Install
@@ -51,6 +62,48 @@ The five tier 1 checks:
 
 `path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of 66 real repositories before anything else was allowed to land. The other four are additive, and each was measured over that same corpus on arrival.
 
+## Fixing what it finds
+
+`--fix` applies the corrections that are not a guess, and `--fix --dry-run` shows you the same diff without touching anything.
+
+```bash
+driftwatch --fix --dry-run    # what it would change
+driftwatch --fix              # change it
+```
+
+Three things are autofixable, and only when there is **exactly one** candidate above 0.8 confidence:
+
+| Check | What gets rewritten |
+|---|---|
+| `path/missing` | the path, when one file in the repo has that name and sits somewhere close to where the document says |
+| `script/missing` | the command, when one script in the nearest manifest is within two edits of the one written |
+| `skill/frontmatter` | a `SKILL.md`'s `name`, to the directory it lives in — withheld when that directory name is not itself kebab-case |
+
+A broken anchor and a mistyped frontmatter value are **never** rewritten. Both were held back deliberately and the reasoning is in [round 17 of the classification](./test/corpus/CLASSIFICATION.md): where the correction is obvious the tool already accepts the line and reports nothing, so what is left to report is a real typo whose target would be a guess.
+
+### What a fix never does
+
+It replaces the claim and nothing around it. A `./` prefix, a `#anchor`, a `:42` line reference and the backticks all survive, because they are outside the range rather than re-applied after it. Line endings, a missing trailing newline and the alignment of a table survive for the same reason: nothing outside the replaced bytes is looked at, let alone rewritten.
+
+It **refuses to rewrite a relative path in a document that is not at the repo root.** Such a document writes half its paths against its own directory and half against the repo root, with no syntactic signal separating them — reporting can accept both readings, because that only costs detections, but writing cannot, because picking one rewrites the path into the other. You still get the finding and the suggestion; you apply it yourself.
+
+It does not touch the file when there is nothing to apply — not even to identical bytes, which would make every watcher in your editor fire. Two fixes that would land on the same fragment cancel each other out rather than one winning. And a byte-identical `CLAUDE.md` beside your `AGENTS.md` is fixed too, so the two stay copies.
+
+### It tells you when there is no way back
+
+If a file it is about to edit has uncommitted changes, it says so before editing it, and edits it anyway:
+
+```console
+$ driftwatch --fix
+driftwatch: uncommitted changes in AGENTS.md
+```
+
+`git checkout -- .` is the one real way back from a fix you did not want, and it is only there if the file was clean. This is not a git tool: it does not stage, commit, refuse, or offer to stash.
+
+### Afterwards
+
+The exit code reflects what **remains** after fixing, which is measured by running the whole audit again rather than by subtracting what was applied. So running `--fix` twice is a no-op: the second run finds nothing to fix and writes nothing.
+
 ## The rule that shapes everything
 
 **One false positive costs more than ten false negatives.**
@@ -80,13 +133,15 @@ Measured over **66 public repositories** pinned to a commit — `next.js`, `lang
 - **61 of the 66 repos produce no false positive at all** — 92.4%. Over the validation group alone, 90.6%.
 - **No repo sees more than 2**, and **the one autofixable finding is correct.**
 
+That last number is the one to read sceptically, and the project reads it that way: across all 66 repositories `--fix` would apply **one** edit. It was checked by hand at the level of the edit and not only of the finding — the document is one directory out of date and the rewrite is the one a maintainer would have made — but a floor met on a sample of one is proven once and unproven at scale. More repositories is the only thing that moves it.
+
 Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one. It carries 12 of the 26 findings.
 
 The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone, with **no single repo above 2** and **no autofixable false positive at all**. All three hold — two of them were broken four rounds ago and the repair is written up finding by finding in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md), along with the five false positives still open and what closing each would cost.
 
 Two bars rather than one aggregate, because they measure different things: how many users would see noise at all, and how bad it gets for the unlucky one. A single ratio hides both — and the aggregate ratio *was* the criterion until growing the validation group took it from 100% to 37.5% with nothing regressing in the code, because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it.
 
-**Sixteen rounds of measurement, every finding classified by hand**, are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) — including the four rounds where a condition broke, and the two where the corpus caught a regression that reading the diff would not have ([ADR-0007](./docs/adr/0007-the-corpus-does-not-run-in-ci.md)).
+**Seventeen rounds of measurement, every finding classified by hand**, are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) — including the four rounds where a condition broke, and the two where the corpus caught a regression that reading the diff would not have ([ADR-0007](./docs/adr/0007-the-corpus-does-not-run-in-ci.md)).
 
 ## What it reads
 
@@ -106,15 +161,15 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 - **Deterministic and offline.** No network, no API key, no LLM. The same repo gives the same output, which is what makes a snapshot diff meaningful. Putting a model on the main path is [out of scope by design](./docs/spec/ROADMAP.md), not unimplemented.
 - **Fast enough to not think about.** Cold start under 80 ms, end to end under 500 ms on a 5,000-file repo. That budget is the reason there is no `typescript` or `esbuild` on the main path.
-- **An autofix never guesses.** `--fix` applies only when there is a single candidate above 0.8 confidence. A wrong fix is not noise, it is a document that now points confidently at the wrong file, and the next agent will believe it.
+- **An autofix never guesses.** `--fix` applies only when there is a single candidate above 0.8 confidence, it replaces the claim and nothing around it — a `./` prefix, a `#anchor` and a `:42` line reference all survive — and it refuses outright to rewrite a relative path in a document that is not at the repo root, because such a document writes half its paths from its own directory and half from the root. A wrong fix is not noise, it is a document that now points confidently at the wrong file, and the next agent will believe it.
 
 ## Status
 
-**`0.1.0` is on npm, and it is early.** M0, M1 and **M2 are done** — M2 closed on 2026-09-10 with the five tier 1 checks, the config file, check selection and the inline ignore directives, and with all nine of the precision conditions met over 66 repositories. M3 is `--fix`.
+**`0.1.1` is on npm, and it is early.** M0, M1, M2 and **M3 are done** — M3 closed on 2026-09-11 with `--fix`, `--fix --dry-run` and the diff. M4 is what turns a tool that works into a project someone adopts: the GIF, the `--json` / `--github` / `--sarif` formats, and the GitHub Action.
 
-Early means the checks are what is finished, not the surroundings: the output is `pretty` and nothing else yet, and `--fix` reports what it *would* fix without being able to apply it.
+Early means the checks and the fixes are what is finished, not the surroundings: the output is `pretty` and nothing else yet.
 
-Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
+Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, **`--fix` and `--fix --dry-run`**, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
 
 A selection that leaves no check enabled is refused rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
@@ -139,6 +194,8 @@ node ./dist/cli.js [paths...]
 | `0` | no errors |
 | `1` | at least one error was found |
 | `2` | the tool itself failed |
+
+With `--fix`, the code describes what is left **after** fixing: a repo whose only error was autofixable exits `0`.
 
 ## Repository layout
 

@@ -77,6 +77,85 @@ describe('renderPretty', () => {
     expect(out).not.toContain('warning')
   })
 
+  it('a fix run replaces the "fixable with --fix" line with what happened', () => {
+    const out = renderPretty(result({ counts: { errors: 0, warnings: 0 }, fixable: 1 }), {
+      ...plain,
+      fixes: { applied: 1, files: 1, dryRun: false, entries: [] },
+    })
+    expect(out).toContain('1 fix applied in 1 file')
+    // Telling somebody who has just run --fix that something is fixable with
+    // --fix is the output saying it did not do what it was asked.
+    expect(out).not.toContain('with --fix')
+  })
+
+  it('a fix run that applied nothing says so', () => {
+    const out = renderPretty(result({ fixable: 1 }), {
+      ...plain,
+      fixes: { applied: 0, files: 0, dryRun: false, entries: [] },
+    })
+    expect(out).toContain('nothing applied')
+  })
+
+  it('a dry run is worded in the conditional, everywhere', () => {
+    const out = renderPretty(result({ counts: { errors: 1, warnings: 0 } }), {
+      ...plain,
+      fixes: {
+        applied: 1,
+        files: 1,
+        dryRun: true,
+        entries: [{ file: 'AGENTS.md', line: 3, before: 'src/old.ts', after: 'src/new.ts' }],
+      },
+    })
+    expect(out).toContain('would fix')
+    expect(out).toContain('1 fix would apply in 1 file')
+    // A `✓` on a line describing something that has not happened is how
+    // somebody applies a fix twice.
+    expect(out).not.toContain('✓')
+  })
+
+  it('the diff names the file, the line, and both sides of the replacement', () => {
+    const out = renderPretty(result({ counts: { errors: 1, warnings: 0 } }), {
+      ...plain,
+      fixes: {
+        applied: 2,
+        files: 1,
+        dryRun: false,
+        entries: [
+          { file: 'AGENTS.md', line: 3, before: 'src/old.ts', after: 'src/new.ts' },
+          { file: 'AGENTS.md', line: 12, before: 'pnpm run biuld', after: 'pnpm run build' },
+        ],
+      },
+    })
+    expect(out).toContain('fixed\nAGENTS.md\n')
+    expect(out).toContain('✓  3  src/old.ts      →  src/new.ts')
+    expect(out).toContain('✓ 12  pnpm run biuld  →  pnpm run build')
+  })
+
+  it('--quiet suppresses the diff with the summary', () => {
+    const out = renderPretty(result(), {
+      color: false,
+      quiet: true,
+      fixes: {
+        applied: 1,
+        files: 1,
+        dryRun: false,
+        entries: [{ file: 'AGENTS.md', line: 3, before: 'a/b.ts', after: 'c/d.ts' }],
+      },
+    })
+    expect(out).not.toContain('fixed')
+  })
+
+  it('the diff carries color when color is on, and none when it is off', () => {
+    const fixes = {
+      applied: 1,
+      files: 1,
+      dryRun: false,
+      entries: [{ file: 'AGENTS.md', line: 3, before: 'a/b.ts', after: 'c/d.ts' }],
+    }
+    expect(renderPretty(result(), { ...plain, color: true, fixes })).toContain(ESC)
+    expect(renderPretty(result(), { ...plain, fixes })).not.toContain(ESC)
+  })
+
   it('--quiet suppresses the summary', () => {
     expect(renderPretty(result(), { color: false, quiet: true })).not.toContain('no drift')
   })

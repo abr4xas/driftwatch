@@ -165,7 +165,7 @@ describe('extractFrontmatterClaims', () => {
   it('an empty value is still claimed, because another check reads it', () => {
     const claims = claimsOf(block('name: deploy', 'description:'))
     expect(claims.map((claim) => claim.text)).toEqual(['name', 'description'])
-    expect(frontmatterFactOf(claims[1]!)).toEqual({
+    expect(frontmatterFactOf(claims[1]!)).toMatchObject({
       subject: 'key',
       key: 'description',
       type: 'empty',
@@ -184,16 +184,26 @@ describe('extractFrontmatterClaims', () => {
       key: 'tools',
       type: 'list',
       scalar: undefined,
+      // No value span: a list is not a token, and no autofix targets one.
     })
   })
 
   it('the string value travels with the fact, which is what keeps a `yes` a boolean', () => {
     const claims = claimsOf(block('alwaysApply: yes'), 'cursor-rule')
-    expect(frontmatterFactOf(claims[0]!)).toEqual({
+    expect(frontmatterFactOf(claims[0]!)).toMatchObject({
       subject: 'key',
       key: 'alwaysApply',
       type: 'string',
       scalar: 'yes',
     })
+  })
+
+  it('the value span travels with it too, because the claim covers the key', () => {
+    const content = block('name: deploy')
+    const fact = frontmatterFactOf(claimsOf(content)[0]!)
+    const span = fact?.subject === 'key' ? fact.valueOffset : undefined
+    // The claim quotes `name` and an autofix rewrites `deploy`. Both spans are
+    // needed and they are not the same one.
+    expect(content.slice(span![0], span![1])).toBe('deploy')
   })
 })

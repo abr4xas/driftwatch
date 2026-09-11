@@ -29,6 +29,16 @@ export type FrontmatterField = {
 export type FrontmatterKey = FrontmatterField & {
   /** Absolute offsets of the **key** token, which is what a finding quotes. */
   offset: [number, number]
+  /**
+   * Absolute offsets of the **value** token, when the value is a scalar.
+   *
+   * A finding quotes the key and `--fix` replaces the value, so the two spans
+   * are both needed and are not the same one. Without this, correcting a
+   * `SKILL.md`'s `name` to its directory writes over the key and produces
+   * `my-skill: wrong-thing`. `undefined` for a mapping or a list, which no
+   * autofix targets.
+   */
+  valueOffset: [number, number] | undefined
 }
 
 export type Frontmatter = {
@@ -103,10 +113,18 @@ function collectKeys(contents: unknown, start: number): FrontmatterKey[] {
     const type = typeOf(item.value)
     if (type === undefined) continue
     const scalar: unknown = isScalar(item.value) ? item.value.value : undefined
+    // `range[1]` and not `range[2]`: the third bound runs to the end of the
+    // node, trailing comment and newline included, and replacing that span
+    // would delete whatever the author wrote after the value.
+    const valueRange = isScalar(item.value) ? item.value.range : undefined
     keys.push({
       key: key.value,
       type,
       offset: [start + range[0], start + range[1]],
+      valueOffset:
+        valueRange === null || valueRange === undefined
+          ? undefined
+          : [start + valueRange[0], start + valueRange[1]],
       scalar: typeof scalar === 'string' ? scalar : undefined,
     })
   }

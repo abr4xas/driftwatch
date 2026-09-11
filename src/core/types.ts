@@ -113,6 +113,15 @@ export type FrontmatterFact =
       type: FrontmatterType
       /** The value when it is a string. Reading it is how a `yes` stays a boolean. */
       scalar: string | undefined
+      /**
+       * Where the value token sits in the file, when the value is a scalar.
+       *
+       * The claim's own `offset` covers the **key**, because that is what a
+       * finding quotes. An autofix on this claim replaces the value, and the
+       * two spans are not the same one: `fix/range.ts` reads this and nothing
+       * else. Absent for a mapping or a list, which no autofix targets.
+       */
+      valueOffset?: [number, number]
     }
 
 /** What a `SKILL.md`'s frontmatter block asserts by existing, or by not. */

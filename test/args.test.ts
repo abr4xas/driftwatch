@@ -55,6 +55,17 @@ describe('parseCliArgs', () => {
   })
 
   it('does not accept flags that are not in SPEC.md § 4', () => {
+    // It used to be `--dry-run`, which SPEC § 8 specified and § 4's list did
+    // not. Ticket `04` of M3 closed that gap, and the flag became real: this
+    // test kept passing for the wrong reason, because a known flag can throw
+    // too. Its example has to be a flag nobody plans to add.
+    expect(() => parseCliArgs(['--rewrite-everything'])).toThrow(UserError)
+  })
+
+  it('--dry-run parses, and only together with --fix', () => {
+    expect(parseCliArgs(['--fix', '--dry-run']).dryRun).toBe(true)
+    expect(parseCliArgs(['--fix']).dryRun).toBe(false)
+    // There is nothing else in the tool a dry run could be dry about.
     expect(() => parseCliArgs(['--dry-run'])).toThrow(UserError)
   })
 

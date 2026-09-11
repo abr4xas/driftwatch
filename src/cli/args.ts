@@ -12,6 +12,8 @@ export type CliArgs = {
   paths: string[]
   format: Format
   fix: boolean
+  /** `--dry-run`: with `--fix`, show what it would change and write nothing. */
+  dryRun: boolean
   strict: boolean
   quiet: boolean
   watch: boolean
@@ -32,6 +34,7 @@ export type BooleanFlag = {
 
 const OPTIONS = {
   fix: { type: 'boolean' },
+  'dry-run': { type: 'boolean' },
   json: { type: 'boolean' },
   format: { type: 'string' },
   only: { type: 'string' },
@@ -107,10 +110,21 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
     throw new UserError('--config and --no-config contradict each other', 'pick one of the two')
   }
 
+  // There is nothing else in the tool a dry run could be dry about. Accepting
+  // it alone would mean a flag that silently does nothing, which is the shape
+  // `notYetImplemented` exists to refuse.
+  if (values['dry-run'] === true && values.fix !== true) {
+    throw new UserError(
+      '--dry-run only means something with --fix',
+      'run driftwatch --fix --dry-run',
+    )
+  }
+
   return {
     paths: positionals,
     format: resolveFormat(values),
     fix: values.fix === true,
+    dryRun: values['dry-run'] === true,
     strict: values.strict === true,
     quiet: values.quiet === true,
     watch: values.watch === true,
