@@ -4,7 +4,7 @@
 
 **Blocked by:** `01`
 
-**Status:** ready-for-agent
+**Status:** done
 
 `docs/spec/ROADMAP.md` § M3 names the file: `fix/apply.ts`, "editing by offset ranges, preserving formatting".
 
@@ -39,3 +39,25 @@ The edits are a handful of single-line replacements whose ranges and replacement
 
 - Writing to disk, the CLI flag, the diff, the exit code. All of `03`.
 - Deciding ranges (`01`).
+
+## Comments
+
+Closed. 16 tests in `test/fix-apply.test.ts`, 474 in the suite. No dependency added; the module is 60 lines of `slice` and a fold.
+
+### The plan carries its findings, and its refusals
+
+`planFixes` returns `{ plans, refusals }` rather than plans alone. The refusals are what tickets `03` and `04` need to tell a user "this was reported as fixable and was not applied" instead of quietly showing one number where the summary promised another. Four reasons, one per rule: `no-edit`, `overlaps`, `no-op`, `out-of-bounds`.
+
+Each plan also carries the findings its edits came from, in the same order, because the diff is per edit and has to name the check that produced it.
+
+### `out-of-bounds` is a second layer, and the test says so
+
+The ticket asked for it and it is there, but nothing reaches it through the normal path: `fix/range.ts` already compares the bytes at the range with the fragment the claim recorded, so a range past the end fails there first and is refused as `no-edit`. The test asserts the outcome that actually happens and explains the layering, rather than asserting the reason the ticket predicted.
+
+### Slicing forward, not splicing in reverse
+
+The ticket offered both and said the second reads better. It does, and it has a second property worth the comment in the code: it never mutates a string it has already produced, so a wrong offset shows up as wrong output rather than as a *later* edit landing in the wrong place.
+
+### Formatting is preserved by absence
+
+CRLF endings, a missing trailing newline and trailing whitespace all have a test, and all three pass for the same reason: nothing looks at them. The multi-byte test passes because offsets are UTF-16 code units on both sides, as mdast's are; it is there to catch the day something starts counting bytes.
