@@ -121,13 +121,23 @@ Three decisions worth carrying forward:
 What turns a tool that works into a project someone adopts.
 
 - README with a ≤15 s GIF at the very top, before any text
-- `--json`, `--github`, `--sarif` formats
+- `--json`, `--github`, `--sarif` formats — **done 2026-09-11**
 - Published GitHub Action (`driftwatch/action@v1`)
 - One-page static site with the demo and the GIF
 - Published to npm with provenance (`npm publish --provenance`) — **a state, not a schedule.** § "Suggested release order" puts the first publish at M2's close, and `.github/workflows/release.yml` already publishes with provenance, so M4 inherits this rather than waiting for it. What M4 adds is the audience, not the package.
 - MIT license (done: `LICENSE`)
 
 **Acceptance:** someone who has never seen the project understands what it does in under 15 seconds, looking only at the README.
+
+**First batch closed 2026-09-11: the three formats, and the documentation split.** Taken before the GIF, the site and the Action deliberately — three of the four remaining deliverables are about *showing* the tool, and a GIF of a `pretty` reporter shows what already existed. The Action in particular was unwritable until `github` and `sarif` existed: without them it pipes a terminal report into a log nobody expands.
+
+`--json` is the stable contract of § 6, with two additions § 6 now documents: `endLine`, without which `endColumn` is ambiguous across a line break, and the fix plan M3 deferred to this milestone. The plan is asymmetric — a per-finding byte range only under `--fix --dry-run`, because after a real fix the findings come from a second run over files that were already rewritten. `--format github` emits annotations and nothing else; `--format sarif` carries `rules[]` built from the checks' own descriptions, which is the half that makes an alert readable a month later.
+
+**The README went from 213 lines to 82**, and nothing was deleted: `docs/guide/` now holds the checks, the flags, the fixes, the formats and the precision argument, in five documents. `docs/spec/`, `docs/adr/` and `docs/agents/` did not move — they are primary source and a different audience. `test/docs-links.test.ts` keeps the split from rotting, and the `link/broken` run over the repo's own documents **stopped being vacuous**: M2 added it noting that no document here wrote an anchor link, and the guide is the day somebody did.
+
+The corpus was re-run and is green at 66 repos with no snapshot moved — 26 findings, 20 true. A batch about output formats that moved a detection would have been a batch with a bug in it.
+
+**Still open in M4:** the GIF, the one-page site, and the published Action. Plus the acceptance criterion itself, which nobody who has read this repository can certify.
 
 ---
 
