@@ -5,7 +5,7 @@
  * interesting decision, and a decision buried in a branch of the CLI is one
  * nobody reads before changing it.
  */
-import type { FixEntry, FixOutcome } from '../report/pretty.ts'
+import type { FixEntry, FixOutcome } from '../report/types.ts'
 import { run, type RunOptions, type RunResult } from '../run.ts'
 import { gitDirtyPaths } from '../verify/git.ts'
 import { planFixes, type FixPlan } from './apply.ts'
@@ -18,12 +18,23 @@ import { writePlans } from './write.ts'
  * finding each edit came from, and the line number is the finding's.
  */
 function entriesOf(plan: FixPlan): FixEntry[] {
-  return plan.edits.map((edit, i) => ({
-    file: plan.source.path,
-    line: plan.findings[i]?.claim.range.line ?? 0,
-    before: plan.source.content.slice(edit.range[0], edit.range[1]),
-    after: edit.replacement,
-  }))
+  return plan.edits.flatMap((edit, i) => {
+    const finding = plan.findings[i]
+    // The pairing is the contract `planFixes` keeps; an entry without its
+    // finding would be an edit no format could attribute, so drop it rather
+    // than report one with a fabricated line number.
+    if (finding === undefined) return []
+    return [
+      {
+        file: plan.source.path,
+        line: finding.claim.range.line,
+        before: plan.source.content.slice(edit.range[0], edit.range[1]),
+        after: edit.replacement,
+        range: edit.range,
+        finding,
+      },
+    ]
+  })
 }
 
 export type FixSessionOptions = {

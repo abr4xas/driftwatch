@@ -3,6 +3,7 @@ import { colorEnabled } from '../src/report/colors.ts'
 import { renderPretty } from '../src/report/pretty.ts'
 import type { RunResult } from '../src/run.ts'
 import type { Claim, Finding, Source } from '../src/core/types.ts'
+import type { FixEntry } from '../src/report/types.ts'
 
 /** The ANSI escape character, to detect color without writing it literally. */
 const ESC = '['
@@ -32,6 +33,21 @@ function finding(file: string, line: number, text: string): Finding {
   }
 }
 
+/**
+ * A diff entry. The range and the finding are what the JSON and SARIF reporters
+ * read; `pretty` ignores both, and these tests exist to keep it that way.
+ */
+function entry(file: string, line: number, before: string, after: string): FixEntry {
+  return {
+    file,
+    line,
+    before,
+    after,
+    range: [0, before.length],
+    finding: finding(file, line, before),
+  }
+}
+
 function result(over: Partial<RunResult> = {}): RunResult {
   return {
     root: '/repo',
@@ -39,6 +55,7 @@ function result(over: Partial<RunResult> = {}): RunResult {
     configPath: undefined,
     sources: [source('CLAUDE.md')],
     checks: ['path/missing'],
+    claims: 0,
     findings: [],
     counts: { errors: 0, warnings: 0 },
     fixable: 0,
@@ -103,7 +120,7 @@ describe('renderPretty', () => {
         applied: 1,
         files: 1,
         dryRun: true,
-        entries: [{ file: 'AGENTS.md', line: 3, before: 'src/old.ts', after: 'src/new.ts' }],
+        entries: [entry('AGENTS.md', 3, 'src/old.ts', 'src/new.ts')],
       },
     })
     expect(out).toContain('would fix')
@@ -121,8 +138,8 @@ describe('renderPretty', () => {
         files: 1,
         dryRun: false,
         entries: [
-          { file: 'AGENTS.md', line: 3, before: 'src/old.ts', after: 'src/new.ts' },
-          { file: 'AGENTS.md', line: 12, before: 'pnpm run biuld', after: 'pnpm run build' },
+          entry('AGENTS.md', 3, 'src/old.ts', 'src/new.ts'),
+          entry('AGENTS.md', 12, 'pnpm run biuld', 'pnpm run build'),
         ],
       },
     })
@@ -139,7 +156,7 @@ describe('renderPretty', () => {
         applied: 1,
         files: 1,
         dryRun: false,
-        entries: [{ file: 'AGENTS.md', line: 3, before: 'a/b.ts', after: 'c/d.ts' }],
+        entries: [entry('AGENTS.md', 3, 'a/b.ts', 'c/d.ts')],
       },
     })
     expect(out).not.toContain('fixed')
@@ -150,7 +167,7 @@ describe('renderPretty', () => {
       applied: 1,
       files: 1,
       dryRun: false,
-      entries: [{ file: 'AGENTS.md', line: 3, before: 'a/b.ts', after: 'c/d.ts' }],
+      entries: [entry('AGENTS.md', 3, 'a/b.ts', 'c/d.ts')],
     }
     expect(renderPretty(result(), { ...plain, color: true, fixes })).toContain(ESC)
     expect(renderPretty(result(), { ...plain, fixes })).not.toContain(ESC)
