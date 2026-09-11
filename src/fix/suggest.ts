@@ -128,7 +128,12 @@ function nearestUnique(candidates: readonly string[], to: string): string | unde
  * canonical key and never reported. What is left to report is a real typo, and
  * choosing its target is a guess. `SPEC.md` § 8 lists `link/broken` as
  * autofixable "with a single candidate target"; that is the *file* half, which
- * this check does not claim.
+ * this check does not claim and `path/missing` does.
+ *
+ * M3 revisited this with the corpus in hand, as it said it would. The corpus
+ * holds no `link/broken` finding at all, so it offers no evidence either way —
+ * and the argument above never rested on it: it rests on the shape of the two
+ * functions. See CLASSIFICATION.md, round 17.
  */
 export function suggestAnchor(anchors: DocumentAnchors, key: string): Suggestion | undefined {
   const only = nearestUnique([...anchors.keys()], key)

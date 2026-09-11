@@ -123,8 +123,11 @@ export const frontmatterInvalid: Check = {
     return {
       claim,
       message: `expected ${expectation(accepted)}, found ${TYPE_NAMES[fact.type]}`,
-      // No suggestion, and never fixable. Quoting somebody's value is an edit
-      // `--fix` (M3) decides on with the corpus in hand, not here.
+      // No suggestion, and never fixable. M3 read the corpus for this and left
+      // it as it was: the one frontmatter finding in 66 repos is an unquoted
+      // `description:` whose text already contains double quotes, so quoting it
+      // means escaping them, and a `--fix` that escapes is a YAML serializer
+      // reformatting somebody's document. See CLASSIFICATION.md, round 17.
     }
   },
 }

@@ -14,10 +14,18 @@
  *   pnpm corpus                    clone what is missing and rewrite snapshots
  *   pnpm corpus --check            fail if a snapshot differs from the stored one
  *   pnpm corpus --only <pattern>   only the repos matching the pattern
+ *   pnpm corpus --fixes            print every edit `--fix` would apply
+ *
+ * `--fixes` is the measurement behind ADR-0006's hard floor — zero false
+ * positives among the fixable findings. It **never writes**: a corpus clone is
+ * a checkout we do not own (ADR-0007), and the question it answers is whether
+ * each rewrite is the one a maintainer of that repo would have made, which is a
+ * judgement a human makes by reading the line.
  */
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { planFixes } from '../src/fix/apply.ts'
 import { run } from '../src/run.ts'
 import { CORPUS, slugOf, type CorpusRepo } from './corpus-repos.ts'
 
@@ -98,15 +106,88 @@ async function snapshotOf(repo: string, dir: string): Promise<string> {
   return `${lines.join('\n')}\n`
 }
 
+/** The line an offset sits on, with the offset's position inside it. */
+function lineAt(content: string, offset: number): { start: number; end: number } {
+  const start = content.lastIndexOf('\n', offset) + 1
+  const end = content.indexOf('\n', offset)
+  return { start, end: end === -1 ? content.length : end }
+}
+
+/**
+ * Every edit `--fix` would apply in one repo, as the line before and the line
+ * after.
+ *
+ * The whole line, not the fragment: a replacement is judged in the sentence it
+ * sits in, and the fragments are what the snapshots already carry.
+ */
+async function reportFixes(
+  repo: string,
+  dir: string,
+): Promise<{ placed: number; refused: number }> {
+  const result = await run({ cwd: dir, paths: [] })
+  const { plans, refusals } = planFixes(result.findings)
+  const placed = plans.reduce((total, plan) => total + plan.edits.length, 0)
+
+  if (placed === 0 && refusals.length === 0) return { placed: 0, refused: 0 }
+
+  process.stdout.write(`\n# ${repo}\n`)
+  for (const plan of plans) {
+    const { content } = plan.source
+    for (const [i, edit] of plan.edits.entries()) {
+      const finding = plan.findings[i]
+      const { start, end } = lineAt(content, edit.range[0])
+      const before = content.slice(start, end)
+      const after =
+        content.slice(start, edit.range[0]) + edit.replacement + content.slice(edit.range[1], end)
+      process.stdout.write(
+        `${plan.source.path}:${finding?.claim.range.line ?? 0}  [${finding?.check ?? '?'}]\n` +
+          `  - ${before.trim()}\n  + ${after.trim()}\n`,
+      )
+    }
+  }
+  for (const refusal of refusals) {
+    const { claim } = refusal.finding
+    process.stdout.write(
+      `${claim.source.path}:${claim.range.line}  [${refusal.finding.check}] ` +
+        `not applied (${refusal.reason}): ${claim.text}\n`,
+    )
+  }
+
+  return { placed, refused: refusals.length }
+}
+
 /** `--only <pattern>`: run only the repos whose name contains the pattern. */
 function onlyPattern(argv: readonly string[]): string | undefined {
   const at = argv.indexOf('--only')
   return at === -1 ? undefined : argv[at + 1]
 }
 
+async function fixesMain(only: string | undefined): Promise<number> {
+  let placed = 0
+  let refused = 0
+
+  for (const entry of CORPUS) {
+    if (only !== undefined && !entry.repo.includes(only)) continue
+    let dir: string
+    try {
+      dir = ensureClone(entry)
+    } catch {
+      process.stderr.write(`${entry.repo}: could not clone, skipping\n`)
+      continue
+    }
+    const counts = await reportFixes(entry.repo, dir)
+    placed += counts.placed
+    refused += counts.refused
+  }
+
+  process.stderr.write(`\n${placed} edit(s) would be applied · ${refused} refused\n`)
+  return 0
+}
+
 async function main(): Promise<number> {
   const check = process.argv.includes('--check')
   const only = onlyPattern(process.argv)
+  if (process.argv.includes('--fixes')) return fixesMain(only)
   mkdirSync(SNAPSHOTS_DIR, { recursive: true })
 
   let differing = 0

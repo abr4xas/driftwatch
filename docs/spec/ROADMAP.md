@@ -92,12 +92,28 @@ Two things M2 also owed and paid:
 
 ---
 
-## M3 — Autofix
+## M3 — Autofix — **closed 2026-09-11**
 - `fix/apply.ts` editing by offset ranges, preserving formatting
 - `--fix`, `--fix --dry-run` with a diff
 - Only applies on confidence > 0.8 and a single candidate
 
 **Acceptance:** applying `--fix` to a broken fixture leaves it byte-for-byte identical to its correct version. Running `--fix` twice is idempotent.
+
+**Closed with all three delivered and the acceptance met**, in seven tickets. 496 tests, the corpus green at 66 repos with no snapshot moved, and the tool silent over its own repo and over `docs/`.
+
+**What the milestone was actually built around** is a trap the ticket that found it is named after. `Claim.offset` says it "enables --fix without reformatting", and that is true for one of the three autofixes: a `skill/frontmatter` claim spans the **key** token, so replacing it writes `my-skill: wrong-thing`, and a path claim from a Markdown link spans the whole url, so replacing it deletes the `#anchor`. `src/fix/range.ts` owns the answer now, the way `verify/path-claim.ts` owns the verdict on a path claim, and every branch of it checks the bytes it is about to overwrite before writing them.
+
+Three decisions worth carrying forward:
+
+- **The exit code comes from a second full run**, not from subtracting what was applied. Subtracting goes wrong the moment a fix changes what another check sees. It is also free in the common case: nothing written means nothing changed, so only a run that really edited files pays for the second pass.
+- **A relative path in a nested source is never rewritten.** A nested document writes half its paths against its own directory and half against the repo root with no syntactic signal separating them — the largest precision correction in the project. Reporting can accept both readings because that only costs detections; writing cannot, because picking one rewrites the path into the other. The corpus refused zero fixes to this rule, which is the absence of evidence that it is expensive rather than evidence that it is cheap.
+- **`--dry-run` became a real flag.** SPEC § 8 specified it and § 4's option list did not, so it existed in one section and in no code. Fixing the specification rather than routing around it also exposed a test that had been built on the gap: `args.test.ts` used `--dry-run` as its example of a flag *outside* the specification, and implementing it left that test green for the wrong reason.
+
+**The measurement, read honestly.** `pnpm corpus --fixes` is a new mode that plans every fix across the 66 repos, prints the line before and the line after, and writes nothing. It found **one edit, none refused**, and it is correct: `fireSeqSearch`'s `CLAUDE.md` is one directory out of date and the rewrite preserves the backticks, the list marker and the sentence around it. So ADR-0006's hard floor is met at the level of the **edit** and not only of the finding — on a sample of one. The fix machinery is proven correct once and unproven at scale, and the way to move that is more repositories, not more rules. `test/corpus/CLASSIFICATION.md` round 17 has it.
+
+**The two deferred fixability decisions were closed rather than inherited.** `link/broken`'s anchors stay unfixable: the corpus holds no such finding, and the argument never rested on it. `frontmatter/invalid`'s values stay unfixable, and the corpus made the case concrete — the only such finding in 66 repos is an unquoted `description:` whose text already contains double quotes, so quoting it would mean escaping them, and a `--fix` that escapes is a YAML serializer.
+
+**Not delivered, deliberately:** `--init`, still owed from M2 and still ownerless; it writes a *new* file and shares nothing with this machinery. And no machine-readable form of the fix plan — M4 owns the output formats and will decide whether it belongs in the JSON contract.
 
 ---
 

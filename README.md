@@ -106,15 +106,15 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 - **Deterministic and offline.** No network, no API key, no LLM. The same repo gives the same output, which is what makes a snapshot diff meaningful. Putting a model on the main path is [out of scope by design](./docs/spec/ROADMAP.md), not unimplemented.
 - **Fast enough to not think about.** Cold start under 80 ms, end to end under 500 ms on a 5,000-file repo. That budget is the reason there is no `typescript` or `esbuild` on the main path.
-- **An autofix never guesses.** `--fix` applies only when there is a single candidate above 0.8 confidence. A wrong fix is not noise, it is a document that now points confidently at the wrong file, and the next agent will believe it.
+- **An autofix never guesses.** `--fix` applies only when there is a single candidate above 0.8 confidence, it replaces the claim and nothing around it — a `./` prefix, a `#anchor` and a `:42` line reference all survive — and it refuses outright to rewrite a relative path in a document that is not at the repo root, because such a document writes half its paths from its own directory and half from the root. A wrong fix is not noise, it is a document that now points confidently at the wrong file, and the next agent will believe it.
 
 ## Status
 
-**`0.1.0` is on npm, and it is early.** M0, M1 and **M2 are done** — M2 closed on 2026-09-10 with the five tier 1 checks, the config file, check selection and the inline ignore directives, and with all nine of the precision conditions met over 66 repositories. M3 is `--fix`.
+**`0.1.1` is on npm, and it is early.** M0, M1, M2 and **M3 are done** — M3 closed on 2026-09-11 with `--fix`, `--fix --dry-run` and the diff. M4 is what turns a tool that works into a project someone adopts: the GIF, the `--json` / `--github` / `--sarif` formats, and the GitHub Action.
 
-Early means the checks are what is finished, not the surroundings: the output is `pretty` and nothing else yet, and `--fix` reports what it *would* fix without being able to apply it.
+Early means the checks and the fixes are what is finished, not the surroundings: the output is `pretty` and nothing else yet.
 
-Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
+Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, **`--fix` and `--fix --dry-run`**, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
 
 A selection that leaves no check enabled is refused rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 

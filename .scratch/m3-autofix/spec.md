@@ -99,3 +99,26 @@ Plus, and this is the one that decides whether the milestone is honest:
 - [ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md): zero false positives among `fixable` findings, no rate modulating it. It gates this milestone the way it gated M1.
 - [ADR-0007](../../docs/adr/0007-the-corpus-does-not-run-in-ci.md): the corpus is a local gate. `--fix` over somebody else's clone is a write to a checkout we do not own; `--dry-run` is the only form the corpus ever sees.
 - [ADR-0001](../../docs/adr/0001-the-specification-lives-inside-the-repo.md): the `--dry-run` gap is fixed in the specification, not routed around in the code.
+
+---
+
+## Closed 2026-09-11
+
+All seven tickets are `done`. `--fix` writes, `--fix --dry-run` does not, and both print the same diff in different moods.
+
+**What shipped:** `src/fix/range.ts` (what may be overwritten), `src/fix/apply.ts` (plan and apply), `src/fix/write.ts` (the only module that touches the disk), `src/fix/session.ts` (what a fix run is), `--dry-run` as a real flag in `SPEC.md` § 4, the summarized diff, the dirty-working-tree warning, and `pnpm corpus --fixes`.
+
+**The trap this document was built around was real, and it was worse than described.** `Claim.offset` is the fix range for one of the three autofixes. The `skill/frontmatter` case would have written `my-skill: wrong-thing` over somebody's frontmatter, and nothing in the type system or the tests as they stood would have caught it.
+
+**What was not predicted:**
+
+- The `./` prefix, the `#anchor` and the `:42` line reference did not need re-applying after the fix. Locating the claim's normalized text **inside** what the author wrote puts all three outside the replacement, so one rule covers what the ticket listed as three cases.
+- Fixing the `--dry-run` gap in the specification exposed a test that had been built on it: `args.test.ts` used `--dry-run` as its example of a flag outside SPEC § 4, and implementing the flag left that test green for the wrong reason.
+- The acceptance fixture could not be a committed `before/` tree, because a real `AGENTS.md` full of deliberately false claims would be audited by driftwatch run over its own repo — the same reason every other fixture in this repo is data.
+
+**What it cost, in this project's currency:** a false negative, written down. A relative path in a nested source is never rewritten, and over 66 repositories that refused nothing, which is not the same as being free.
+
+**What is open:** `--init`, owed since M2 and still ownerless; two replacement validation repos, owed since M2's close and not paid by a round that burned no repo; and the honest limit on the whole milestone — the fix machinery is correct on one real-world edit out of 66 repositories, and only more repositories move that.
+
+Next: M4, which is the audience rather than the tool.
+

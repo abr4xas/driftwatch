@@ -1019,3 +1019,60 @@ Validation carries **12 findings** now, four times the three the M1 certificatio
 | A third-party convention no prose rule reaches | 1 | `eve-template` (calibration) | Open since round one |
 
 Nothing here is load-bearing for a condition: the maximum per repo is 2, and closing any of them would move condition 6 by at most 1.5 points. The four remaining rounds' worth of work is in the corpus growing, not in these five findings.
+
+## Seventeenth round, 2026-09-11: the fixes, read one by one
+
+The first sixteen rounds classified **findings**. This one classifies **edits**, which is a different question and the one ADR-0006's hard floor is actually about: not "is this path really missing" — that is measured — but "is the rewrite the one a maintainer of that repo would have made".
+
+`pnpm corpus --fixes` is the new mode that asks it. It plans every fix across the 66 repos and prints the line before and the line after. **It never writes**: a corpus clone is a checkout we do not own ([ADR-0007](../../docs/adr/0007-the-corpus-does-not-run-in-ci.md)), and the judgement is a human's anyway.
+
+### What it found
+
+Snapshots first: `pnpm corpus --check` is green, **66 repos · 236 sources · 26 findings**, unchanged. M3 added a value span to the frontmatter parser and a module deciding fix ranges, and moved no detection at all — which is what it was supposed to do.
+
+Then the edits: **one edit would be applied across the whole corpus, and none was refused.**
+
+```
+# Endle/fireSeqSearch
+CLAUDE.md:145  [path/missing]
+  - - Query path: `fire_seq_search_server/src/query_engine/semantic_query.rs`
+  + - Query path: `fire_seq_search_server/src/semantic_query.rs`
+```
+
+**Classified true.** Verified against the clone: there is no `query_engine/` directory under `fire_seq_search_server/src/`, and `semantic_query.rs` sits directly in `src/` alongside `app_state.rs`, `config.rs`, `lib.rs` and `main.rs`. The document is one directory out of date and the correction is the only candidate.
+
+The *rewrite* is also right, which is the part this round exists to check. The replacement covers the path and nothing else: the backticks, the list marker, the `Query path:` label and the surrounding line all survive because they were never inside the range.
+
+### The honest reading: this is one observation
+
+Condition 2 is met — zero false positives among the fixable findings — and it is met on a sample of **one**. That was already true before M3 and it stays true after it. What changed is that the one observation is now checked at the level of the edit rather than at the level of the finding.
+
+The three-checks-deep thing this round cannot tell you: whether the **rewrite** logic is right in the cases the corpus does not contain. There is no fixable script finding in 66 repos, no fixable skill name, no fixable path in a nested source. Every one of those is covered by the fixture, and covered by a fixture is a weaker claim than measured on somebody else's repo. `link/broken` was "proven quiet and unproven useful" in round nine; the fix machinery is **proven correct once and unproven at scale**, and the honest way to move that number is more repositories, not more rules.
+
+### The nested-source refusal cost nothing measurable
+
+`fix/range.ts` refuses to rewrite a relative path in a source that is not at the repo root, because a nested document writes half its paths against its own directory and half against the root and picking one convention rewrites the path into the other. The worry when that rule was written was that it might refuse most real fixes.
+
+Over the corpus it refused **zero**, because the only fixable finding is in a root `CLAUDE.md`. That is not evidence the rule is cheap — a denominator of one measures nothing — it is the absence of evidence that it is expensive. Recorded so the next round with more fixable findings knows to look.
+
+### The two deferred decisions, closed
+
+Both were postponed in writing to "M3 with the corpus in hand". Both stay as they were, and now for a stated reason rather than a deferral.
+
+**`link/broken` anchors stay unfixable.** The corpus holds **zero** `link/broken` findings, exactly as round nine reported, so it offers no evidence either way. The argument in `fix/suggest.ts` never needed the corpus: every case where the correction is obvious — wrong case, wrong punctuation — is already accepted by the canonical key and never reported, so what is left to report is a real typo whose target is a guess. That is structural, and the empty corpus neither supports nor weakens it.
+
+**`frontmatter/invalid` values stay unfixable, and the corpus made the case concrete.** There is exactly one such finding, in `colinhacks/zod`:
+
+```
+.claude/skills/security-advisory/SKILL.md:3
+  invalid YAML: Nested mappings are not allowed in compact mappings
+```
+
+An unquoted `description:` whose text contains colons. The obvious fix is to quote it — and the value contains `"the draft advisories"`, `"the security reports"`, `"the vulnerability queue"`, so quoting it means **escaping the quotes inside it**. A `--fix` that does that is a YAML serializer, which is precisely the reformat of somebody's document this milestone refuses everywhere else. One case is not a rule, but it is the only case there is, and it points the same way the code comment already did.
+
+### Where the conditions stand
+
+Unmoved. Nothing in M3 touched a heuristic, the snapshots are byte-identical, and the table at the top of this document still reads as it did after round sixteen: **all nine met, 66 repos, 32 in validation, 26 findings, 20 true and 6 false.**
+
+The five open false-positive classes in the round-sixteen ledger are all still open and none of them is fixable, so none of them can become a bad autofix. The two replacement validation repos owed since M2's close are still owed; this round did not pay them, because it changed no rule and burned no repo.
+

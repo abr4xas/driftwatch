@@ -13,7 +13,14 @@ This directory is the only honest false positive measurement the project has.
 ```
 pnpm corpus            clone what is missing and rewrite the snapshots
 pnpm corpus --check    fail if a snapshot differs from the stored one
+pnpm corpus --fixes    print every edit `--fix` would apply, and write nothing
 ```
+
+`--fixes` answers the question the snapshots cannot: not whether a path is
+really missing, which is what a finding claims, but whether the **rewrite** is
+the one a maintainer of that repo would have made. It prints the line before and
+the line after, for a human to read. It never writes to a clone — these are
+checkouts we do not own.
 
 ## What a snapshot claims
 

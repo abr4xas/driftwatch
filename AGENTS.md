@@ -66,6 +66,8 @@ So it is on you to run it. Read [test/corpus/README.md](test/corpus/README.md) f
 
 `pnpm corpus --only <pattern>` runs a subset without re-cloning the rest, which is what you want while iterating on a rule. The full run is for the last three triggers.
 
+**After touching anything an autofix depends on** — `src/fix/`, or a suggestion's `fixable` flag — also run `pnpm corpus --fixes` and read every edit it prints. It writes nothing. The snapshots cannot catch a wrong rewrite of a right finding, and ADR-0006's hard floor is about exactly that.
+
 If a snapshot changes, review the diff **by hand, finding by finding**, before accepting it. That diff is the only real precision-regression signal the project has. Delete `test/corpus/repos/` when you are done if you will not need it again.
 
 Report results exactly as they come out. If a check is half-done or the corpus shows noise, say so explicitly instead of closing it as done.
