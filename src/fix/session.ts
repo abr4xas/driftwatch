@@ -7,6 +7,7 @@
  */
 import type { FixEntry, FixOutcome } from '../report/pretty.ts'
 import { run, type RunOptions, type RunResult } from '../run.ts'
+import { gitDirtyPaths } from '../verify/git.ts'
 import { planFixes, type FixPlan } from './apply.ts'
 import { writePlans } from './write.ts'
 
@@ -23,6 +24,36 @@ function entriesOf(plan: FixPlan): FixEntry[] {
     before: plan.source.content.slice(edit.range[0], edit.range[1]),
     after: edit.replacement,
   }))
+}
+
+export type FixSessionOptions = {
+  /** `--dry-run`: plan and report, write nothing. */
+  dryRun: boolean
+  /**
+   * Where a warning goes. It is a callback and not an `Io`, because the one
+   * warning this module has is about the user's git state and not about the
+   * audit, and passing the whole output surface in would invite more.
+   */
+  warn: (message: string) => void
+}
+
+/**
+ * `SPEC.md` § 8: "If the working tree has uncommitted changes in a file to be
+ * modified, it warns but proceeds (this is not a git tool)."
+ *
+ * Before the edits and not after: afterwards it is a fact about the past. The
+ * value is that `git checkout -- .` is the one real way back from a bad `--fix`
+ * and it only exists if the file was clean.
+ */
+async function warnAboutDirty(
+  root: string,
+  plans: readonly FixPlan[],
+  warn: (message: string) => void,
+): Promise<void> {
+  const paths = plans.flatMap((plan) => [plan.source.path, ...plan.source.aliases])
+  const dirty = await gitDirtyPaths(root, paths)
+  if (dirty.size === 0) return
+  warn(`uncommitted changes in ${[...dirty].toSorted((a, b) => a.localeCompare(b)).join(', ')}`)
 }
 
 export type FixSession = {
@@ -48,10 +79,11 @@ export type FixSession = {
 export async function applyFixes(
   result: RunResult,
   options: RunOptions,
-  dryRun: boolean,
+  { dryRun, warn }: FixSessionOptions,
 ): Promise<FixSession> {
   const { plans } = planFixes(result.findings)
   const entries = plans.flatMap((plan) => entriesOf(plan))
+  await warnAboutDirty(result.root, plans, warn)
 
   /**
    * A dry run stops here, before the only irreversible step. It also keeps the

@@ -76,3 +76,48 @@ export async function originSlug(root: string): Promise<string | undefined> {
     return undefined
   }
 }
+
+/**
+ * Which of these paths have uncommitted changes.
+ *
+ * `SPEC.md` § 8 warns before `--fix` writes to one, and the parenthesis in that
+ * sentence — "this is not a git tool" — is the important half: it does not
+ * stage, commit, refuse or offer to stash. The one real safety net after a bad
+ * `--fix` is `git checkout -- .`, and it is only there if the file was clean.
+ * Saying so before the fall is the whole value; blocking on it would get a
+ * `--force` bolted on within a week.
+ *
+ * A repo with no git, or no `git` on `PATH`, answers "none". A warning that git
+ * failed is noise about a tool the user may not be using — discovery already
+ * falls back to a glob walk for that case.
+ */
+export async function gitDirtyPaths(
+  root: string,
+  paths: readonly string[],
+): Promise<ReadonlySet<string>> {
+  const dirty = new Set<string>()
+  if (paths.length === 0) return dirty
+
+  for (let i = 0; i < paths.length; i += BATCH) {
+    const batch = paths.slice(i, i + BATCH)
+    try {
+      const { stdout } = await run('git', ['-C', root, 'status', '--porcelain', '--', ...batch], {
+        maxBuffer: 16 * 1024 * 1024,
+        encoding: 'utf8',
+      })
+      for (const line of stdout.split('\n')) {
+        // `XY <path>`, and `XY <old> -> <new>` for a rename. The path we asked
+        // about is the last field either way.
+        const path = line.slice(3).trim()
+        if (path.length === 0) continue
+        const arrow = path.lastIndexOf(' -> ')
+        dirty.add(arrow === -1 ? path : path.slice(arrow + 4))
+      }
+    } catch {
+      // No git, no repository, or a path outside it. Nothing to warn about.
+      continue
+    }
+  }
+
+  return dirty
+}

@@ -1,4 +1,5 @@
-import { readFileSync, statSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { EXIT } from '../src/core/exit-codes.ts'
@@ -217,6 +218,67 @@ describe('main', () => {
     const c = capture()
     await expect(main(['--dry-run'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
     expect(c.stderr()).toContain('--dry-run only means something with --fix')
+  })
+
+  it('warns about a dirty file before editing it, and edits it anyway', async () => {
+    const root = makeTempRepo({
+      files: {
+        'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    // `makeTempRepo` runs `git add -A`, so the file is staged. Rewriting it
+    // after that is an uncommitted change against HEAD, which is the state the
+    // warning is about.
+    writeFileSync(join(root, 'AGENTS.md'), 'Entry `./src/util/date.ts`, edited.\n')
+
+    const c = capture()
+    await main(['--fix'], c.io, root)
+    expect(c.stderr()).toContain('uncommitted changes in AGENTS.md')
+    // It warns and proceeds. This is not a git tool.
+    expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toContain('src/helpers/date.ts')
+  })
+
+  it('says nothing when the file is clean', async () => {
+    const root = makeTempRepo({
+      files: {
+        'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'x'], {
+      cwd: root,
+    })
+    const c = capture()
+    await main(['--fix'], c.io, root)
+    expect(c.stderr()).toBe('')
+  })
+
+  it('a dry run warns too, because the point is to say what state you are in', async () => {
+    const root = makeTempRepo({
+      files: {
+        'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    writeFileSync(join(root, 'AGENTS.md'), 'Entry `./src/util/date.ts`, edited.\n')
+    const c = capture()
+    await main(['--fix', '--dry-run'], c.io, root)
+    expect(c.stderr()).toContain('uncommitted changes in AGENTS.md')
+  })
+
+  it('a repo with no git neither warns nor crashes', async () => {
+    const root = makeTempRepo({
+      git: false,
+      files: {
+        'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    const c = capture()
+    await expect(main(['--fix'], c.io, root)).resolves.toBe(EXIT.ok)
+    expect(c.stderr()).toBe('')
+    expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toContain('src/helpers/date.ts')
   })
 
   it('there are no emojis in any output', async () => {

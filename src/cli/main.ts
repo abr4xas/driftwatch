@@ -100,7 +100,13 @@ async function audit(args: CliArgs, io: Io, cwd: string): Promise<ExitCode> {
   }
 
   const { applyFixes } = await import('../fix/session.ts')
-  const { after, outcome } = await applyFixes(result, options, args.dryRun)
+  const { after, outcome } = await applyFixes(result, options, {
+    dryRun: args.dryRun,
+    // A warning, in the English sense: it is not a finding, it does not touch
+    // the counts, and it belongs on stderr with the other things that are not
+    // the report.
+    warn: (message) => io.err(`driftwatch: ${message}\n`),
+  })
   render(after, outcome)
   return exitCodeFor(after.counts, args.strict)
 }
