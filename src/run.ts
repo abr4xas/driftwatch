@@ -18,8 +18,8 @@ import { CHECKS } from './verify/checks/index.ts'
 import { buildTaskIndex } from './verify/manifest.ts'
 import { selectChecks } from './verify/selection.ts'
 import { gitIgnoredPaths, originSlug } from './verify/git.ts'
+import { gitQueriesFor } from './verify/ignored.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
-import { resolveInRepo } from './verify/resolve.ts'
 
 export type RunOptions = {
   cwd: string
@@ -119,33 +119,6 @@ function verify(claims: readonly Claim[], checks: readonly Check[], ctx: CheckCo
   return findings
 }
 
-/** An improbable name, to ask git about a directory's contents. */
-const DIR_PROBE = '__driftwatch_probe__'
-
-/** The paths the checks will look up, in both possible resolutions. */
-function candidatePaths(claims: readonly Claim[]): string[] {
-  const paths = new Set<string>()
-  for (const claim of claims) {
-    if (claim.kind !== 'path') continue
-    for (const base of [claim.source.baseDir, '']) {
-      const rel = resolveInRepo(base, claim.text)
-      if (rel === undefined || rel === '') continue
-      paths.add(rel)
-      /**
-       * A pattern like `pr-status/*` ignores the directory's *contents*, not
-       * the directory. So for a directory claim we also ask about a made-up
-       * child: if git would ignore what is inside, the directory is generated
-       * output.
-       *
-       * Real case (vercel/next.js): `scripts/pr-status/`, with
-       * `scripts/.gitignore` containing `pr-status/*`.
-       */
-      if (claim.text.endsWith('/')) paths.add(`${rel}/${DIR_PROBE}`)
-    }
-  }
-  return [...paths]
-}
-
 /** Whether any enabled check reads claims of this kind. */
 function consumes(checks: readonly Check[], kind: ClaimKind): boolean {
   return checks.some((check) => check.claimKinds.includes(kind))
@@ -202,7 +175,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
   // checks: a path git ignores cannot be claimed to be missing.
   const ctx: CheckContext = {
     index,
-    ignoredByGit: await gitIgnoredPaths(root, candidatePaths(claims)),
+    ignoredByGit: await gitIgnoredPaths(root, gitQueriesFor(claims)),
     // Reading the target files is real I/O, so it is skipped entirely when no
     // enabled check consumes a link claim (`--only path`, or the config
     // turning `link/broken` off).
