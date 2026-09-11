@@ -6,6 +6,14 @@ export type PrettyOptions = {
   color: boolean
   /** SPEC.md § 5: show problems only, no summary. */
   quiet: boolean
+  /** What `--fix` did, when it ran. Absent on an ordinary run. */
+  fixes?: FixOutcome
+}
+
+/** What a `--fix` run applied, as the summary needs to say it. */
+export type FixOutcome = {
+  applied: number
+  files: number
 }
 
 /** SPEC.md § 5: the quoted fragment is truncated to 40 characters with '…'. */
@@ -69,18 +77,35 @@ function renderGroup(findings: readonly Finding[], c: Colors): string {
   return `${headerFor(findings, c)}\n${rows}\n`
 }
 
-function summary(result: RunResult, c: Colors): string {
+/**
+ * The line about fixes, which replaces the "fixable with --fix" one rather
+ * than joining it.
+ *
+ * Telling somebody who has just run `--fix` that N findings are fixable with
+ * `--fix` is the output saying it did not do what it was asked. What is left
+ * after a fix run is reported as what it is: the findings that remain, and a
+ * count of what was applied.
+ */
+function fixLine(outcome: FixOutcome, c: Colors): string {
+  if (outcome.applied === 0) return c.dim('nothing applied\n')
+  const what = count(outcome.applied, 'fix', 'fixes')
+  return c.dim(`${what} applied in ${count(outcome.files, 'file', 'files')}\n`)
+}
+
+function summary(result: RunResult, c: Colors, fixes: FixOutcome | undefined): string {
   const files = count(result.sources.length, 'file', 'files')
   const ms = `${Math.round(result.durationMs)}ms`
   const { errors, warnings } = result.counts
   const problems = errors + warnings
 
   if (problems === 0) {
-    return `${c.green('✓')} ${files} · no drift · ${ms}\n`
+    const clean = `${c.green('✓')} ${files} · no drift · ${ms}\n`
+    return fixes === undefined ? clean : `${clean}${fixLine(fixes, c)}`
   }
 
   const total = count(problems, 'problem', 'problems')
   const head = `${files} · ${total}${breakdown(errors, warnings)} · ${ms}\n`
+  if (fixes !== undefined) return `${head}${fixLine(fixes, c)}`
   if (result.fixable === 0) return head
   return `${head}${c.dim(`${count(result.fixable, 'fixable', 'fixable')} with --fix\n`)}`
 }
@@ -90,5 +115,5 @@ export function renderPretty(result: RunResult, options: PrettyOptions): string 
   const body = [...groupByFile(result.findings)]
     .map(([, findings]) => renderGroup(findings, c))
     .join('')
-  return options.quiet ? body : `${body}${summary(result, c)}`
+  return options.quiet ? body : `${body}${summary(result, c, options.fixes)}`
 }

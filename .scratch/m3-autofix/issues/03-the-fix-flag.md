@@ -4,7 +4,7 @@
 
 **Blocked by:** `02`
 
-**Status:** ready-for-agent
+**Status:** done
 
 `--fix` currently parses and throws `notYetImplemented` from the `UNIMPLEMENTED_BOOLEANS` list in `src/cli/main.ts`. That list is documented as "a to-do list the test suite watches: when a ticket implements a flag, it deletes it from here and the test that demanded exit 2 fails." This is that ticket for `fix`; leave `watch`, `init` and `strict` in place.
 
@@ -48,3 +48,29 @@ Take the re-run, and make the second run's result the one that is printed and co
 
 - `--dry-run` and the diff (`04`).
 - The git warning (`05`).
+
+## Comments
+
+Closed. `--fix` writes. 477 tests, four of them new in `test/cli.test.ts`, and the tripwire worked exactly as its comment said it would: deleting `fix` from `UNIMPLEMENTED_BOOLEANS` failed the test that demanded exit 2, which is how the to-do list stays honest.
+
+### The re-run was taken, and it is cheap in the case that matters
+
+`SPEC.md` § 4's "the exit code reflects what remains" is a second full run, in `fix/session.ts`. The alternative — subtracting what was applied — is wrong the moment a fix changes what another check sees, and this way every real invocation exercises the idempotence ticket `06` asserts.
+
+The budget worry did not materialise, because the expensive case does not arise: **nothing written means nothing changed**, so a run with no applicable fix keeps the first result and pays nothing. Only a run that really edited files pays for a second pass, and that user just asked for a write.
+
+### Aliases are written, and `realpath` is what separates the two kinds
+
+`Source.aliases` holds two different things and they need opposite treatment. A byte-identical `CLAUDE.md` beside an `AGENTS.md` is a **second file**: not writing it makes the two stop being copies, silently, after the reporter has just told the user they were. A symlink alias is the *same* file under another name, and writing through it would rewrite bytes that are already right.
+
+`fix/write.ts` tells them apart with `realpath`, which is what `collapseSymlinks` used to decide they were aliases in the first place. The test asserts both files come out fixed.
+
+### The summary replaces the "fixable" line rather than joining it
+
+Telling somebody who has just run `--fix` that "1 fixable with --fix" is the output saying it did not do what it was asked. After a fix run the line reads `1 fix applied in 1 file`, or `nothing applied` when no fix was placeable, and the old line is suppressed. A test asserts the string `with --fix` never appears in a `--fix` run's output.
+
+`--quiet` suppresses it with the rest of the summary, since it lives inside `summary()`.
+
+### Where the code went
+
+`fix/write.ts` is the only module in `src/fix/` that touches the disk — everything upstream is pure — and `fix/session.ts` holds what a fix run *is*, so the second-run decision is a paragraph somebody reads rather than a branch inside the CLI. `main()` grew a sibling, `audit()`, and both are back under the 50-line lint limit; `fix/session.ts` is behind its own dynamic import, so a run without `--fix` never loads it.

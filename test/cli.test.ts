@@ -1,3 +1,5 @@
+import { readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { EXIT } from '../src/core/exit-codes.ts'
 import { main } from '../src/cli/main.ts'
@@ -86,7 +88,7 @@ describe('main', () => {
     await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
 
-  it.each([['--fix'], ['--watch'], ['--init'], ['--strict']])(
+  it.each([['--watch'], ['--init'], ['--strict']])(
     '%s is not implemented yet and says so, instead of being ignored',
     async (flag) => {
       const c = capture()
@@ -130,6 +132,65 @@ describe('main', () => {
     const c = capture()
     await expect(main(['--format', 'sarif'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
     expect(c.stderr()).toContain('sarif')
+  })
+
+  it('--fix writes the correction and exits on what remains', async () => {
+    const root = makeTempRepo({
+      files: {
+        'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    const c = capture()
+    // The only error was fixable, so nothing remains and the code is 0.
+    await expect(main(['--fix'], c.io, root)).resolves.toBe(EXIT.ok)
+    expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toBe(
+      'The entry point is `./src/helpers/date.ts`.\n',
+    )
+    expect(c.stdout()).toContain('1 fix applied in 1 file')
+    expect(c.stdout()).toContain('no drift')
+  })
+
+  it('--fix exits 1 when something unfixable remains', async () => {
+    const root = makeTempRepo({
+      files: {
+        'AGENTS.md': 'Entry `./src/util/date.ts`, and `src/nowhere/gone.ts`.\n',
+        'src/helpers/date.ts': '',
+      },
+    })
+    const c = capture()
+    await expect(main(['--fix'], c.io, root)).resolves.toBe(EXIT.findings)
+    const after = readFileSync(join(root, 'AGENTS.md'), 'utf8')
+    expect(after).toContain('./src/helpers/date.ts')
+    // The finding next to the fixed one is untouched, and still reported.
+    expect(after).toContain('src/nowhere/gone.ts')
+    expect(c.stdout()).toContain('1 fix applied in 1 file')
+  })
+
+  it('--fix writes nothing at all when nothing is fixable', async () => {
+    const root = makeTempRepo({
+      files: { 'AGENTS.md': 'See `src/nowhere/gone.ts`.\n', 'src/other.ts': '' },
+    })
+    const before = statSync(join(root, 'AGENTS.md')).mtimeMs
+    const c = capture()
+    await expect(main(['--fix'], c.io, root)).resolves.toBe(EXIT.findings)
+    // On mtime and not on content: a rewrite to identical bytes still makes
+    // every watcher in the user's editor fire.
+    expect(statSync(join(root, 'AGENTS.md')).mtimeMs).toBe(before)
+    expect(c.stdout()).toContain('nothing applied')
+    expect(c.stdout()).not.toContain('with --fix')
+  })
+
+  it('--fix writes the identical copies too, so they stay copies', async () => {
+    const document = 'The entry point is `src/util/date.ts`.\n'
+    const root = makeTempRepo({
+      files: { 'AGENTS.md': document, 'CLAUDE.md': document, 'src/helpers/date.ts': '' },
+    })
+    const c = capture()
+    await main(['--fix'], c.io, root)
+    const fixed = 'The entry point is `src/helpers/date.ts`.\n'
+    expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toBe(fixed)
+    expect(readFileSync(join(root, 'CLAUDE.md'), 'utf8')).toBe(fixed)
   })
 
   it('there are no emojis in any output', async () => {

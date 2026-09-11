@@ -3,7 +3,8 @@ import { resolve } from 'node:path'
 import { isUserError, messageOf, notYetImplemented, UserError } from '../core/errors.ts'
 import { EXIT, exitCodeFor, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
-import type { RunOptions } from '../run.ts'
+import type { RunOptions, RunResult } from '../run.ts'
+import type { FixOutcome, PrettyOptions } from '../report/pretty.ts'
 import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
@@ -21,7 +22,6 @@ export type Io = {
  * it deletes it from here and the test that demanded exit 2 fails.
  */
 const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
-  ['fix', '--fix'],
   ['watch', '--watch'],
   ['init', '--init'],
   // --strict only changes something once warnings exist, and warnings are
@@ -52,6 +52,18 @@ function runOptionsFor(args: CliArgs, cwd: string): RunOptions {
   }
 }
 
+/**
+ * `exactOptionalPropertyTypes` again: an absent `fixes` cannot be spelled as an
+ * explicit `undefined`, and the spread is the cheapest way to say it.
+ */
+function prettyOptions(
+  args: CliArgs,
+  color: boolean,
+  fixes: FixOutcome | undefined,
+): PrettyOptions {
+  return { color, quiet: args.quiet, ...(fixes === undefined ? {} : { fixes }) }
+}
+
 function assertPathsExist(paths: readonly string[], cwd: string): void {
   for (const path of paths) {
     try {
@@ -60,6 +72,37 @@ function assertPathsExist(paths: readonly string[], cwd: string): void {
       throw new UserError(`path does not exist: ${path}`)
     }
   }
+}
+
+/**
+ * The audit itself: run, report, and — with `--fix` — write and ask again.
+ *
+ * The pipeline and the reporter are imported dynamically: `--help` and
+ * `--version` have no reason to pay for loading remark-parse, and the 80 ms
+ * cold-start budget is part of the product. `fix/session.ts` is behind a second
+ * one for the same reason: a run without `--fix` never loads it.
+ */
+async function audit(args: CliArgs, io: Io, cwd: string): Promise<ExitCode> {
+  const [{ run }, { renderPretty }, { colorEnabled }] = await Promise.all([
+    import('../run.ts'),
+    import('../report/pretty.ts'),
+    import('../report/colors.ts'),
+  ])
+
+  const options = runOptionsFor(args, cwd)
+  const result = await run(options)
+  const render = (of: RunResult, fixes?: FixOutcome): void =>
+    io.out(renderPretty(of, prettyOptions(args, colorEnabled(io.env, io.isTty), fixes)))
+
+  if (!args.fix) {
+    render(result)
+    return exitCodeFor(result.counts, args.strict)
+  }
+
+  const { applyFixes } = await import('../fix/session.ts')
+  const { after, outcome } = await applyFixes(result, options)
+  render(after, outcome)
+  return exitCodeFor(after.counts, args.strict)
 }
 
 /**
@@ -85,23 +128,7 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
     assertNotYetImplemented(args)
     assertPathsExist(args.paths, cwd)
 
-    // The pipeline and the reporter are imported dynamically: `--help` and
-    // `--version` have no reason to pay for loading remark-parse, and the
-    // 80 ms cold-start budget is part of the product.
-    const [{ run }, { renderPretty }, { colorEnabled }] = await Promise.all([
-      import('../run.ts'),
-      import('../report/pretty.ts'),
-      import('../report/colors.ts'),
-    ])
-
-    const result = await run(runOptionsFor(args, cwd))
-    io.out(
-      renderPretty(result, {
-        color: colorEnabled(io.env, io.isTty),
-        quiet: args.quiet,
-      }),
-    )
-    return exitCodeFor(result.counts, args.strict)
+    return await audit(args, io, cwd)
   } catch (error) {
     if (isUserError(error)) {
       io.err(`driftwatch: ${error.message}\n`)
