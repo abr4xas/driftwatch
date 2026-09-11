@@ -125,7 +125,16 @@ export function extractFrontmatterClaims(context: ExtractContext): Claim[] {
   // Every top-level key, `empty` ones included: `skill/frontmatter` reads
   // these same claims and an empty `description:` is one of its rules.
   return frontmatter.keys.map((key) =>
-    claim(key.offset, { subject: 'key', key: key.key, type: key.type, scalar: key.scalar }),
+    claim(key.offset, {
+      subject: 'key',
+      key: key.key,
+      type: key.type,
+      scalar: key.scalar,
+      // Carried for `--fix` alone: the claim points at the key and the fix
+      // replaces the value. `exactOptionalPropertyTypes` is why it is spread
+      // rather than written as an explicit `undefined`.
+      ...(key.valueOffset === undefined ? {} : { valueOffset: key.valueOffset }),
+    }),
   )
 }
 
