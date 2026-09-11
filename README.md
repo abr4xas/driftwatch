@@ -1,5 +1,9 @@
 # driftwatch
 
+[![npm](https://img.shields.io/npm/v/%40abr4xas%2Fdriftwatch?style=flat-square)](https://www.npmjs.com/package/@abr4xas/driftwatch)
+[![CI](https://img.shields.io/github/actions/workflow/status/abr4xas/driftwatch/ci.yml?style=flat-square&label=CI)](https://github.com/abr4xas/driftwatch/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/%40abr4xas%2Fdriftwatch?style=flat-square)](./LICENSE)
+
 Find the parts of your `CLAUDE.md`, `AGENTS.md` and skills that are no longer true.
 
 > `knip` finds dead code. driftwatch finds **dead context**.
