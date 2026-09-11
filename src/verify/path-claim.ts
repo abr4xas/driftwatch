@@ -4,7 +4,7 @@ import { belongsToAbsentTool } from './foreign-tools.ts'
 import { passesThroughGenerated } from './generated.ts'
 import { ignoredByGit } from './ignored.ts'
 import { hasDir, hasFile, someEntryEndsWith } from './repo-index.ts'
-import { resolveInRepo } from './resolve.ts'
+import { resolutionsOf } from './resolve.ts'
 
 /**
  * What is known about a path claim once every rule has spoken.
@@ -70,20 +70,17 @@ function exists(ctx: CheckContext, rel: string): boolean {
 export function verifyPathClaim(claim: Claim, ctx: CheckContext): PathVerdict {
   const { baseDir } = claim.source
 
-  const local = resolveInRepo(baseDir, claim.text)
+  /**
+   * One definition of the pair, shared with `gitQueriesFor`: the prefetch and
+   * the lookup have to ask about the same resolutions, and they used to be two
+   * copies of that list in two modules.
+   */
+  const { local, asWritten } = resolutionsOf(claim)
   // A path that escapes above the root is not ours to verify.
-  if (local === undefined || local === '') return { kind: 'unanswerable', rule: 'escapes-root' }
+  if (local === undefined) return { kind: 'unanswerable', rule: 'escapes-root' }
   if (pointsOutsideRepo(ctx, claim.text, local)) {
     return { kind: 'unanswerable', rule: 'outside-repo' }
   }
-
-  /**
-   * The path as the document writes it, from the root. Two rules need it
-   * rather than the baseDir resolution: another tool's configuration root
-   * means that root wherever the document sits, and the suffix search below
-   * asks whether this sequence of segments appears anywhere.
-   */
-  const asWritten = resolveInRepo('', claim.text)
 
   // Another assistant's directory, in a repo that does not use that
   // assistant. See `belongsToAbsentTool`.
@@ -114,7 +111,7 @@ export function verifyPathClaim(claim: Claim, ctx: CheckContext): PathVerdict {
    * neither against the baseDir nor against the root. It was the single
    * largest precision correction in the whole project.
    */
-  if (baseDir !== '' && asWritten !== undefined && asWritten !== '') {
+  if (baseDir !== '' && asWritten !== undefined) {
     if (passesThroughGenerated(asWritten)) return { kind: 'unanswerable', rule: 'generated' }
     if (ignoredByGit(ctx.ignoredByGit, claim, asWritten)) {
       return { kind: 'unanswerable', rule: 'ignored-by-git' }
@@ -137,7 +134,7 @@ export function verifyPathClaim(claim: Claim, ctx: CheckContext): PathVerdict {
    * already resolved against the baseDir: the question is whether that
    * sequence of segments appears anywhere in the repo.
    */
-  if (asWritten !== undefined && asWritten !== '' && someEntryEndsWith(ctx.index, asWritten)) {
+  if (asWritten !== undefined && someEntryEndsWith(ctx.index, asWritten)) {
     return { kind: 'unanswerable', rule: 'exists-as-suffix' }
   }
 

@@ -1,3 +1,5 @@
+import type { Claim } from '../core/types.ts'
+
 /**
  * Resolves a claim's text to a path relative to the repo root.
  *
@@ -21,4 +23,34 @@ export function resolveInRepo(baseDir: string, text: string): string | undefined
     out.push(segment)
   }
   return out.join('/')
+}
+
+/**
+ * The two paths a claim resolves to: against its source's directory, and
+ * against the repo root.
+ *
+ * Both exist because a nested source writes half its paths one way and half the
+ * other, with no syntactic signal separating them (`path-claim.ts` has the
+ * argument). They are named rather than returned as a list because the rules
+ * use them differently: the absent-tool rule and the suffix search want the
+ * path **as written** even when the source sits at the root.
+ *
+ * `undefined` means there is nothing to ask about — the path escapes above the
+ * root, or resolves to the root itself.
+ */
+export type Resolutions = {
+  local: string | undefined
+  asWritten: string | undefined
+}
+
+/** The root itself is not something to ask about, so it reads as absent. */
+function asked(rel: string | undefined): string | undefined {
+  return rel === undefined || rel === '' ? undefined : rel
+}
+
+export function resolutionsOf(claim: Claim): Resolutions {
+  return {
+    local: asked(resolveInRepo(claim.source.baseDir, claim.text)),
+    asWritten: asked(resolveInRepo('', claim.text)),
+  }
 }

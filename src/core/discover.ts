@@ -1,7 +1,7 @@
 import { lstatSync, realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { RepoIndex } from '../verify/repo-index.ts'
+import { allFiles, hasFile, type RepoIndex } from '../verify/repo-index.ts'
 import { UserError } from './errors.ts'
 import type { Source, SourceKind } from './types.ts'
 
@@ -112,7 +112,7 @@ async function matchConfiguredSources(
 
   const matched = new Set<string>()
   for (const literal of literals) {
-    if (!index.files.has(literal)) {
+    if (!hasFile(index, literal)) {
       throw new UserError(
         `the config declares a source that does not exist: ${literal}`,
         'remove it from `sources`, or check the path is relative to the repo root',
@@ -129,7 +129,7 @@ async function matchConfiguredSources(
     for (const glob of globs) {
       const matcher = ignore().add(glob)
       let hits = 0
-      for (const rel of index.files) {
+      for (const rel of allFiles(index)) {
         if (!matcher.ignores(rel)) continue
         matched.add(rel)
         hits += 1
@@ -244,7 +244,7 @@ export async function discoverSources(
   options: DiscoverOptions,
 ): Promise<Source[]> {
   const matched: Array<{ path: string; kind: SourceKind }> = []
-  for (const rel of index.files) {
+  for (const rel of allFiles(index)) {
     if (!isInScope(rel, options.paths)) continue
     const kind = classifySource(rel)
     if (kind !== undefined) matched.push({ path: rel, kind })

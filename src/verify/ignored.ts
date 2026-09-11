@@ -1,23 +1,8 @@
 import type { Claim } from '../core/types.ts'
-import { resolveInRepo } from './resolve.ts'
+import { resolutionsOf } from './resolve.ts'
 
 /** An improbable name, to ask git about a directory's contents. */
 const DIR_PROBE = '__driftwatch_probe__'
-
-/**
- * The paths a path claim is verified against: its source's `baseDir`, and the
- * repo root. Both, because a nested source writes half its paths one way and
- * half the other; `path/missing` has the argument.
- */
-export function resolutionsOf(claim: Claim): string[] {
-  const out: string[] = []
-  for (const base of [claim.source.baseDir, '']) {
-    const rel = resolveInRepo(base, claim.text)
-    if (rel === undefined || rel === '' || out.includes(rel)) continue
-    out.push(rel)
-  }
-  return out
-}
 
 /**
  * What git has to be asked to answer "is this resolution ignored?".
@@ -41,7 +26,9 @@ export function gitQueriesFor(claims: readonly Claim[]): string[] {
   const paths = new Set<string>()
   for (const claim of claims) {
     if (claim.kind !== 'path') continue
-    for (const rel of resolutionsOf(claim)) {
+    const { local, asWritten } = resolutionsOf(claim)
+    for (const rel of new Set([local, asWritten])) {
+      if (rel === undefined) continue
       for (const query of queriesFor(claim, rel)) paths.add(query)
     }
   }

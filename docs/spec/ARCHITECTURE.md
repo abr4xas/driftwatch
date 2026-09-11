@@ -55,9 +55,9 @@ src/
   verify/
     repo-index.ts      in-memory repo index (the heart)
     check.ts           the shape of a check and its context
-    resolve.ts         a claim's text -> path relative to the root
+    resolve.ts         a claim's text -> path relative to the root, and the pair of resolutions
     generated.ts       directories whose contents are generated, not versioned
-    ignored.ts         the two resolutions of a path claim, and what git is asked about them
+    ignored.ts         what git is asked about a path claim, prefetch and lookup
     path-claim.ts      the verdict on a path claim: every rule that can decline the question
     anchor-index.ts    the anchors of the files some link points into
     manifest.ts        the tasks each directory offers: package.json / Makefile / deno.json
@@ -143,6 +143,7 @@ type RepoIndex = {
 Decisions:
 - A single tree walk with `fast-glob` or `tinyglobby`, honouring `.gitignore`.
 - If git is available, use `git ls-files` — it is faster and already respects ignores. Fall back to glob if there is no repo.
+- `root` and `listing` are plain values, read directly. Everything with a shape is asked through the exported functions — `hasFile`, `hasDir`, `candidatesFor`, `someEntryEndsWith`, `allFiles`, `allManifests` — and that is the whole interface. The struct used to be a second one, with `discover.ts` and `manifest.ts` reaching past the accessors into the raw sets and maps.
 - `byBasename` is what feeds the `--fix` suggestions. It is a `Map` of arrays, not a fuzzy search: the fuzzy search only runs over the candidates for that basename, never over the whole index.
 - Everything in memory. On a repo of 100k files that is a few MB; acceptable.
 

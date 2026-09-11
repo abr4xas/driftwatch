@@ -16,6 +16,14 @@ export type Manifest = {
   scripts: Readonly<Record<string, string>>
 }
 
+/**
+ * The repo, in memory, built once per run.
+ *
+ * `root` and `listing` are plain values and are read directly. Everything with
+ * a shape — the sets and the maps — is asked through the functions below, and
+ * that is the whole interface: the struct used to be a second one, with
+ * `discover.ts` and `manifest.ts` reaching past the accessors into it.
+ */
 export type RepoIndex = {
   root: string
   /** Every file path relative to the root, with posix separators. */
@@ -194,10 +202,6 @@ export function candidatesFor(index: RepoIndex, basename: string): readonly stri
   return index.byBasename.get(basename) ?? []
 }
 
-export function dirCandidatesFor(index: RepoIndex, basename: string): readonly string[] {
-  return index.dirsByBasename.get(basename) ?? []
-}
-
 /**
  * Whether some path in the repo **ends** with `rel`, taking whole segments.
  *
@@ -220,14 +224,12 @@ export function someEntryEndsWith(index: RepoIndex, rel: string): boolean {
   )
 }
 
-/** The nearest manifest walking up from `dir`. It is what makes monorepos work. */
-export function manifestFor(index: RepoIndex, dir: string): Manifest | undefined {
-  let current = dir
-  while (true) {
-    const found = index.manifests.get(current)
-    if (found !== undefined) return found
-    if (current === '') return undefined
-    const slash = current.lastIndexOf('/')
-    current = slash === -1 ? '' : current.slice(0, slash)
-  }
+/** Every file, for the callers that classify or match the whole listing. */
+export function allFiles(index: RepoIndex): Iterable<string> {
+  return index.files
+}
+
+/** Every manifest the tree walk parsed, by the directory holding it. */
+export function allManifests(index: RepoIndex): Iterable<[string, Manifest]> {
+  return index.manifests
 }
