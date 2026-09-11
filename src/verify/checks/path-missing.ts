@@ -102,8 +102,6 @@ export const pathMissing: Check = {
 
     const suggestion = suggestPath(ctx.index, local)
     return {
-      check: pathMissing.id,
-      severity: pathMissing.defaultSeverity,
       claim,
       message: 'path does not exist',
       ...(suggestion === undefined ? {} : { suggestion }),

@@ -95,8 +95,6 @@ export const frontmatterInvalid: Check = {
 
     if (fact.subject === 'parse') {
       return {
-        check: frontmatterInvalid.id,
-        severity: frontmatterInvalid.defaultSeverity,
         claim,
         // The parser's own reason. `Map keys must be unique` and `Tabs are not
         // allowed as indentation` say more than any rewording of ours, and a
@@ -124,8 +122,6 @@ export const frontmatterInvalid: Check = {
     }
 
     return {
-      check: frontmatterInvalid.id,
-      severity: frontmatterInvalid.defaultSeverity,
       claim,
       message: `expected ${expectation(accepted)}, found ${TYPE_NAMES[fact.type]}`,
       // No suggestion, and never fixable. Quoting somebody's value is an edit

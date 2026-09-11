@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { isUserError } from '../src/core/errors.ts'
 import type { Check } from '../src/verify/check.ts'
-import { selectChecks, type CheckSelection } from '../src/verify/selection.ts'
+import { selectChecks, severityOf, type CheckSelection } from '../src/verify/selection.ts'
 
 /**
  * A synthetic registry. The real one has a single tier 1 check, which cannot
@@ -104,5 +104,29 @@ describe('check selection', () => {
     expect(refusal({ tier2: true, skip: ['path', 'link', 'script', 'stale'] })).toContain(
       'no checks enabled',
     )
+  })
+})
+
+describe('the severity a check reports at', () => {
+  const check = fake('path/missing', 1)
+
+  it('with no config it is the check default', () => {
+    expect(severityOf(check, undefined)).toBe('error')
+  })
+
+  it('the config overrides it', () => {
+    expect(severityOf(check, { 'path/missing': 'warning' })).toBe('warning')
+  })
+
+  it('another check id does not reach it', () => {
+    expect(severityOf(check, { 'link/broken': 'warning' })).toBe('error')
+  })
+
+  /**
+   * `'off'` deselects, so it cannot reach here — except through a `--only`
+   * naming the check, where the flag beats the config and the check runs.
+   */
+  it("'off' on a check a flag turned back on falls back to the default", () => {
+    expect(severityOf(check, { 'path/missing': 'off' })).toBe('error')
   })
 })

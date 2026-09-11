@@ -320,8 +320,15 @@ export const check: Check = {
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['path'],
-  run(claim, ctx): Finding | null { /* ... */ },
+  run(claim, ctx): CheckReport | null { /* ... */ },
 }
 ```
+
+A check reports a claim, a message and maybe a suggestion. It does not stamp its
+own id or its severity: `run.ts` knows which check ran, and the severity is the
+config's to set (SPEC § 7, `severityOf` in `verify/selection.ts`). That is what
+makes `checks: { 'path/missing': 'warning' }` an override instead of an edit in
+five check bodies, and it is why `defaultSeverity` is a default rather than the
+answer.
 
 `ctx` exposes `index` (whose `manifests` carries the parsed `package.json` of every directory), `anchors`, `tasks`, and will grow `git` and `config` when a check needs them — a field nobody reads is a field nobody maintains. Static registry in `verify/checks/index.ts` — no dynamic plugin loading in v1. Third-party plugins are a v2 decision and must not shape the design now.

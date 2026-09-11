@@ -45,8 +45,6 @@ export const linkBroken: Check = {
 
     const suggestion = suggestAnchor(anchors, key)
     return {
-      check: linkBroken.id,
-      severity: linkBroken.defaultSeverity,
       claim,
       message: 'anchor does not exist',
       ...(suggestion === undefined ? {} : { suggestion }),

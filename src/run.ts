@@ -1,4 +1,4 @@
-import { loadConfig, type Config } from './core/config.ts'
+import { loadConfig, type CheckSeverity, type Config } from './core/config.ts'
 import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
@@ -16,7 +16,7 @@ import { buildAnchorIndex } from './verify/anchor-index.ts'
 import type { Check, CheckContext } from './verify/check.ts'
 import { CHECKS } from './verify/checks/index.ts'
 import { buildTaskIndex } from './verify/manifest.ts'
-import { selectChecks } from './verify/selection.ts'
+import { selectChecks, severityOf } from './verify/selection.ts'
 import { gitIgnoredPaths, originSlug } from './verify/git.ts'
 import { gitQueriesFor } from './verify/ignored.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
@@ -107,13 +107,29 @@ function applyIgnores(
   })
 }
 
-function verify(claims: readonly Claim[], checks: readonly Check[], ctx: CheckContext): Finding[] {
+/**
+ * A check reports what it found; the id and the severity are stamped here. That
+ * is what makes the config's `checks` key (SPEC.md § 7) an override rather than
+ * five edits in five check bodies.
+ */
+function verify(
+  claims: readonly Claim[],
+  checks: readonly Check[],
+  ctx: CheckContext,
+  configured: Readonly<Record<string, CheckSeverity>> | undefined,
+): Finding[] {
+  const severities = new Map(checks.map((check) => [check.id, severityOf(check, configured)]))
   const findings: Finding[] = []
   for (const claim of claims) {
     for (const check of checks) {
       if (!check.claimKinds.includes(claim.kind)) continue
-      const finding = check.run(claim, ctx)
-      if (finding !== null) findings.push(finding)
+      const report = check.run(claim, ctx)
+      if (report === null) continue
+      findings.push({
+        check: check.id,
+        severity: severities.get(check.id) ?? check.defaultSeverity,
+        ...report,
+      })
     }
   }
   return findings
@@ -185,7 +201,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     tasks: consumes(checks, 'script') ? await buildTaskIndex(root, index, claims) : new Map(),
   }
 
-  const findings = sortFindings(applyIgnores(verify(claims, checks, ctx), ignores))
+  const findings = sortFindings(applyIgnores(verify(claims, checks, ctx, config.checks), ignores))
 
   return {
     root,
