@@ -58,6 +58,7 @@ src/
     resolve.ts         a claim's text -> path relative to the root
     generated.ts       directories whose contents are generated, not versioned
     ignored.ts         the two resolutions of a path claim, and what git is asked about them
+    path-claim.ts      the verdict on a path claim: every rule that can decline the question
     anchor-index.ts    the anchors of the files some link points into
     manifest.ts        the tasks each directory offers: package.json / Makefile / deno.json
     git.ts             per-file churn, a source's last commit
@@ -180,6 +181,22 @@ This is the most nuanced algorithm in the project. Rule order:
 5. Normalize: strip a leading `./`, strip a trailing `:line`, strip leftover backticks, strip trailing punctuation (`.`, `,`, `)`).
 6. Resolve against `source.baseDir`.
 7. Look up `index.files` and `index.dirs`.
+
+Rules 1 to 5 run in `extract/`, where a text that is not a path builds no claim
+and costs nothing. Everything that needs the index — the resolutions, the absent
+tool, the generated artifact, the git ignore, the suffix search — runs in
+`verify/path-claim.ts`, which returns a `PathVerdict` and is the only thing
+`path/missing` calls.
+
+That split is on purpose and it is not the old one. The seam used to fall where
+a rule happened to need `RepoIndex`, which is an implementation fact: it left
+`path/missing` five sixths suppression and one sixth verdict, and it put the
+project's precision — its one real asset — in seven places. `verifyPathClaim`
+names each declining rule (`escapes-root`, `outside-repo`, `absent-tool`,
+`generated`, `ignored-by-git`, `exists-as-suffix`), so the matrix is one table
+test instead of ten temporary repos. `generated.ts` and `foreign-tools.ts` keep
+their own files: they are lists with the argument for each entry written next to
+it, and folding them in would trade readable documents for one nobody opens.
 
 If it fails, generate a suggestion: look up `basename` in `index.byBasename`. Confidence = 1.0 if there is a single candidate and the parent directory is similar; 0.6 if there is a single candidate in a different directory; 0.3 if there are several.
 
