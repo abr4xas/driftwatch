@@ -2,6 +2,7 @@ import { suggestPath } from '../../fix/suggest.ts'
 import type { Check, CheckContext } from '../check.ts'
 import { belongsToAbsentTool } from '../foreign-tools.ts'
 import { passesThroughGenerated } from '../generated.ts'
+import { ignoredByGit } from '../ignored.ts'
 import { hasDir, hasFile, someEntryEndsWith } from '../repo-index.ts'
 import { resolveInRepo } from '../resolve.ts'
 
@@ -24,15 +25,6 @@ function pointsOutsideRepo(ctx: CheckContext, text: string, rel: string): boolea
 
 function exists(ctx: CheckContext, rel: string): boolean {
   return hasFile(ctx.index, rel) || hasDir(ctx.index, rel)
-}
-
-/**
- * Whether git ignores the path, or would ignore whatever is inside it. The
- * second is what detects a generated output directory, because a `.gitignore`
- * usually writes `output/*` and not `output/`.
- */
-function ignoredByGit(ctx: CheckContext, rel: string): boolean {
-  return ctx.ignoredByGit.has(rel) || ctx.ignoredByGit.has(`${rel}/__driftwatch_probe__`)
 }
 
 export const pathMissing: Check = {
@@ -65,7 +57,7 @@ export const pathMissing: Check = {
     // indistinguishable from a nonexistent path. Let it through. The fixed
     // list is the fallback for when there is no git; `ignoredByGit` is the
     // good signal.
-    if (passesThroughGenerated(local) || ignoredByGit(ctx, local)) return null
+    if (passesThroughGenerated(local) || ignoredByGit(ctx.ignoredByGit, claim, local)) return null
 
     if (exists(ctx, local)) return null
 
@@ -84,7 +76,8 @@ export const pathMissing: Check = {
     if (baseDir !== '') {
       const fromRoot = resolveInRepo('', claim.text)
       if (fromRoot !== undefined && fromRoot !== '') {
-        if (passesThroughGenerated(fromRoot) || ignoredByGit(ctx, fromRoot)) return null
+        if (passesThroughGenerated(fromRoot) || ignoredByGit(ctx.ignoredByGit, claim, fromRoot))
+          return null
         if (exists(ctx, fromRoot)) return null
       }
     }

@@ -57,6 +57,7 @@ src/
     check.ts           the shape of a check and its context
     resolve.ts         a claim's text -> path relative to the root
     generated.ts       directories whose contents are generated, not versioned
+    ignored.ts         the two resolutions of a path claim, and what git is asked about them
     anchor-index.ts    the anchors of the files some link points into
     manifest.ts        the tasks each directory offers: package.json / Makefile / deno.json
     git.ts             per-file churn, a source's last commit
