@@ -67,8 +67,65 @@ export type Claim = {
   /** Absolute offsets into `source.content`. Enables --fix without reformatting. */
   offset: [number, number]
   context: ClaimContext
-  meta?: Record<string, unknown>
+  /**
+   * What the extractor read, beyond the text. It is a discriminated union and
+   * not an open record: producer and consumer used to agree on a `subject`
+   * string through three hand-written revalidators, and the compiler does it.
+   */
+  fact?: ClaimFact
 }
+
+/** Which file a script claim's name would have to be defined in. */
+export type ScriptRunner = 'package' | 'make' | 'deno'
+
+/**
+ * The observed type of a top-level frontmatter value. It names YAML shapes and
+ * not JavaScript ones: `mapping` and `list`, and `empty` for a key written with
+ * nothing after it.
+ */
+export type FrontmatterType = 'string' | 'number' | 'boolean' | 'list' | 'mapping' | 'empty'
+
+/** What a script claim asserts. */
+export type ScriptFact = {
+  subject: 'script'
+  runner: ScriptRunner
+  /** The binary as written, so a message can name what the reader typed. */
+  manager: string
+  script: string
+  /**
+   * Where the name starts inside `Claim.text`. The claim spans the whole
+   * command — that is what `SPEC.md` § 5 prints and what `--fix` replaces — so
+   * rewriting one token needs its position, and re-parsing the text later is
+   * how the parser and the fix come to disagree.
+   */
+  nameOffset: number
+}
+
+/**
+ * What a frontmatter claim asserts: either that the block did not parse, or
+ * what one top-level key holds.
+ */
+export type FrontmatterFact =
+  | { subject: 'parse'; reason: string }
+  | {
+      subject: 'key'
+      key: string
+      type: FrontmatterType
+      /** The value when it is a string. Reading it is how a `yes` stays a boolean. */
+      scalar: string | undefined
+    }
+
+/** What a `SKILL.md`'s frontmatter block asserts by existing, or by not. */
+export type SkillFact = {
+  subject: 'skill-block'
+  /** `false` when the file has no frontmatter at all. */
+  present: boolean
+  /** The top-level keys, in the order they are written. */
+  keys: readonly string[]
+}
+
+/** Everything a claim can carry. The `subject` is the discriminant. */
+export type ClaimFact = ScriptFact | FrontmatterFact | SkillFact
 
 export type Verdict = 'ok' | 'broken' | 'suspect' | 'skipped'
 

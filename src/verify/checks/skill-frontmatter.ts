@@ -1,7 +1,7 @@
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
-import { skillFactOf, type SkillFact } from '../../extract/skill.ts'
+import { skillFactOf } from '../../extract/skill.ts'
 import { suggestKey } from '../../fix/suggest.ts'
-import type { Claim, Suggestion } from '../../core/types.ts'
+import type { Claim, SkillFact, Suggestion } from '../../core/types.ts'
 import type { Check, CheckReport } from '../check.ts'
 
 /**
@@ -127,7 +127,7 @@ export const skillFrontmatter: Check = {
     if (claim.source.kind !== 'skill') return null
 
     const fact = frontmatterFactOf(claim)
-    if (fact === undefined || fact.subject !== 'key') return null
+    if (fact?.subject !== 'key') return null
 
     /**
      * The unknown-key rule is answered **before** the type gates below,

@@ -12,8 +12,8 @@
  */
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Claim } from '../core/types.ts'
-import { scriptFactOf, type ScriptRunner } from '../extract/scripts.ts'
+import type { Claim, ScriptRunner } from '../core/types.ts'
+import { scriptFactOf } from '../extract/scripts.ts'
 import type { RepoIndex } from './repo-index.ts'
 
 export type TaskFile = {

@@ -7,21 +7,10 @@
  * (`verify/checks/frontmatter-invalid.ts`): this extractor only reports the
  * type it observed, so nothing here has to know what a `SKILL.md` is.
  */
-import type { Claim } from '../core/types.ts'
-import { FRONTMATTER_TYPES, type Frontmatter, type FrontmatterField } from '../parse/frontmatter.ts'
+import type { Claim, ClaimFact, FrontmatterFact } from '../core/types.ts'
+import type { Frontmatter } from '../parse/frontmatter.ts'
 import { rangeFor } from '../parse/positions.ts'
 import type { ExtractContext } from './paths.ts'
-
-/**
- * What a frontmatter claim asserts. It travels in `Claim.meta`.
- *
- * `subject` and not `problem`: a key claim is emitted for **every** top-level
- * key, and most of them turn out to be fine. What the claim carries is what it
- * is about, and whether that is a problem is the check's answer, not the
- * extractor's.
- */
-export type FrontmatterFact =
-  { subject: 'parse'; reason: string } | ({ subject: 'key' } & FrontmatterField)
 
 /**
  * The block is only claimed when its first non-blank line is key-shaped.
@@ -97,7 +86,7 @@ export function claimableFrontmatter(
 export function frontmatterClaim(
   { source, table }: Pick<ExtractContext, 'source' | 'table'>,
   offset: [number, number],
-  meta: Record<string, unknown>,
+  fact: ClaimFact,
 ): Claim {
   const raw = source.content.slice(offset[0], offset[1])
   return {
@@ -108,7 +97,7 @@ export function frontmatterClaim(
     range: rangeFor(table, offset[0], offset[1]),
     offset,
     context: 'frontmatter',
-    meta,
+    fact,
   }
 }
 
@@ -116,8 +105,8 @@ export function extractFrontmatterClaims(context: ExtractContext): Claim[] {
   const frontmatter = claimableFrontmatter(context.frontmatter)
   if (frontmatter === undefined) return []
 
-  const claim = (offset: [number, number], meta: FrontmatterFact): Claim =>
-    frontmatterClaim(context, offset, meta)
+  const claim = (offset: [number, number], fact: FrontmatterFact): Claim =>
+    frontmatterClaim(context, offset, fact)
 
   const { error } = frontmatter
   if (error !== undefined) {
@@ -140,30 +129,9 @@ export function extractFrontmatterClaims(context: ExtractContext): Claim[] {
   )
 }
 
-/** Validation, so the guard below narrows instead of casting. */
-function isFrontmatterType(value: unknown): value is FrontmatterField['type'] {
-  return FRONTMATTER_TYPES.some((type) => type === value)
-}
-
-/**
- * The fact a claim carries, validated rather than cast.
- *
- * `Claim.meta` is an open record, so the check reads it through this guard the
- * way `link/broken` reads a url through `splitAnchor`: the boundary is here,
- * and no check casts.
- */
+/** The fact a claim carries. The union discriminates; nothing is revalidated. */
 export function frontmatterFactOf(claim: Claim): FrontmatterFact | undefined {
-  const meta = claim.meta
-  if (meta === undefined) return undefined
-  if (meta.subject === 'parse') {
-    return typeof meta.reason === 'string' ? { subject: 'parse', reason: meta.reason } : undefined
-  }
-  if (meta.subject !== 'key') return undefined
-  if (typeof meta.key !== 'string' || !isFrontmatterType(meta.type)) return undefined
-  return {
-    subject: 'key',
-    key: meta.key,
-    type: meta.type,
-    scalar: typeof meta.scalar === 'string' ? meta.scalar : undefined,
-  }
+  const fact = claim.fact
+  if (fact === undefined) return undefined
+  return fact.subject === 'parse' || fact.subject === 'key' ? fact : undefined
 }

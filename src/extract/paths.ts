@@ -1,4 +1,4 @@
-import type { Claim, Source } from '../core/types.ts'
+import type { Claim, ClaimFact, Source } from '../core/types.ts'
 import type { Frontmatter } from '../parse/frontmatter.ts'
 import type { ProseGates } from './context-prose.ts'
 import type { ParsedDoc } from '../parse/markdown.ts'
@@ -192,7 +192,7 @@ export function extractPathClaims({
     candidate: string,
     offset: [number, number],
     context: Claim['context'],
-    meta?: Record<string, unknown>,
+    fact?: ClaimFact,
   ): void => {
     const evaluated = evaluatePathText(candidate, {
       couldBeCommand: context !== 'link',
@@ -206,7 +206,7 @@ export function extractPathClaims({
       range: rangeFor(table, offset[0], offset[1]),
       offset,
       context,
-      ...(meta === undefined ? {} : { meta }),
+      ...(fact === undefined ? {} : { fact }),
     })
   }
 
@@ -227,7 +227,9 @@ export function extractPathClaims({
   }
 
   for (const value of frontmatter?.values ?? []) {
-    push(value.value, value.value, value.offset, 'frontmatter', { key: value.key })
+    // No fact: the key it came from was carried and never read, and the union
+    // is where that shows. `context: 'frontmatter'` is what the reporter uses.
+    push(value.value, value.value, value.offset, 'frontmatter')
   }
 
   return claims

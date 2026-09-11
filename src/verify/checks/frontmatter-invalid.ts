@@ -1,6 +1,5 @@
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
-import type { FrontmatterType } from '../../parse/frontmatter.ts'
-import type { SourceKind } from '../../core/types.ts'
+import type { FrontmatterType, SourceKind } from '../../core/types.ts'
 import type { Check } from '../check.ts'
 
 /**

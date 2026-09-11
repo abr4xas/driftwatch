@@ -1,5 +1,4 @@
-import type { Suggestion } from '../core/types.ts'
-import type { ScriptFact } from '../extract/scripts.ts'
+import type { ScriptFact, Suggestion } from '../core/types.ts'
 import type { DocumentAnchors } from '../verify/anchor-index.ts'
 import { candidatesFor, type RepoIndex } from '../verify/repo-index.ts'
 

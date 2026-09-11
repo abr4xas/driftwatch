@@ -108,7 +108,7 @@ type Claim = {
   range: { line: number; column: number; endLine: number; endColumn: number }
   offset: [number, number]  // absolute offsets into content, for --fix
   context: 'inline-code' | 'code-fence' | 'link' | 'frontmatter' | 'prose'
-  meta?: Record<string, unknown>   // e.g. { manager: 'pnpm' } for scripts
+  fact?: ClaimFact          // discriminated by `subject`: script | parse | key | skill-block
 }
 
 type Finding = {
@@ -121,6 +121,8 @@ type Finding = {
 ```
 
 `offset` is what makes `--fix` possible without reformatting: exactly that byte range gets replaced.
+
+`fact` is a **discriminated union**, not an open record. It was `Record<string, unknown>`, which meant every extractor and the check reading it agreed on a `subject` string through a hand-written revalidator each — three of them, none directly tested, each re-checking a shape its own module had built forty lines above. The union lives in `core/types.ts` with the rest of the data model, so the compiler enforces the agreement and `scriptFactOf`, `frontmatterFactOf` and `skillFactOf` are one discriminant test each. A claim carrying a fact nobody reads now shows up as a union member nobody matches.
 
 ---
 
@@ -216,7 +218,7 @@ This is also the only check that reads **code fences**, which § "Markdown parsi
 - **A manifest that cannot be enumerated answers nothing.** `package.json#scripts` and `deno.json#tasks` are objects, so their keys are the whole truth. A `Makefile` is a program: an `include` puts targets somewhere we did not read, and a pattern rule means the valid targets are not the literal names. Enumerability is judged on the **nearest** file only — letting a nested `include` silence the whole repo would turn the check off from one line.
 - **The script only has to exist somewhere.** [ADR-0005](../adr/0005-a-path-that-exists-somewhere-is-not-drift.md) applied to scripts: a monorepo's `packages/api/CLAUDE.md` saying `pnpm run test` with the script defined at the root is the same situation as a path written from the root. The nearest manifest is what the message names and where the suggestion comes from, because it is the file the reader will open.
 
-The claim spans the **whole command**, which is what SPEC § 5 prints, so `Claim.meta` carries where the name sits inside it: `--fix` replaces one token without re-parsing, and the parser cannot come to disagree with the fix.
+The claim spans the **whole command**, which is what SPEC § 5 prints, so `Claim.fact` carries where the name sits inside it: `--fix` replaces one token without re-parsing, and the parser cannot come to disagree with the fix.
 
 ---
 
@@ -304,7 +306,7 @@ It is the only way to measure false positives in practice.
 How it is run, what a snapshot claims and why the commits are pinned is in [test/corpus/README.md](../../test/corpus/README.md). It is a **local** gate, not a CI job, and the reason is in [ADR-0007](../adr/0007-the-corpus-does-not-run-in-ci.md): CI can detect that a snapshot changed but cannot rule on whether the change is an improvement.
 
 ### 3. Unit
-For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, and the guards that read a claim's `meta` back out. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
+For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, and the guards that narrow a claim's `fact`. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
 
 The line is not "small enough to unit-test", it is **"wrong in a way a fixture would not localise"**. Three of these earned their place by catching something a fixture would only have reported as a missing finding somewhere: the symlink comparison in discovery, the canonical key's handling of duplicate headings, and a parse-error offset landing on a newline.
 
