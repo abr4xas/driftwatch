@@ -1,11 +1,13 @@
 /**
- * Which checks run (`docs/spec/SPEC.md` § 5 for the flags, § 7 for the config
- * key). Nothing here can produce a finding; what it can do is leave the tool
- * with nothing to verify, which is why the empty selection is an error.
+ * What the flags and the config say about checks (`docs/spec/SPEC.md` § 5 for
+ * the flags, § 7 for the config key): which ones run, and at what severity.
+ * Nothing here can produce a finding; what it can do is leave the tool with
+ * nothing to verify, which is why the empty selection is an error.
  */
 import { matchesCheckId } from '../core/check-id.ts'
 import type { CheckSeverity } from '../core/config.ts'
 import { UserError } from '../core/errors.ts'
+import type { Severity } from '../core/types.ts'
 import type { Check } from './check.ts'
 
 export type CheckSelection = {
@@ -15,7 +17,7 @@ export type CheckSelection = {
   skip?: readonly string[]
   /** `false` when `--no-tier2` was passed. */
   tier2: boolean
-  /** The config's `checks` key. Only `'off'` is acted on today. */
+  /** The config's `checks` key. `'off'` deselects; the rest is severity. */
   configured?: Readonly<Record<string, CheckSeverity>>
 }
 
@@ -72,4 +74,17 @@ export function selectChecks(
     )
   }
   return enabled
+}
+
+/**
+ * What a check's findings are reported at. `'off'` cannot reach here through
+ * the selection, and when it does — a `--only` naming a check the config turns
+ * off, where the flag wins — the check's own default is the answer.
+ */
+export function severityOf(
+  check: Check,
+  configured: Readonly<Record<string, CheckSeverity>> | undefined,
+): Severity {
+  const wanted = configured?.[check.id]
+  return wanted === 'error' || wanted === 'warning' ? wanted : check.defaultSeverity
 }

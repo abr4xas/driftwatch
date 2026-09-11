@@ -5,7 +5,7 @@ import {
   findRepoRoot,
   hasDir,
   hasFile,
-  manifestFor,
+  allManifests,
 } from '../src/verify/repo-index.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
@@ -84,8 +84,19 @@ describe('buildRepoIndex', () => {
   })
 })
 
-describe('manifestFor', () => {
-  it('resolves the nearest package.json upwards', async () => {
+function names(index: Awaited<ReturnType<typeof buildRepoIndex>>): string[] {
+  return [...allManifests(index)]
+    .map(([dir, manifest]) => `${dir}:${manifest.name ?? ''}`)
+    .toSorted()
+}
+
+/**
+ * `manifestFor` walked this map upwards and nothing called it: the walk-up that
+ * makes monorepos work is `nearestOfKind` over the task index. What the map
+ * itself holds is still worth asserting, because the tree walk parses it.
+ */
+describe('the manifests the tree walk parses', () => {
+  it('one per directory holding a package.json', async () => {
     const root = makeTempRepo({
       files: {
         'package.json': JSON.stringify({ name: 'root', scripts: { build: 'tsdown' } }),
@@ -94,20 +105,16 @@ describe('manifestFor', () => {
         'packages/web/src/app.ts': '',
       },
     })
-    const index = await buildRepoIndex(root)
-    expect(manifestFor(index, 'packages/api/src')?.name).toBe('api')
-    expect(manifestFor(index, 'packages/web/src')?.name).toBe('root')
-    expect(manifestFor(index, '')?.name).toBe('root')
+    expect(names(await buildRepoIndex(root))).toEqual([':root', 'packages/api:api'])
   })
 
   it('an unreadable package.json does not break the index', async () => {
     const root = makeTempRepo({ files: { 'package.json': '{ this is not json' } })
-    const index = await buildRepoIndex(root)
-    expect(manifestFor(index, '')).toBeUndefined()
+    expect(names(await buildRepoIndex(root))).toEqual([])
   })
 
-  it('with no package.json anywhere it returns undefined', async () => {
+  it('with no package.json anywhere there are none', async () => {
     const index = await buildRepoIndex(makeTempRepo({ files: { 'a.ts': '' } }))
-    expect(manifestFor(index, '')).toBeUndefined()
+    expect(names(index)).toEqual([])
   })
 })

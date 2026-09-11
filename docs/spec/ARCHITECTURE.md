@@ -11,6 +11,8 @@ discover  →  parse  →  extract  →  verify  →  report
 
 No stage knows the next one. A new check is a new file in `extract/` and/or `verify/`, without touching the rest. A new output format is a file in `report/`.
 
+Both sides of that sentence are a **static registry** with a file next to it: `verify/checks/index.ts` lists the checks, `extract/index.ts` lists the extractors, and `verify/check.ts` and `extract/context.ts` hold the shape each one is a list of. `run.ts` named the five extractors by hand for a while, which made the promise true on the verify side and false on the extract side; `test/registries.test.ts` now fails when a file in either directory is not registered, because the failure mode is silent — an extractor nobody registered never runs and every fixture still passes.
+
 The CLI sits outside the pipeline: `cli/` translates arguments into a configuration and a configuration into an exit code, and knows nothing about checks. The pipeline imports nothing from `cli/`.
 
 This matters for the project itself: most of the future work is *adding checks*, and that operation has to cost one file.
@@ -43,6 +45,8 @@ src/
     frontmatter.ts     YAML of the leading block
     anchors.ts         the anchors a document offers, keyed for matching
   extract/
+    index.ts           the extractor registry, twin of verify/checks/index.ts
+    context.ts         ExtractContext: what every extractor reads from one source
     paths.ts           path Claim[]
     discard.ts         the discard rules of the path extractor
     context-prose.ts   the prose gates: markers that disclaim a nearby claim
@@ -55,9 +59,10 @@ src/
   verify/
     repo-index.ts      in-memory repo index (the heart)
     check.ts           the shape of a check and its context
-    resolve.ts         a claim's text -> path relative to the root
+    resolve.ts         a claim's text -> path relative to the root, and the pair of resolutions
     generated.ts       directories whose contents are generated, not versioned
-    ignored.ts         the two resolutions of a path claim, and what git is asked about them
+    ignored.ts         what git is asked about a path claim, prefetch and lookup
+    path-claim.ts      the verdict on a path claim: every rule that can decline the question
     anchor-index.ts    the anchors of the files some link points into
     manifest.ts        the tasks each directory offers: package.json / Makefile / deno.json
     git.ts             per-file churn, a source's last commit
@@ -108,7 +113,7 @@ type Claim = {
   range: { line: number; column: number; endLine: number; endColumn: number }
   offset: [number, number]  // absolute offsets into content, for --fix
   context: 'inline-code' | 'code-fence' | 'link' | 'frontmatter' | 'prose'
-  meta?: Record<string, unknown>   // e.g. { manager: 'pnpm' } for scripts
+  fact?: ClaimFact          // discriminated by `subject`: script | parse | key | skill-block
 }
 
 type Finding = {
@@ -121,6 +126,8 @@ type Finding = {
 ```
 
 `offset` is what makes `--fix` possible without reformatting: exactly that byte range gets replaced.
+
+`fact` is a **discriminated union**, not an open record. It was `Record<string, unknown>`, which meant every extractor and the check reading it agreed on a `subject` string through a hand-written revalidator each — three of them, none directly tested, each re-checking a shape its own module had built forty lines above. The union lives in `core/types.ts` with the rest of the data model, so the compiler enforces the agreement and `scriptFactOf`, `frontmatterFactOf` and `skillFactOf` are one discriminant test each. A claim carrying a fact nobody reads now shows up as a union member nobody matches.
 
 ---
 
@@ -140,6 +147,7 @@ type RepoIndex = {
 Decisions:
 - A single tree walk with `fast-glob` or `tinyglobby`, honouring `.gitignore`.
 - If git is available, use `git ls-files` — it is faster and already respects ignores. Fall back to glob if there is no repo.
+- `root` and `listing` are plain values, read directly. Everything with a shape is asked through the exported functions — `hasFile`, `hasDir`, `candidatesFor`, `someEntryEndsWith`, `allFiles`, `allManifests` — and that is the whole interface. The struct used to be a second one, with `discover.ts` and `manifest.ts` reaching past the accessors into the raw sets and maps.
 - `byBasename` is what feeds the `--fix` suggestions. It is a `Map` of arrays, not a fuzzy search: the fuzzy search only runs over the candidates for that basename, never over the whole index.
 - Everything in memory. On a repo of 100k files that is a few MB; acceptable.
 
@@ -179,6 +187,22 @@ This is the most nuanced algorithm in the project. Rule order:
 6. Resolve against `source.baseDir`.
 7. Look up `index.files` and `index.dirs`.
 
+Rules 1 to 5 run in `extract/`, where a text that is not a path builds no claim
+and costs nothing. Everything that needs the index — the resolutions, the absent
+tool, the generated artifact, the git ignore, the suffix search — runs in
+`verify/path-claim.ts`, which returns a `PathVerdict` and is the only thing
+`path/missing` calls.
+
+That split is on purpose and it is not the old one. The seam used to fall where
+a rule happened to need `RepoIndex`, which is an implementation fact: it left
+`path/missing` five sixths suppression and one sixth verdict, and it put the
+project's precision — its one real asset — in seven places. `verifyPathClaim`
+names each declining rule (`escapes-root`, `outside-repo`, `absent-tool`,
+`generated`, `ignored-by-git`, `exists-as-suffix`), so the matrix is one table
+test instead of ten temporary repos. `generated.ts` and `foreign-tools.ts` keep
+their own files: they are lists with the argument for each entry written next to
+it, and folding them in would trade readable documents for one nobody opens.
+
 If it fails, generate a suggestion: look up `basename` in `index.byBasename`. Confidence = 1.0 if there is a single candidate and the parent directory is similar; 0.6 if there is a single candidate in a different directory; 0.3 if there are several.
 
 **Every discard rule must have a case in `test/fixtures/`.** That is the contract against false positive regression.
@@ -216,7 +240,7 @@ This is also the only check that reads **code fences**, which § "Markdown parsi
 - **A manifest that cannot be enumerated answers nothing.** `package.json#scripts` and `deno.json#tasks` are objects, so their keys are the whole truth. A `Makefile` is a program: an `include` puts targets somewhere we did not read, and a pattern rule means the valid targets are not the literal names. Enumerability is judged on the **nearest** file only — letting a nested `include` silence the whole repo would turn the check off from one line.
 - **The script only has to exist somewhere.** [ADR-0005](../adr/0005-a-path-that-exists-somewhere-is-not-drift.md) applied to scripts: a monorepo's `packages/api/CLAUDE.md` saying `pnpm run test` with the script defined at the root is the same situation as a path written from the root. The nearest manifest is what the message names and where the suggestion comes from, because it is the file the reader will open.
 
-The claim spans the **whole command**, which is what SPEC § 5 prints, so `Claim.meta` carries where the name sits inside it: `--fix` replaces one token without re-parsing, and the parser cannot come to disagree with the fix.
+The claim spans the **whole command**, which is what SPEC § 5 prints, so `Claim.fact` carries where the name sits inside it: `--fix` replaces one token without re-parsing, and the parser cannot come to disagree with the fix.
 
 ---
 
@@ -304,9 +328,11 @@ It is the only way to measure false positives in practice.
 How it is run, what a snapshot claims and why the commits are pinned is in [test/corpus/README.md](../../test/corpus/README.md). It is a **local** gate, not a CI job, and the reason is in [ADR-0007](../adr/0007-the-corpus-does-not-run-in-ci.md): CI can detect that a snapshot changed but cannot rule on whether the change is an improvement.
 
 ### 3. Unit
-For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, and the guards that read a claim's `meta` back out. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
+For the pure functions whose behaviour **is** a rule: the path extractor, the suggestion scoring, the anchor keys, the frontmatter parse, the guards that narrow a claim's `fact`, and the prose gates. Everything else is covered by fixtures, and a check is never unit-tested — its rules are worth reading as a whole document with its findings next to it, which is what a fixture is.
 
 The line is not "small enough to unit-test", it is **"wrong in a way a fixture would not localise"**. Three of these earned their place by catching something a fixture would only have reported as a missing finding somewhere: the symlink comparison in discovery, the canonical key's handling of duplicate headings, and a parse-error offset landing on a newline.
+
+The prose gates are the late addition and the reason is worth writing down. `proseGatesFor(content, origin)` is asked about an **offset**, and building one by hand is the awkward part — not reaching the module — so every assertion about the six gates went through `run()` over a temporary repo, and the module carrying the most false-positive risk in the project had no case of its own. `test/context-prose.test.ts` marks the claim with `‸` in the document and strips it, which makes a case read as the document it is about. The two regressions the module has had — a table row bleeding into the next one, and a sentence split on a newline — have a case each.
 
 ---
 
@@ -320,8 +346,15 @@ export const check: Check = {
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['path'],
-  run(claim, ctx): Finding | null { /* ... */ },
+  run(claim, ctx): CheckReport | null { /* ... */ },
 }
 ```
+
+A check reports a claim, a message and maybe a suggestion. It does not stamp its
+own id or its severity: `run.ts` knows which check ran, and the severity is the
+config's to set (SPEC § 7, `severityOf` in `verify/selection.ts`). That is what
+makes `checks: { 'path/missing': 'warning' }` an override instead of an edit in
+five check bodies, and it is why `defaultSeverity` is a default rather than the
+answer.
 
 `ctx` exposes `index` (whose `manifests` carries the parsed `package.json` of every directory), `anchors`, `tasks`, and will grow `git` and `config` when a check needs them — a field nobody reads is a field nobody maintains. Static registry in `verify/checks/index.ts` — no dynamic plugin loading in v1. Third-party plugins are a v2 decision and must not shape the design now.

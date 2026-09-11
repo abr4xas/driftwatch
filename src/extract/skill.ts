@@ -6,19 +6,11 @@
  * only thing missing is the block itself: "there is no `name`" is not a fact
  * about any key, and neither is "there is no frontmatter".
  */
-import type { Claim } from '../core/types.ts'
+import type { Claim, SkillFact } from '../core/types.ts'
 import { claimableFrontmatter, frontmatterClaim } from './frontmatter.ts'
-import type { ExtractContext } from './paths.ts'
+import type { ExtractContext } from './context.ts'
 
 /** What the block asserts: that it is there, and which keys it holds. */
-export type SkillFact = {
-  subject: 'skill-block'
-  /** `false` when the file has no frontmatter at all. */
-  present: boolean
-  /** The top-level keys, in the order they are written. */
-  keys: readonly string[]
-}
-
 /** The opening delimiter, which `parseFrontmatter` guarantees is at offset 0. */
 const DELIMITER: [number, number] = [0, 3]
 
@@ -60,15 +52,8 @@ export function extractSkillClaims(context: ExtractContext): Claim[] {
   ]
 }
 
-/**
- * The fact a claim carries, validated rather than cast — the same boundary
- * `frontmatterFactOf` draws, for the same reason.
- */
+/** The fact a claim carries. The union discriminates; nothing is revalidated. */
 export function skillFactOf(claim: Claim): SkillFact | undefined {
-  const meta = claim.meta
-  if (meta === undefined || meta.subject !== 'skill-block') return undefined
-  if (typeof meta.present !== 'boolean' || !Array.isArray(meta.keys)) return undefined
-  const keys: readonly unknown[] = meta.keys
-  if (!keys.every((key): key is string => typeof key === 'string')) return undefined
-  return { subject: 'skill-block', present: meta.present, keys }
+  const fact = claim.fact
+  return fact?.subject === 'skill-block' ? fact : undefined
 }

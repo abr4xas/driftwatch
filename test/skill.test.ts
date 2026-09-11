@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Claim, Source, SourceKind } from '../src/core/types.ts'
 import { proseGatesFor } from '../src/extract/context-prose.ts'
+import { extractFrontmatterClaims, frontmatterFactOf } from '../src/extract/frontmatter.ts'
 import { extractSkillClaims, skillFactOf } from '../src/extract/skill.ts'
 import { suggestKey } from '../src/fix/suggest.ts'
 import { parseFrontmatter } from '../src/parse/frontmatter.ts'
@@ -103,5 +104,40 @@ describe('suggestKey', () => {
 
   it('never fixable, whatever the distance', () => {
     expect(suggestKey(known, 'licence')?.fixable).toBe(false)
+  })
+})
+
+describe('the fact guards discriminate', () => {
+  const content = block('name: deploy', 'description: ships it')
+  const source: Source = {
+    path: '.claude/skills/deploy/SKILL.md',
+    absPath: '/tmp/.claude/skills/deploy/SKILL.md',
+    kind: 'skill',
+    content,
+    baseDir: '.claude/skills/deploy',
+    aliases: [],
+  }
+  const context = {
+    source,
+    doc: parseMarkdown(content),
+    frontmatter: parseFrontmatter(content),
+    table: buildLineTable(content),
+    prose: proseGatesFor(content, undefined),
+  }
+
+  /**
+   * Both extractors emit `frontmatter` claims, so `claimKinds` cannot tell the
+   * two checks apart and each narrows by fact. The union is what makes that a
+   * discriminant test rather than a revalidation.
+   */
+  it('a skill-block claim is not read as a key, and a key is not read as a block', () => {
+    const blockClaim = extractSkillClaims(context)[0]!
+    const keyClaim = extractFrontmatterClaims(context)[0]!
+
+    expect(skillFactOf(blockClaim)?.subject).toBe('skill-block')
+    expect(frontmatterFactOf(blockClaim)).toBeUndefined()
+
+    expect(frontmatterFactOf(keyClaim)?.subject).toBe('key')
+    expect(skillFactOf(keyClaim)).toBeUndefined()
   })
 })

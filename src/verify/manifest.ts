@@ -12,9 +12,9 @@
  */
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Claim } from '../core/types.ts'
-import { scriptFactOf, type ScriptRunner } from '../extract/scripts.ts'
-import type { RepoIndex } from './repo-index.ts'
+import type { Claim, ScriptRunner } from '../core/types.ts'
+import { scriptFactOf } from '../extract/scripts.ts'
+import { allManifests, candidatesFor, type RepoIndex } from './repo-index.ts'
 
 export type TaskFile = {
   /** Path relative to the root. It is what the message names. */
@@ -160,7 +160,7 @@ function runnersIn(claims: readonly Claim[]): Set<ScriptRunner> {
 function directoriesWith(index: RepoIndex, filenames: readonly string[]): Map<string, string> {
   const found = new Map<string, string>()
   for (const filename of filenames) {
-    for (const path of index.byBasename.get(filename) ?? []) {
+    for (const path of candidatesFor(index, filename)) {
       const slash = path.lastIndexOf('/')
       const dir = slash === -1 ? '' : path.slice(0, slash)
       // The first filename in the list wins, the way the runner itself resolves.
@@ -183,7 +183,7 @@ export async function buildTaskIndex(
     built.set(
       'package',
       new Map(
-        [...index.manifests].map(([dir, manifest]) => [
+        [...allManifests(index)].map(([dir, manifest]) => [
           dir,
           {
             path: dir === '' ? 'package.json' : `${dir}/package.json`,

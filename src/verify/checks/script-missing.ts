@@ -43,8 +43,6 @@ export const scriptMissing: Check = {
     const available = nearest.flatMap((file) => [...file.tasks])
     const suggestion = suggestScript(available, fact, claim.text)
     return {
-      check: scriptMissing.id,
-      severity: scriptMissing.defaultSeverity,
       claim,
       // The manifest is named by its path, not its basename: in a monorepo
       // `script not in packages/api/package.json` says which of the four the

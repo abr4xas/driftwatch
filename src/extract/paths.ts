@@ -1,8 +1,6 @@
-import type { Claim, Source } from '../core/types.ts'
-import type { Frontmatter } from '../parse/frontmatter.ts'
-import type { ProseGates } from './context-prose.ts'
-import type { ParsedDoc } from '../parse/markdown.ts'
-import { rangeFor, type LineTable } from '../parse/positions.ts'
+import type { Claim, ClaimFact } from '../core/types.ts'
+import { rangeFor } from '../parse/positions.ts'
+import type { ExtractContext } from './context.ts'
 import {
   discardReason,
   normalizePathText,
@@ -137,15 +135,6 @@ export function evaluatePathText(raw: string, options?: DiscardOptions): PathEva
   return { kind: 'path', text }
 }
 
-export type ExtractContext = {
-  source: Source
-  doc: ParsedDoc
-  frontmatter: Frontmatter | undefined
-  table: LineTable
-  /** The prose gates for this source. See `proseGatesFor`. */
-  prose: ProseGates
-}
-
 /**
  * Trims the anchor off a link target: `./docs/x.md#section` claims that
  * `./docs/x.md` exists. A bare anchor (`#section`) claims nothing about a path,
@@ -192,7 +181,7 @@ export function extractPathClaims({
     candidate: string,
     offset: [number, number],
     context: Claim['context'],
-    meta?: Record<string, unknown>,
+    fact?: ClaimFact,
   ): void => {
     const evaluated = evaluatePathText(candidate, {
       couldBeCommand: context !== 'link',
@@ -206,7 +195,7 @@ export function extractPathClaims({
       range: rangeFor(table, offset[0], offset[1]),
       offset,
       context,
-      ...(meta === undefined ? {} : { meta }),
+      ...(fact === undefined ? {} : { fact }),
     })
   }
 
@@ -227,7 +216,9 @@ export function extractPathClaims({
   }
 
   for (const value of frontmatter?.values ?? []) {
-    push(value.value, value.value, value.offset, 'frontmatter', { key: value.key })
+    // No fact: the key it came from was carried and never read, and the union
+    // is where that shows. `context: 'frontmatter'` is what the reporter uses.
+    push(value.value, value.value, value.offset, 'frontmatter')
   }
 
   return claims

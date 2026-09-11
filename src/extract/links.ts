@@ -8,7 +8,7 @@
  */
 import type { Claim } from '../core/types.ts'
 import { rangeFor } from '../parse/positions.ts'
-import type { ExtractContext } from './paths.ts'
+import type { ExtractContext } from './context.ts'
 
 /** A link target whose anchor is worth verifying. */
 export type AnchorLink = {

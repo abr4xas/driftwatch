@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Claim, Source } from '../src/core/types.ts'
-import { gitQueriesFor, ignoredByGit, resolutionsOf } from '../src/verify/ignored.ts'
+import { gitQueriesFor, ignoredByGit } from '../src/verify/ignored.ts'
+import { resolutionsOf } from '../src/verify/resolve.ts'
 
 function claim(text: string, baseDir = ''): Claim {
   const source: Source = {
@@ -23,19 +24,25 @@ function claim(text: string, baseDir = ''): Claim {
 }
 
 describe('the two resolutions of a path claim', () => {
-  it('at the root there is only one', () => {
-    expect(resolutionsOf(claim('src/x.ts'))).toEqual(['src/x.ts'])
+  it('at the root both are the same path', () => {
+    expect(resolutionsOf(claim('src/x.ts'))).toEqual({
+      local: 'src/x.ts',
+      asWritten: 'src/x.ts',
+    })
   })
 
-  it('a nested source is resolved against its directory and against the root', () => {
-    expect(resolutionsOf(claim('src/x.ts', 'packages/api'))).toEqual([
-      'packages/api/src/x.ts',
-      'src/x.ts',
-    ])
+  it('a nested source resolves against its directory and against the root', () => {
+    expect(resolutionsOf(claim('src/x.ts', 'packages/api'))).toEqual({
+      local: 'packages/api/src/x.ts',
+      asWritten: 'src/x.ts',
+    })
   })
 
-  it('a path escaping above the root contributes nothing', () => {
-    expect(resolutionsOf(claim('../../outside.ts'))).toEqual([])
+  it('a path escaping above the root has nothing to ask about', () => {
+    expect(resolutionsOf(claim('../../outside.ts'))).toEqual({
+      local: undefined,
+      asWritten: undefined,
+    })
   })
 })
 
@@ -62,9 +69,10 @@ describe('the git-ignore queries', () => {
     const claims = [claim('dist/'), claim('build/', 'packages/api'), claim('src/x.ts', 'docs')]
     const asked = new Set(gitQueriesFor(claims))
     for (const one of claims) {
-      for (const rel of resolutionsOf(one)) {
+      const { local, asWritten } = resolutionsOf(one)
+      for (const resolution of [local, asWritten].filter((each) => each !== undefined)) {
         // Anything `ignoredByGit` can answer true to has to be in the batch.
-        expect(ignoredByGit(asked, one, rel)).toBe(true)
+        expect(ignoredByGit(asked, one, resolution)).toBe(true)
       }
     }
   })

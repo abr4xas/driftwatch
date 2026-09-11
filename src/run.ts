@@ -1,14 +1,11 @@
-import { loadConfig, type Config } from './core/config.ts'
+import { loadConfig, type CheckSeverity, type Config } from './core/config.ts'
 import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
 import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
 import { proseGatesFor } from './extract/context-prose.ts'
-import { extractFrontmatterClaims } from './extract/frontmatter.ts'
-import { extractLinkClaims } from './extract/links.ts'
-import { extractPathClaims } from './extract/paths.ts'
-import { extractScriptClaims } from './extract/scripts.ts'
-import { extractSkillClaims } from './extract/skill.ts'
+import type { ExtractContext } from './extract/context.ts'
+import { extractClaims } from './extract/index.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
@@ -16,7 +13,7 @@ import { buildAnchorIndex } from './verify/anchor-index.ts'
 import type { Check, CheckContext } from './verify/check.ts'
 import { CHECKS } from './verify/checks/index.ts'
 import { buildTaskIndex } from './verify/manifest.ts'
-import { selectChecks } from './verify/selection.ts'
+import { selectChecks, severityOf } from './verify/selection.ts'
 import { gitIgnoredPaths, originSlug } from './verify/git.ts'
 import { gitQueriesFor } from './verify/ignored.ts'
 import { buildRepoIndex, findRepoRoot } from './verify/repo-index.ts'
@@ -72,20 +69,14 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
     const table = buildLineTable(source.content)
     // One set of gates per source, shared by every extractor: the section scan
     // they start with is over the whole document.
-    const context = {
+    const context: ExtractContext = {
       source,
       doc,
       frontmatter,
       table,
       prose: proseGatesFor(source.content, origin),
     }
-    claims.push(
-      ...extractPathClaims(context),
-      ...extractScriptClaims(context),
-      ...extractLinkClaims(context),
-      ...extractFrontmatterClaims(context),
-      ...extractSkillClaims(context),
-    )
+    claims.push(...extractClaims(context))
     ignores.set(source, parseIgnores(doc, table))
   }
   return { claims, ignores }
@@ -107,13 +98,29 @@ function applyIgnores(
   })
 }
 
-function verify(claims: readonly Claim[], checks: readonly Check[], ctx: CheckContext): Finding[] {
+/**
+ * A check reports what it found; the id and the severity are stamped here. That
+ * is what makes the config's `checks` key (SPEC.md § 7) an override rather than
+ * five edits in five check bodies.
+ */
+function verify(
+  claims: readonly Claim[],
+  checks: readonly Check[],
+  ctx: CheckContext,
+  configured: Readonly<Record<string, CheckSeverity>> | undefined,
+): Finding[] {
+  const severities = new Map(checks.map((check) => [check.id, severityOf(check, configured)]))
   const findings: Finding[] = []
   for (const claim of claims) {
     for (const check of checks) {
       if (!check.claimKinds.includes(claim.kind)) continue
-      const finding = check.run(claim, ctx)
-      if (finding !== null) findings.push(finding)
+      const report = check.run(claim, ctx)
+      if (report === null) continue
+      findings.push({
+        check: check.id,
+        severity: severities.get(check.id) ?? check.defaultSeverity,
+        ...report,
+      })
     }
   }
   return findings
@@ -185,7 +192,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     tasks: consumes(checks, 'script') ? await buildTaskIndex(root, index, claims) : new Map(),
   }
 
-  const findings = sortFindings(applyIgnores(verify(claims, checks, ctx), ignores))
+  const findings = sortFindings(applyIgnores(verify(claims, checks, ctx, config.checks), ignores))
 
   return {
     root,

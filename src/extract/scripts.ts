@@ -9,31 +9,13 @@
  * claim: which manager, whether a script is being run, and which token is its
  * name.
  */
-import type { Claim } from '../core/types.ts'
+import type { Claim, ScriptFact, ScriptRunner } from '../core/types.ts'
 import type { FenceSpan } from '../parse/markdown.ts'
 import { rangeFor } from '../parse/positions.ts'
 import { isPlaceholderName } from './discard.ts'
-import type { ExtractContext } from './paths.ts'
+import type { ExtractContext } from './context.ts'
 
 /** Which file answers whether the script exists. */
-export type ScriptRunner = 'package' | 'make' | 'deno'
-
-/** What a script claim asserts. It travels in `Claim.meta`. */
-export type ScriptFact = {
-  subject: 'script'
-  runner: ScriptRunner
-  /** The binary as written, so a message can name what the reader typed. */
-  manager: string
-  script: string
-  /**
-   * Where the name starts inside `Claim.text`. The claim spans the whole
-   * command — that is what `SPEC.md` § 5 prints and what `--fix` replaces — so
-   * rewriting one token needs its position, and re-parsing the text later is
-   * how the parser and the fix come to disagree.
-   */
-  nameOffset: number
-}
-
 export type ParsedCommand = Omit<ScriptFact, 'subject'>
 
 /** A token of a command line, with where it sits in the segment. */
@@ -345,7 +327,7 @@ export function extractScriptClaims({ source, doc, table, prose }: ExtractContex
       range: rangeFor(table, offset[0], offset[1]),
       offset,
       context,
-      meta: { subject: 'script', ...command },
+      fact: { subject: 'script', ...command },
     })
   }
 
@@ -375,16 +357,8 @@ export function extractScriptClaims({ source, doc, table, prose }: ExtractContex
   return claims
 }
 
-/**
- * The fact a claim carries, validated rather than cast: the same boundary
- * `frontmatterFactOf` and `skillFactOf` draw, for the same reason.
- */
+/** The fact a claim carries. The union discriminates; nothing is revalidated. */
 export function scriptFactOf(claim: Claim): ScriptFact | undefined {
-  const meta = claim.meta
-  if (meta === undefined || meta.subject !== 'script') return undefined
-  const { runner, manager, script, nameOffset } = meta
-  if (runner !== 'package' && runner !== 'make' && runner !== 'deno') return undefined
-  if (typeof manager !== 'string' || typeof script !== 'string') return undefined
-  if (typeof nameOffset !== 'number') return undefined
-  return { subject: 'script', runner, manager, script, nameOffset }
+  const fact = claim.fact
+  return fact?.subject === 'script' ? fact : undefined
 }

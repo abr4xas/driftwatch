@@ -1,8 +1,8 @@
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
-import { skillFactOf, type SkillFact } from '../../extract/skill.ts'
+import { skillFactOf } from '../../extract/skill.ts'
 import { suggestKey } from '../../fix/suggest.ts'
-import type { Claim, Finding, Suggestion } from '../../core/types.ts'
-import type { Check } from '../check.ts'
+import type { Claim, SkillFact, Suggestion } from '../../core/types.ts'
+import type { Check, CheckReport } from '../check.ts'
 
 /**
  * `SPEC.md` § 3: the five structural rules of a `SKILL.md` frontmatter.
@@ -58,10 +58,8 @@ function skillDirectoryOf(path: string): string | undefined {
   return parent.at(-1)
 }
 
-function finding(claim: Claim, message: string, suggestion?: Suggestion): Finding {
+function finding(claim: Claim, message: string, suggestion?: Suggestion): CheckReport {
   return {
-    check: skillFrontmatter.id,
-    severity: skillFrontmatter.defaultSeverity,
     claim,
     message,
     ...(suggestion === undefined ? {} : { suggestion }),
@@ -69,7 +67,7 @@ function finding(claim: Claim, message: string, suggestion?: Suggestion): Findin
 }
 
 /** The rules that need the block rather than a key: the two absences. */
-function checkBlock(claim: Claim, fact: SkillFact): Finding | null {
+function checkBlock(claim: Claim, fact: SkillFact): CheckReport | null {
   if (!fact.present) return finding(claim, 'frontmatter is missing')
 
   const missing = REQUIRED.filter((field) => !fact.keys.includes(field))
@@ -89,7 +87,7 @@ function checkBlock(claim: Claim, fact: SkillFact): Finding | null {
  * directory and both are wrong, which is the shape where the two names really
  * do have to change together.
  */
-function checkName(claim: Claim, value: string): Finding | null {
+function checkName(claim: Claim, value: string): CheckReport | null {
   const directory = skillDirectoryOf(claim.source.path)
 
   if (directory !== undefined && value !== directory) {
@@ -105,7 +103,7 @@ function checkName(claim: Claim, value: string): Finding | null {
   return KEBAB.test(value) ? null : finding(claim, 'name is not kebab-case')
 }
 
-function checkDescription(claim: Claim, value: string): Finding | null {
+function checkDescription(claim: Claim, value: string): CheckReport | null {
   const text = value.trim()
   if (text.length === 0) return finding(claim, 'description is empty')
   if (text.length < MIN_DESCRIPTION) {
@@ -129,7 +127,7 @@ export const skillFrontmatter: Check = {
     if (claim.source.kind !== 'skill') return null
 
     const fact = frontmatterFactOf(claim)
-    if (fact === undefined || fact.subject !== 'key') return null
+    if (fact?.subject !== 'key') return null
 
     /**
      * The unknown-key rule is answered **before** the type gates below,

@@ -257,6 +257,23 @@ describe('the sources key', () => {
     expect((await audit(root)).sources).toHaveLength(2)
   })
 
+  it('the checks key sets the severity a finding is reported at', async () => {
+    const root = repo({
+      'AGENTS.md': '# Agents\n\nThe entry point is `src/nope.ts`.\n',
+      'driftwatch.config.json': JSON.stringify({ checks: { 'path/missing': 'warning' } }),
+    })
+    const result = await audit(root)
+    expect(result.findings.map((finding) => finding.severity)).toEqual(['warning'])
+    expect(result.counts).toEqual({ errors: 0, warnings: 1 })
+  })
+
+  it('with no checks key the same finding is an error', async () => {
+    const root = repo({ 'AGENTS.md': '# Agents\n\nThe entry point is `src/nope.ts`.\n' })
+    const result = await audit(root)
+    expect(result.findings.map((finding) => finding.severity)).toEqual(['error'])
+    expect(result.counts).toEqual({ errors: 1, warnings: 0 })
+  })
+
   it('the keys with no implementation yet are carried, not acted on', async () => {
     const root = repo({
       'driftwatch.config.json': JSON.stringify({

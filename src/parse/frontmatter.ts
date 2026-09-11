@@ -1,4 +1,5 @@
 import { isMap, isPair, isScalar, isSeq, parseDocument } from 'yaml'
+import type { FrontmatterType } from '../core/types.ts'
 
 /** A string value from the frontmatter, with its position in the file. */
 export type FrontmatterValue = {
@@ -15,25 +16,6 @@ export type FrontmatterError = {
   /** Absolute offsets into the file, pointing at the offending token. */
   offset: [number, number]
 }
-
-/**
- * The observed type of a top-level value. It is what the format's schema is
- * compared against, so it names YAML shapes and not JavaScript ones:
- * `mapping` and `list`, and `empty` for a key written with nothing after it.
- *
- * The list is one tuple and the union is derived from it, so the guard that
- * validates a type coming back out of a claim cannot fall behind the union.
- */
-export const FRONTMATTER_TYPES: readonly [
-  'string',
-  'number',
-  'boolean',
-  'list',
-  'mapping',
-  'empty',
-] = ['string', 'number', 'boolean', 'list', 'mapping', 'empty']
-
-export type FrontmatterType = (typeof FRONTMATTER_TYPES)[number]
 
 /** What a top-level pair says about its value. */
 export type FrontmatterField = {
