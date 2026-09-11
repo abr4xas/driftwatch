@@ -4,11 +4,8 @@ import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
 import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
 import { proseGatesFor } from './extract/context-prose.ts'
-import { extractFrontmatterClaims } from './extract/frontmatter.ts'
-import { extractLinkClaims } from './extract/links.ts'
-import { extractPathClaims } from './extract/paths.ts'
-import { extractScriptClaims } from './extract/scripts.ts'
-import { extractSkillClaims } from './extract/skill.ts'
+import type { ExtractContext } from './extract/context.ts'
+import { extractClaims } from './extract/index.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
 import { buildLineTable } from './parse/positions.ts'
@@ -72,20 +69,14 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
     const table = buildLineTable(source.content)
     // One set of gates per source, shared by every extractor: the section scan
     // they start with is over the whole document.
-    const context = {
+    const context: ExtractContext = {
       source,
       doc,
       frontmatter,
       table,
       prose: proseGatesFor(source.content, origin),
     }
-    claims.push(
-      ...extractPathClaims(context),
-      ...extractScriptClaims(context),
-      ...extractLinkClaims(context),
-      ...extractFrontmatterClaims(context),
-      ...extractSkillClaims(context),
-    )
+    claims.push(...extractClaims(context))
     ignores.set(source, parseIgnores(doc, table))
   }
   return { claims, ignores }

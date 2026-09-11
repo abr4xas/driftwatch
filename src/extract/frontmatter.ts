@@ -10,7 +10,7 @@
 import type { Claim, ClaimFact, FrontmatterFact } from '../core/types.ts'
 import type { Frontmatter } from '../parse/frontmatter.ts'
 import { rangeFor } from '../parse/positions.ts'
-import type { ExtractContext } from './paths.ts'
+import type { ExtractContext } from './context.ts'
 
 /**
  * The block is only claimed when its first non-blank line is key-shaped.

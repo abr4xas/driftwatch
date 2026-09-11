@@ -11,6 +11,8 @@ discover  →  parse  →  extract  →  verify  →  report
 
 No stage knows the next one. A new check is a new file in `extract/` and/or `verify/`, without touching the rest. A new output format is a file in `report/`.
 
+Both sides of that sentence are a **static registry** with a file next to it: `verify/checks/index.ts` lists the checks, `extract/index.ts` lists the extractors, and `verify/check.ts` and `extract/context.ts` hold the shape each one is a list of. `run.ts` named the five extractors by hand for a while, which made the promise true on the verify side and false on the extract side; `test/registries.test.ts` now fails when a file in either directory is not registered, because the failure mode is silent — an extractor nobody registered never runs and every fixture still passes.
+
 The CLI sits outside the pipeline: `cli/` translates arguments into a configuration and a configuration into an exit code, and knows nothing about checks. The pipeline imports nothing from `cli/`.
 
 This matters for the project itself: most of the future work is *adding checks*, and that operation has to cost one file.
@@ -43,6 +45,8 @@ src/
     frontmatter.ts     YAML of the leading block
     anchors.ts         the anchors a document offers, keyed for matching
   extract/
+    index.ts           the extractor registry, twin of verify/checks/index.ts
+    context.ts         ExtractContext: what every extractor reads from one source
     paths.ts           path Claim[]
     discard.ts         the discard rules of the path extractor
     context-prose.ts   the prose gates: markers that disclaim a nearby claim

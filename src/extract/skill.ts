@@ -8,7 +8,7 @@
  */
 import type { Claim, SkillFact } from '../core/types.ts'
 import { claimableFrontmatter, frontmatterClaim } from './frontmatter.ts'
-import type { ExtractContext } from './paths.ts'
+import type { ExtractContext } from './context.ts'
 
 /** What the block asserts: that it is there, and which keys it holds. */
 /** The opening delimiter, which `parseFrontmatter` guarantees is at offset 0. */

@@ -1,8 +1,6 @@
-import type { Claim, ClaimFact, Source } from '../core/types.ts'
-import type { Frontmatter } from '../parse/frontmatter.ts'
-import type { ProseGates } from './context-prose.ts'
-import type { ParsedDoc } from '../parse/markdown.ts'
-import { rangeFor, type LineTable } from '../parse/positions.ts'
+import type { Claim, ClaimFact } from '../core/types.ts'
+import { rangeFor } from '../parse/positions.ts'
+import type { ExtractContext } from './context.ts'
 import {
   discardReason,
   normalizePathText,
@@ -135,15 +133,6 @@ export function evaluatePathText(raw: string, options?: DiscardOptions): PathEva
   if (!looksLikePath(text)) return { kind: 'discarded', reason: 'not-path-shaped' }
 
   return { kind: 'path', text }
-}
-
-export type ExtractContext = {
-  source: Source
-  doc: ParsedDoc
-  frontmatter: Frontmatter | undefined
-  table: LineTable
-  /** The prose gates for this source. See `proseGatesFor`. */
-  prose: ProseGates
 }
 
 /**

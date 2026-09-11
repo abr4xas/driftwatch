@@ -13,7 +13,7 @@ import type { Claim, ScriptFact, ScriptRunner } from '../core/types.ts'
 import type { FenceSpan } from '../parse/markdown.ts'
 import { rangeFor } from '../parse/positions.ts'
 import { isPlaceholderName } from './discard.ts'
-import type { ExtractContext } from './paths.ts'
+import type { ExtractContext } from './context.ts'
 
 /** Which file answers whether the script exists. */
 export type ParsedCommand = Omit<ScriptFact, 'subject'>
