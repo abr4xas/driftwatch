@@ -84,6 +84,11 @@ function expectation(accepted: AcceptedTypes): string {
 
 export const frontmatterInvalid: Check = {
   id: 'frontmatter/invalid',
+  title: 'Frontmatter does not parse, or a field holds the wrong type',
+  description:
+    'The YAML block at the top of the file is not valid YAML, or a key whose ' +
+    'type the format fixes holds something else. Only keys with a defined type ' +
+    "are checked; everything else in a block is the author's business.",
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['frontmatter'],

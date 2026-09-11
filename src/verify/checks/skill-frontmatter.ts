@@ -114,6 +114,12 @@ function checkDescription(claim: Claim, value: string): CheckReport | null {
 
 export const skillFrontmatter: Check = {
   id: 'skill/frontmatter',
+  title: 'A SKILL.md frontmatter is not invocable',
+  description:
+    'A SKILL.md is missing a required field, names itself something other than ' +
+    'its directory, or carries a description too short to make the skill ' +
+    'discoverable. Structure only: a field whose type is wrong is reported by ' +
+    'frontmatter/invalid.',
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['frontmatter'],
