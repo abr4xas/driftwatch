@@ -90,7 +90,7 @@ describe('main', () => {
     await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
 
-  it.each([['--watch'], ['--init'], ['--strict']])(
+  it.each([['--watch'], ['--strict']])(
     '%s is not implemented yet and says so, instead of being ignored',
     async (flag) => {
       const c = capture()

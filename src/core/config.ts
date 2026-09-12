@@ -1,10 +1,12 @@
 /**
  * The optional config file (`docs/spec/SPEC.md` § 7).
  *
- * Only `sources` has an effect today. The other keys are validated and carried
- * anyway, because a config written against the specification should not fail
- * against an incomplete implementation — an unknown key is an error, and a key
- * that exists in the spec is not unknown.
+ * `sources` and `checks` reach the pipeline. `ignore`, `knownPaths` and
+ * `staleThreshold` are validated and carried anyway, because a config written
+ * against the specification should not fail against an incomplete
+ * implementation — an unknown key is an error, and a key that exists in the
+ * spec is not unknown. `src/cli/init.ts` is where that split is visible to the
+ * user: what is inert is written commented out.
  */
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -40,7 +42,7 @@ const CONFIG_FILENAMES: readonly string[] = [
   'driftwatch.config.json',
 ]
 
-const KNOWN_KEYS: readonly string[] = [
+export const KNOWN_KEYS: readonly string[] = [
   'sources',
   'ignore',
   'checks',
@@ -169,6 +171,40 @@ export type LoadedConfig = {
   path: string | undefined
 }
 
+export type FoundConfig = {
+  /** Absolute path of the file holding it. */
+  path: string
+  /** How it is named in messages: the filename, or `package.json#driftwatch`. */
+  where: string
+  /** Whether it is the `driftwatch` key inside package.json rather than a file of its own. */
+  inManifest: boolean
+}
+
+/**
+ * The first config the lookup order finds, without loading it.
+ *
+ * `loadConfig` uses it for the automatic lookup, and `--init` uses it to refuse
+ * rather than write a second config next to an existing one.
+ */
+export async function findConfig(root: string): Promise<FoundConfig | undefined> {
+  for (const name of CONFIG_FILENAMES) {
+    const path = join(root, name)
+    if (existsSync(path)) return { path, where: name, inManifest: false }
+  }
+
+  // Last in the order: the `driftwatch` key in package.json. Absence of the
+  // key is not an error, unlike absence of an explicitly requested file.
+  const manifest = join(root, 'package.json')
+  if (existsSync(manifest)) {
+    const parsed = await readJson(manifest, 'package.json')
+    if (isRecord(parsed) && parsed.driftwatch !== undefined) {
+      return { path: manifest, where: 'package.json#driftwatch', inManifest: true }
+    }
+  }
+
+  return undefined
+}
+
 export async function loadConfig(options: LoadConfigOptions): Promise<LoadedConfig> {
   if (options.explicit === false) return { config: {}, path: undefined }
 
@@ -180,23 +216,16 @@ export async function loadConfig(options: LoadConfigOptions): Promise<LoadedConf
     return { config: await loadFrom(path, options.explicit), path }
   }
 
-  for (const name of CONFIG_FILENAMES) {
-    const path = join(options.root, name)
-    if (existsSync(path)) return { config: await loadFrom(path, name), path }
+  const found = await findConfig(options.root)
+  if (found === undefined) return { config: {}, path: undefined }
+
+  if (found.inManifest) {
+    // Read again rather than threaded through `findConfig`: the manifest is a
+    // few kilobytes and one shape beats two return types.
+    const parsed = await readJson(found.path, 'package.json')
+    const raw = isRecord(parsed) ? parsed.driftwatch : undefined
+    return { config: validateConfig(raw, found.where), path: found.path }
   }
 
-  // Last in the order: the `driftwatch` key in package.json. Absence of the
-  // key is not an error, unlike absence of an explicitly requested file.
-  const manifest = join(options.root, 'package.json')
-  if (existsSync(manifest)) {
-    const parsed = await readJson(manifest, 'package.json')
-    if (isRecord(parsed) && parsed.driftwatch !== undefined) {
-      return {
-        config: validateConfig(parsed.driftwatch, 'package.json#driftwatch'),
-        path: manifest,
-      }
-    }
-  }
-
-  return { config: {}, path: undefined }
+  return { config: await loadFrom(found.path, found.where), path: found.path }
 }

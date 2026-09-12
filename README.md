@@ -78,7 +78,7 @@ The specification is primary source: when the code and those documents disagree,
 
 **`0.1.1` is on npm, and it is early.** M0 through M3 are done: the five checks, `--fix`, and now the `--json` / `--github` / `--sarif` formats that M4 owes. What is left in M4 is the audience — a GIF, a one-page site, and a published GitHub Action.
 
-Early means the checks and the fixes are what is finished. `--watch`, `--init` and `--strict` parse and then tell you which milestone they belong to; the four tier 2 checks land in M5.
+Early means the checks and the fixes are what is finished. `--watch` and `--strict` parse and then tell you which milestone they belong to; the four tier 2 checks land in M5.
 
 **The package is scoped; the command is not.** npm refuses the name `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read. `bin` fixes the command at `driftwatch` whatever the package is called.
 
