@@ -19,6 +19,7 @@ type Step = {
 }
 
 type Action = {
+  name: string
   inputs: Record<string, { description: string; default?: string }>
   outputs: Record<string, { description: string; value: string }>
   runs: { using: string; steps: Step[] }
@@ -28,6 +29,16 @@ const SOURCE = readFileSync(resolve(import.meta.dirname, '../action.yml'), 'utf8
 const ACTION = parse(SOURCE) as Action
 
 describe('action.yml', () => {
+  // The Marketplace refuses a listing whose name matches any existing action,
+  // user or organisation, and a GitHub user called Driftwatch exists. It is the
+  // same collision npm had with the unscoped package name, and the same fix:
+  // publish under a name that is free and let the repository carry the real
+  // one. Asserted so nobody tidies it back to `driftwatch` and discovers this
+  // from a rejected submission.
+  it('is not named after something the Marketplace will refuse', () => {
+    expect(ACTION.name).not.toBe('driftwatch')
+  })
+
   it('is a composite action with steps', () => {
     expect(ACTION.runs.using).toBe('composite')
     expect(ACTION.runs.steps.length).toBeGreaterThan(0)
