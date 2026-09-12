@@ -39,3 +39,5 @@ One ticket, one flag, 17 tests. The batch's own decision held: `sources` and `ch
 What it did not survive contact with is the import. `defineConfig` is a value, and a repo that ran the tool through `npx` has no `@abr4xas/driftwatch` in `node_modules`, so the generated config failed to load the first time the test suite fed it back to the loader that documents it. The template imports the type instead. The full account is in ticket `01`.
 
 **Still unimplemented, and still saying so:** `--watch` and `--strict`. `--strict` is waiting on warnings, which are tier 2, which is M5.
+
+**Reopened 2026-09-12 by ticket `02`:** the flag writes a `.ts` file into any repo, and driftwatch audits Go, Rust and Python repos as readily as Node ones. The format is the question, and the specification is what has to move, since `SPEC.md` § 4 names the extension.
