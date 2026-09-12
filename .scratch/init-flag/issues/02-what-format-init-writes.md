@@ -1,6 +1,6 @@
 # 02: What `--init` writes, and why a `.ts` in a Go repo is wrong
 
-**What to build:** `--init` stops assuming the repo is a TypeScript one. The direction is a `.json` config by default; what it costs is the comments, and that is the ticket.
+**What to build:** `--init` stops assuming the repo is a TypeScript one. The direction is a language-neutral config by default — JSON was the first proposal, YAML is the one that survives the objections — and what it costs is what this ticket weighs.
 
 **Blocked by:** nothing. Ticket `01` shipped the flag and the template.
 
@@ -22,12 +22,19 @@ driftwatch audits `AGENTS.md` in Go, Rust and Python repos exactly as well as in
 
 ## What to decide
 
-Four shapes, and the ticket picks one with reasons rather than by taste:
+Five shapes, and the ticket picks one with reasons rather than by taste:
 
 - [ ] **JSON with `$schema` allowed and a schema published.** The loader learns to accept and ignore `$schema`; the template carries a URL; the editor does the documenting the comments used to do. Best result, most work, and it adds a published artefact that has to stay in sync with `KNOWN_KEYS`.
 - [ ] **JSONC.** Keeps the comments, keeps one format. Costs a parser — `JSON.parse` throws on a comment — and the cold-start budget is 80 ms with a 40-line rule before any dependency (`AGENTS.md` § Dependencies). It also makes `driftwatch.config.json` mean something slightly different from what every other tool means by that filename.
 - [ ] **Detect.** `package.json` present, so a `.ts` is native there; absent, so write `.json`. Right answer per repo, and two templates to keep honest instead of one.
+- [ ] **YAML.** Comments survive, so ticket `01`'s guarantee survives with them, and it is as language-neutral as JSON — a `.yaml` at the root of a Cargo workspace surprises nobody. **The parser is already a runtime dependency:** `src/parse/frontmatter.ts` imports `yaml` for `frontmatter/invalid` and `skill/frontmatter`, so `AGENTS.md` § Dependencies has nothing to object to. Editor completion comes from `# yaml-language-server: $schema=...`, which is a *comment* rather than a key, so the validator keeps rejecting unknown keys with no exception carved out for `$schema`.
 - [ ] **Strict JSON, comments dropped.** Cheapest, and it gives up ticket `01`'s guarantee. If this wins, the inert keys must be **absent** rather than silently present-and-dead, because a key that looks live and does nothing is exactly the drift this tool reports.
+
+### If it is YAML, three things to settle in the ticket
+
+- **`off` is a severity and a YAML 1.1 boolean.** `'dep/missing': off` reads as the string `"off"` under YAML 1.2, which is what `yaml` v2 implements, and as `false` under 1.1. It works, and it works for a reason a reader cannot see. The template quotes it, and the ticket records why — including what the loader should do with a `checks` value that arrives as a boolean, since a clear error beats a silent miss.
+- **The lookup order grows by two.** `.yaml` and `.yml` both have to be findable or the one nobody picked becomes a config that is silently ignored, which is the failure `CONFIG_FILENAMES` is ordered to avoid. `findConfig` is the single place that decides, and `--init`'s refusal follows it for free.
+- **The import stays lazy.** `yaml` is loaded by the frontmatter parser today, on a path that only runs when a document has frontmatter. A config loader that imports it unconditionally puts it in front of every run, against an 80 ms cold-start budget. Load it when a YAML config actually exists, the way the `.ts` branch already does.
 
 ## What has to change either way
 
@@ -45,4 +52,6 @@ Four shapes, and the ticket picks one with reasons rather than by taste:
 
 Opened 2026-09-12, after the question "does `--init` create a `.ts` file?". It does, and the answer to *should it* is no for any repo that is not a Node one.
 
-Angel's read: JSON is the more standard choice because it works for a repo in any language. That is the direction. The obstacle is that ticket `01`'s whole argument lives in comments JSON cannot hold, so this ticket is `needs-triage` rather than `ready-for-agent` until the four options above are decided — an agent picking one on its own would be choosing a specification change unsupervised.
+Angel's read: JSON is the more standard choice because it works for a repo in any language. That is the direction — the config should not assume the repo speaks TypeScript. The obstacle is that ticket `01`'s whole argument lives in comments JSON cannot hold, so this ticket is `needs-triage` rather than `ready-for-agent` until the options above are decided: an agent picking one on its own would be choosing a specification change unsupervised.
+
+**Added the same day, after "can we use YAML instead":** yes, and it is the strongest of the five. It keeps the language-neutrality that motivated JSON, keeps the comments that motivated the objection to JSON, and costs no new dependency, because `yaml` is already a runtime dependency of the frontmatter checks. It is also the only option where editor completion needs nothing from the validator, since a YAML schema is attached with a comment. The `off`/boolean footgun is the price, and it is one line of quoting plus a sentence of explanation.
