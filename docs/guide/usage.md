@@ -21,12 +21,13 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--config <path>` | use this config file |
 | `--no-config` | ignore any config found |
 | `--quiet` | problems only, no summary (`pretty` only) |
+| `--init` | write a commented `driftwatch.config.ts` and exit |
 | `--version`, `-v` | print the version |
 | `--help`, `-h` | print the options |
 
 `--only` and `--skip` take a comma-separated list and accept a prefix, so `--only path,script` and `--only path/missing` both work. **A selection that leaves no check enabled is refused** rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
-Three flags parse and then tell you they are not implemented, naming the milestone they belong to: `--watch`, `--init` and `--strict`.
+Two flags parse and then tell you they are not implemented, naming the milestone they belong to: `--watch` and `--strict`.
 
 ## Exit codes
 
@@ -56,6 +57,8 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 Optional. `driftwatch.config.ts`, `.js`, `.json`, or a `driftwatch` key in `package.json`.
 
+`driftwatch --init` writes a commented one for you, with the inert keys commented out so the file does not promise more than the tool does. It refuses if any config is already there — including a `driftwatch` key in `package.json` — rather than overwrite it, and it writes to the repo root wherever you run it from.
+
 ```ts
 import { defineConfig } from 'driftwatch'
 
@@ -70,6 +73,8 @@ export default defineConfig({
   },
 })
 ```
+
+The generated file imports the `Config` **type** instead of calling `defineConfig`: a type import is erased before the file runs, so the config loads even when the tool came from `npx` and the package is not in `node_modules`. Both forms are supported; use whichever your repo can resolve.
 
 A `.ts` config needs no transpiler: Node strips the types itself. What that costs is that syntax type stripping cannot erase — an `enum`, a `namespace`, a parameter property — fails with a clear error.
 

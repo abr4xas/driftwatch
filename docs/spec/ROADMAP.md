@@ -149,6 +149,20 @@ Two things it had to get right that are not visible in the YAML: every input rea
 
 ---
 
+## `--init` — **done 2026-09-11**
+
+Not a milestone. `SPEC.md` § 4 has listed it since the beginning, `--help` has advertised it since M0, and M2, M3 and both M4 batches each deferred it for a reason that was right at the time: it depends on the config file, it is not what any of their lines asked for, and it shares nothing with the machinery they built. Five specs called it ownerless, which is an absence of a status rather than one. [`.scratch/init-flag/`](../../.scratch/init-flag/spec.md) is where it stopped being that.
+
+**The template only presents as working what actually works.** `sources` and `checks` reach `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by the loader and read by nobody, so `--init` writes them commented out, each naming what makes it real. A generated file claiming all five would be a document promising more than the code delivers, produced by the tool whose entire subject is that.
+
+**It imports the `Config` type rather than calling `defineConfig`.** Found by running it, not by reading it: the advertised way to use this tool is `npx`, which installs nothing in the target repo, so a generated config calling `defineConfig` fails to load with "could not be loaded" the first time it is used. A type import is erased by the same type stripping that loads the file, so the config works installed or not. `defineConfig` stays exported for repos that do have the package.
+
+It refuses rather than overwrites, and the refusal covers every shape the loader looks for — including a `driftwatch` key in `package.json`, where there is no config *file* and it still counts. Writing a second config beside an existing one would create exactly the case `loadConfig` deliberately refuses to merge, and the one that loses would be the one it did not write.
+
+**Still unimplemented and still honest about it:** `--watch` (M6) and `--strict`, which only means something once warnings exist, which is tier 2, which is M5.
+
+---
+
 ## M5 — Tier 2
 - `dep/missing` with a curated dictionary
 - `symbol/missing`

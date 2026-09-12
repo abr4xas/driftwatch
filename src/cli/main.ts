@@ -24,7 +24,6 @@ export type Io = {
  */
 const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
   ['watch', '--watch'],
-  ['init', '--init'],
   // --strict only changes something once warnings exist, and warnings are
   // tier 2, which is M5. Until then, accepting it would promise too much.
   ['strict', '--strict'],
@@ -163,6 +162,19 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
     }
 
     assertNotYetImplemented(args)
+
+    // Before the audit, and instead of it. `--init` does not modify a run: it
+    // writes a file and leaves. Positional paths and --config/--no-config are
+    // about reading a config, and none of them redirect where this one goes.
+    if (args.init) {
+      const [{ writeInitConfig }, { findRepoRoot }] = await Promise.all([
+        import('./init.ts'),
+        import('../verify/repo-index.ts'),
+      ])
+      io.out(`wrote ${await writeInitConfig(findRepoRoot(cwd))}\n`)
+      return EXIT.ok
+    }
+
     assertPathsExist(args.paths, cwd)
 
     return await audit(args, io, cwd)
