@@ -1,0 +1,965 @@
+/* driftwatch — the survey, rendered on graphite instead of paper.
+   Flat warm-dark ground, no ruling, no texture. Structure comes from hairlines,
+   recessed panels and one high-visibility marking orange: the colour a surveyor
+   actually puts on the ground when something has to be corrected. */
+
+:root {
+  --ground:   #313031;   /* the page */
+  --panel:    #272627;   /* raised block: specimen, figures */
+  --well:     #1a191a;   /* recessed: the field book, code */
+
+  --ink:      #ece9e4;
+  --ink-2:    #c4bfb9;
+  --ink-3:    #a5a09a;
+  --hair:     #464445;
+  --hair-2:   #3c3a3b;
+
+  --mark:     #ff6a2f;   /* high-visibility marking orange */
+  --mark-dim: rgba(255, 106, 47, 0.16);
+  /* The marking colour legible at body size on top of its own tint. #ff6a2f
+     there measures 3.7:1, which passes for the thesis because that line is
+     large and fails everywhere else. */
+  --mark-ink: #ff8a55;
+  --ok:       #8fc98a;
+  --warn:     #e8b05a;
+
+  --book-ink: #ece9e4;
+  --book-dim: #8d8881;
+  --book-err: #ff6a2f;
+  --book-warn:#e8b05a;
+  --book-ok:  #8fc98a;
+
+  --sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --narrow: 'Archivo Narrow', 'Archivo', system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --t-xs: 0.6875rem;
+  --t-sm: 0.8125rem;
+  --t-base: 1.0625rem;
+  --t-lg: 1.1875rem;
+
+  --ease: cubic-bezier(.2, .75, .25, 1);
+  --dur: .5s;
+
+  --u: 8px;
+  --band: clamp(72px, 9vw, 132px);
+  --max: 1200px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; background: var(--ground); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: var(--t-base);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--ground);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sheet {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 clamp(18px, 4vw, 48px);
+}
+
+/* ---------- marginalia ---------- */
+
+.marg {
+  font-family: var(--narrow);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--u) * 1.25);
+  align-items: baseline;
+}
+.marg a { color: var(--ink-2); text-decoration-color: var(--hair); }
+
+.fine { font-size: var(--t-sm); color: var(--ink-2); line-height: 1.55; }
+
+code, pre, .mono { font-family: var(--mono); font-size: 0.875em; }
+code { font-feature-settings: 'liga' 0; }
+
+/* Inline code and parameters are marked the way the thesis marks the two
+   filenames: the marking colour on a tint of itself. One definition, so a
+   flag in a list and a filename in the headline are unmistakably the same
+   kind of thing. Blocks are excluded — inside a terminal, everything is code
+   and marking all of it would mark nothing. */
+:not(pre) > code,
+.thesis .ul {
+  font-family: var(--mono);
+  color: var(--mark-ink);
+  background: var(--mark-dim);
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* Two exceptions, both the same shape: code that is not a fragment quoted
+   inside a sentence. The install command is a whole command in its own box,
+   and the action inputs and format names are the labels of their own rows.
+   Chipping a label turns a list into a column of orange tags and spends the
+   marking colour on structure it was not meant to carry. */
+.install code,
+.inputs li > code,
+.formats dt code { color: var(--ink); background: none; padding: 0; }
+
+a { color: var(--ink); text-underline-offset: 3px; text-decoration-thickness: 1px; text-decoration-color: var(--hair); }
+a:hover { color: var(--mark); text-decoration-color: var(--mark); }
+
+:focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; }
+
+.skip {
+  position: absolute; left: -9999px;
+  background: var(--mark); color: #1a1109;
+  padding: var(--u) calc(var(--u) * 2);
+  font-family: var(--narrow); text-transform: uppercase; letter-spacing: .12em;
+}
+.skip:focus { left: var(--u); top: var(--u); z-index: 99; }
+
+/* ---------- sheet head ---------- */
+
+.head { padding: calc(var(--u) * 3) 0 calc(var(--u) * 7); }
+.head > .marg { padding-bottom: calc(var(--u) * 2); border-bottom: 1px solid var(--hair); }
+
+.head-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--u) * 6);
+  padding-top: calc(var(--u) * 6);
+}
+@media (min-width: 940px) {
+  .head-grid {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    gap: calc(var(--u) * 5);
+    align-items: start;
+  }
+}
+
+.wordmark {
+  font-weight: 700;
+  font-size: clamp(2.6rem, 7.4vw, 5.1rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  margin: 0 0 calc(var(--u) * 3);
+}
+
+.thesis {
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  line-height: 1.24;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  margin: 0 0 calc(var(--u) * 2);
+  max-width: 22ch;
+}
+.thesis .ul { font-size: 0.82em; }
+
+.sub { margin: 0 0 calc(var(--u) * 4); color: var(--ink-2); max-width: 34ch; }
+.sub em { color: var(--mark); font-style: normal; font-weight: 600; }
+
+.install {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--hair);
+  background: var(--well);
+  max-width: 30rem;
+}
+.install code {
+  flex: 1;
+  padding: calc(var(--u) * 1.75) calc(var(--u) * 2);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+  overflow-x: auto;
+  color: var(--ink);
+}
+.install code::before { content: '$ '; color: var(--ink-3); }
+.copy {
+  border: 0;
+  background: var(--mark);
+  color: #1a1109;
+  font-family: var(--narrow);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 calc(var(--u) * 2);
+  cursor: pointer;
+}
+.copy:hover { background: #ff8352; }
+.copy[data-done] { background: var(--ok); }
+
+.install-lg { max-width: 34rem; margin: 0 0 calc(var(--u) * 6); }
+.install-lg code { padding: calc(var(--u) * 2.25) calc(var(--u) * 2.5); font-size: var(--t-base); }
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--u) * 3);
+  margin: calc(var(--u) * 3) 0 0;
+  font-family: var(--narrow);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* The proof band.
+
+   It was a sentence with a link trailing off the end of it, sitting at the top
+   of the header's bottom padding with a hundred and thirty pixels of nothing
+   underneath: not centred, just resting on the rule above it. It is an
+   invitation to go and check the claim, so it is built as one — its own band
+   between two rules, with symmetric padding and the claim and the control on a
+   shared baseline. */
+.proof {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 3);
+  padding: clamp(28px, 3.6vw, 46px) 0;
+}
+
+.proof-claim {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+  line-height: 1.35;
+  color: var(--ink-2);
+  max-width: 46ch;
+}
+.proof-claim strong { color: var(--mark); font-weight: 700; }
+
+/* Outlined, not filled. The one solid orange button on this page is the one
+   that copies the install command; a second filled button in the same viewport
+   would make the page argue with itself about what to do first. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.25);
+  flex: none;
+  border: 1px solid var(--ink-3);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--narrow);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: calc(var(--u) * 1.75) calc(var(--u) * 3);
+  white-space: nowrap;
+  transition: background-color .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease);
+}
+.btn::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: var(--mark-arrow) center / contain no-repeat;
+  mask: var(--mark-arrow) center / contain no-repeat;
+  transition: transform .18s var(--ease);
+}
+.btn:hover, .btn:focus-visible {
+  background: var(--mark);
+  border-color: var(--mark);
+  color: #1a1109;
+}
+.btn:hover::after { transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) { .btn::after { transition: none; } .btn:hover::after { transform: none; } }
+
+@media (max-width: 620px) {
+  .proof { display: block; }
+  .proof-claim { margin-bottom: calc(var(--u) * 3); }
+  .btn { display: flex; justify-content: center; }
+}
+
+/* ---------- the field book ---------- */
+
+.fieldbook-wrap > .marg { margin-bottom: calc(var(--u) * 1.5); }
+
+.fieldbook {
+  background: var(--well);
+  border: 1px solid var(--hair-2);
+  color: var(--book-ink);
+}
+
+.fb-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--u);
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 2);
+  border-bottom: 1px solid var(--hair-2);
+  font-family: var(--narrow);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--book-dim);
+}
+
+.fb-screen {
+  margin: 0;
+  padding: calc(var(--u) * 2.5);
+  height: 15rem;
+  font-family: var(--mono);
+  font-size: clamp(0.66rem, 1.06vw, 0.8rem);
+  line-height: 1.62;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 2;
+  overscroll-behavior: contain;
+}
+@media (min-width: 940px) { .fb-screen { height: 16.5rem; } }
+
+.fb-screen .p    { color: var(--book-dim); }
+.fb-screen .cmd  { color: var(--book-ink); font-weight: 600; }
+.fb-screen .file { color: var(--book-ink); font-weight: 600; }
+.fb-screen .err  { color: var(--book-err); }
+.fb-screen .warn { color: var(--book-warn); }
+.fb-screen .ok   { color: var(--book-ok); }
+.fb-screen .dim  { color: var(--book-dim); }
+.fb-screen .key  { color: var(--book-warn); }
+.fb-screen .str  { color: var(--book-ok); }
+.fb-screen .num  { color: var(--book-err); }
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  vertical-align: text-bottom;
+  background: var(--mark);
+  animation: blink 1.05s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
+
+.fb-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px 0 0;
+  background: var(--hair-2);
+  border-top: 1px solid var(--hair-2);
+}
+.fb-keys button {
+  flex: 1 1 auto;
+  border: 0;
+  background: var(--well);
+  color: var(--book-dim);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  padding: calc(var(--u) * 1.5);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fb-keys button:hover { background: #262425; color: var(--book-ink); }
+.fb-keys button.on { background: var(--mark); color: #1a1109; font-weight: 600; }
+
+/* ---------- bands ---------- */
+
+.rule { border: 0; border-top: 1px solid var(--hair); margin: 0; }
+
+.band { padding: var(--band) 0; }
+
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2.3rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  margin: 0 0 calc(var(--u) * 4);
+  max-width: 24ch;
+}
+
+h3 {
+  font-family: var(--narrow);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 calc(var(--u) * 2);
+  color: var(--ink);
+}
+
+.lede {
+  font-size: var(--t-lg);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 62ch;
+  margin: 0 0 calc(var(--u) * 6);
+}
+
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--u) * 6);
+}
+@media (min-width: 860px) {
+  .two { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * 8); }
+}
+
+.prose p { margin: 0 0 calc(var(--u) * 2.5); max-width: 50ch; color: var(--ink-2); }
+.prose p:last-child { margin-bottom: 0; }
+.prose strong { color: var(--ink); }
+
+/* The pulled claim is ruled across the measure above it, in marking orange.
+   Never a bar down its side. */
+.pull {
+  font-size: clamp(1.2rem, 2.1vw, 1.55rem);
+  line-height: 1.26;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: calc(var(--u) * 4) 0 calc(var(--u) * 3);
+  padding-top: calc(var(--u) * 2);
+  border-top: 2px solid var(--mark);
+  max-width: 40ch;
+  color: var(--ink) !important;
+}
+
+.more {
+  font-family: var(--narrow);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- specimen ---------- */
+
+.specimen { margin: 0; }
+.specimen figcaption { margin-bottom: calc(var(--u) * 1.5); }
+
+.spec-body {
+  border: 1px solid var(--hair-2);
+  background: var(--well);
+  padding: calc(var(--u) * 3) calc(var(--u) * 2.5);
+  font-size: var(--t-sm);
+  line-height: 1.9;
+}
+
+/* Grid, not flex: the correction used to take the row's slack with
+   `margin-left: auto`, which pushed the struck claim onto the next line and
+   separated the two halves of the gesture. It now owns its own row under the
+   claim it corrects, the way a proofreader writes one. */
+.spec-row {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+  gap: 0 calc(var(--u) * 2);
+  align-items: baseline;
+  position: relative;
+}
+.spec-row .ln {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--book-dim);
+  grid-column: 1;
+  text-align: right;
+}
+.spec-row .src { grid-column: 2; font-family: var(--mono); font-size: 0.78rem; color: var(--ink); min-height: 1em; }
+.spec-row s { text-decoration: none; position: relative; color: var(--ink-3); }
+.spec-row s::after {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px; top: 52%;
+  height: 2px;
+  background: var(--mark);
+  transform: scaleX(var(--strike, 1));
+  transform-origin: left;
+}
+.spec-row .over {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--mark);
+  grid-column: 2 / -1;
+  margin-bottom: calc(var(--u) * 0.75);
+}
+.spec-row .over::before {
+  content: '';
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 5px;
+  vertical-align: -1px;
+  background: currentColor;
+  -webkit-mask: var(--mark-hook) center / contain no-repeat;
+  mask: var(--mark-hook) center / contain no-repeat;
+}
+.spec-row .over.quiet { color: var(--book-dim); font-style: italic; }
+.spec-row .kept { border-bottom: 1px solid var(--ok); }
+.spec-row .tick { grid-column: 3; color: var(--ok); font-size: 0.8rem; }
+
+.spec-note { margin: calc(var(--u) * 2) 0 0; }
+
+/* ---------- legend ---------- */
+
+.legend-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hair); }
+.legend-list li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: calc(var(--u) * 0.5) calc(var(--u) * 1.5);
+  padding: calc(var(--u) * 2.5) 0;
+  border-bottom: 1px solid var(--hair);
+  align-items: baseline;
+}
+@media (min-width: 860px) {
+  .legend-list li {
+    grid-template-columns: 1.5rem 12rem minmax(0, 1fr) 7rem;
+    gap: calc(var(--u) * 2);
+  }
+}
+.legend-list .sym { font-family: var(--mono); color: var(--mark); font-size: 0.9rem; }
+.legend-list .lg-id { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.legend-list .lg-what { color: var(--ink-2); font-size: 0.95rem; line-height: 1.5; }
+.legend-list .lg-what .fine { display: block; color: var(--ink-3); }
+.legend-list .lg-fix {
+  font-family: var(--narrow);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  grid-column: 2;
+}
+@media (min-width: 860px) { .legend-list .lg-fix { grid-column: 4; text-align: right; } }
+.legend-list .lg-fix.yes { color: var(--ok); }
+/* What follows the legend is two separate things, so it stops pretending to be
+   one grey footnote under the table's closing rule: how to turn a check off,
+   and where the tool's job ends. Each gets a heading, because a reader who
+   cannot tell which one they are reading gets neither. */
+/* Two dash lists under two headings, deliberately the same shape. They were a
+   wall of prose beside a scannable list: equal billing, three times the
+   reading cost on the left for the same amount of information. Whatever the
+   two columns are, they have to be the same kind of thing. */
+.legend-after { margin-top: calc(var(--u) * 5); }
+.legend-after p { margin: 0; color: var(--ink-2); max-width: 52ch; }
+/* No rule above it. A border on an element capped at 52ch stops short of the
+   column and reads as an accident rather than a separator; the smaller size
+   already says this is subordinate to the list. */
+.after-note { margin-top: calc(var(--u) * 4) !important; }
+.legend-after em { font-style: normal; color: var(--ink); }
+.legend-after .ticks li { margin-bottom: calc(var(--u) * 2); }
+.legend-after .ticks li:last-child { margin-bottom: 0; }
+
+/* ---------- reliability diagram ---------- */
+
+/* The field runs the full measure. Boxed into half a column it read as a
+   decoration beside the numbers; at full width it is the evidence and the
+   numbers are its summary. */
+.survey { display: block; }
+
+.survey-map > .marg { margin-bottom: calc(var(--u) * 2); }
+
+/* The survey field.
+
+   236 marks, one per context file, clustered into 66 runs — one run per
+   repository. The runs keep their real length, so a repo carrying twenty-two
+   documents reads as twenty-two and not as the equal of a repo carrying one.
+   Nineteen marks are lit: those files say something the repository contradicts. */
+
+.cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: flex-start;
+}
+
+.run {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  margin: -3px;
+  border: 0;
+  background: none;
+  cursor: default;
+}
+.run:hover, .run:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 0; }
+.run:focus-visible { outline-color: var(--ink); outline-width: 2px; }
+
+.mk {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 1px solid var(--hair);
+  background: transparent;
+}
+.mk[data-lit] { border-color: var(--mark); background: var(--mark); }
+
+.run:hover .mk, .run:focus-visible .mk { border-color: var(--ink-3); }
+.run:hover .mk[data-lit], .run:focus-visible .mk[data-lit] { border-color: var(--mark); }
+
+/* The sweep. Each mark lands on its own beat in reading order, and a lit one
+   flares as it arrives. 236 marks at 7ms is a pass of about a second and a
+   half — a survey being taken, not a page animating in. */
+.cells[data-armed] .mk {
+  animation: land .42s var(--ease) backwards;
+  animation-delay: calc(var(--i) * 7ms);
+}
+.cells[data-armed] .mk[data-lit] {
+  animation: land .42s var(--ease) backwards, flare .5s var(--ease) backwards;
+  animation-delay: calc(var(--i) * 7ms), calc(var(--i) * 7ms + 60ms);
+}
+
+@keyframes land {
+  from { opacity: 0; transform: scale(.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes flare {
+  0%   { box-shadow: 0 0 0 0 var(--mark); }
+  35%  { box-shadow: 0 0 7px 2px var(--mark); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 106, 47, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cells[data-armed] .mk { opacity: 1; animation: none; }
+}
+
+.readout {
+  margin: calc(var(--u) * 3) 0 0;
+  max-width: 78ch;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-2);
+  border-left: 1px solid var(--hair);
+  padding-left: calc(var(--u) * 2);
+}
+.readout b { color: var(--ink); font-weight: 600; }
+.readout .hit { color: var(--mark); }
+
+.cell-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--u) * 2.5);
+  margin: calc(var(--u) * 2) 0 0;
+  font-family: var(--narrow);
+  font-size: var(--t-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  align-items: center;
+}
+.cell-key i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: -1px; }
+.k-clean { border: 1px solid var(--hair); }
+.ro-idle .lit { color: var(--mark); }
+.k-hit { background: var(--mark); }
+.cell-key .fine { font-size: var(--t-xs); text-transform: none; letter-spacing: 0; font-family: var(--sans); }
+
+.cell-caveat { margin: calc(var(--u) * 3) 0 0; max-width: 62ch; }
+.cell-caveat strong { color: var(--mark); }
+.cell-caveat em { font-style: normal; border-bottom: 1px solid var(--hair); }
+
+.figures {
+  margin: calc(var(--u) * 7) 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--u) * 3.5);
+}
+@media (min-width: 680px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * 4); } }
+@media (min-width: 1020px) { .figures { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 3); } }
+.figures > div { border-top: 1px solid var(--hair); padding-top: calc(var(--u) * 1.75); }
+.figures dt {
+  font-family: var(--narrow);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: calc(var(--u) * 0.75);
+}
+.figures dd { margin: 0; display: flex; align-items: baseline; gap: var(--u); }
+.figures dd b {
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.figures dd span { font-family: var(--narrow); font-size: var(--t-sm); color: var(--ink-3); letter-spacing: 0.06em; }
+.figures .pct { display: block; font-size: var(--t-sm); color: var(--ink-2); margin-top: calc(var(--u) * 0.5); line-height: 1.45; }
+.hero-fig { border-top-color: var(--mark) !important; border-top-width: 2px !important; }
+.hero-fig dd b { color: var(--mark); }
+
+.refuse { margin-top: calc(var(--u) * 9); }
+.refuse p { margin: 0 0 calc(var(--u) * 2); max-width: 52ch; color: var(--ink-2); }
+.ticks { list-style: none; margin: 0; padding: 0; }
+.ticks li {
+  position: relative;
+  padding-left: calc(var(--u) * 3);
+  margin-bottom: calc(var(--u) * 1.75);
+  font-size: 0.95rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.ticks li::before { content: '—'; position: absolute; left: 0; color: var(--ink-3); }
+
+/* ---------- code blocks ---------- */
+
+.codeblock > .marg { margin-bottom: calc(var(--u) * 1.5); }
+.codeblock pre {
+  margin: 0 0 calc(var(--u) * 2);
+  background: var(--well);
+  border: 1px solid var(--hair-2);
+  color: var(--book-ink);
+  padding: calc(var(--u) * 2.5);
+  overflow-x: auto;
+  font-size: var(--t-sm);
+  line-height: 1.7;
+}
+.codeblock .c-dim { color: var(--book-dim); }
+
+.inputs-h { margin-top: calc(var(--u) * 5); }
+.inputs { list-style: none; margin: 0; padding: 0; }
+.inputs li { padding: calc(var(--u) * 1.5) 0; border-bottom: 1px solid var(--hair); font-size: var(--t-sm); }
+.inputs li:first-child { border-top: 1px solid var(--hair); }
+.inputs li > code { font-size: 0.8rem; font-weight: 600; }
+.inputs li > span { display: block; color: var(--ink-2); margin-top: 2px; line-height: 1.5; }
+
+.formats dl { margin: 0; }
+.formats dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 2) 0;
+  border-bottom: 1px solid var(--hair);
+}
+.formats dl > div:first-child { border-top: 1px solid var(--hair); }
+.formats dt { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.formats dd { margin: 0; font-size: 0.95rem; color: var(--ink-2); line-height: 1.5; }
+.formats > .fine { margin-top: calc(var(--u) * 2.5); }
+
+/* ---------- close ---------- */
+
+.close { padding: var(--band) 0 calc(var(--u) * 8); }
+.close-h { max-width: 20ch; }
+.status { max-width: 62ch; margin-bottom: calc(var(--u) * 6); }
+.status > .marg { margin-bottom: calc(var(--u) * 1.5); }
+.status p { margin: 0 0 calc(var(--u) * 2); font-size: 0.97rem; color: var(--ink-2); }
+.status strong { color: var(--ink); }
+
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 1.5) calc(var(--u) * 3);
+  padding: calc(var(--u) * 3) 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+  font-family: var(--narrow);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.colophon { margin-top: calc(var(--u) * 3); }
+
+/* Overprint strike draws itself once, on entry. Without JS it is already drawn. */
+.js .spec-row s::after { transition: transform var(--dur) var(--ease); }
+@media (prefers-reduced-motion: reduce) { .js .spec-row s::after { transition: none; } }
+
+/* ---------------------------------------------------------------------------
+   Browser surfaces. Selection, caret, scrollbars and numerals ship with
+   defaults that belong to no design system; on a page about checking things
+   against the ground, leaving them unthemed is the one thing nobody checked.
+   --------------------------------------------------------------------------- */
+
+::selection { background: var(--mark); color: #1a1109; text-shadow: none; }
+
+:root {
+  caret-color: var(--mark);
+  accent-color: var(--mark);
+  scrollbar-color: var(--hair) transparent;
+  scrollbar-width: thin;
+
+  /* The correction mark: one drawn hook, one stroke weight, used wherever the
+     page points from a false claim to its replacement. */
+  --mark-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M1.5 7h10M7.6 2.9 11.7 7l-4.1 4.1' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --mark-hook: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 1v6.5h7.2M6.9 5.1 9.6 7.5 6.9 9.9' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hair); border: 3px solid var(--ground); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+.fb-screen::-webkit-scrollbar-thumb,
+.codeblock pre::-webkit-scrollbar-thumb { border-color: var(--well); }
+
+/* Figures are read against each other, so their digits line up. */
+.figures dd b,
+.proof-claim strong,
+.readout,
+.spec-row .ln,
+.fb-screen { font-variant-numeric: tabular-nums; }
+
+a { transition: color .18s var(--ease), text-decoration-color .18s var(--ease); }
+.copy, .fb-keys button { transition: background-color .18s var(--ease), color .18s var(--ease); }
+
+/* ---------------------------------------------------------------------------
+   The reliability readout.
+
+   The diagram used to be a picture of the measurement. It now carries the
+   measurement itself: every cell holds the repository's real findings, with
+   the claim that turned out to be false and the replacement driftwatch would
+   suggest. Nothing here is illustrative — it is read out of the committed
+   snapshots at build time.
+   --------------------------------------------------------------------------- */
+
+/* No reserved height. A fixed box sized for the worst case (turso, four
+   findings) left every one-finding repo sitting under a long empty rule.
+   The readout sits below the cells, so growing and shrinking moves only the
+   key and the caption underneath it — never the cells being pointed at. */
+.readout {
+  transition: border-color .2s var(--ease);
+}
+.readout[data-hit] { border-left-color: var(--mark); }
+
+.ro-idle { color: var(--ink-2); }
+.ro-idle b { color: var(--ink); }
+
+.ro-head {
+  margin: 0 0 calc(var(--u) * 1.25);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--u);
+  align-items: baseline;
+}
+.ro-head b { color: var(--ink); font-weight: 600; }
+.ro-head span { color: var(--ink-3); font-size: var(--t-xs); }
+.ro-head .hit { color: var(--mark); }
+
+.ro-list { list-style: none; margin: 0; padding: 0; }
+.ro-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--u);
+  align-items: baseline;
+  line-height: 1.5;
+  padding: 1px 0;
+}
+.ro-loc { color: var(--ink-3); flex: none; }
+.ro-claim { color: var(--ink); word-break: break-all; }
+.ro-claim s { text-decoration: none; position: relative; color: var(--ink-2); }
+.ro-claim s::after {
+  content: '';
+  position: absolute;
+  left: -1px; right: -1px; top: 53%;
+  height: 1.5px;
+  background: var(--mark);
+}
+.ro-fix { color: var(--mark); word-break: break-all; }
+.ro-fix::before {
+  content: '';
+  display: inline-block;
+  width: 10px; height: 10px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  background: currentColor;
+  -webkit-mask: var(--mark-hook) center / contain no-repeat;
+  mask: var(--mark-hook) center / contain no-repeat;
+}
+.ro-check { color: var(--ink-3); font-size: var(--t-xs); }
+
+
+/* ---------------------------------------------------------------------------
+   First run.
+
+   A tool built to stay quiet when it is unsure is quiet most of the time: 50
+   of the 66 corpus repositories report nothing. So the empty result is not an
+   edge case here, it is the likeliest first experience, and it gets the same
+   weight as the one everybody designs for. Three outcomes, each with its real
+   output beside what it means.
+   --------------------------------------------------------------------------- */
+
+.outcomes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hair); }
+
+.outcomes > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--u) * 3);
+  padding: calc(var(--u) * 4) 0;
+  border-bottom: 1px solid var(--hair);
+}
+@media (min-width: 900px) {
+  .outcomes > li {
+    /* The drift output is 64 characters wide and must not clip: a static block
+       that scrolls sideways reads as a defect, not as a terminal. */
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: calc(var(--u) * 5);
+    align-items: start;
+  }
+}
+
+.oc-out pre {
+  margin: 0;
+  background: var(--well);
+  border: 1px solid var(--hair-2);
+  color: var(--book-ink);
+  padding: calc(var(--u) * 2.5);
+  overflow-x: auto;
+  font-size: 0.76rem;
+  line-height: 1.62;
+  font-variant-numeric: tabular-nums;
+}
+.oc-out .c-ok   { color: var(--ok); }
+.oc-out .c-err  { color: var(--mark); }
+.oc-out .c-dim  { color: var(--book-dim); }
+.oc-out .c-file { color: var(--book-ink); font-weight: 600; }
+
+.oc-say h3 { margin-bottom: calc(var(--u) * 1.5); }
+.oc-say p { margin: 0 0 calc(var(--u) * 2); color: var(--ink-2); max-width: 56ch; }
+.oc-say p:last-child { margin-bottom: 0; }
+.oc-say em { font-style: normal; color: var(--ink); }
+
+/* What it reads: the answer to the question an empty result asks. */
+.reads { margin: 0 0 calc(var(--u) * 2); }
+.reads > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 calc(var(--u) * 2);
+  padding: calc(var(--u) * 0.75) 0;
+  border-bottom: 1px solid var(--hair-2);
+}
+@media (min-width: 480px) { .reads > div { grid-template-columns: 8.5rem minmax(0, 1fr); align-items: baseline; } }
+.reads > div:first-child { border-top: 1px solid var(--hair-2); }
+.reads dt {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.reads dd { margin: 0; font-size: var(--t-sm); color: var(--ink-2); }
+
+.recovery { margin-top: calc(var(--u) * 7); }
+.recovery p { margin: 0 0 calc(var(--u) * 2); color: var(--ink-2); max-width: 52ch; }
+.recovery .codeblock { margin-bottom: calc(var(--u) * 2); }
+.recovery .codeblock pre { margin-bottom: 0; white-space: pre-wrap; }
+
+/* ---------------------------------------------------------------------------
+   Narrow screens: let the output wrap the way a terminal wraps it.
+
+   The drift line is 64 characters and will not fit a phone at any legible
+   size, so the choice was horizontal scroll or a shorter example. Both were
+   wrong: a static block you have to drag sideways reads as a defect, and
+   inventing a narrower output would put a shape on the page that driftwatch
+   does not print. A real terminal at forty columns soft-wraps, mid-token,
+   at the column — so that is what this does. Nothing is hidden and nothing
+   is invented.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  .oc-out pre,
+  .codeblock pre,
+  .fb-screen {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  /* Wrapping adds lines, so the field book stops being a fixed window and
+     becomes as tall as the run it is showing. */
+  .fb-screen { height: auto; min-height: 15rem; max-height: 60vh; }
+}
