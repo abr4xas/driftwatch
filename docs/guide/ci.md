@@ -80,14 +80,14 @@ The action writes the file and hands you the path; it does not upload. Uploading
 
 The action runs **the version of driftwatch that shipped with it**. `@v0` executes what the `package.json` next to that tag says, not whatever is newest on npm: an action pinned at a tag whose behaviour changes without a tag is not pinned at all.
 
-**`v0` is a floating tag**, moved to each `0.x` release, so a fix reaches you without an edit to your workflow. It is `v0` and not `v1` because the package is still `0.x` and the project says it is early; the day there is a `1.0.0` there is a `v1` to go with it. Pin the exact tag — `@v0.3.0` — instead if you would rather nothing move under you.
+**`v0` is a floating tag**, moved to each `0.x` release, so a fix reaches you without an edit to your workflow. It is `v0` and not `v1` because the package is still `0.x` and the project says it is early; the day there is a `1.0.0` there is a `v1` to go with it. Pin the exact release tag instead if you would rather nothing move under you.
 
 Override it when you need to:
 
 ```yaml
 - uses: abr4xas/driftwatch@v0
   with:
-    version: 0.3.0-beta.1
+    version: 0.2.0
 ```
 
 A path or a `.tgz` is used as written, which is how this repo's own CI runs the action against the commit that changed it instead of against npm.

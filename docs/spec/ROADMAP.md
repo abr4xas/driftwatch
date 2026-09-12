@@ -145,7 +145,7 @@ It defaults to `--format github`, writes a SARIF file on request and **does not 
 
 Two things it had to get right that are not visible in the YAML: every input reaches bash through `env:` rather than `${{ }}` inside a `run:`, because an interpolated input is a shell injection in an action anybody can call; and `npx --package` names the binary separately, because `npx <path.tgz>` reads the argument as a command and dies with "Permission denied". A CI job runs the action from `./` against a tarball built from the commit, so it fails on the commit that breaks it rather than on the tag that publishes it.
 
-**The action did not work until the next publish.** `0.1.1` had no `--format github`; the flag parsed and refused. `0.3.0` is the release that pays that debt — and it is also the first release where `version` defaults to something the action can actually use.
+**The action did not work until the next publish.** `0.1.1` had no `--format github`; the flag parsed and refused. `0.2.0` is the release that paid that debt, published 2026-09-12 — and it is the first release where `version` defaults to something the action can actually use.
 
 **Still open in M4:** the GIF and the one-page site, deferred to a later session. Plus the acceptance criterion itself, which nobody who has read this repository can certify.
 
@@ -204,11 +204,10 @@ Do not wait for M6 to show the project. Visible cadence is part of what makes so
 **This section decides the timing, and the milestone lists do not.** M3 to M6 are inventories of what has to be true, in the order the work makes sense; the numbering is not a release calendar. Where a milestone lists something this section has already scheduled — npm, in M4 — the milestone inherits it.
 
 1. Publish to npm when **M2** closes — it is already useful. **Prepared 2026-09-10, not published.** The package is out of `private` at `0.1.0`, the tarball is 14 files and 54 kB (`pnpm pack:check` fails the build if anything outside `dist/` ever enters it), and `.github/workflows/release.yml` runs the whole gate on a `v*` tag, publishes with `--provenance`, and generates the release notes from the commits since the previous tag. What is left is not code, and it is sequenced in [`.scratch/first-release/`](../../.scratch/first-release/spec.md): push so CI runs, tag and publish **by hand once**, then configure the publisher and switch the workflow on. The first publish is manual because npm's per-package settings — a trusted publisher, a granular token — do not exist until the package does, and because `--provenance` needs a CI with OIDC and fails from a laptop. **Both publishes happened: `0.1.0` by hand, `0.1.1` staged by the workflow with signed provenance and approved by hand.** `NPM_PUBLISH` has been `true` since 2026-09-10, so a `v*` tag now publishes — this sentence used to say the opposite and was itself drift.
-2. **`0.3.0`, which absorbs the `0.2.0` that was never tagged.** The `0.2.0` bump was merged and the tag never pushed, so npm never saw it and there is no reason to publish a version whose only distinction is having been prepared first. `0.3.0` carries everything below plus the YAML config. Written down because the ROADMAP otherwise describes a release nobody can install.
-
-   **What `0.2.0` was, and still is, the argument for:** Everything since `0.1.1` is additive — `--fix` and `--dry-run`, the three output formats, the Action, `--init` — and the public API of `src/index.ts` did not lose a line, so the minor is the whole of it. It matters more than a version bump usually does: `0.1.1` has no `--format github`, so the Action is unusable until this publish lands.
-3. Launch post with the GIF when **M4** closes.
-4. Sustain commits over months, not a one-week sprint.
+2. **`0.2.0` — published 2026-09-12.** Everything since `0.1.1` was additive — `--fix` and `--dry-run`, the three output formats, the Action, `--init` — and the public API of `src/index.ts` did not lose a line, so the minor covered the whole of it. It mattered more than a version bump usually does: `0.1.1` had no `--format github`, so the Action was unusable until it landed.
+3. **`0.3.0` — the YAML config.** `--init` writes `driftwatch.config.yaml` instead of a `.ts`, and the loader reads `.yaml` and `.yml`. Additive again: every existing config keeps working, and what changes is which format gets written into a repo that had none.
+4. Launch post with the GIF when **M4** closes.
+5. Sustain commits over months, not a one-week sprint.
 
 ### What a release is, by hand
 
