@@ -56,10 +56,11 @@ It applies a correction only when there is exactly one candidate above 0.8 confi
 ## In CI
 
 ```yaml
-- run: npx @abr4xas/driftwatch --format github
+- uses: actions/checkout@v7
+- uses: abr4xas/driftwatch@v1
 ```
 
-`--format json` is a stable contract, `--format github` annotates the diff, `--format sarif` uploads to Code Scanning. See [docs/guide/output.md](./docs/guide/output.md).
+Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
 
 ## Learn more
 

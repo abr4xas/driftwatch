@@ -93,19 +93,24 @@ One native annotation per finding, and **nothing else** — the job log is the t
 `::warning` for a warning-severity finding. `title` carries the check id, which is the only stable thing to group and search by. A run with no findings emits nothing at all — not a blank line. No fix diff reaches the log, because there is no workflow command for "I changed this file".
 
 ```yaml
-- run: npx @abr4xas/driftwatch --format github
+- uses: abr4xas/driftwatch@v1
 ```
+
+See [ci.md](./ci.md) for the action's inputs.
 
 ## sarif
 
 SARIF 2.1.0, for upload to Code Scanning.
 
 ```yaml
-- run: npx @abr4xas/driftwatch --format sarif > driftwatch.sarif
-  continue-on-error: true
-- uses: github/codeql-action/upload-sarif@v3
+- uses: abr4xas/driftwatch@v1
+  id: drift
   with:
-    sarif_file: driftwatch.sarif
+    sarif: true
+    fail-on-drift: false
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: ${{ steps.drift.outputs.sarif-file }}
 ```
 
 The document carries `tool.driver.rules` — one rule per check that actually **ran**, with its description and a link into [checks.md](./checks.md). That is the half that decides whether an alert is readable a month after it was raised: the result says what is wrong on one line, the rule says what the check means and when it is wrong.

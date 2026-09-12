@@ -78,3 +78,60 @@ jobs:
       # here as well as in the release workflow, so a `files` mistake fails on
       # the commit that makes it rather than at the tag.
       - run: pnpm pack:check
+
+  # The action running the code of this commit, not whatever is on npm.
+  #
+  # `version` takes the tarball `pnpm pack` just built, which is the only way
+  # this job fails on the commit that breaks the action rather than on the tag
+  # that publishes it. An action nobody runs is an action that breaks silently.
+  action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      # `pnpm pack` prints the tarball it wrote, and whether that is a name or
+      # an absolute path has changed between majors. Normalise rather than
+      # assume: the action resolves the spec from the workspace root.
+      - id: pack
+        run: |
+          tarball="$(pnpm pack | tail -1)"
+          case "$tarball" in
+            /*) ;;
+            *) tarball="$(pwd)/$tarball" ;;
+          esac
+          test -f "$tarball"
+          echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
+
+      # The repo is clean, so drift here means the audit found something real.
+      - uses: ./
+        id: drift
+        with:
+          version: ${{ steps.pack.outputs.tarball }}
+          sarif: true
+
+      - name: the outputs say what happened
+        run: |
+          test "${{ steps.drift.outputs.exit-code }}" = "0"
+          test -s "${{ steps.drift.outputs.sarif-file }}"
+          node -e "JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'))" \
+            "${{ steps.drift.outputs.sarif-file }}"
+
+      # fail-on-drift: false must not swallow a real failure, only a finding.
+      - uses: ./
+        with:
+          version: ${{ steps.pack.outputs.tarball }}
+          only: path
+          fail-on-drift: false
