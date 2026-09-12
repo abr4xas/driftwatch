@@ -1,6 +1,6 @@
 {
   "name": "@abr4xas/driftwatch",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Find the parts of your CLAUDE.md, AGENTS.md and skills that are no longer true",
   "keywords": [
     "claude",

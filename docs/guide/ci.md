@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: abr4xas/driftwatch@v1
+      - uses: abr4xas/driftwatch@v0
 ```
 
 That is the whole thing. The action defaults to `--format github`, so every stale claim shows up as an annotation on the diff, on the line that makes it.
@@ -44,7 +44,7 @@ The two ways to run this want opposite things, so the choice is an input rather 
 
 ```yaml
 # Advisory: annotate the diff, never block the merge
-- uses: abr4xas/driftwatch@v1
+- uses: abr4xas/driftwatch@v0
   with:
     fail-on-drift: false
 ```
@@ -61,7 +61,7 @@ permissions:
 steps:
   - uses: actions/checkout@v7
 
-  - uses: abr4xas/driftwatch@v1
+  - uses: abr4xas/driftwatch@v0
     id: drift
     with:
       sarif: true
@@ -78,14 +78,16 @@ The action writes the file and hands you the path; it does not upload. Uploading
 
 ## Which version it runs
 
-The action runs **the version of driftwatch that shipped with it**. `@v1` executes what the `package.json` next to that tag says, not whatever is newest on npm: an action pinned at a tag whose behaviour changes without a tag is not pinned at all.
+The action runs **the version of driftwatch that shipped with it**. `@v0` executes what the `package.json` next to that tag says, not whatever is newest on npm: an action pinned at a tag whose behaviour changes without a tag is not pinned at all.
+
+**`v0` is a floating tag**, moved to each `0.x` release, so a fix reaches you without an edit to your workflow. It is `v0` and not `v1` because the package is `0.2.0` and the project says it is early; the day there is a `1.0.0` there is a `v1` to go with it. Pin `@v0.2.0` instead if you would rather nothing move under you.
 
 Override it when you need to:
 
 ```yaml
-- uses: abr4xas/driftwatch@v1
+- uses: abr4xas/driftwatch@v0
   with:
-    version: 0.2.0
+    version: 0.3.0-beta.1
 ```
 
 A path or a `.tgz` is used as written, which is how this repo's own CI runs the action against the commit that changed it instead of against npm.
