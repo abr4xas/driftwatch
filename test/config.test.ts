@@ -17,6 +17,45 @@ function audit(root: string, over: Partial<RunOptions> = {}): Promise<RunResult>
   return run({ cwd: root, paths: [], ...over })
 }
 
+describe('a YAML config', () => {
+  it('is found and loaded', async () => {
+    const root = repo({
+      'driftwatch.config.yaml': "sources:\n  - 'docs/notes.md'\n",
+      'docs/notes.md': NOTES,
+    })
+    const result = await audit(root)
+    expect(result.config.sources).toEqual(['docs/notes.md'])
+    expect(result.findings.some((f) => f.check === 'path/missing')).toBe(true)
+  })
+
+  it('is found under .yml too', async () => {
+    const root = repo({ 'driftwatch.config.yml': "sources:\n  - 'docs/notes.md'\n" })
+    // The source is declared and missing, which is a user error by design.
+    await expect(audit(root)).rejects.toThrow('docs/notes.md')
+  })
+
+  // `off` is one of the three severities and also a YAML 1.1 boolean. The
+  // `yaml` package implements 1.2, so the unquoted form arrives as a string
+  // and works; the quoted form has to work too, since the template quotes it.
+  it.each([["'off'"], ['off']])('takes %s as a severity', async (written) => {
+    const root = repo({ 'driftwatch.config.yaml': `checks:\n  'path/missing': ${written}\n` })
+    const result = await audit(root)
+    expect(result.checks).not.toContain('path/missing')
+  })
+
+  // What a 1.1 parser elsewhere would have written. The message has to name
+  // the quotes, or the reader goes looking at their check ids instead.
+  it('explains a severity that arrived as a boolean', async () => {
+    const root = repo({ 'driftwatch.config.yaml': "checks:\n  'path/missing': false\n" })
+    await expect(audit(root)).rejects.toThrow(/path\/missing/u)
+  })
+
+  it('reports invalid YAML as a user error naming the file', async () => {
+    const root = repo({ 'driftwatch.config.yaml': 'sources: [unclosed\n' })
+    await expect(audit(root)).rejects.toThrow(/driftwatch\.config\.yaml/u)
+  })
+})
+
 describe('config lookup', () => {
   it('finds driftwatch.config.ts and loads it with no transpiler', async () => {
     const root = repo({
@@ -120,10 +159,15 @@ describe('--config and --no-config', () => {
     )
   })
 
+  // This case used to use `.yaml`, which stopped being unsupported. A test
+  // whose subject is "an extension we do not read" has to be re-pointed every
+  // time one is added, or it goes green for the wrong reason — the same trap
+  // `--dry-run` sprang in M3, where a flag outside the specification was used
+  // as the example of a flag outside the specification and then implemented.
   it('an unsupported extension is a user error', async () => {
-    const root = repo({ 'dw.yaml': 'sources: []\n' })
-    await expect(audit(root, { config: 'dw.yaml' })).rejects.toThrow(
-      'unsupported config extension: .yaml',
+    const root = repo({ 'dw.toml': 'sources = []\n' })
+    await expect(audit(root, { config: 'dw.toml' })).rejects.toThrow(
+      'unsupported config extension: .toml',
     )
   })
 })

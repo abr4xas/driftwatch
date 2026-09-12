@@ -4,7 +4,9 @@
 
 **Blocked by:** nothing. Ticket `01` shipped the flag and the template.
 
-**Status:** needs-triage
+**Status:** ready-for-agent
+
+**Decided 2026-09-12: YAML.**
 
 ## The problem
 
@@ -27,7 +29,7 @@ Five shapes, and the ticket picks one with reasons rather than by taste:
 - [ ] **JSON with `$schema` allowed and a schema published.** The loader learns to accept and ignore `$schema`; the template carries a URL; the editor does the documenting the comments used to do. Best result, most work, and it adds a published artefact that has to stay in sync with `KNOWN_KEYS`.
 - [ ] **JSONC.** Keeps the comments, keeps one format. Costs a parser — `JSON.parse` throws on a comment — and the cold-start budget is 80 ms with a 40-line rule before any dependency (`AGENTS.md` § Dependencies). It also makes `driftwatch.config.json` mean something slightly different from what every other tool means by that filename.
 - [ ] **Detect.** `package.json` present, so a `.ts` is native there; absent, so write `.json`. Right answer per repo, and two templates to keep honest instead of one.
-- [ ] **YAML.** Comments survive, so ticket `01`'s guarantee survives with them, and it is as language-neutral as JSON — a `.yaml` at the root of a Cargo workspace surprises nobody. **The parser is already a runtime dependency:** `src/parse/frontmatter.ts` imports `yaml` for `frontmatter/invalid` and `skill/frontmatter`, so `AGENTS.md` § Dependencies has nothing to object to. Editor completion comes from `# yaml-language-server: $schema=...`, which is a *comment* rather than a key, so the validator keeps rejecting unknown keys with no exception carved out for `$schema`.
+- [x] **YAML.** ← chosen Comments survive, so ticket `01`'s guarantee survives with them, and it is as language-neutral as JSON — a `.yaml` at the root of a Cargo workspace surprises nobody. **The parser is already a runtime dependency:** `src/parse/frontmatter.ts` imports `yaml` for `frontmatter/invalid` and `skill/frontmatter`, so `AGENTS.md` § Dependencies has nothing to object to. Editor completion comes from `# yaml-language-server: $schema=...`, which is a *comment* rather than a key, so the validator keeps rejecting unknown keys with no exception carved out for `$schema`.
 - [ ] **Strict JSON, comments dropped.** Cheapest, and it gives up ticket `01`'s guarantee. If this wins, the inert keys must be **absent** rather than silently present-and-dead, because a key that looks live and does nothing is exactly the drift this tool reports.
 
 ### If it is YAML, three things to settle in the ticket

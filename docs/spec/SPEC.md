@@ -139,7 +139,7 @@ Options
   --no-config            Ignore any config found
   --quiet                Show problems only, no summary
   --watch                Re-run whenever a source changes
-  --init                 Write a commented driftwatch.config.ts
+  --init                 Write a commented driftwatch.config.yaml
   --version, -v
   --help, -h
 ```
@@ -243,7 +243,32 @@ Adding an optional field is not a breaking change. `version` stays `1`.
 
 ## 7. Configuration
 
-Optional. `driftwatch.config.ts`, `.js`, `.json`, or the `driftwatch` key in `package.json` is looked up.
+Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.ts`, `.js`, `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
+
+**`--init` writes the YAML one**, because driftwatch audits repositories in any language and a `.ts` config assumes the repo speaks TypeScript. YAML also holds the comments the generated file is mostly made of, which JSON cannot.
+
+```yaml
+# What --init writes, minus the commentary.
+sources:
+  - 'docs/agent-notes.md'
+
+ignore:
+  - '**/fixtures/**'
+
+# 'error' | 'warning' | 'off' — quoted, because `off` is a YAML 1.1 boolean
+checks:
+  'dep/missing': 'off'
+  'stale/churn': 'warning'
+  'symbol/missing': 'error'
+
+knownPaths:
+  - 'dist/**'
+  - '.next/**'
+
+staleThreshold: 15
+```
+
+The same config as a `.ts` file, which is what a TypeScript repo may prefer:
 
 ```ts
 import { defineConfig } from 'driftwatch'

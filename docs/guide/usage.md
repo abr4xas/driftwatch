@@ -21,7 +21,7 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--config <path>` | use this config file |
 | `--no-config` | ignore any config found |
 | `--quiet` | problems only, no summary (`pretty` only) |
-| `--init` | write a commented `driftwatch.config.ts` and exit |
+| `--init` | write a commented `driftwatch.config.yaml` and exit |
 | `--version`, `-v` | print the version |
 | `--help`, `-h` | print the options |
 
@@ -55,18 +55,28 @@ Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo wit
 
 ## Configuration
 
-Optional. `driftwatch.config.ts`, `.js`, `.json`, or a `driftwatch` key in `package.json`.
+Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or a `driftwatch` key in `package.json`.
 
-`driftwatch --init` writes a commented one for you, with the inert keys commented out so the file does not promise more than the tool does. It refuses if any config is already there — including a `driftwatch` key in `package.json` — rather than overwrite it, and it writes to the repo root wherever you run it from.
+`driftwatch --init` writes a commented `driftwatch.config.yaml` for you, with the inert keys commented out so the file does not promise more than the tool does. It refuses if any config is already there — including a `driftwatch` key in `package.json` — rather than overwrite it, and it writes to the repo root wherever you run it from.
+
+**YAML is the default because driftwatch is not a Node tool.** It audits Go, Rust and Python repositories as readily as JavaScript ones, and a `.ts` config assumes otherwise — in a TypeScript repo it is worse than an odd file, because it can land inside the tsconfig include, the lint glob and the build. A `.ts` config still works, and in this repository that is what is used.
+
+```yaml
+sources:
+  - 'docs/agent-notes.md'
+
+checks:
+  'link/broken': 'warning'
+  'frontmatter/invalid': 'off'
+```
+
+The same thing as a `.ts` config, which is what this repository uses and what gets you completion:
 
 ```ts
 import { defineConfig } from 'driftwatch'
 
 export default defineConfig({
-  // Audit these too, beyond what discovery finds
   sources: ['docs/agent-notes.md'],
-
-  // Per-check severity: 'error' | 'warning' | 'off'
   checks: {
     'link/broken': 'warning',
     'frontmatter/invalid': 'off',
@@ -74,7 +84,7 @@ export default defineConfig({
 })
 ```
 
-The generated file imports the `Config` **type** instead of calling `defineConfig`: a type import is erased before the file runs, so the config loads even when the tool came from `npx` and the package is not in `node_modules`. Both forms are supported; use whichever your repo can resolve.
+**Quote the severity.** `off` is one of the three values and also a boolean in YAML 1.1; the parser here implements 1.2, where the unquoted form is a string and works, but a file edited elsewhere may not survive the round trip. If a severity ever arrives as a boolean the error says so rather than blaming your check ids.
 
 A `.ts` config needs no transpiler: Node strips the types itself. What that costs is that syntax type stripping cannot erase — an `enum`, a `namespace`, a parameter property — fails with a clear error.
 
