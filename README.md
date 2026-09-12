@@ -57,7 +57,7 @@ It applies a correction only when there is exactly one candidate above 0.8 confi
 
 ```yaml
 - uses: actions/checkout@v7
-- uses: abr4xas/driftwatch@v1
+- uses: abr4xas/driftwatch@v0
 ```
 
 Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
@@ -76,7 +76,7 @@ The specification is primary source: when the code and those documents disagree,
 
 ## Status
 
-**`0.1.1` is on npm, and it is early.** M0 through M3 are done: the five checks, `--fix`, and now the `--json` / `--github` / `--sarif` formats that M4 owes. What is left in M4 is the audience — a GIF, a one-page site, and a published GitHub Action.
+**It is on npm, and it is early.** The badge above carries the published version, so this paragraph does not have to and cannot go stale. M0 through M3 are done: the five checks and `--fix`. M4 has delivered the `--json` / `--github` / `--sarif` formats and the GitHub Action; what is left of it is the audience — a GIF and a one-page site.
 
 Early means the checks and the fixes are what is finished. `--watch` and `--strict` parse and then tell you which milestone they belong to; the four tier 2 checks land in M5.
 
