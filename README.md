@@ -80,7 +80,9 @@ The specification is primary source: when the code and those documents disagree,
 
 Early means the checks and the fixes are what is finished. `--watch` and `--strict` parse and then tell you which milestone they belong to; the four tier 2 checks land in M5.
 
-**The package is scoped; the command is not.** npm refuses the name `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read. `bin` fixes the command at `driftwatch` whatever the package is called.
+**The package is scoped, the Marketplace listing is suffixed, and the command is neither.** npm refuses `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read; the GitHub Marketplace refuses it too, because a user account called Driftwatch already exists and a listing name has to be unique across every action, user and organisation. So the package is `@abr4xas/driftwatch` and the listing is `driftwatch-action`.
+
+Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v0`, which comes from the repository rather than from the listing.
 
 ## License
 
