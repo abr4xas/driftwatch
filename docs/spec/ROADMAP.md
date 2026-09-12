@@ -122,7 +122,7 @@ What turns a tool that works into a project someone adopts.
 
 - README with a ≤15 s GIF at the very top, before any text
 - `--json`, `--github`, `--sarif` formats — **done 2026-09-11**
-- Published GitHub Action (`driftwatch/action@v1`) — **done 2026-09-11, as `abr4xas/driftwatch@v1`**
+- Published GitHub Action (`driftwatch/action@v1`) — **done 2026-09-11, as `abr4xas/driftwatch` pinned to an exact release tag.** The `@v1` this line writes never existed: the tags have been exact since `v0.1.0`, and a major-version tag would have to be force-pushed on every release.
 - One-page static site with the demo and the GIF
 - Published to npm with provenance (`npm publish --provenance`) — **a state, not a schedule.** § "Suggested release order" puts the first publish at M2's close, and `.github/workflows/release.yml` already publishes with provenance, so M4 inherits this rather than waiting for it. What M4 adds is the audience, not the package.
 - MIT license (done: `LICENSE`)
@@ -137,9 +137,9 @@ What turns a tool that works into a project someone adopts.
 
 The corpus was re-run and is green at 66 repos with no snapshot moved — 26 findings, 20 true. A batch about output formats that moved a detection would have been a batch with a bug in it.
 
-**Second batch closed 2026-09-11: the GitHub Action.** It lives in this repository as `action.yml` at the root, so it is used as `abr4xas/driftwatch@v0` rather than from the `driftwatch/action` organisation this line names — that organisation does not exist, and a separate repository would need its own tags plus a hand-maintained answer to "which version of the package does `@v1` run". Here the tag that selects the action selects the `package.json` beside it, and pinning the action pins the tool.
+**Second batch closed 2026-09-11: the GitHub Action.** It lives in this repository as `action.yml` at the root, so it is used as `abr4xas/driftwatch@v0.3.0` rather than from the `driftwatch/action` organisation this line names — that organisation does not exist, and a separate repository would need its own tags plus a hand-maintained answer to "which version of the package does `@v1` run". Here the tag that selects the action selects the `package.json` beside it, and pinning the action pins the tool.
 
-The documented ref is `v0` and not `v1`: a floating tag moved to each `0.x` release, so a fix reaches a caller without an edit to their workflow, and no promise of a stable API is made by a package that says it is early. `v1` arrives with `1.0.0`. **Moving that tag is manual and is part of releasing** — the workflow does not do it.
+**The documented ref is an exact release tag, and there is no floating `v0` or `v1`.** A major-version tag is the Marketplace convention, and it is convention rather than requirement: it buys a caller upgrades without an edit, and costs a force-pushed tag on every release — the one operation in this repo that rewrites something already published. The tags here have been exact since `v0.1.0`, and the documentation now matches that instead of promising a ref nobody created. What a reader loses is automatic upgrades; what they gain is a workflow file that says which version it runs.
 
 It defaults to `--format github`, writes a SARIF file on request and **does not upload it**: uploading from inside would make every caller grant `security-events: write`, including the ones that only want annotations. `fail-on-drift: false` exists because an advisory annotation and a merge gate want opposite things — and it silences a finding, never a failure, since exit 2 is the tool breaking rather than finding something.
 

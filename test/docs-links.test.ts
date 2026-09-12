@@ -82,3 +82,36 @@ describe('the documentation links', () => {
     expect(wrong).toEqual([])
   })
 })
+
+/**
+ * Every `uses: abr4xas/driftwatch@vX.Y.Z` in the documentation names the
+ * version this repository is about to publish.
+ *
+ * The action ref is pinned to an exact release rather than to a floating `v0`,
+ * which is the honest trade — a reader sees which version their workflow runs
+ * — but it moves the cost to release day: six snippets across the README, the
+ * CI guide, the ROADMAP and `action.yml`'s own comment. Forgetting one leaves
+ * a documented `uses:` pointing at the previous release, which is drift in a
+ * repository whose product reports drift.
+ */
+describe('the documented action ref', () => {
+  const VERSION = (
+    JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version: string }
+  ).version
+  const REF = /abr4xas\/driftwatch@v(?<version>[\w.-]+)/gu
+  const FILES = ['README.md', 'action.yml', 'docs/guide/ci.md', 'docs/spec/ROADMAP.md']
+
+  it.each(FILES)('matches package.json in %s', (file) => {
+    const text = readFileSync(join(ROOT, file), 'utf8')
+    const found = [...text.matchAll(REF)].map((match) => match.groups?.version)
+    // A file with no ref is fine; one naming the wrong release is not.
+    expect(found.filter((version) => version !== VERSION)).toEqual([])
+  })
+
+  it('is documented somewhere, so this test cannot pass vacuously', () => {
+    const total = FILES.map((file) => readFileSync(join(ROOT, file), 'utf8')).flatMap((text) => [
+      ...text.matchAll(REF),
+    ])
+    expect(total.length).toBeGreaterThan(3)
+  })
+})
