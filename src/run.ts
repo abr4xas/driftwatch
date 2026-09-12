@@ -43,6 +43,13 @@ export type RunResult = {
    * that distinguishes a clean audit from a vacuous one.
    */
   checks: readonly string[]
+  /**
+   * How many claims were examined. `SPEC.md` § 6's `summary.claims`, and the
+   * only figure in the output that says how much was *looked at* rather than
+   * what went wrong: a clean run over 200 claims and a clean run over none are
+   * not the same result, and only this number tells them apart.
+   */
+  claims: number
   findings: readonly Finding[]
   counts: Counts
   fixable: number
@@ -200,6 +207,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     configPath,
     sources,
     checks: checks.map((check) => check.id),
+    claims: claims.length,
     findings,
     counts: countBySeverity(findings),
     fixable: findings.filter((finding) => finding.suggestion?.fixable === true).length,

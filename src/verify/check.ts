@@ -32,6 +32,17 @@ export type CheckReport = {
 export type Check = {
   /** Stable id, used in config, in `--only/--skip` and in the ignores. */
   id: string
+  /**
+   * One line naming what the check verifies, and a paragraph saying what a
+   * finding means and when it is wrong.
+   *
+   * They live on the check and not in a table inside a reporter because SARIF's
+   * `rules[]` is what makes a Code Scanning alert readable a month later, and a
+   * lookup table in `report/sarif.ts` is a second place to forget when a check
+   * changes.
+   */
+  title: string
+  description: string
   tier: 1 | 2
   /** What it reports at when the config says nothing. See `severityOf`. */
   defaultSeverity: Severity

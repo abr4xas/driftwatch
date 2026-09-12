@@ -6,7 +6,7 @@ Find the claims in your agent context files that are no longer true.
 Options
   --fix                  Apply the unambiguous fixes
   --dry-run              With --fix, show what it would change without writing
-  --json                 JSON output on stdout
+  --json                 JSON output on stdout (same as --format json)
   --format <fmt>         pretty | json | github | sarif   (default: pretty)
   --only <ids>           Only these checks (comma-separated, accepts a prefix: --only path)
   --skip <ids>           Exclude these checks

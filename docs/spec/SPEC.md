@@ -178,11 +178,25 @@ Formatting rules:
 - No emojis. Only the `✗ ⚠ ✓` symbols.
 - When autofixes are available, close with: `3 fixable with --fix`.
 
+`--quiet` and colour are `pretty` concepts. The other three formats ignore both: a JSON document without its summary is not quieter, it is invalid against its own contract.
+
 ### `github` format
-Emits `::error file=X,line=Y::message` for native GitHub Actions annotations.
+Emits one native GitHub Actions annotation per finding, and **nothing else** — the job log is the transport, so a line that is not a workflow command is noise in the output:
+
+```
+::error file=CLAUDE.md,line=12,col=4,endColumn=19,title=path/missing::path does not exist → src/auth/index.ts?
+```
+
+`::warning` for a warning-severity finding. `title` carries the check id, which is the only stable label to group and search by. Property values escape `%`, `\r`, `\n`, `:` and `,`; the message escapes the first three. A run with no findings emits nothing at all.
 
 ### `sarif` format
-SARIF 2.1.0, for upload to GitHub Code Scanning.
+SARIF 2.1.0, for upload to GitHub Code Scanning. One `run`, with:
+
+- `tool.driver` carrying `name`, `informationUri`, `semanticVersion` and **`rules[]`** — one rule per check that *ran*, with its title, its description and a `helpUri` into `docs/guide/checks.md`. The rules are what make an alert readable a month after it was raised.
+- `results[]` with `ruleId`, `level`, `message.text` and a physical location resolved against `%SRCROOT%`.
+- `fixes[]`, SARIF's own, under `--fix --dry-run`. See § 6 for why only then.
+
+No `partialFingerprints`: without them Code Scanning fingerprints on location and an alert reappears when the file shifts by a line; with them the hashing decision is owned forever and changing it re-raises every alert at once. The first cost is visible and recoverable.
 
 ---
 
@@ -212,7 +226,18 @@ Stable contract. Breaking changes only on a major.
 }
 ```
 
-`file` is always relative to `root`. `line` and `column` are 1-indexed.
+`file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line.
+
+### The fix plan
+
+Two additions, and they are not symmetric:
+
+- **`fixes`**, top level, whenever `--fix` was passed: `{ applied, files, dryRun, edits[] }`, each edit `{ file, line, start, end, before, after }`.
+- **`fix`** on an individual finding, `{ start, end, replacement }` — **only under `--fix --dry-run`**.
+
+The asymmetry is the honest part. `start` and `end` are absolute byte offsets into the file as it is on disk, and after a real `--fix` what gets reported comes from a second full run over files that have already been rewritten (§ 4). Those findings have no relationship to the plan that was applied, so offering them a range would be offering an index into a file that no longer exists in that form. What was applied is still described, in the top-level block, as the past rather than as an offer.
+
+Adding an optional field is not a breaking change. `version` stays `1`.
 
 ---
 

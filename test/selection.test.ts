@@ -16,7 +16,15 @@ const REGISTRY: readonly Check[] = [
 ]
 
 function fake(id: string, tier: 1 | 2): Check {
-  return { id, tier, defaultSeverity: 'error', claimKinds: ['path'], run: () => null }
+  return {
+    id,
+    title: id,
+    description: id,
+    tier,
+    defaultSeverity: 'error',
+    claimKinds: ['path'],
+    run: () => null,
+  }
 }
 
 function ids(selection: CheckSelection): string[] {

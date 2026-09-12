@@ -130,10 +130,10 @@ describe('main', () => {
     await expect(main(['--no-tier2'], c.io, CWD)).resolves.toBe(EXIT.ok)
   })
 
-  it('a format other than pretty is not implemented yet', async () => {
+  it('an unknown format is refused by name', async () => {
     const c = capture()
-    await expect(main(['--format', 'sarif'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain('sarif')
+    await expect(main(['--format', 'xml'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain('unknown format: xml')
   })
 
   it('--fix writes the correction and exits on what remains', async () => {

@@ -16,6 +16,12 @@ import { hasFile } from '../repo-index.ts'
  */
 export const linkBroken: Check = {
   id: 'link/broken',
+  title: 'A link points at an anchor no heading produces',
+  description:
+    'A Markdown link carries a #fragment that the target document has no ' +
+    'heading for. The other half of a broken link — a target file that does ' +
+    'not exist — is reported by path/missing instead, so one broken link ' +
+    'produces one finding.',
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['link'],

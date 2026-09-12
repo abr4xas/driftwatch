@@ -4,7 +4,8 @@ import { isUserError, messageOf, notYetImplemented, UserError } from '../core/er
 import { EXIT, exitCodeFor, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
 import type { RunOptions, RunResult } from '../run.ts'
-import type { FixOutcome, PrettyOptions } from '../report/pretty.ts'
+import type { PrettyOptions } from '../report/pretty.ts'
+import type { FixOutcome } from '../report/types.ts'
 import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
@@ -33,7 +34,6 @@ function assertNotYetImplemented(args: CliArgs): void {
   for (const [key, flag] of UNIMPLEMENTED_BOOLEANS) {
     if (args[key]) throw notYetImplemented(flag)
   }
-  if (args.format !== 'pretty') throw notYetImplemented(`--format ${args.format}`)
 }
 
 /**
@@ -74,6 +74,42 @@ function assertPathsExist(paths: readonly string[], cwd: string): void {
   }
 }
 
+/** What a format does with a result. The four of them share nothing else. */
+type Render = (result: RunResult, fixes: FixOutcome | undefined) => string
+
+/**
+ * The format dispatch, with one dynamic import per branch: a `pretty` run must
+ * not pay to load the SARIF builder, and a `--format sarif` run must not load
+ * the colour support it will never consult.
+ *
+ * `--quiet` and colour are `pretty` concepts and stop here. A JSON document
+ * without its summary is not quieter, it is invalid against its own contract.
+ */
+async function rendererFor(args: CliArgs, io: Io): Promise<Render> {
+  switch (args.format) {
+    case 'json': {
+      const { renderJson } = await import('../report/json.ts')
+      return (result, fixes) => renderJson(result, fixes === undefined ? {} : { fixes })
+    }
+    case 'github': {
+      const { renderGithub } = await import('../report/github.ts')
+      return (result) => renderGithub(result)
+    }
+    case 'sarif': {
+      const { renderSarif } = await import('../report/sarif.ts')
+      return (result, fixes) => renderSarif(result, fixes === undefined ? {} : { fixes })
+    }
+    case 'pretty': {
+      const [{ renderPretty }, { colorEnabled }] = await Promise.all([
+        import('../report/pretty.ts'),
+        import('../report/colors.ts'),
+      ])
+      const color = colorEnabled(io.env, io.isTty)
+      return (result, fixes) => renderPretty(result, prettyOptions(args, color, fixes))
+    }
+  }
+}
+
 /**
  * The audit itself: run, report, and — with `--fix` — write and ask again.
  *
@@ -83,16 +119,11 @@ function assertPathsExist(paths: readonly string[], cwd: string): void {
  * one for the same reason: a run without `--fix` never loads it.
  */
 async function audit(args: CliArgs, io: Io, cwd: string): Promise<ExitCode> {
-  const [{ run }, { renderPretty }, { colorEnabled }] = await Promise.all([
-    import('../run.ts'),
-    import('../report/pretty.ts'),
-    import('../report/colors.ts'),
-  ])
+  const [{ run }, renderer] = await Promise.all([import('../run.ts'), rendererFor(args, io)])
 
   const options = runOptionsFor(args, cwd)
   const result = await run(options)
-  const render = (of: RunResult, fixes?: FixOutcome): void =>
-    io.out(renderPretty(of, prettyOptions(args, colorEnabled(io.env, io.isTty), fixes)))
+  const render = (of: RunResult, fixes?: FixOutcome): void => io.out(renderer(of, fixes))
 
   if (!args.fix) {
     render(result)

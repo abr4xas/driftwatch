@@ -1,0 +1,179 @@
+name: driftwatch
+description: Find the claims in your agent context files that are no longer true
+author: angel cruz
+
+branding:
+  icon: file-text
+  color: yellow
+
+inputs:
+  paths:
+    description: Paths to audit, space separated. Empty means the whole repository.
+    required: false
+    default: ''
+  format:
+    description: 'pretty | json | github | sarif. Annotations are the reason to run this in CI.'
+    required: false
+    default: github
+  only:
+    description: 'Run only these checks, comma separated. A prefix works: path'
+    required: false
+    default: ''
+  skip:
+    description: Run everything except these checks, comma separated.
+    required: false
+    default: ''
+  config:
+    description: Explicit path to the config file.
+    required: false
+    default: ''
+  sarif:
+    description: >
+      Also write a SARIF 2.1.0 file and expose its path as the sarif-file
+      output. Upload it yourself with github/codeql-action/upload-sarif; doing
+      it here would make every caller grant security-events: write.
+    required: false
+    default: 'false'
+  fail-on-drift:
+    description: >
+      Fail the step when drift is found. Annotations on a pull request are
+      advisory and a failing job is a gate; which one you want is not ours to
+      decide.
+    required: false
+    default: 'true'
+  version:
+    description: >
+      Which driftwatch to run. Empty means the version in the package.json next
+      to this action, so pinning the action pins the tool. A path or a .tgz is
+      used as written, which is how CI tests the action against a commit.
+    required: false
+    default: ''
+  working-directory:
+    description: Where to run. Defaults to the workspace root.
+    required: false
+    default: '.'
+
+outputs:
+  exit-code:
+    description: '0 no errors, 1 drift found, 2 the tool itself failed.'
+    value: ${{ steps.audit.outputs.exit-code }}
+  sarif-file:
+    description: Path to the SARIF file, when sarif was true.
+    value: ${{ steps.sarif.outputs.sarif-file }}
+
+runs:
+  using: composite
+  steps:
+    # ADR-0002: the floor is Node 24. Checked before installing, because a
+    # repository that already set up Node 26 should not be silently moved down
+    # to 24 by a linter it happens to run.
+    - id: node
+      shell: bash
+      run: |
+        major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
+        if [ "$major" -ge 24 ]; then
+          echo "sufficient=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "sufficient=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - if: steps.node.outputs.sufficient != 'true'
+      uses: actions/setup-node@v7
+      with:
+        node-version: '24'
+
+    # An action pinned at @v1 that silently upgrades what it executes is an
+    # action whose behaviour changes without a tag. The default is the version
+    # sitting next to this file, so pinning the action pins the tool.
+    #
+    # The spec is passed to `npx --package` and the binary named separately,
+    # rather than `npx <spec>`: with a path or a tarball, npx reads the argument
+    # as a command to run and fails with "Permission denied" on the .tgz.
+    - id: resolve
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        if [ -z "$VERSION" ]; then
+          version="$(node -p "require('$ACTION_PATH/package.json').version")"
+          spec="@abr4xas/driftwatch@$version"
+        elif [ -e "$VERSION" ] || [ "${VERSION#*.tgz}" != "$VERSION" ]; then
+          spec="$VERSION"
+        else
+          spec="@abr4xas/driftwatch@$VERSION"
+        fi
+        echo "spec=$spec" >> "$GITHUB_OUTPUT"
+
+    # Every input reaches the shell through env, never through ${{ }} inside a
+    # run block: an input interpolated into a script is a shell injection in an
+    # action anybody can call.
+    - id: audit
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        SPEC: ${{ steps.resolve.outputs.spec }}
+        PATHS: ${{ inputs.paths }}
+        FORMAT: ${{ inputs.format }}
+        ONLY: ${{ inputs.only }}
+        SKIP: ${{ inputs.skip }}
+        CONFIG: ${{ inputs.config }}
+      run: |
+        args=(--format "$FORMAT")
+        [ -n "$ONLY" ] && args+=(--only "$ONLY")
+        [ -n "$SKIP" ] && args+=(--skip "$SKIP")
+        [ -n "$CONFIG" ] && args+=(--config "$CONFIG")
+        if [ -n "$PATHS" ]; then
+          read -ra extra <<< "$PATHS"
+          args+=("${extra[@]}")
+        fi
+        set +e
+        npx --yes --package="$SPEC" driftwatch "${args[@]}"
+        code=$?
+        set -e
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+
+    # A second pass rather than a reformat of the first. The tool runs in under
+    # 500 ms on a 5,000-file repo, and two honest runs cost less than one run
+    # that has to buffer both shapes.
+    - id: sarif
+      if: inputs.sarif == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        SPEC: ${{ steps.resolve.outputs.spec }}
+        PATHS: ${{ inputs.paths }}
+        ONLY: ${{ inputs.only }}
+        SKIP: ${{ inputs.skip }}
+        CONFIG: ${{ inputs.config }}
+      run: |
+        args=(--format sarif)
+        [ -n "$ONLY" ] && args+=(--only "$ONLY")
+        [ -n "$SKIP" ] && args+=(--skip "$SKIP")
+        [ -n "$CONFIG" ] && args+=(--config "$CONFIG")
+        if [ -n "$PATHS" ]; then
+          read -ra extra <<< "$PATHS"
+          args+=("${extra[@]}")
+        fi
+        set +e
+        npx --yes --package="$SPEC" driftwatch "${args[@]}" > driftwatch.sarif
+        set -e
+        echo "sarif-file=$(pwd)/driftwatch.sarif" >> "$GITHUB_OUTPUT"
+
+    # Last, so the SARIF is written before the step can fail. Exit 2 is the
+    # tool breaking rather than finding something, and it fails the job whatever
+    # fail-on-drift says: a gate you turned off is not a licence to ignore a
+    # crash.
+    - shell: bash
+      env:
+        CODE: ${{ steps.audit.outputs.exit-code }}
+        FAIL_ON_DRIFT: ${{ inputs.fail-on-drift }}
+      run: |
+        if [ "$CODE" = "2" ]; then
+          echo "driftwatch failed to run" >&2
+          exit 2
+        fi
+        if [ "$CODE" != "0" ] && [ "$FAIL_ON_DRIFT" = "true" ]; then
+          exit 1
+        fi
+        exit 0

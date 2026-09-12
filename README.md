@@ -1,5 +1,9 @@
 # driftwatch
 
+[![npm](https://img.shields.io/npm/v/%40abr4xas%2Fdriftwatch?style=flat-square)](https://www.npmjs.com/package/@abr4xas/driftwatch)
+[![CI](https://img.shields.io/github/actions/workflow/status/abr4xas/driftwatch/ci.yml?style=flat-square&label=CI)](https://github.com/abr4xas/driftwatch/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/%40abr4xas%2Fdriftwatch?style=flat-square)](./LICENSE)
+
 Find the parts of your `CLAUDE.md`, `AGENTS.md` and skills that are no longer true.
 
 > `knip` finds dead code. driftwatch finds **dead context**.
@@ -12,35 +16,13 @@ AGENTS.md
 
 1 file · 2 problems (2 errors) · 59ms
 1 fixable with --fix
-
-$ driftwatch --fix
-AGENTS.md
-  ✗ 5  src/cli.ts  path does not exist
-
-fixed
-AGENTS.md
-  ✓ 3  src/util/date.ts  →  src/helpers/date.ts
-
-1 file · 1 problem (1 error) · 61ms
-1 fix applied in 1 file
 ```
-
-## Install
-
-```bash
-npm install -g @abr4xas/driftwatch
-driftwatch
-```
-
-Or without installing anything:
 
 ```bash
 npx @abr4xas/driftwatch
 ```
 
-Needs Node 24 or newer ([ADR-0002](./docs/adr/0002-node-24-floor.md)). No configuration, no API key, no network.
-
-**The package is scoped; the command is not.** npm refuses the name `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read. `bin` fixes the command at `driftwatch` whatever the package is called.
+Needs Node 24 or newer. No configuration, no API key, no network.
 
 ## The problem
 
@@ -50,9 +32,7 @@ Nobody notices, because nothing reads that file except the agent — and the age
 
 Linters check your code. Nothing checks the document you wrote *about* your code.
 
-## What it does today
-
-The five tier 1 checks:
+## What it checks
 
 - `path/missing` — every path a context file claims exists, verified against the repo index.
 - `script/missing` — the package manager commands a document tells you to run, against the nearest `package.json`, `Makefile` or `deno.json`.
@@ -60,153 +40,47 @@ The five tier 1 checks:
 - `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes.
 - `skill/frontmatter` — the structural rules a `SKILL.md` has to meet to be invocable.
 
-`path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of 66 real repositories before anything else was allowed to land. The other four are additive, and each was measured over that same corpus on arrival.
+`path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of **66 real repositories** before anything else was allowed to land, and **61 of them produce no false positive at all**.
+
+That is the rule the whole tool is built on — **one false positive costs more than ten false negatives** — and [docs/guide/precision.md](./docs/guide/precision.md) is the argument, with the numbers and the rounds where they broke.
 
 ## Fixing what it finds
-
-`--fix` applies the corrections that are not a guess, and `--fix --dry-run` shows you the same diff without touching anything.
 
 ```bash
 driftwatch --fix --dry-run    # what it would change
 driftwatch --fix              # change it
 ```
 
-Three things are autofixable, and only when there is **exactly one** candidate above 0.8 confidence:
+It applies a correction only when there is exactly one candidate above 0.8 confidence, it replaces the claim and nothing around it, and it refuses outright to rewrite a relative path in a document that is not at the repo root. [docs/guide/fixing.md](./docs/guide/fixing.md) has the whole list of what it will not touch, and why.
 
-| Check | What gets rewritten |
-|---|---|
-| `path/missing` | the path, when one file in the repo has that name and sits somewhere close to where the document says |
-| `script/missing` | the command, when one script in the nearest manifest is within two edits of the one written |
-| `skill/frontmatter` | a `SKILL.md`'s `name`, to the directory it lives in — withheld when that directory name is not itself kebab-case |
+## In CI
 
-A broken anchor and a mistyped frontmatter value are **never** rewritten. Both were held back deliberately and the reasoning is in [round 17 of the classification](./test/corpus/CLASSIFICATION.md): where the correction is obvious the tool already accepts the line and reports nothing, so what is left to report is a real typo whose target would be a guess.
-
-### What a fix never does
-
-It replaces the claim and nothing around it. A `./` prefix, a `#anchor`, a `:42` line reference and the backticks all survive, because they are outside the range rather than re-applied after it. Line endings, a missing trailing newline and the alignment of a table survive for the same reason: nothing outside the replaced bytes is looked at, let alone rewritten.
-
-It **refuses to rewrite a relative path in a document that is not at the repo root.** Such a document writes half its paths against its own directory and half against the repo root, with no syntactic signal separating them — reporting can accept both readings, because that only costs detections, but writing cannot, because picking one rewrites the path into the other. You still get the finding and the suggestion; you apply it yourself.
-
-It does not touch the file when there is nothing to apply — not even to identical bytes, which would make every watcher in your editor fire. Two fixes that would land on the same fragment cancel each other out rather than one winning. And a byte-identical `CLAUDE.md` beside your `AGENTS.md` is fixed too, so the two stay copies.
-
-### It tells you when there is no way back
-
-If a file it is about to edit has uncommitted changes, it says so before editing it, and edits it anyway:
-
-```console
-$ driftwatch --fix
-driftwatch: uncommitted changes in AGENTS.md
+```yaml
+- uses: actions/checkout@v7
+- uses: abr4xas/driftwatch@v1
 ```
 
-`git checkout -- .` is the one real way back from a fix you did not want, and it is only there if the file was clean. This is not a git tool: it does not stage, commit, refuse, or offer to stash.
+Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
 
-### Afterwards
+## Learn more
 
-The exit code reflects what **remains** after fixing, which is measured by running the whole audit again rather than by subtracting what was applied. So running `--fix` twice is a no-op: the second run finds nothing to fix and writes nothing.
-
-## The rule that shapes everything
-
-**One false positive costs more than ten false negatives.**
-
-A tool that reports 6 real problems gets used every day. One that reports 20 with 8 doubtful ones gets uninstalled on first use and never comes back. So driftwatch stays silent when it is unsure, and every discard rule in the extractor carries a comment naming the false positive it prevents.
-
-Concretely, it does **not** report:
-
-- a path inside a URL, a glob, or a placeholder (`<name>`, `{{path}}`, `$VAR`, `[id]`, `EventNameHere`)
-- a bare word with no slash, or a single-segment directory like `` `feat/` `` — people use `name/` for categories and branches, not only for paths ([ADR-0003](./docs/adr/0003-a-path-needs-a-slash.md), [ADR-0004](./docs/adr/0004-a-bare-directory-is-not-a-claim.md))
-- a path whose shape exists somewhere in the repo, because the document is probably writing relative to a directory its prose already named ([ADR-0005](./docs/adr/0005-a-path-that-exists-somewhere-is-not-drift.md))
-- anything git ignores, or that lands in a generated output directory
-- a path the surrounding line already hedges: "such as", "if exists", "(optional)", "is generated by", or a line that opens with "Create …"
-- a path on a line that links to a *different* repository
-- a path inside another assistant's configuration root, in a repo that does not use that assistant
-
-They share a shape: **the document is not asserting that the path exists.** It argues — "a `Tools/xcodeproj.sh` that writes one on demand *would* avoid the merge conflicts, but…". It instructs — "Write a skill in a directory in `skills/mine/`". It names a build output, a `#lib/` that is a Node subpath import, or a `link:../..` that is a dependency protocol.
-
-**Eleven such classes have been found and closed**, each with its case in the `false-positive-traps` fixture and a test naming the repo and line it came from. Every fix was measured over the whole corpus before being kept, and not one of them has ever removed a true positive.
-
-## How well it works
-
-Measured over **66 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable` and others, in nine languages — running over the context files their authors wrote without knowing driftwatch exists.
-
-**26 findings: 20 true, 6 false.** The ratio is the least useful number here, so these are the numbers the project holds itself to:
-
-- **61 of the 66 repos produce no false positive at all** — 92.4%. Over the validation group alone, 90.6%.
-- **No repo sees more than 2**, and **the one autofixable finding is correct.**
-
-That last number is the one to read sceptically, and the project reads it that way: across all 66 repositories `--fix` would apply **one** edit. It was checked by hand at the level of the edit and not only of the finding — the document is one directory out of date and the rewrite is the one a maintainer would have made — but a floor met on a sample of one is proven once and unproven at scale. More repositories is the only thing that moves it.
-
-Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one. It carries 12 of the 26 findings.
-
-The bar the project sets itself is **90% of repos producing zero false positives**, over the whole corpus and over that group alone, with **no single repo above 2** and **no autofixable false positive at all**. All three hold — two of them were broken four rounds ago and the repair is written up finding by finding in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md), along with the five false positives still open and what closing each would cost.
-
-Two bars rather than one aggregate, because they measure different things: how many users would see noise at all, and how bad it gets for the unlucky one. A single ratio hides both — and the aggregate ratio *was* the criterion until growing the validation group took it from 100% to 37.5% with nothing regressing in the code, because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](./docs/adr/0009-precision-is-counted-in-quiet-repos.md) replaced it.
-
-**Seventeen rounds of measurement, every finding classified by hand**, are in [`test/corpus/CLASSIFICATION.md`](./test/corpus/CLASSIFICATION.md) — including the four rounds where a condition broke, and the two where the corpus caught a regression that reading the diff would not have ([ADR-0007](./docs/adr/0007-the-corpus-does-not-run-in-ci.md)).
-
-## What it reads
-
-| Kind | Where |
+| Where | What is in it |
 |---|---|
-| `agents-md` | `AGENTS.md`, at any depth |
-| `claude-md` | `CLAUDE.md`, `CLAUDE.local.md` |
-| `skill` | `.claude/skills/**/SKILL.md` |
-| `subagent` | `.claude/agents/*.md` |
-| `command` | `.claude/commands/**/*.md` |
-| `cursor-rule` | `.cursorrules`, `.cursor/rules/**/*.mdc` |
-| `copilot` | `.github/copilot-instructions.md` |
+| [docs/guide/](./docs/guide/README.md) | using it: the checks, the flags, the fixes, the output formats, the precision numbers |
+| [docs/spec/](./docs/spec/README.md) | the reference specification: brief, spec, architecture, roadmap |
+| [docs/adr/](./docs/adr/) | decision records, including the ones that cost precision |
+| [test/corpus/](./test/corpus/README.md) | the 66-repo corpus: the only false positive measurement there is |
+| [AGENTS.md](./AGENTS.md) | the handoff for the agent doing the building |
 
-Discovery uses `git ls-files`, so `.gitignore` is respected for free; a repo with no `.git` falls back to a glob walk. Byte-identical `AGENTS.md` and `CLAUDE.md` files in the same directory are audited once and reported as aliases, because counting the same problem twice is its own kind of noise.
-
-## Design commitments
-
-- **Deterministic and offline.** No network, no API key, no LLM. The same repo gives the same output, which is what makes a snapshot diff meaningful. Putting a model on the main path is [out of scope by design](./docs/spec/ROADMAP.md), not unimplemented.
-- **Fast enough to not think about.** Cold start under 80 ms, end to end under 500 ms on a 5,000-file repo. That budget is the reason there is no `typescript` or `esbuild` on the main path.
-- **An autofix never guesses.** `--fix` applies only when there is a single candidate above 0.8 confidence, it replaces the claim and nothing around it — a `./` prefix, a `#anchor` and a `:42` line reference all survive — and it refuses outright to rewrite a relative path in a document that is not at the repo root, because such a document writes half its paths from its own directory and half from the root. A wrong fix is not noise, it is a document that now points confidently at the wrong file, and the next agent will believe it.
+The specification is primary source: when the code and those documents disagree, the first step is deciding which one is wrong, not adjusting the document to fit ([ADR-0001](./docs/adr/0001-the-specification-lives-inside-the-repo.md)).
 
 ## Status
 
-**`0.1.1` is on npm, and it is early.** M0, M1, M2 and **M3 are done** — M3 closed on 2026-09-11 with `--fix`, `--fix --dry-run` and the diff. M4 is what turns a tool that works into a project someone adopts: the GIF, the `--json` / `--github` / `--sarif` formats, and the GitHub Action.
+**`0.1.1` is on npm, and it is early.** M0 through M3 are done: the five checks, `--fix`, and now the `--json` / `--github` / `--sarif` formats that M4 owes. What is left in M4 is the audience — a GIF, a one-page site, and a published GitHub Action.
 
-Early means the checks and the fixes are what is finished, not the surroundings: the output is `pretty` and nothing else yet.
+Early means the checks and the fixes are what is finished. `--watch`, `--init` and `--strict` parse and then tell you which milestone they belong to; the four tier 2 checks land in M5.
 
-Working today: discovery, the config file with its `sources` key, the five tier 1 checks with their suggestions, **`--fix` and `--fix --dry-run`**, the `pretty` reporter, check selection with `--only`, `--skip` and `--no-tier2`, the inline `<!-- driftwatch-ignore -->` directives, `--quiet`, positional path arguments, `--config`, `--no-config`, `--help`, `--version` and the exit codes. Every other flag in `--help` parses and then tells you it is not implemented yet, naming the milestone it belongs to.
-
-A selection that leaves no check enabled is refused rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
-
-```console
-$ node ./dist/cli.js --json
-driftwatch: --format json is not implemented yet
-  it lands in a later milestone; see docs/spec/ROADMAP.md
-```
-
-### Running it from source
-
-Needs Node 24 or newer ([ADR-0002](./docs/adr/0002-node-24-floor.md)) and pnpm.
-
-```bash
-pnpm install
-pnpm build
-node ./dist/cli.js [paths...]
-```
-
-| Exit code | Meaning |
-|---|---|
-| `0` | no errors |
-| `1` | at least one error was found |
-| `2` | the tool itself failed |
-
-With `--fix`, the code describes what is left **after** fixing: a repo whose only error was autofixable exits `0`.
-
-## Repository layout
-
-| Path | What is in it |
-|---|---|
-| [`docs/spec/`](./docs/spec/README.md) | the reference specification: brief, spec, architecture, roadmap |
-| [`docs/adr/`](./docs/adr/) | decision records, including the ones that cost precision |
-| [`test/corpus/`](./test/corpus/README.md) | the 66-repo corpus: the only false positive measurement there is |
-| [`AGENTS.md`](./AGENTS.md) | the handoff for the agent doing the building |
-
-The specification is primary source: when the code and those documents disagree, the first step is deciding which one is wrong, not adjusting the document to fit ([ADR-0001](./docs/adr/0001-the-specification-lives-inside-the-repo.md)).
+**The package is scoped; the command is not.** npm refuses the name `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read. `bin` fixes the command at `driftwatch` whatever the package is called.
 
 ## License
 

@@ -1,6 +1,7 @@
 import type { Finding } from '../core/types.ts'
 import type { RunResult } from '../run.ts'
 import { colorsFor, type Colors } from './colors.ts'
+import type { FixEntry, FixOutcome } from './types.ts'
 
 export type PrettyOptions = {
   color: boolean
@@ -8,23 +9,6 @@ export type PrettyOptions = {
   quiet: boolean
   /** What `--fix` did, when it ran. Absent on an ordinary run. */
   fixes?: FixOutcome
-}
-
-/** One replacement, as the diff prints it. */
-export type FixEntry = {
-  file: string
-  line: number
-  before: string
-  after: string
-}
-
-/** What a `--fix` run applied, or would apply, as the report needs to say it. */
-export type FixOutcome = {
-  applied: number
-  files: number
-  /** `--dry-run`: nothing was written, and the wording says so. */
-  dryRun: boolean
-  entries: readonly FixEntry[]
 }
 
 /** SPEC.md § 5: the quoted fragment is truncated to 40 characters with '…'. */

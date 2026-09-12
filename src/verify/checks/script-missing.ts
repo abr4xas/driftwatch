@@ -23,6 +23,12 @@ import { hasTaskAnywhere, nearestTaskFiles, RUNNERS } from '../manifest.ts'
  */
 export const scriptMissing: Check = {
   id: 'script/missing',
+  title: 'A documented command has no script behind it',
+  description:
+    'A document tells the reader to run a package manager command whose script ' +
+    'is defined in no manifest in the repository. Verified against ' +
+    'package.json scripts, a Makefile and deno.json tasks. A repository with no ' +
+    'manifest at all is not reported: there is nothing to verify against.',
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['script'],
