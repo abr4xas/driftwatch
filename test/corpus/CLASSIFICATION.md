@@ -7,7 +7,7 @@ Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 65 sources, 12 findings, 5 true and 7 false.**
+Validation group measurement: **32 repos, 65 sources, 12 findings, 8 true and 4 false.**
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
@@ -17,7 +17,7 @@ Validation group measurement: **32 repos, 65 sources, 12 findings, 5 true and 7 
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
 | 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 61 of 66 = **92.4%**; validation **29 of 32 = 90.6%** | **met**, repaired in round 16 |
-| 7 | ≥ 1 true positive in validation | 5 | **met** |
+| 7 | ≥ 1 true positive in validation | 8 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
@@ -60,80 +60,122 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **15 findings, 13 true and 2 false**, so 86.7% aggregate.
+The corpus produces **26 findings, 20 true and 6 false**, so 76.9% aggregate — and the aggregate is
+the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
+gives. The numbers the project holds itself to are in the condition table above.
 
-| Repo | Findings | True | False | Group |
-|---|---|---|---|---|
-| `openai/codex` | 3 | 3 | 0 | calibration |
-| `tursodatabase/turso` | 3 | 3 | 0 | calibration |
-| `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | **validation** |
-| `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration (moved) |
-| `emdash-cms/emdash` | 1 | 1 | 0 | calibration (moved) |
-| `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
-| `calcom/cal.com` | 1 | 1 | 0 | calibration |
-| `github/spec-kit` | 1 | 0 | 1 | calibration |
-| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration (moved) |
-| the other 41 | 0 | — | — | — |
+Every row below is derived from the committed snapshots in `snapshots/` and the `holdout` field in
+`scripts/corpus-repos.ts`. The verdicts are the ones recorded in the rounds named in the last column;
+no finding appears here without one.
+
+| Repo | Findings | True | False | Group | Verdict recorded in |
+|---|---|---|---|---|---|
+| `tursodatabase/turso` | 4 | 4 | 0 | calibration | rounds 8, 12 |
+| `openai/codex` | 3 | 3 | 0 | calibration | round 1 |
+| `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | **validation** | round 8 |
+| `1amageek/SwiftAgent` | 2 | 2 | 0 | **validation** | round 13 |
+| `raphaelmansuy/edgecrab` | 2 | 0 | 2 | **validation** | round 13 |
+| `fancy1108/Clutch` | 2 | 1 | 1 | **validation** | round 16 |
+| `Endle/fireSeqSearch` | 1 | 1 | 0 | **validation** | rounds 13, 17 |
+| `CrossPaste/crosspaste-desktop` | 1 | 1 | 0 | **validation** | round 13 |
+| `northword/zotero-format-metadata` | 1 | 0 | 1 | **validation** | round 13 |
+| `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration | round 1 |
+| `calcom/cal.com` | 1 | 1 | 0 | calibration | round 1 |
+| `colinhacks/zod` | 1 | 1 | 0 | calibration | round 10 |
+| `emdash-cms/emdash` | 1 | 1 | 0 | calibration | rounds 6, 8 |
+| `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration | rounds 6, 7 |
+| `saubakirov/KZ-IT-telegram-list` | 1 | 0 | 1 | calibration | round 13 |
+| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration | round 3 |
+| the other 50 | 0 | — | — | — | — |
+
+**`github/spec-kit` is no longer in this table.** It carried the corpus's first false positive, open
+from round one — `.goose/recipes/`, another tool's convention — and round fourteen closed the class
+that produced it. The repo is still in the corpus and is now silent. The finding and the argument it
+generated stay in the history below, where they happened.
+
+Split by group: **validation 12 findings, 8 true and 4 false**, in 7 of its 32 repos; **calibration
+14 findings, 12 true and 2 false**, in 9 of its 34 repos. Only the first half measures anything.
 
 ---
 
 ## Validation group, one by one
 
-The three findings from the validation group. Their repos were never inspected before running the tool over them, and no rule was derived from any of them.
+Twelve findings, in 7 of the 32 repos. These repos were added after the heuristics were frozen and
+none of them was looked at to derive a rule, so their false positive rate is the only honest
+out-of-sample number the project has.
 
-The eight repos in the group: `vitest-dev/vitest`, `rust-lang/rust-analyzer`, `nuxt/nuxt`, `openai/openai-node`, `modelcontextprotocol/typescript-sdk`, `modelcontextprotocol/python-sdk`, `openai/openai-python`, `railwayapp/cli`. Only the fifth produced findings.
+### True positives (8)
 
-### True positives (3), all in `modelcontextprotocol/typescript-sdk`
+**1–3. `modelcontextprotocol/typescript-sdk` `CLAUDE.md:87`, `:93`, `:98`**
 
-**1. `CLAUDE.md:87` — `packages/server/src/server/sse.ts`**
+`packages/server/src/server/sse.ts` — the document says: "**SSE** (`packages/server/src/server/sse.ts`, `packages/client/src/client/sse.ts`) - Legacy HTTP+SSE transport". The client one exists; the server one does **not**. The real file lives at `packages/server-legacy/src/sse/sse.ts`: the package was renamed to `server-legacy` and the internal path was restructured.
 
-The document says: "**SSE** (`packages/server/src/server/sse.ts`, `packages/client/src/client/sse.ts`) - Legacy HTTP+SSE transport". The client one exists; the server one does **not**. The real file lives at `packages/server-legacy/src/sse/sse.ts`: the package was renamed to `server-legacy` and the internal path was restructured. Real drift.
+`packages/server/src/server/auth/` — "Full OAuth 2.0 server implementation in `packages/server/src/server/auth/`". That directory does not exist. The real implementations are in `packages/server-legacy/src/auth` and `packages/core-internal/src/auth`. Same rename.
 
-**2. `CLAUDE.md:93` — `packages/server/src/server/auth/`**
+`packages/client/src/client/auth-extensions.ts` — "OAuth client support in `packages/client/src/client/auth.ts` and `packages/client/src/client/auth-extensions.ts`". The first exists and is not reported; the second does not, because the real file is **`authExtensions.ts`**, camelCase and without the hyphen. Real name drift, of the kind an agent cannot guess.
 
-"Full OAuth 2.0 server implementation in `packages/server/src/server/auth/`". That directory does not exist. The real implementations are in `packages/server-legacy/src/auth` and `packages/core-internal/src/auth`. Real drift, from the same rename.
+Three findings from one cause, counted as three. Drift events: one.
 
-**3. `CLAUDE.md:98` — `packages/client/src/client/auth-extensions.ts`**
+**4–5. `1amageek/SwiftAgent` `AGENTS.md:701` and `CLAUDE.md:701`**
 
-"OAuth client support in `packages/client/src/client/auth.ts` and `packages/client/src/client/auth-extensions.ts`". The first exists and is not reported; the second does not, because the real file is **`authExtensions.ts`**, camelCase and without the hyphen. Real name drift, of the kind an agent cannot guess.
+A Markdown link to `docs/SECURITY.md`. The directory is `Docs/`, capitalised, so on a case-sensitive filesystem the path does not resolve. The same line appears in both files and neither is a symlink or an alias of the other, so it is reported twice. Counted as findings it is two; counted as drift events it is **one, written twice**, the same shape as `typescript-sdk`'s three-from-one-cause.
 
-### False positives (0)
+**6. `Endle/fireSeqSearch` `CLAUDE.md:145`**
 
-None. The previous measurement had one, and it is why this group changed composition:
+`fire_seq_search_server/src/query_engine/semantic_query.rs`. There is no `query_engine/` directory; `semantic_query.rs` sits directly in `src/`. The document is one directory out of date.
 
-**`browser-use/browser-use` `CLAUDE.md:87` — `tests/ci/test_action_EventNameHere.py`**
+This is the corpus's **only fixable finding**, and round seventeen checked it at the level of the edit rather than the finding: the rewrite replaces the path and nothing around it. It is what condition 2 rests on, on a sample of one.
 
-The text says: "Make sure any tests specific to an event live in its `tests/ci/test_action_EventNameHere.py` file". `EventNameHere` is a **placeholder**: it has to be replaced with the event's name.
+**7. `CrossPaste/crosspaste-desktop` `CLAUDE.md:41`**
 
-It is a new and general class: a placeholder in **CamelCase with filler** (`EventNameHere`, `YourClassName`, `SomethingHere`). The existing rules covered `<...>`, `{{...}}`, `$VAR`, `[...]`, `foo`, `NNNN` and `your_*`, but not this form.
+`app/src/commonMain/sqldelight/`. The directory does not exist.
 
-**It was fixed** (`PLACEHOLDER_CAMEL` in `src/extract/discard.ts`), with three deliberately narrow forms: `...Here` with an uppercase `H` preceded by a lowercase letter, so `sphere` and `elsewhere` are left alone; `Your...`/`My...` followed by another uppercase letter; and `XXX`/`Xxx`. There are tests for both halves: the six forms it discards and the six real words it does not.
+**8. `fancy1108/Clutch` `CLAUDE.md:190`**
 
-That contaminated `browser-use`, which moved to calibration, and to get back to eight validation repos `railwayapp/cli` was added — small, from another ecosystem, never looked at.
+"Single-context repo: one `CONTEXT.md` + `docs/adr/` at the repo root." `docs/agents/domain.md` on the same line exists and is not reported; **`docs/adr/` does not**. Classified true in round sixteen, with the doubt recorded there: the sentence could be read as a convention that materialises when the first ADR is written. The strict reading was taken.
 
-**The 75% measurement is neither deleted nor replaced:** it was valid when it was taken, and the current one is a different measurement over a different group. Both stay in the history below.
+### False positives (4)
+
+**1. `northword/zotero-format-metadata` `AGENTS.md:44`** — `content/scripts/linter.js`, a bundle the sentence itself describes as generated. The class is open.
+
+**2–3. `raphaelmansuy/edgecrab` `AGENTS.md:508` and `:614`** — `gateway/run.rs` is a crate nickname for `crates/edgecrab-gateway/src/run.rs`, and `adapters/base.py` belongs to Hermes, a different project the document is comparing itself to. Two false positives in one repo, which is the corpus maximum and what condition 5 is measured against. No rule shape has been proposed for either.
+
+**4. `fancy1108/Clutch` `.cursor/rules/cli-whitelist-docs.mdc:3`** — a Cursor `globs:` frontmatter value holding a **comma-separated list**, which the frontmatter extractor claims as one path. All three files in it exist; the joined string does not. Left open on purpose: the fix *raises* detection, and it would burn a validation repo the round after it arrived. See the round-sixteen ledger.
+
+All four are in the round-sixteen ledger, all four are unfixable, and none of them can therefore become a bad autofix.
 
 ---
 
 ## Calibration, one by one
 
-These nine are in repos whose findings were already looked at to tune heuristics. **They do not measure precision**; they are here for the record.
+Fourteen findings, in 9 of the 34 repos whose findings were already looked at to tune heuristics.
+**They do not measure precision**; they are here for the record.
 
-### True positives (8)
+### True positives (12)
 
 **`openai/codex` `AGENTS.md:35`** — `codex-rs/codex-mcp/src/mcp_connection_manager.rs`, with a "prefer using" aimed at the agent. There is no `mcp_connection_manager.rs` anywhere in the repo.
 
 **`openai/codex` `AGENTS.md:265` and `275`** — `app-server-protocol/src/protocol/v2.rs`. The directory has `common.rs`, `mod.rs`, `mappers.rs`; there is no `v2.rs`.
 
+**`tursodatabase/turso` `.claude/skills/cdc/SKILL.md:158`, `242`, `246`** — `core/translate/emitter.rs` three times, as section headings. `core/translate/` exists; there is no `emitter.rs` anywhere in the repo. Found while turso was in validation.
+
+**`tursodatabase/turso` `.claude/skills/mvcc/SKILL.md:91`** — `make test-mvcc`, in a code fence. The `Makefile` offers no such target. This is the corpus's only `script/missing` finding, and round twelve rejected eight of the nine that check's first draft produced before keeping this one.
+
 **`cloudflare/workers-sdk` `AGENTS.md:140`** — `.github/PULL_REQUEST_TEMPLATE.md`. The real one is `.github/pull_request_template.md`, lowercase. True but minor: on a case-sensitive filesystem the path does not exist, and that is what an agent sees in CI.
 
 **`calcom/cal.com` `AGENTS.md:130`** — `packages/features/ee/workflows/lib/constants.ts`. The directory exists, the file does not. `CLAUDE.md`, which is an identical copy, is reported as an alias instead of counting twice.
 
-**`tursodatabase/turso` `.claude/skills/cdc/SKILL.md:158`, `242`, `246`** — `core/translate/emitter.rs` three times, as section headings. `core/translate/` exists; there is no `emitter.rs` anywhere in the repo. Found while turso was in validation.
+**`colinhacks/zod` `.claude/skills/security-advisory/SKILL.md:3`** — the corpus's only `frontmatter/invalid` finding: an unquoted `description:` whose text contains colons, which does not parse. Round seventeen closed the question of fixing it: the value also contains quoted phrases, so quoting it means escaping them, and a `--fix` that escapes is a YAML serializer.
 
-### False positive (1)
+**`emdash-cms/emdash` `AGENTS.md:398`** — `tests/e2e/`. Reported twice through a symlink in round six; round eight collapsed symlinked sources, and it is now one finding for one drift event.
 
-**`github/spec-kit` `AGENTS.md:464`** — `.goose/recipes/`, in a section titled "Goose Integration" that describes **another tool's** convention, for the project spec-kit generates. Detecting it would require understanding that the whole section is about a third party. It is the class with no deterministic fix.
+**`mattpocock/course-video-manager` `CLAUDE.md:27`** — `.github/workflows/test.yml`. The survivor of the five false positives this repo produced in round six, all from one cause: paths written relative to an external root named in the first line. Round seven closed that class and this one stayed.
+
+### False positives (2)
+
+**`saubakirov/KZ-IT-telegram-list` `.claude/commands/tfw-init.md:141`** — `.tfw/adapters/antigravity/rules/`, a framework's own directory. Free to leave open: no general rule reaches it.
+
+**`vercel-labs/marketing-team-eve-template` `AGENTS.md:136`** — `writing-quality/references/ai-phrases-to-avoid.md`, a third-party convention no prose rule reaches. Open since round three, and the longest-standing false positive in the corpus.
 
 ---
 
