@@ -4,3 +4,5 @@ dist/
 # The clones are a local cache; the snapshots are committed.
 test/corpus/repos/
 *.tsbuildinfo
+.vercel
+.env*
