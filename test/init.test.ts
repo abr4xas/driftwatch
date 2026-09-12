@@ -7,7 +7,6 @@ import { KNOWN_KEYS, validateConfig } from '../src/core/config.ts'
 import { EXIT } from '../src/core/exit-codes.ts'
 import { run } from '../src/run.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
-import pkg from '../package.json' with { type: 'json' }
 
 function capture() {
   const out: string[] = []
@@ -24,7 +23,7 @@ function capture() {
   }
 }
 
-const CONFIG = 'driftwatch.config.ts'
+const CONFIG = 'driftwatch.config.yaml'
 
 /** The uncommented line declaring a key, or '' when the key is not live. */
 function lineFor(key: string): string {
@@ -66,9 +65,7 @@ describe('--init', () => {
     expect(result.findings).toEqual([])
   })
 
-  it('the live keys parse as the config they claim to be', () => {
-    // The template is TypeScript, so what is asserted is the shape it builds:
-    // the two keys left uncommented are the two the pipeline reads.
+  it('the live keys are the two the pipeline reads', () => {
     expect(validateConfig({ sources: [], checks: {} }, 'template')).toEqual({
       sources: [],
       checks: {},
@@ -87,19 +84,17 @@ describe('--init', () => {
     }
     for (const key of ['ignore', 'knownPaths', 'staleThreshold']) {
       expect(lineFor(key), `${key} does nothing yet and must not look like it does`).toBe('')
-      expect(INIT_TEMPLATE).toContain(`// ${key}:`)
+      expect(INIT_TEMPLATE).toContain(`# ${key}:`)
     }
   })
 
-  // The template names a type from the public API. Renaming it in src/index.ts
-  // without touching the template leaves every generated config importing
-  // something that is not there, and a type error is invisible at run time
-  // because the import is erased.
-  it('the type it imports is the one the package exports', () => {
-    const imported = /import type \{ (?<name>\w+) \} from '(?<from>[^']+)'/u.exec(INIT_TEMPLATE)
-    expect(imported?.groups?.from).toBe(pkg.name)
-    const api = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
-    expect(api).toContain(`type ${imported?.groups?.name}`)
+  // The template is YAML, so the keys are asserted against the loader's own
+  // list rather than against a type the file imports. The `.ts` template used
+  // to import `Config` from the public API; nothing does now, which removes a
+  // rename that would have broken every generated config invisibly.
+  it('parses as YAML and yields only the live keys', async () => {
+    const { parse } = await import('yaml')
+    expect(parse(INIT_TEMPLATE)).toEqual({ sources: [], checks: {} })
   })
 
   it('has no emoji', () => {
@@ -112,6 +107,8 @@ describe('--init refuses rather than overwrite', () => {
     ['driftwatch.config.ts', { 'driftwatch.config.ts': 'export default {}\n' }],
     ['driftwatch.config.js', { 'driftwatch.config.js': 'export default {}\n' }],
     ['driftwatch.config.json', { 'driftwatch.config.json': '{}\n' }],
+    ['driftwatch.config.yaml', { 'driftwatch.config.yaml': 'sources: []\n' }],
+    ['driftwatch.config.yml', { 'driftwatch.config.yml': 'sources: []\n' }],
     // No config file at all, and it still counts: the key is a config.
     ['package.json#driftwatch', { 'package.json': '{"driftwatch":{"sources":[]}}\n' }],
   ]

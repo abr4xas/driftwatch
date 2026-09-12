@@ -40,6 +40,8 @@ const CONFIG_FILENAMES: readonly string[] = [
   'driftwatch.config.ts',
   'driftwatch.config.js',
   'driftwatch.config.json',
+  'driftwatch.config.yaml',
+  'driftwatch.config.yml',
 ]
 
 export const KNOWN_KEYS: readonly string[] = [
@@ -72,7 +74,20 @@ function severityMap(value: unknown, where: string): Readonly<Record<string, Che
   const out: Record<string, CheckSeverity> = {}
   for (const [id, severity] of Object.entries(value)) {
     if (severity !== 'error' && severity !== 'warning' && severity !== 'off') {
-      throw invalid(where, `checks['${id}'] has to be 'error', 'warning' or 'off'`)
+      // `off` is a severity here and a boolean in YAML 1.1, where `off`, `no`
+      // and `n` all read as false. The `yaml` package implements 1.2, so an
+      // unquoted `off` arrives as the string and works — but a file edited
+      // with a 1.1 parser somewhere else does not, and the value that shows up
+      // is `false`. Naming the quotes is the difference between a fix that
+      // takes a second and an afternoon spent doubting the check ids.
+      const hint =
+        typeof severity === 'boolean'
+          ? "quote it: in YAML, an unquoted off, no or false is a boolean, and 'off' is the severity"
+          : undefined
+      throw new UserError(
+        `invalid config in ${where}: checks['${id}'] has to be 'error', 'warning' or 'off'`,
+        hint,
+      )
     }
     out[id] = severity
   }
@@ -144,15 +159,37 @@ async function importConfig(path: string, where: string): Promise<unknown> {
   return module
 }
 
+/**
+ * Reads a YAML config.
+ *
+ * `yaml` is already a runtime dependency — `src/parse/frontmatter.ts` needs it
+ * for `frontmatter/invalid` and `skill/frontmatter` — but it is imported here
+ * **lazily**, because that path only runs when a document actually has
+ * frontmatter and this one would otherwise run on every invocation. The
+ * cold-start budget is 80 ms and `AGENTS.md` § Dependencies is explicit that it
+ * is part of the product.
+ */
+async function readYaml(path: string, where: string): Promise<unknown> {
+  const [{ parse }, text] = await Promise.all([import('yaml'), readFile(path, 'utf8')])
+  try {
+    return parse(text)
+  } catch (error) {
+    throw new UserError(`${where} is not valid YAML`, messageOf(error))
+  }
+}
+
 async function loadFrom(path: string, where: string): Promise<Config> {
   const extension = extname(path)
   if (extension === '.json') return validateConfig(await readJson(path, where), where)
+  if (extension === '.yaml' || extension === '.yml') {
+    return validateConfig(await readYaml(path, where), where)
+  }
   if (extension === '.ts' || extension === '.js' || extension === '.mjs') {
     return validateConfig(await importConfig(path, where), where)
   }
   throw new UserError(
     `unsupported config extension: ${extension}`,
-    'use a .ts, .js or .json file, or the driftwatch key in package.json',
+    'use a .yaml, .json, .ts or .js file, or the driftwatch key in package.json',
   )
 }
 

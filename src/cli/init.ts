@@ -10,58 +10,61 @@ import { join } from 'node:path'
 import { findConfig } from '../core/config.ts'
 import { UserError } from '../core/errors.ts'
 
-const CONFIG_FILENAME = 'driftwatch.config.ts'
+const CONFIG_FILENAME = 'driftwatch.config.yaml'
 
 /**
  * The file `--init` writes.
  *
+ * **YAML, not TypeScript.** driftwatch audits Go, Rust and Python repositories
+ * as readily as Node ones, and a `.ts` file at the root of a Cargo workspace is
+ * an artefact nobody there can explain — in a repo that does use TypeScript it
+ * is worse, because it can land inside the tsconfig include, the lint glob and
+ * the build. YAML is neutral about the language, and unlike JSON it holds the
+ * comments this file is mostly made of. The parser costs nothing new: `yaml` is
+ * already a runtime dependency of the frontmatter checks. Ticket `02` of
+ * `.scratch/init-flag/` weighed five shapes; this is the one that survived.
+ *
  * **Only the keys that do something are live.** `sources` and `checks` reach
  * `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by
- * the loader and read by nobody, so they are commented out with the reason.
- * A template presenting all five as working config would be a document
- * claiming more than the code delivers, written by the tool that reports
- * exactly that.
+ * the loader and read by nobody, so they are commented out with the reason. A
+ * template presenting all five as working config would be a document claiming
+ * more than the code delivers, written by the tool that reports exactly that.
  *
  * As it stands, with nothing uncommented, it is valid input to the loader it
  * documents: an empty `sources` and an empty `checks` both validate.
- *
- * The type is imported, not `defineConfig`. `defineConfig` is a value, so a
- * config using it does not load unless the package is in `node_modules` — and
- * the advertised way to run this tool is `npx`, which installs nothing in the
- * target repo. An `import type` is erased by the same type stripping that
- * loads the file, so the config works whether or not the package is installed,
- * and an editor that has it still gets completion.
  */
-export const INIT_TEMPLATE = `import type { Config } from '@abr4xas/driftwatch'
+export const INIT_TEMPLATE = `# driftwatch configuration
+# https://github.com/abr4xas/driftwatch
 
-const config: Config = {
-  // Context files beyond the ones discovery finds on its own. Literal paths or
-  // globs, matched against the files git lists, relative to the repo root.
-  // An entry matching nothing is an error: a source that disappeared is drift.
-  sources: [],
+# Context files beyond the ones discovery finds on its own. Literal paths or
+# globs, matched against the files git lists, relative to the repo root.
+# An entry matching nothing is an error: a source that disappeared is drift.
+sources: []
 
-  // Severity per check: 'error' | 'warning' | 'off'. The ids are listed by
-  // \`driftwatch --help\` and described in the guide.
-  checks: {
-    // 'path/missing': 'error',
-    // 'dep/missing': 'off',
-  },
+# Severity per check: 'error' | 'warning' | 'off'. The ids are listed by
+# \`driftwatch --help\` and described in the guide.
+#
+# Quote the value. In YAML an unquoted off is a boolean to some parsers, and
+# the severity is the string.
+checks: {}
+  # 'path/missing': 'error'
+  # 'dep/missing': 'off'
 
-  // The three keys below are in the specification and accepted by the loader,
-  // but nothing reads them yet. They are commented out so this file does not
-  // promise more than the tool does.
+# The three keys below are in the specification and accepted by the loader,
+# but nothing reads them yet. They are commented out so this file does not
+# promise more than the tool does.
 
-  // Excluded from discovery.
-  // ignore: ['**/fixtures/**'],
+# Excluded from discovery.
+# ignore:
+#   - '**/fixtures/**'
 
-  // Paths that are real but not on disk, such as build outputs.
-  // knownPaths: ['dist/**', '.next/**'],
+# Paths that are real but not on disk, such as build outputs.
+# knownPaths:
+#   - 'dist/**'
+#   - '.next/**'
 
-  // Days before a document counts as stale. Tier 2, so it lands with them.
-  // staleThreshold: 15,
-}
-
-export default config
+# Days before a document counts as stale. Tier 2, so it lands with them.
+# staleThreshold: 15
 `
 
 /**
