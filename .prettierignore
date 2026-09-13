@@ -3,6 +3,11 @@ node_modules
 test/corpus
 pnpm-lock.yaml
 
-# Los documentos son fuente primaria; un formateador les mete churn que
-# ensucia el diff sin cambiar el contenido.
+# The documents are primary source. A formatter puts churn through them that
+# dirties the diff without changing what they say.
 *.md
+
+# The site is output, not source. corpus-data.js is generated from the corpus
+# snapshots, and Prettier would open its single line into 278 that change on
+# every regeneration: the same churn pnpm-lock.yaml is already excluded for.
+site
