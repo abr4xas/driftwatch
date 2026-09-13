@@ -1,23 +1,98 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>driftwatch — find the parts of your CLAUDE.md that are no longer true</title>
-<meta name="description" content="A zero-configuration CLI that checks the claims in your CLAUDE.md, AGENTS.md and skills against the repository. knip finds dead code. driftwatch finds dead context.">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="theme-color" content="#313031">
-<meta name="color-scheme" content="dark">
-<meta property="og:title" content="driftwatch — dead context, found">
-<meta property="og:description" content="knip finds dead code. driftwatch finds dead context. 61 of 66 real repositories produce no false positive at all.">
-<meta property="og:type" content="website">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<!--
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Is your CLAUDE.md or AGENTS.md still true? — driftwatch</title>
+		<meta name="description"
+			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 61 of 66 real repositories.">
+		<link rel="icon" href="favicon.svg" type="image/svg+xml">
+		<meta name="theme-color" content="#313031">
+		<meta name="color-scheme" content="dark">
+		<meta property="og:title" content="driftwatch — dead context, found">
+		<meta property="og:description"
+			content="knip finds dead code. driftwatch finds dead context. 61 of 66 real repositories produce no false positive at all.">
+		<meta property="og:type" content="website">
+		<link rel="canonical" href="https://driftwatch-cli.vercel.app/">
+		<meta property="og:url" content="https://driftwatch-cli.vercel.app/">
+		<meta property="og:site_name" content="driftwatch">
+		<meta name="twitter:card" content="summary">
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+		<meta property="og:locale" content="en_US">
+		<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://driftwatch-cli.vercel.app/#author",
+      "name": "angel cruz",
+      "url": "https://angelcruz.dev"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://driftwatch-cli.vercel.app/#driftwatch",
+      "name": "driftwatch",
+      "alternateName": "@abr4xas/driftwatch",
+      "description": "Find the parts of your CLAUDE.md, AGENTS.md and skills that are no longer true",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "Command-line tool",
+      "operatingSystem": "Linux, macOS, Windows",
+      "runtimePlatform": "Node.js",
+      "softwareRequirements": "Node.js 24 or newer",
+      "programmingLanguage": "TypeScript",
+      "url": "https://driftwatch-cli.vercel.app/",
+      "codeRepository": "https://github.com/abr4xas/driftwatch",
+      "downloadUrl": "https://www.npmjs.com/package/@abr4xas/driftwatch",
+      "installUrl": "https://www.npmjs.com/package/@abr4xas/driftwatch",
+      "license": "https://spdx.org/licenses/MIT.html",
+      "isAccessibleForFree": true,
+      "author": {
+        "@id": "https://driftwatch-cli.vercel.app/#author"
+      },
+      "maintainer": {
+        "@id": "https://driftwatch-cli.vercel.app/#author"
+      },
+      "keywords": "claude, claude-code, claude-md, agents-md, agents, skills, cli, lint, documentation, drift, ai, codex, cursor",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "sameAs": [
+        "https://github.com/abr4xas/driftwatch",
+        "https://www.npmjs.com/package/@abr4xas/driftwatch"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://driftwatch-cli.vercel.app/#website",
+      "name": "driftwatch",
+      "url": "https://driftwatch-cli.vercel.app/",
+      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 61 of 66 real repositories.",
+      "inLanguage": "en",
+      "author": {
+        "@id": "https://driftwatch-cli.vercel.app/#author"
+      },
+      "about": {
+        "@id": "https://driftwatch-cli.vercel.app/#driftwatch"
+      }
+    }
+  ]
+}
+</script>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@400;500;600;700&display=swap"
+			rel="stylesheet">
+		<link rel="stylesheet" href="style.css">
+	</head>
+
+	<body>
+		<!--
   IMPECCABLE DIRECTION CONTRACT · seed 5175f244 · persuade · assigned 6
   THESIS: A stale context file is a map that no longer matches the ground. This page is the
   revision sheet that proves the survey, and it refuses the category's dark-terminal-with-neon-glow hero.
@@ -33,402 +108,537 @@
   is load-bearing. The marking orange is loud by design and must never be spent on decoration.
 -->
 
-<a class="skip" href="#demo">Skip to the demo</a>
+		<a class="skip" href="#demo">Skip to the demo</a>
 
-<div class="sheet">
+		<div class="sheet">
 
-  <header class="head" id="top">
-    <p class="marg">
-      <span>Sheet 1 of 1</span>
-      <span aria-hidden="true">·</span>
-      <span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">0.3.0</a></span>
-      <span aria-hidden="true">·</span>
-      <span>Node 24+</span>
-      <span aria-hidden="true">·</span>
-      <span>No config, no API key, no network</span>
-      <span aria-hidden="true">·</span>
-      <span>MIT</span>
-    </p>
+			<header class="head" id="top">
+				<p class="marg">
+					<span>Sheet 1 of 1</span>
+					<span aria-hidden="true">·</span>
+					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">0.3.0</a></span>
+					<span aria-hidden="true">·</span>
+					<span>Node 24+</span>
+					<span aria-hidden="true">·</span>
+					<span>No config, no API key, no network</span>
+					<span aria-hidden="true">·</span>
+					<span>MIT</span>
+				</p>
 
-    <div class="head-grid">
-      <div class="title-block">
-        <h1 class="wordmark">driftwatch</h1>
-        <p class="thesis">Find the parts of your <span class="ul">CLAUDE.md</span>, <span class="ul">AGENTS.md</span> and skills that are no longer&nbsp;true.</p>
-        <p class="sub"><code>knip</code> finds dead code. driftwatch finds <em>dead context</em>.</p>
+				<div class="head-grid">
+					<div class="title-block">
+						<h1 class="wordmark">driftwatch</h1>
+						<p class="thesis">Find the parts of your <span class="ul">CLAUDE.md</span>, <span
+								class="ul">AGENTS.md</span> and skills that are no longer&nbsp;true.</p>
+						<p class="sub"><code>knip</code> finds dead code. driftwatch finds <em>dead context</em>.</p>
 
-        <div class="install">
-          <code id="install-cmd">npx @abr4xas/driftwatch</code>
-          <button type="button" class="copy" data-copy="npx @abr4xas/driftwatch" aria-label="Copy install command">copy</button>
-        </div>
+						<div class="install">
+							<code id="install-cmd">npx @abr4xas/driftwatch</code>
+							<button type="button" class="copy" data-copy="npx @abr4xas/driftwatch"
+								aria-label="Copy install command">copy</button>
+						</div>
 
-        <p class="links">
-          <a href="https://github.com/abr4xas/driftwatch">GitHub</a>
-          <a href="https://github.com/abr4xas/driftwatch/tree/master/docs/guide">Docs</a>
-          <a href="#reliability">Precision</a>
-          <a href="#first-run">First run</a>
-          <a href="#ci">CI</a>
-        </p>
-      </div>
+						<p class="links">
+							<a href="https://github.com/abr4xas/driftwatch">GitHub</a>
+							<a href="https://github.com/abr4xas/driftwatch/tree/master/docs/guide">Docs</a>
+							<a href="#reliability">Precision</a>
+							<a href="#first-run">First run</a>
+							<a href="#ci">CI</a>
+						</p>
+					</div>
 
-      <div class="fieldbook-wrap">
-        <p class="marg marg-r"><span>Field book</span><span aria-hidden="true">·</span><span>live, not a recording</span></p>
-        <section class="fieldbook" id="demo" aria-label="Live terminal demonstration">
-          <div class="fb-bar">
-            <span class="fb-path">~/your-repo</span>
-            <span class="fb-ver">driftwatch 0.3.0</span>
-          </div>
-          <pre class="fb-screen" id="screen" aria-live="polite" aria-atomic="false"></pre>
-          <div class="fb-keys" role="group" aria-label="Run a command">
-            <button type="button" data-run="demo" class="on">driftwatch</button>
-            <button type="button" data-run="dry">--fix --dry-run</button>
-            <button type="button" data-run="fix">--fix</button>
-            <button type="button" data-run="json">--json</button>
-            <button type="button" data-run="gh">--format github</button>
-            <button type="button" data-run="clean">a clean repo</button>
-          </div>
-        </section>
-      </div>
-    </div>
+					<div class="fieldbook-wrap">
+						<p class="marg marg-r"><span>Field book</span><span aria-hidden="true">·</span><span>live, not a
+								recording</span></p>
+						<section class="fieldbook" id="demo" aria-label="Live terminal demonstration">
+							<div class="fb-bar">
+								<span class="fb-path">~/your-repo</span>
+								<span class="fb-ver">driftwatch 0.3.0</span>
+							</div>
+							<pre class="fb-screen" id="screen" aria-live="polite" aria-atomic="false"></pre>
+							<div class="fb-keys" role="group" aria-label="Run a command">
+								<button type="button" data-run="demo" class="on">driftwatch</button>
+								<button type="button" data-run="dry">--fix --dry-run</button>
+								<button type="button" data-run="fix">--fix</button>
+								<button type="button" data-run="json">--json</button>
+								<button type="button" data-run="gh">--format github</button>
+								<button type="button" data-run="clean">a clean repo</button>
+							</div>
+						</section>
+					</div>
+				</div>
 
-  </header>
+			</header>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <div class="proof">
-    <p class="proof-claim"><strong>61 of 66</strong> real repositories produce <strong>zero</strong> false positives.</p>
-    <a class="btn" href="#reliability">See the survey</a>
-  </div>
+			<div class="proof">
+				<p class="proof-claim"><strong>61 of 66</strong> real repositories produce <strong>zero</strong> false
+					positives.</p>
+				<a class="btn" href="#reliability">See the survey</a>
+			</div>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <section class="band" id="problem" aria-labelledby="problem-h">
-    <h2 id="problem-h">Your document is a map. The repository is the ground.</h2>
+			<section class="band" id="problem" aria-labelledby="problem-h">
+				<h2 id="problem-h">Your document is a map. The repository is the ground.</h2>
 
-    <div class="two">
-      <div class="prose">
-        <p>An out-of-date <code>README</code> confuses a person, who notices and asks. An out-of-date <code>CLAUDE.md</code> hands the agent a false premise that it <strong>executes with confidence</strong>: it runs a script that no longer exists, edits a file that moved, follows an abandoned convention.</p>
-        <p>The cost is not confusion. It is incorrect work with no error signal.</p>
-        <p class="pull">Linters check your code. Nothing checks the document you wrote <em>about</em> your code.</p>
-        <p class="fine">Unlike code, these files have no compiler, no tests, no linter. They are the one part of the repo where lying has no mechanical consequence.</p>
-      </div>
+				<div class="two">
+					<div class="prose">
+						<p>An out-of-date <code>README</code> confuses a person, who notices and asks. An out-of-date
+							<code>CLAUDE.md</code> hands the agent a false premise that it <strong>executes with
+								confidence</strong>: it runs a script that no longer exists, edits a file that moved,
+							follows an abandoned convention.</p>
+						<p>The cost is not confusion, it is incorrect work with no error signal.</p>
+						<p class="pull">Linters check your code. Nothing checks the document you wrote <em>about</em>
+							your code.</p>
+						<p class="fine">Unlike code, these files have no compiler, no tests, no linter. They are the one
+							part of the repo where lying has no mechanical consequence.</p>
+					</div>
 
-      <figure class="specimen">
-        <figcaption class="marg"><span>Specimen</span><span aria-hidden="true">·</span><span>AGENTS.md, with revision overprint</span></figcaption>
-        <div class="spec-body">
-          <div class="spec-row"><span class="ln">1</span><span class="src"># Contributing</span></div>
-          <div class="spec-row"><span class="ln">2</span><span class="src"></span></div>
-          <div class="spec-row struck">
-            <span class="ln">3</span>
-            <span class="src">The entry point is <s>src/util/date.ts</s>.</span>
-            <span class="over">src/helpers/date.ts</span>
-          </div>
-          <div class="spec-row"><span class="ln">4</span><span class="src"></span></div>
-          <div class="spec-row struck no-fix">
-            <span class="ln">5</span>
-            <span class="src">See <s>src/cli.ts</s> for the flag table.</span>
-            <span class="over quiet">no single candidate, not rewritten</span>
-          </div>
-          <div class="spec-row"><span class="ln">6</span><span class="src"></span></div>
-          <div class="spec-row"><span class="ln">7</span><span class="src">Run <span class="kept">pnpm test</span> before pushing.</span><span class="tick" aria-hidden="true">✓</span></div>
-        </div>
-        <p class="fine spec-note">Struck in overprint: a claim the ground contradicts. Written beneath it: the correction, only when exactly one candidate clears 0.8 confidence.</p>
-      </figure>
-    </div>
-  </section>
+					<figure class="specimen">
+						<figcaption class="marg"><span>Specimen</span><span aria-hidden="true">·</span><span>AGENTS.md,
+								with revision overprint</span></figcaption>
+						<div class="spec-body">
+							<div class="spec-row"><span class="ln">1</span><span class="src"># Contributing</span></div>
+							<div class="spec-row"><span class="ln">2</span><span class="src"></span></div>
+							<div class="spec-row struck">
+								<span class="ln">3</span>
+								<span class="src">The entry point is <s>src/util/date.ts</s>.</span>
+								<span class="over">src/helpers/date.ts</span>
+							</div>
+							<div class="spec-row"><span class="ln">4</span><span class="src"></span></div>
+							<div class="spec-row struck no-fix">
+								<span class="ln">5</span>
+								<span class="src">See <s>src/cli.ts</s> for the flag table.</span>
+								<span class="over quiet">no single candidate, not rewritten</span>
+							</div>
+							<div class="spec-row"><span class="ln">6</span><span class="src"></span></div>
+							<div class="spec-row"><span class="ln">7</span><span class="src">Run <span class="kept">pnpm
+										test</span> before pushing.</span><span class="tick" aria-hidden="true">✓</span>
+							</div>
+						</div>
+						<p class="fine spec-note">Struck in overprint: a claim the ground contradicts. Written beneath
+							it: the correction, only when exactly one candidate clears 0.8 confidence.</p>
+					</figure>
+				</div>
+			</section>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <section class="band" id="legend" aria-labelledby="legend-h">
-    <h2 id="legend-h">Five checks. Each answers a question the document already claimed to know.</h2>
+			<section class="band" id="legend" aria-labelledby="legend-h">
+				<h2 id="legend-h">Five checks. Each answers a question the document already claimed to know.</h2>
 
-    <ul class="legend-list">
-      <li>
-        <span class="sym err" aria-hidden="true">✗</span>
-        <span class="lg-id">path/missing</span>
-        <span class="lg-what">Every path a context file claims exists, verified against the repo index. <span class="fine">The check that pays for the project: the paths are what an agent acts on.</span></span>
-        <span class="lg-fix yes">fixable</span>
-      </li>
-      <li>
-        <span class="sym err" aria-hidden="true">✗</span>
-        <span class="lg-id">script/missing</span>
-        <span class="lg-what"><code>npm/pnpm/yarn/bun run</code>, <code>deno task</code> and <code>make</code>, against the nearest <code>package.json</code>, <code>Makefile</code> or <code>deno.json</code>. <span class="fine">No manifest anywhere means silence.</span></span>
-        <span class="lg-fix yes">fixable</span>
-      </li>
-      <li>
-        <span class="sym err" aria-hidden="true">✗</span>
-        <span class="lg-id">link/broken</span>
-        <span class="lg-what">A Markdown link to an anchor no heading in the target document produces. <span class="fine">Suggests a near heading; never rewrites one.</span></span>
-        <span class="lg-fix">never fixable</span>
-      </li>
-      <li>
-        <span class="sym err" aria-hidden="true">✗</span>
-        <span class="lg-id">frontmatter/invalid</span>
-        <span class="lg-what">YAML that does not parse, and fields whose type the format fixes. <span class="fine">An unknown key is only ever reported as a near miss of a known one.</span></span>
-        <span class="lg-fix">never fixable</span>
-      </li>
-      <li>
-        <span class="sym err" aria-hidden="true">✗</span>
-        <span class="lg-id">skill/frontmatter</span>
-        <span class="lg-what">The structural rules a <code>SKILL.md</code> has to meet to be invocable: required fields, a <code>name</code> matching its directory, kebab-case. <span class="fine">Structure, never content.</span></span>
-        <span class="lg-fix yes">fixable</span>
-      </li>
-    </ul>
+				<ul class="legend-list">
+					<li>
+						<span class="sym err" aria-hidden="true">✗</span>
+						<span class="lg-id">path/missing</span>
+						<span class="lg-what">Every path a context file claims exists, verified against the repo index.
+							<span class="fine">The check that pays for the project: the paths are what an agent acts
+								on.</span></span>
+						<span class="lg-fix yes">fixable</span>
+					</li>
+					<li>
+						<span class="sym err" aria-hidden="true">✗</span>
+						<span class="lg-id">script/missing</span>
+						<span class="lg-what"><code>npm/pnpm/yarn/bun run</code>, <code>deno task</code> and
+							<code>make</code>, against the nearest <code>package.json</code>, <code>Makefile</code> or
+							<code>deno.json</code>. <span class="fine">No manifest anywhere means silence.</span></span>
+						<span class="lg-fix yes">fixable</span>
+					</li>
+					<li>
+						<span class="sym err" aria-hidden="true">✗</span>
+						<span class="lg-id">link/broken</span>
+						<span class="lg-what">A Markdown link to an anchor no heading in the target document produces.
+							<span class="fine">Suggests a near heading.</span></span>
+						<span class="lg-fix">never fixable</span>
+					</li>
+					<li>
+						<span class="sym err" aria-hidden="true">✗</span>
+						<span class="lg-id">frontmatter/invalid</span>
+						<span class="lg-what">YAML that does not parse, and fields whose type the format fixes. <span
+								class="fine">An unknown key is only ever reported as a near miss of a known
+								one.</span></span>
+						<span class="lg-fix">never fixable</span>
+					</li>
+					<li>
+						<span class="sym err" aria-hidden="true">✗</span>
+						<span class="lg-id">skill/frontmatter</span>
+						<span class="lg-what">The structural rules a <code>SKILL.md</code> has to meet to be invocable:
+							required fields, a <code>name</code> matching its directory, kebab-case. <span
+								class="fine">Structure, and only structure.</span></span>
+						<span class="lg-fix yes">fixable</span>
+					</li>
+				</ul>
 
-    <div class="two legend-after">
-      <div>
-        <h3>Turning one off</h3>
-        <ul class="ticks">
-          <li><code>--skip link/broken</code> turns that check off everywhere</li>
-          <li><code>--only path</code> keeps only that family, and a prefix matches, so <code>--only path</code> and <code>--only path/missing</code> both work</li>
-          <li><code>checks:</code> in the config file makes either permanent, or demotes a check to a warning instead of silencing it</li>
-          <li>a directive in the document silences one line rather than a whole check, and <a href="#first-run">the syntax is with the first run</a></li>
-        </ul>
-        <p class="fine after-note">A selection that would leave no check enabled is refused rather than run as an expensive way of doing nothing.</p>
-      </div>
-      <div>
-        <h3>What it never does</h3>
-        <ul class="ticks">
-          <li>judge whether the content is <em>good</em>. It checks whether a claim is <em>true</em>, and those are different questions with different answers</li>
-          <li>lint your Markdown. Style, formatting and spelling belong to a tool you already have</li>
-          <li>rewrite prose. <code>--fix</code> touches the mechanically verifiable fragment of a line and nothing around it</li>
-          <li>put a model on the main path. It runs offline and deterministically, or it does not run</li>
-        </ul>
-      </div>
-    </div>
-  </section>
+				<div class="two legend-after">
+					<div>
+						<h3>Turning one off</h3>
+						<ul class="ticks">
+							<li><code>--skip link/broken</code> turns that check off everywhere</li>
+							<li><code>--only path</code> keeps only that family, and a prefix matches, so
+								<code>--only path</code> and <code>--only path/missing</code> both work</li>
+							<li><code>checks:</code> in the config file makes either permanent, or demotes a check to a
+								warning instead of silencing it</li>
+							<li>a directive in the document silences one line rather than a whole check, and <a
+									href="#first-run">the syntax is with the first run</a></li>
+						</ul>
+						<p class="fine after-note">A selection that leaves no check enabled is refused.</p>
+					</div>
+					<div>
+						<h3>What it never does</h3>
+						<ul class="ticks">
+							<li>judge whether the content is <em>good</em>. It checks whether a claim is <em>true</em>,
+								and those are different questions with different answers</li>
+							<li>lint your Markdown. Style, formatting and spelling belong to a tool you already have
+							</li>
+							<li>rewrite prose. <code>--fix</code> touches the mechanically verifiable fragment of a line
+								and nothing around it</li>
+							<li>put a model on the main path. That is out of scope by design, not unimplemented</li>
+						</ul>
+					</div>
+				</div>
+			</section>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <section class="band band-survey" id="reliability" aria-labelledby="rel-h">
-    <h2 id="rel-h">One false positive costs more than ten false negatives.</h2>
-    <p class="lede">A linter that shouts too much gets uninstalled on first use. So driftwatch stays silent when it is unsure, and every discard rule in the extractor carries a comment naming the false positive it prevents. This is the measurement, over context files their authors wrote without knowing driftwatch exists.</p>
+			<section class="band band-survey" id="reliability" aria-labelledby="rel-h">
+				<h2 id="rel-h">One false positive costs more than ten false negatives.</h2>
+				<p class="lede">A linter that shouts too much gets uninstalled on first use. So driftwatch stays silent
+					when it is unsure, and every discard rule in the extractor carries a comment naming the false
+					positive it prevents. This is the measurement, over context files their authors wrote without
+					knowing driftwatch exists.</p>
 
-    <div class="survey">
-      <div class="survey-map">
-        <p class="marg"><span>236 context files</span><span aria-hidden="true">·</span><span>66 repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine languages</span></p>
-        <div class="cells" id="cells" aria-label="236 context files, grouped into 66 repositories"></div>
-        <div class="readout" id="readout" aria-live="polite"></div>
-        <p class="cell-key">
-          <span><i class="k-clean" aria-hidden="true"></i> checked, no drift</span>
-          <span><i class="k-hit" aria-hidden="true"></i> says something untrue</span>
-          <span class="fine">One mark is one file, one run is one repository. Point at a run, or tab in and use the arrow keys.</span>
-        </p>
-        <p class="fine cell-caveat">A lit mark is a context file driftwatch reported <em>anything at all</em> about: 19 of the 236, carrying 26 findings between them, and 20 of those are true drift the maintainers had not noticed. The four figures below count only the <strong>false</strong> ones — which is the number that decides whether a tool like this survives its first run.</p>
-      </div>
+				<div class="survey">
+					<div class="survey-map">
+						<p class="marg"><span>236 context files</span><span aria-hidden="true">·</span><span>66
+								repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine
+								languages</span></p>
+						<div class="cells" id="cells" aria-label="236 context files, grouped into 66 repositories">
+						</div>
+						<div class="readout" id="readout" aria-live="polite"></div>
+						<p class="cell-key">
+							<span><i class="k-clean" aria-hidden="true"></i> checked, no drift</span>
+							<span><i class="k-hit" aria-hidden="true"></i> says something untrue</span>
+							<span class="fine">One mark is one file, one run is one repository. Point at a run, or tab
+								in and use the arrow keys.</span>
+						</p>
+						<p class="fine cell-caveat">A lit mark is a context file driftwatch reported <em>anything at
+								all</em> about: 19 of the 236, carrying 26 findings between them, and 20 of those are
+							true drift the maintainers had not noticed. The four figures below count only the
+							<strong>false</strong> ones.</p>
+					</div>
 
-      <dl class="figures">
-        <div>
-          <dt>Repositories with zero false positives</dt>
-          <dd><b>61</b><span>/ 66</span></dd>
-          <dd class="pct">92.4%</dd>
-        </div>
-        <div>
-          <dt>Same, over the validation group alone</dt>
-          <dd><b>29</b><span>/ 32</span></dd>
-          <dd class="pct">90.6%. Added after the heuristics were frozen, and never used to derive one</dd>
-        </div>
-        <div>
-          <dt>Worst single repository</dt>
-          <dd><b>2</b><span>false positives</span></dd>
-          <dd class="pct">No repo in the corpus sees more</dd>
-        </div>
-        <div class="hero-fig">
-          <dt>Edits <code>--fix</code> would apply across all 66</dt>
-          <dd><b>1</b></dd>
-          <dd class="pct">and it is correct, checked by hand at the level of the edit and not only of the finding</dd>
-        </div>
-      </dl>
-    </div>
+					<dl class="figures">
+						<div>
+							<dt>Repositories with zero false positives</dt>
+							<dd><b>61</b><span>/ 66</span></dd>
+							<dd class="pct">92.4%</dd>
+						</div>
+						<div>
+							<dt>Same, over the validation group alone</dt>
+							<dd><b>29</b><span>/ 32</span></dd>
+							<dd class="pct">90.6%. Added after the heuristics were frozen, and never used to derive one
+							</dd>
+						</div>
+						<div>
+							<dt>Worst single repository</dt>
+							<dd><b>2</b><span>false positives</span></dd>
+							<dd class="pct">No repo in the corpus sees more</dd>
+						</div>
+						<div class="hero-fig">
+							<dt>Edits <code>--fix</code> would apply across all 66</dt>
+							<dd><b>1</b></dd>
+							<dd class="pct">and it is correct, checked by hand at the level of the edit and not only of
+								the finding</dd>
+						</div>
+					</dl>
+				</div>
 
-    <div class="two refuse">
-      <div>
-        <h3>What it refuses to report</h3>
-        <ul class="ticks">
-          <li>a path inside a URL, a glob, or a placeholder: <code>&lt;name&gt;</code>, <code>{{path}}</code>, <code>$VAR</code>, <code>[id]</code>, <code>EventNameHere</code></li>
-          <li>a bare word with no slash, or a single-segment directory like <code>feat/</code></li>
-          <li>a path whose shape exists somewhere in the repo, because the document is probably writing relative to a directory its prose already named</li>
-          <li>anything git ignores, or that lands in a generated output directory</li>
-          <li>a path the line already hedges: “such as”, “if exists”, “(optional)”, “is generated by”, or a line opening with “Create …”</li>
-          <li>a path inside another assistant's configuration root, in a repo that does not use that assistant</li>
-        </ul>
-      </div>
-      <div>
-        <h3>How it was measured</h3>
-        <p>Seventeen rounds, every finding classified by hand, including the four rounds where a condition broke and the two where the corpus caught a regression that reading the diff would not have.</p>
-        <p>Eleven false-positive classes have been found and closed, each with a fixture and a test naming the repository and line it came from. Every fix was measured over the whole corpus before being kept, and not one of them has ever removed a true positive.</p>
-        <p class="fine">The corpus does not run in CI, because the verdict requires a person. CI can detect that a snapshot changed; it cannot rule on whether the change is an improvement, and that ruling <em>is</em> the measurement.</p>
-        <p><a class="more" href="https://github.com/abr4xas/driftwatch/blob/master/docs/guide/precision.md">The whole argument, with the rounds where they broke →</a></p>
-      </div>
-    </div>
-  </section>
+				<div class="two refuse">
+					<div>
+						<h3>What it refuses to report</h3>
+						<ul class="ticks">
+							<li>a path inside a URL, a glob, or a placeholder: <code>&lt;name&gt;</code>,
+								<code>{{path}}</code>, <code>$VAR</code>, <code>[id]</code>, <code>EventNameHere</code>
+							</li>
+							<li>a bare word with no slash, or a single-segment directory like <code>feat/</code></li>
+							<li>a path whose shape exists somewhere in the repo, because the document is probably
+								writing relative to a directory its prose already named</li>
+							<li>anything git ignores, or that lands in a generated output directory</li>
+							<li>a path the line already hedges: "such as", "if exists", "(optional)", "is generated by",
+								or a line opening with "Create ..."</li>
+							<li>a path inside another assistant's configuration root, in a repo that does not use that
+								assistant</li>
+						</ul>
+					</div>
+					<div>
+						<h3>How it was measured</h3>
+						<p>Seventeen rounds, every finding classified by hand, including the four rounds where a
+							condition broke and the two where the corpus caught a regression that reading the diff would
+							not have.</p>
+						<p>Eleven false-positive classes have been found and closed, each with a fixture and a test
+							naming the repository and line it came from. Every fix was measured over the whole corpus
+							before being kept, and not one of them has ever removed a true positive.</p>
+						<p class="fine">The corpus does not run in CI, because the verdict requires a person. CI can
+							detect that a snapshot changed; it cannot rule on whether the change is an improvement, and
+							that ruling <em>is</em> the measurement.</p>
+						<p><a class="more"
+								href="https://github.com/abr4xas/driftwatch/blob/master/docs/guide/precision.md">The
+								whole argument, with the rounds where they broke →</a></p>
+					</div>
+				</div>
+			</section>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <section class="band" id="first-run" aria-labelledby="fr-h">
-    <h2 id="fr-h">Most first runs find nothing. That is an answer, not a failure.</h2>
-    <p class="lede">Fifty of the sixty-six repositories in the corpus report nothing at all. A tool built to stay quiet when it is unsure is quiet most of the time, so the first thing worth learning is how to read its silence. There are three ways a first run can end, and only one of them is the one you were hoping for.</p>
+			<section class="band" id="first-run" aria-labelledby="fr-h">
+				<h2 id="fr-h">Most first runs find nothing. That is an answer, not a failure.</h2>
+				<p class="lede">Fifty of the sixty-six repositories in the corpus report nothing at all. A tool built to
+					stay quiet when it is unsure is quiet most of the time, so a first run has three possible endings
+					and only one of them reports drift.</p>
 
-    <ol class="outcomes">
-      <li>
-        <div class="oc-out">
-<pre><code><span class="c-ok">✓</span> 14 files · no drift · 210ms</code></pre>
-        </div>
-        <div class="oc-say">
-          <h3>It read your documents and they were true</h3>
-          <p>Fourteen context files, every claim in them checked against the repository. Exit code <code>0</code>.</p>
-          <p class="fine">The file count is the proof that it looked at all. <code>--json</code> carries <code>summary.claims</code> beside it: how many individual assertions were verified. That is the only thing that tells <em>nothing to find</em> apart from <em>nothing found</em>. In CI, where nobody reads the output of a green run, it is the only number worth asserting on.</p>
-        </div>
-      </li>
+				<ol class="outcomes">
+					<li>
+						<div class="oc-out">
+							<pre><code><span class="c-ok">✓</span> 14 files · no drift · 210ms</code></pre>
+						</div>
+						<div class="oc-say">
+							<h3>It read your documents and they were true</h3>
+							<p>Fourteen context files, every claim in them checked against the repository. Exit code
+								<code>0</code>.</p>
+							<p class="fine">The file count is the proof that it looked at all. <code>--json</code>
+								carries <code>summary.claims</code> beside it: how many individual assertions were
+								verified. That is the only thing that tells <em>nothing to find</em> apart from
+								<em>nothing found</em>. In CI, where nobody reads the output of a green run, it is the
+								only number worth asserting on.</p>
+						</div>
+					</li>
 
-      <li>
-        <div class="oc-out">
-<pre><code><span class="c-ok">✓</span> 0 files · no drift · 12ms</code></pre>
-        </div>
-        <div class="oc-say">
-          <h3>It found nothing to read</h3>
-          <p>Zero files is not a clean bill of health. It is an empty room, and it is the one result worth double-checking.</p>
-          <p class="fine">Discovery runs off <code>git ls-files</code>, so <code>.gitignore</code> is respected for free, and anything it hides is invisible to driftwatch too. A repository with no <code>.git</code> falls back to a glob walk.</p>
-          <dl class="reads">
-            <div><dt>agents-md</dt><dd><code>AGENTS.md</code>, at any depth</dd></div>
-            <div><dt>claude-md</dt><dd><code>CLAUDE.md</code>, <code>CLAUDE.local.md</code></dd></div>
-            <div><dt>skill</dt><dd><code>.claude/skills/**/SKILL.md</code></dd></div>
-            <div><dt>subagent</dt><dd><code>.claude/agents/*.md</code></dd></div>
-            <div><dt>command</dt><dd><code>.claude/commands/**/*.md</code></dd></div>
-            <div><dt>cursor-rule</dt><dd><code>.cursorrules</code>, <code>.cursor/rules/**/*.mdc</code></dd></div>
-            <div><dt>copilot</dt><dd><code>.github/copilot-instructions.md</code></dd></div>
-          </dl>
-          <p class="fine">Anything else, name it yourself: <code>driftwatch docs/ AGENTS.md</code> audits only those paths, and a <code>sources:</code> key in the config makes it permanent.</p>
-        </div>
-      </li>
+					<li>
+						<div class="oc-out">
+							<pre><code><span class="c-ok">✓</span> 0 files · no drift · 12ms</code></pre>
+						</div>
+						<div class="oc-say">
+							<h3>It found nothing to read</h3>
+							<p>Zero files does not mean your documents are clean. It means driftwatch found none to
+								read, and it is the one result worth checking.</p>
+							<p class="fine">Discovery runs off <code>git ls-files</code>, so <code>.gitignore</code> is
+								respected for free, and anything it hides is invisible to driftwatch too. A repository
+								with no <code>.git</code> falls back to a glob walk.</p>
+							<dl class="reads">
+								<div>
+									<dt>agents-md</dt>
+									<dd><code>AGENTS.md</code>, at any depth</dd>
+								</div>
+								<div>
+									<dt>claude-md</dt>
+									<dd><code>CLAUDE.md</code>, <code>CLAUDE.local.md</code></dd>
+								</div>
+								<div>
+									<dt>skill</dt>
+									<dd><code>.claude/skills/**/SKILL.md</code></dd>
+								</div>
+								<div>
+									<dt>subagent</dt>
+									<dd><code>.claude/agents/*.md</code></dd>
+								</div>
+								<div>
+									<dt>command</dt>
+									<dd><code>.claude/commands/**/*.md</code></dd>
+								</div>
+								<div>
+									<dt>cursor-rule</dt>
+									<dd><code>.cursorrules</code>, <code>.cursor/rules/**/*.mdc</code></dd>
+								</div>
+								<div>
+									<dt>copilot</dt>
+									<dd><code>.github/copilot-instructions.md</code></dd>
+								</div>
+							</dl>
+							<p class="fine">Anything else, name it yourself: <code>driftwatch docs/ AGENTS.md</code>
+								audits only those paths, and a <code>sources:</code> key in the config makes it
+								permanent.</p>
+						</div>
+					</li>
 
-      <li>
-        <div class="oc-out">
-<pre><code><span class="c-file">AGENTS.md</span>
+					<li>
+						<div class="oc-out">
+							<pre><code><span class="c-file">AGENTS.md</span>
   <span class="c-err">✗ 3</span>  src/util/date.ts  path does not exist  <span class="c-dim">→ src/helpers/date.ts?</span>
   <span class="c-err">✗ 5</span>  src/cli.ts        path does not exist
 
 1 file · 2 problems (2 errors) · 59ms
 <span class="c-dim">1 fixable with --fix</span></code></pre>
-        </div>
-        <div class="oc-say">
-          <h3>It found drift</h3>
-          <p>This is the moment the tool exists for: a sentence in your own repository that an agent would have believed. Exit code <code>1</code>.</p>
-          <p class="fine"><code>file:line</code> is clickable in a modern terminal, so the fastest next move is to open the line and read what it claims. The arrow is a suggestion and never an assumption. <code>--fix --dry-run</code> prints the exact rewrite before anything is written to disk.</p>
-        </div>
-      </li>
-    </ol>
+						</div>
+						<div class="oc-say">
+							<h3>It found drift</h3>
+							<p>A claim in your own repository that an agent would have believed, on the line that makes
+								it. Exit code <code>1</code>.</p>
+							<p class="fine"><code>file:line</code> is clickable in a modern terminal, so the fastest
+								next move is to open the line and read what it claims. The arrow is a suggestion, and
+								<code>--fix --dry-run</code> prints the exact rewrite before anything is written to
+								disk.</p>
+						</div>
+					</li>
+				</ol>
 
-    <div class="two recovery">
-      <div>
-        <h3>If it is wrong about one</h3>
-        <p>It will happen: six of the corpus's twenty-six findings are false. The recovery is a comment, and it lives in the document rather than in a config nobody will find again.</p>
-        <div class="codeblock">
-<pre><code><span class="c-dim">&lt;!-- driftwatch-ignore-next-line --&gt;</span>
+				<div class="two recovery">
+					<div>
+						<h3>If it is wrong about one</h3>
+						<p>It will happen: six of the corpus's twenty-six findings are false. The recovery is a comment
+							in the document itself, next to the claim it covers.</p>
+						<div class="codeblock">
+							<pre><code><span class="c-dim">&lt;!-- driftwatch-ignore-next-line --&gt;</span>
 `src/planned/feature.ts` does not exist yet, it is the plan
 
 <span class="c-dim">&lt;!-- driftwatch-ignore path/missing --&gt;</span>
 <span class="c-dim">&lt;!-- driftwatch-ignore-file --&gt;</span></code></pre>
-        </div>
-        <p class="fine">With no id it silences every check on that line; with an id, only that one. Directives apply to findings rather than to claims, so an id you misspell silences nothing and the finding still shows up, so a typo cannot quietly disable a check.</p>
-      </div>
-      <div>
-        <h3>Then stop running it by hand</h3>
-        <p>The first run tells you whether your documents are true today. The point is keeping them true, and that is a job for the diff rather than for your memory.</p>
-        <p class="fine">One more thing worth knowing before that: with <code>--fix</code> the exit code describes what is <em>left</em>, so a repository whose only error was autofixable exits <code>0</code>. Code <code>2</code> is reserved for driftwatch itself failing (bad config, a path that does not exist, a crash) and never means drift.</p>
-        <p><a class="more" href="#ci">Put it on the diff instead →</a></p>
-      </div>
-    </div>
-  </section>
+						</div>
+						<p class="fine">With no id it silences every check on that line; with an id, only that one.
+							Directives apply to findings rather than to claims, so an id you misspell silences nothing
+							and the finding still shows up.</p>
+					</div>
+					<div>
+						<h3>Then stop running it by hand</h3>
+						<p>The first run tells you whether your documents are true today. Keeping them true is the part
+							that has to happen on every change, which is what CI is for.</p>
+						<p class="fine">With <code>--fix</code> the exit code describes what is <em>left</em>, so a
+							repository whose only error was autofixable exits <code>0</code>. Code <code>2</code> is
+							reserved for driftwatch itself failing (bad config, a path that does not exist, a crash) and
+							never means drift.</p>
+						<p><a class="more" href="#ci">Put it on the diff instead →</a></p>
+					</div>
+				</div>
+			</section>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <section class="band" id="fix" aria-labelledby="fix-h">
-    <h2 id="fix-h">An autofix never guesses.</h2>
+			<section class="band" id="fix" aria-labelledby="fix-h">
+				<h2 id="fix-h">An autofix never guesses.</h2>
 
-    <div class="two">
-      <div class="prose">
-        <p>A wrong fix is not noise. It is a document that now points confidently at the wrong file, and the next agent will believe it.</p>
-        <p>So <code>--fix</code> applies a correction only when there is exactly one candidate above 0.8 confidence. It replaces the claim and nothing around it. And it refuses outright to rewrite a relative path in a document that is not at the repo root.</p>
-        <p><a class="more" href="https://github.com/abr4xas/driftwatch/blob/master/docs/guide/fixing.md">The whole list of what it will not touch, and why →</a></p>
-      </div>
-      <div class="codeblock">
-        <p class="marg"><span>Terminal</span></p>
-<pre><code><span class="c-dim">$</span> driftwatch --fix --dry-run   <span class="c-dim"># what it would change</span>
+				<div class="two">
+					<div class="prose">
+						<p>A wrong fix is not noise, it is a document that now points confidently at the wrong file, and
+							the next agent will believe it.</p>
+						<p>So <code>--fix</code> applies a correction only when there is exactly one candidate above 0.8
+							confidence. It replaces the claim and nothing around it. And it refuses outright to rewrite
+							a relative path in a document that is not at the repo root.</p>
+						<p><a class="more"
+								href="https://github.com/abr4xas/driftwatch/blob/master/docs/guide/fixing.md">The whole
+								list of what it will not touch, and why →</a></p>
+					</div>
+					<div class="codeblock">
+						<p class="marg"><span>Terminal</span></p>
+						<pre><code><span class="c-dim">$</span> driftwatch --fix --dry-run   <span class="c-dim"># what it would change</span>
 <span class="c-dim">$</span> driftwatch --fix             <span class="c-dim"># change it</span></code></pre>
-        <p class="fine">Try both in the field book above. That is the real output, not a screenshot.</p>
-      </div>
-    </div>
-  </section>
+						<p class="fine">Try both in the field book above. It prints the real output.</p>
+					</div>
+				</div>
+			</section>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <section class="band" id="ci" aria-labelledby="ci-h">
-    <h2 id="ci-h">Every stale claim becomes an annotation on the diff, on the line that makes it.</h2>
+			<section class="band" id="ci" aria-labelledby="ci-h">
+				<h2 id="ci-h">Every stale claim becomes an annotation on the diff, on the line that makes it.</h2>
 
-    <div class="two">
-      <div class="codeblock">
-        <p class="marg"><span>.github/workflows/ci.yml</span></p>
-<pre><code><span class="c-dim">- uses:</span> actions/checkout@v7
+				<div class="two">
+					<div class="codeblock">
+						<p class="marg"><span>.github/workflows/ci.yml</span></p>
+						<pre><code><span class="c-dim">- uses:</span> actions/checkout@v7
 <span class="c-dim">- uses:</span> abr4xas/driftwatch@v0.3.0</code></pre>
-        <p class="fine"><code>fail-on-drift: false</code> makes it advisory. <code>sarif: true</code> writes a file for Code Scanning.</p>
+						<p class="fine"><code>fail-on-drift: false</code> makes it advisory. <code>sarif: true</code>
+							writes a file for Code Scanning.</p>
 
-        <h3 class="inputs-h">What the step accepts</h3>
-        <ul class="inputs">
-          <li><code>paths</code> <span>Paths to audit, space separated. Empty means the whole repository.</span></li>
-          <li><code>only</code> / <code>skip</code> <span>Run only these checks, or everything except them. A prefix works: <code>path</code>.</span></li>
-          <li><code>format</code> <span><code>pretty | json | github | sarif</code>. Annotations are the reason to run this in CI.</span></li>
-          <li><code>sarif</code> <span>Write a SARIF file and expose its path as an output.</span></li>
-          <li><code>fail-on-drift</code> <span>Whether drift fails the job, or only annotates it.</span></li>
-          <li><code>working-directory</code> <span>Where to run. Defaults to the workspace root.</span></li>
-        </ul>
-      </div>
-      <div class="formats">
-        <h3>Four formats, one set of findings</h3>
-        <dl>
-          <div><dt><code>pretty</code></dt><dd>for a person at a terminal. The only one with a human as its consumer, and the only one that may change freely between versions.</dd></div>
-          <div><dt><code>--json</code></dt><dd>a stable contract. Breaking changes only on a major; <code>version</code> is what you branch on, and it is <code>1</code>.</dd></div>
-          <div><dt><code>--github</code></dt><dd>one native annotation per finding and nothing else. A run with no findings emits nothing at all, not even a blank line.</dd></div>
-          <div><dt><code>--sarif</code></dt><dd>SARIF 2.1.0 for Code Scanning, carrying one rule per check that actually ran.</dd></div>
-        </dl>
-        <p class="fine">stdout is the report, stderr is everything else, and the exit code does not depend on the format.</p>
-      </div>
-    </div>
-  </section>
+						<h3 class="inputs-h">What the step accepts</h3>
+						<ul class="inputs">
+							<li><code>paths</code> <span>Paths to audit, space separated. Empty means the whole
+									repository.</span></li>
+							<li><code>only</code> / <code>skip</code> <span>Run only these checks, or everything except
+									them. A prefix works: <code>path</code>.</span></li>
+							<li><code>format</code> <span><code>pretty | json | github | sarif</code>. Annotations are
+									the reason to run this in CI.</span></li>
+							<li><code>sarif</code> <span>Write a SARIF file and expose its path as an output.</span>
+							</li>
+							<li><code>fail-on-drift</code> <span>Whether drift fails the job, or only annotates
+									it.</span></li>
+							<li><code>working-directory</code> <span>Where to run. Defaults to the workspace
+									root.</span></li>
+						</ul>
+					</div>
+					<div class="formats">
+						<h3>Four formats, one set of findings</h3>
+						<dl>
+							<div>
+								<dt><code>pretty</code></dt>
+								<dd>for a person at a terminal. The only one with a human as its consumer, and the only
+									one that may change freely between versions.</dd>
+							</div>
+							<div>
+								<dt><code>--json</code></dt>
+								<dd>a stable contract. Breaking changes only on a major; <code>version</code> is what
+									you branch on, and it is <code>1</code>.</dd>
+							</div>
+							<div>
+								<dt><code>--github</code></dt>
+								<dd>one native annotation per finding and nothing else. A run with no findings emits
+									nothing at all, not even a blank line.</dd>
+							</div>
+							<div>
+								<dt><code>--sarif</code></dt>
+								<dd>SARIF 2.1.0 for Code Scanning, carrying one rule per check that actually ran.</dd>
+							</div>
+						</dl>
+						<p class="fine">stdout is the report, stderr is everything else, and the exit code does not
+							depend on the format.</p>
+					</div>
+				</div>
+			</section>
 
-  <hr class="rule">
+			<hr class="rule">
 
-  <footer class="close">
-    <h2 class="close-h">It takes one command and about sixty milliseconds to find out.</h2>
+			<footer class="close">
+				<h2 class="close-h">It takes one command and about sixty milliseconds to find out.</h2>
 
-    <div class="install install-lg">
-      <code>npx @abr4xas/driftwatch</code>
-      <button type="button" class="copy" data-copy="npx @abr4xas/driftwatch" aria-label="Copy install command">copy</button>
-    </div>
+				<div class="install install-lg">
+					<code>npx @abr4xas/driftwatch</code>
+					<button type="button" class="copy" data-copy="npx @abr4xas/driftwatch"
+						aria-label="Copy install command">copy</button>
+				</div>
 
-    <div class="status">
-      <p class="marg"><span>Status</span></p>
-      <p><strong>It is on npm, and it is early.</strong> What is finished is the part you would actually run: the five checks, <code>--fix</code>, all four output formats and the GitHub Action. Four further checks are next.</p>
-      <p><code>--watch</code> and <code>--strict</code> are recognised on the command line and not implemented yet, and they say so when you pass them rather than quietly doing nothing.</p>
-      <p class="fine">The package is <code>@abr4xas/driftwatch</code> because npm refuses <code>driftwatch</code> for being too similar to an unrelated tool. Neither reaches you: <code>bin</code> fixes the command at <code>driftwatch</code>, and the action is used as <code>abr4xas/driftwatch@v0.3.0</code>.</p>
-    </div>
+				<div class="status">
+					<p class="marg"><span>Status</span></p>
+					<p><strong>It is on npm, and it is early.</strong> What is finished is the part you would actually
+						run: the five checks, <code>--fix</code>, all four output formats and the GitHub Action. Four
+						further checks are next.</p>
+					<p><code>--watch</code> and <code>--strict</code> are recognised on the command line and not
+						implemented yet, and they say so when you pass them rather than quietly doing nothing.</p>
+					<p class="fine">The package is <code>@abr4xas/driftwatch</code> because npm refuses
+						<code>driftwatch</code> for being too similar to an unrelated tool. Neither reaches you:
+						<code>bin</code> fixes the command at <code>driftwatch</code>, and the action is used as
+						<code>abr4xas/driftwatch@v0.3.0</code>.</p>
+				</div>
 
-    <nav class="foot-links" aria-label="Project links">
-      <a href="https://github.com/abr4xas/driftwatch">GitHub</a>
-      <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">npm</a>
-      <a href="https://github.com/abr4xas/driftwatch/tree/master/docs/guide">Guide</a>
-      <a href="https://github.com/abr4xas/driftwatch/tree/master/docs/spec">Specification</a>
-      <a href="https://github.com/abr4xas/driftwatch/tree/master/docs/adr">Decision records</a>
-      <a href="https://github.com/abr4xas/driftwatch/blob/master/LICENSE">MIT</a>
-    </nav>
+				<nav class="foot-links" aria-label="Project links">
+					<a href="https://github.com/abr4xas/driftwatch">GitHub</a>
+					<a href="https://www.npmjs.com/package/@abr4xas/driftwatch">npm</a>
+					<a href="https://github.com/abr4xas/driftwatch/tree/master/docs/guide">Guide</a>
+					<a href="https://github.com/abr4xas/driftwatch/tree/master/docs/spec">Specification</a>
+					<a href="https://github.com/abr4xas/driftwatch/tree/master/docs/adr">Decision records</a>
+					<a href="https://github.com/abr4xas/driftwatch/blob/master/LICENSE">MIT</a>
+				</nav>
 
-    <p class="colophon marg">
-      <span>driftwatch</span><span aria-hidden="true">·</span><span>knip finds dead code. driftwatch finds dead context.</span><span aria-hidden="true">·</span><span>Deterministic, offline, no LLM on the main path</span>
-    </p>
-  </footer>
+				<p class="colophon marg">
+					<span>driftwatch</span><span aria-hidden="true">·</span><span>knip finds dead code. driftwatch finds
+						dead context.</span><span aria-hidden="true">·</span><span>Deterministic, offline, no LLM on the
+						main path</span>
+				</p>
+			</footer>
 
-</div>
+		</div>
 
-<script src="corpus-data.js"></script>
-<script src="app.js"></script>
-</body>
+		<script src="corpus-data.js"></script>
+		<script src="app.js"></script>
+	</body>
+
 </html>
