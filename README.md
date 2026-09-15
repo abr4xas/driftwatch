@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/driftwatch-dark.png">
+  <img alt="driftwatch" src=".github/driftwatch-light.png" width="100%">
+</picture>
+
 # driftwatch
 
 [![npm](https://img.shields.io/npm/v/%40abr4xas%2Fdriftwatch?style=flat-square)](https://www.npmjs.com/package/@abr4xas/driftwatch)
