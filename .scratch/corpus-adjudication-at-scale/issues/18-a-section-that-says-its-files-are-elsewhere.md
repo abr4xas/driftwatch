@@ -135,8 +135,9 @@ findings to none**. Adjudicated as round twenty-three of `CLASSIFICATION.md`.
    this is one being certain in the other direction — so it reports under its own name and
    keeps `07`'s table readable.
 
-The phrasings were **counted, not invented**: over 700 repositories, `not in this repo` in 19,
-`not available locally` in 5, `not part of this repo` in 3. Every entry carries its own
+The phrasings were **counted, not invented**: over 700 repositories, `not in this repo` in 15
+repositories, `not available locally` in 4, `not part of this repo` in 2. (First written as 19,
+5 and 3 — those are file counts, and ticket `11` is the one that says to count repositories.) Every entry carries its own
 negation, because `available locally` alone is 28 repositories saying a thing *is* there.
 
 ### Every bound on the lead-in walk came from a repository

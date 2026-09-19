@@ -100,11 +100,12 @@ const HEDGED = [
  * introducing a list of forty paths under `.github/aw/`, of which the
  * repository has none.
  *
- * The phrasings are the ones the ecosystem actually writes, counted over 700
- * repositories rather than invented: "not in this repo" leads by a distance,
+ * The phrasings are the ones the ecosystem actually writes, counted across a
+ * wide sample rather than invented: "not in this repo" leads by a distance,
  * and `includes` matching means it covers "not in this repository" too. The
  * negation is part of every entry on purpose — "available locally" on its own
- * is twenty-eight repositories saying a thing *is* there.
+ * is a great many documents saying a thing *is* there. The counts are in
+ * `CLASSIFICATION.md` round twenty-three.
  */
 const ELSEWHERE = [
   'not in this repo',

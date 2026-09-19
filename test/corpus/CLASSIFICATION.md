@@ -1588,7 +1588,10 @@ Both named repositories lost a finding to an early version, and both got it back
 other direction, so it reports under its own name rather than blurring the table `07` produces.
 
 The phrasings were counted over 700 repositories rather than invented: `not in this repo` in
-19, `not available locally` in 5, `not part of this repo` in 3. Every entry carries its own
+**15 repositories**, `not available locally` in 4, `not part of this repo` in 2. (Those were
+first written here as 19, 5 and 3, which were **files**. Round twenty-two is the round that
+says to count repositories and not files; the mistake it is about was made again two rounds
+later, in the sentence justifying a suppression rule.) Every entry carries its own
 **negation** on purpose — `available locally` alone is 28 repositories saying a thing *is*
 there.
 
