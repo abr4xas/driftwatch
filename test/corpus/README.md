@@ -30,6 +30,30 @@ A green fixture proves nothing about false positives: we wrote it, with the trap
 
 When a snapshot changes, the diff is reviewed **by hand**, finding by finding, before accepting it. That diff is the only real precision-regression signal.
 
+## Promoting a repository from the discovery corpus
+
+`pnpm discovery` acquires thousands of repositories that carry no verdicts and measure
+nothing. Some of them are worth having *here*, where a person rules on what the tool says —
+and the move from there to here is the one place material can cross between the two corpora,
+so the rule for it is written down rather than left to judgement.
+
+**Select on a property of the repository, never on the tool's output.**
+
+- *Allowed:* it has `.agents/skills/`, its skill directory was renamed at some point, the
+  skill is an accessory rather than the product, it is written in a language the corpus is
+  thin on. These are strata, which this corpus already uses openly.
+- *Not allowed:* driftwatch produces a finding on it. That is choosing the exam questions
+  after seeing the answers, and ADR-0006 conditions 3 through 6 count repositories with zero
+  false positives as a proportion — a proportion which means nothing over a population
+  selected for producing findings.
+
+The test for which side a rule falls on: **could you apply it without running driftwatch?**
+`git log --follow` on a skill directory answers "was this renamed" from the repository's own
+history, so it passes. "It has a finding" does not.
+
+Whatever stratum a promotion adds, add it to §"What is here" in the same commit. The
+provenance of a repository is part of what its snapshot means.
+
 ## Why the commits are pinned
 
 Without a fixed `sha`, the snapshot would change every time the upstream repo moves, and the diff would stop meaning "driftwatch changed". Updating a pin is a deliberate change, with its own diff review.

@@ -238,3 +238,52 @@ describe('every finding has a row and a verdict', () => {
     expect(verdicts.filter((verdict) => verdict === 'true')).toHaveLength(trueCount)
   })
 })
+
+/**
+ * Condition 6's arithmetic, which is the one that went wrong quietly.
+ *
+ * It reads "≥ 90% of repos produce zero false positives", and the table said
+ * 61 of 66 while the rows said 58 — round eighteen left three classes open on
+ * purpose and three more repositories joined the count without anyone dividing
+ * again. Nothing regressed in the code; the numerator grew while the
+ * denominator stood still.
+ *
+ * This asserts that the cited counts **match the rows**, and nothing about
+ * whether the condition passes. A test that goes red when a false positive is
+ * found is a test that discourages finding one, and ADR-0007 keeps the verdict
+ * out of CI.
+ */
+describe('condition 6 is divided from the rows it is about', () => {
+  const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
+
+  /** Repositories with at least one false positive, and of those, validation. */
+  function repositoriesWithAFalsePositive(): { all: Set<string>; validation: Set<string> } {
+    const all = new Set<string>()
+    const validation = new Set<string>()
+    for (const line of doc.split('\n')) {
+      const row =
+        /^\| \d+ \| `([^`]+)` \| `[^`]+` \| `[^`]+` \| .* \| \*\*false\*\* \| \S+ \| ([^|]+)\|/u.exec(
+          line,
+        )
+      if (row === null) continue
+      const repo = row[1] ?? ''
+      all.add(repo)
+      if ((row[2] ?? '').trim().startsWith('validation')) validation.add(repo)
+    }
+    return { all, validation }
+  }
+
+  it('cites the count the per-finding rows produce', () => {
+    const cited = /\*\*(\d+) of (\d+) = [\d.]+%\*\*; validation \*\*(\d+) of (\d+) = [\d.]+%\*\*/u
+      .exec(doc)
+    if (cited === null) throw new Error('CLASSIFICATION.md does not cite condition 6 both ways')
+    const [clean = 0, total = 0, cleanValidation = 0, totalValidation = 0] = cited
+      .slice(1)
+      .map(Number)
+    const withAFalsePositive = repositoriesWithAFalsePositive()
+    expect({
+      clean: total - withAFalsePositive.all.size,
+      cleanValidation: totalValidation - withAFalsePositive.validation.size,
+    }).toEqual({ clean, cleanValidation })
+  })
+})

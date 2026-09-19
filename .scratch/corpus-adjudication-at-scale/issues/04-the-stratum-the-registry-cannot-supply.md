@@ -7,8 +7,8 @@ published to any registry — the only population where `skill/frontmatter` can 
 
 **Blocked by:** nothing
 
-**Status:** open — substantively unchanged by the 2026-09-18 revision, but see
-§"Which corpus this feeds, and the trap in the answer"
+**Status: resolved 2026-09-19.** The population turned up on its own and the premise expired.
+See §"Answer"
 
 ## Why this stratum and not the registry's
 
@@ -85,3 +85,53 @@ measured against 200 real skills and found nothing is in a completely different 
 from one that has never been measured — that is worth the work even if the number stays at
 zero. What is not acceptable is 40 more leaderboard repos and a zero that looks like
 evidence.
+
+## Answer
+
+Resolved 2026-09-19. **No special sourcing was needed, and the question the ticket was asked
+to answer has answered itself.**
+
+### The premise is gone
+
+Round eleven's table is the argument this ticket rests on: 31 skill sources, 30 blocks
+claimed, **0 findings**. Today:
+
+| | round 11 | now |
+|---|---|---|
+| `skill` sources in the corpus | 31 | **137** |
+| `skill/frontmatter` findings | 0 | **5** |
+
+All five are `name` ≠ directory, all true, all fixable — `securego/gosec` ×4 and
+`openai/codex`. The rule this ticket calls "the one that catches a folder renamed after the
+fact" fires, on repositories that were added for other reasons entirely.
+
+Nothing here searched for them. Ticket `09`'s `SKILL.md` facet acquired the population and
+tickets `11` and `24` widened discovery to the roots where skills actually live; the findings
+followed. Over 700 discovery repositories the same rule produces 23 findings in 5
+repositories, so the stratum is neither rare nor hard to reach.
+
+### And the check it was about is a different check
+
+Ticket `14` removed four of the five rules. The table in §"Why this stratum and not the
+registry's" measures a `skill/frontmatter` that no longer exists: four of its rows were the
+lint rules, and the fifth — the 50-character margin on `description` — is no longer a rule at
+all. What is left is the one this ticket predicted would be the one that matters, which is the
+ticket being right and then being overtaken.
+
+### What survives, and it is not about skills
+
+§"Which corpus this feeds, and the trap in the answer" is the useful part and it is general:
+the rule for promoting a repository from discovery into certification. **Select on a property
+of the repository, never on the tool's output**, with `git log --follow` as the test for which
+side a rule falls on — a rename is a fact about history, visible without running driftwatch.
+
+That has moved to `test/corpus/README.md` § "Promoting a repository from the discovery
+corpus", which is where the corpus documents its strata and where somebody about to promote a
+repository will actually look. It was the one thing in this ticket that nothing else records.
+
+### The honest outcome, which is not the one prepared for
+
+§"The honest outcome to be prepared for" braced for zero: a check measured against 200 real
+skills and finding nothing. It found five in the corpus and twenty-three in the wild, and the
+work that got there was acquisition rather than sourcing. The ticket was not wrong about the
+population; it was wrong that reaching it needed a plan of its own.

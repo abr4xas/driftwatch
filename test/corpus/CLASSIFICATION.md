@@ -20,14 +20,32 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 61 of 66 = **92.4%**; validation **29 of 32 = 90.6%** | **met**, repaired in round 16 |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **58 of 66 = 87.9%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — see below |
 | 7 | ≥ 1 true positive in validation | 8 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
 Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. All six are true.
 
-**All nine conditions are met again** after round nineteen repaired condition 2, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
+**Condition 6 is not met, and was not noticed.** Eight of the 66 repositories carry a false
+positive, not five: round eighteen opened three classes that were deliberately left open — the
+`+types/` placeholder and two anchors in `vercel/next.js`, `app/entry.server.tsx` in
+`remix-run/react-router`, a runtime log in `block/goose` — and those three repositories joined
+the count without anyone dividing again. Round twenty-one closed with "33 findings, 11 false"
+and the eleven were already spread across eight repositories.
+
+Nothing regressed in the code. The numerator grew while the denominator stood still, which is
+the same mechanism [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
+records, arriving from the other direction. **The validation half still holds at 90.6%**, so
+the out-of-sample measurement — the only one ADR-0009 says means anything — is unaffected.
+
+What to do about it is ticket `20`, and it is deliberately not decided here: `ROADMAP.md` says
+tune the heuristics or accept that the check does not get there and say so, and the one thing
+forbidden is discovering a reason why 87.9% was always acceptable. The other eight conditions
+are met.
+
+The table above is now derived from the per-finding rows rather than carried forward by hand,
+and `corpus-bookkeeping.test.ts` holds it to them.
 
 Four rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together, because two of them broke conditions and two repaired them:
 

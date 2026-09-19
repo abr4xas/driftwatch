@@ -7,7 +7,8 @@ committed before the corpus grows.
 
 **Blocked by:** nothing
 
-**Status:** open, and **no longer blocking** as of 2026-09-18 — it used to block all cloning
+**Status:** open, and **overtaken** as of 2026-09-19 — the thing it was meant to pre-empt has
+already happened. See §"What overtook it" and ticket `20`.
 
 ## What changed
 
@@ -25,6 +26,26 @@ So the urgency is gone. The ticket is not, for two reasons:
    what the number means.
 
 It is now a cheap piece of hygiene to do whenever, rather than a gate on anything.
+
+## What overtook it
+
+This ticket exists to write the decision rule down **before** anybody sees a number below a
+bar. That is no longer possible for condition 6: it is at **87.9%** on the whole corpus and has
+been since round eighteen, discovered on 2026-09-19 while re-reading this ticket. The condition
+table had carried 92.4% forward by hand.
+
+The mechanism was the opposite of the one below. The denominator did not grow — the corpus is
+still 66 — the **numerator** did, as round eighteen left three classes open and three
+previously clean repositories joined the count. §"The arithmetic" below projects onto 300
+repos and that projection is now moot; the hazard it describes is not.
+
+So this ticket cannot do its job for condition 6, and ticket `20` has to decide that one with
+the number already in view. What is still worth writing here, and is now worth more, is the
+rule for **the next** bar: `20` § "What to do" says to commit it as part of that decision
+rather than after it.
+
+The value of the ticket is unchanged and its timing is spent. That is worth recording plainly:
+a pre-registration written after the fact is not one.
 
 ## The arithmetic
 
