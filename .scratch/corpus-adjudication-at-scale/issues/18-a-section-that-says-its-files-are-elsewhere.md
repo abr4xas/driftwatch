@@ -7,7 +7,8 @@ says in the same breath that none of them is in this repository.
 
 **Blocked by:** nothing
 
-**Status:** open — it blocks `.github/skills/` in ticket `11`
+**Status: resolved 2026-09-19.** Eighty findings to none, and `11` is unblocked. See
+§"Answer".
 
 ## The document
 
@@ -117,3 +118,81 @@ unambiguous and `fixable: true` at confidence 1; with several it is not fixable 
 is why react-router shows `fixable: 0`. Re-running it needs the empty-repo shape exactly. Nothing in the certification
 corpus produces it today and condition 2 is not currently broken. But the class is no longer
 only a noise problem, and that is the argument for doing this before `11` rather than after.
+
+## Answer
+
+Resolved 2026-09-19. Three changes, each priced on its own, and the document goes from **80
+findings to none**. Adjudicated as round twenty-three of `CLASSIFICATION.md`.
+
+### What was built, against the three near-misses this ticket named
+
+1. **Markers read the prose, not the line.** Inline code is the claim and the words around it
+   are the prose, so markers are matched with the code spans removed and whitespace collapsed.
+   ``If `x` exists`` reads as `if exists`; so does a marker a line wrap had split. One rule for
+   the whole list, instead of a second spelling of every entry.
+2. **A line that introduces a list speaks for the list.** The third option in §"What to do"
+   was to fix `if exists` alone and it would have fixed 1 of 80; this is what reaches the other
+   39.
+3. **`ELSEWHERE`, section-scoped.** Not a hedge — `HEDGED` is a document being uncertain and
+   this is one being certain in the other direction — so it reports under its own name and
+   keeps `07`'s table readable.
+
+The phrasings were **counted, not invented**: over 700 repositories, `not in this repo` in 19,
+`not available locally` in 5, `not part of this repo` in 3. Every entry carries its own
+negation, because `available locally` alone is 28 repositories saying a thing *is* there.
+
+### Every bound on the lead-in walk came from a repository
+
+The walk is where this could have gone wrong, and it did, twice, before the measurement caught
+it:
+
+| bound | found by |
+|---|---|
+| the window is lead-in **+ item**, nothing in between | `openai/codex` — a sibling bullet writes "(for example, `thread/read`)" four lines up |
+| the lead-in must be indented no further than the item | `saubakirov/KZ-IT-telegram-list` — a sibling's wrapped second line carries an `e.g.` about its own paths |
+
+Both lost a true finding to an early version and both have it back. Neither would have been
+visible without running the corpus between attempts, which is the argument `AGENTS.md` makes
+for running it before *and* after.
+
+### The measurement, both halves
+
+The certification corpus does not move — 66 repos · 334 sources · 35 findings — which this
+ticket predicted would be uninformative, so the 700 discovery repositories were audited before
+and after:
+
+```
+before 1442 · after 1437 · ADDED 0 · REMOVED 5
+```
+
+Nothing added, which is structural: every change here only widens suppression. Three of the
+five removals are correct — the ``If `x` exists`` shape. **Two are the cost**: `DocRoms/Kronn`,
+where a table row says to read a file when the *task* references something not in this repo and
+the marker read that as being about the file; and `TheAndrewStaker/mcp-midi-control`, where a
+lead-in linking to another repository about a different file reached the bullet below it.
+
+Two false negatives in 700 repositories against eighty false positives in one file. The
+project's rule settles that, and the direction is the only reason it settles: two real claims
+went quiet and are named here rather than rounded off.
+
+The section rule on top removed **nothing further** in 700 repositories. It is kept for the
+document it was written for, where it takes 13 to 0. A measured cost of zero is not no cost,
+only a rule that rarely fires — its risk is a long section with one aside in it, and nothing
+like that occurred in 766 repositories.
+
+### Condition 2
+
+The fixable false positive this ticket recorded — `skills/otel-queries/SKILL.md` suggested as
+`.agents/skills/agentic-workflows/SKILL.md` at confidence 1 — is gone with the rest. The
+corpus keeps its two fixable findings and both are true.
+
+Worth recording separately, because this gate is not what makes it safe: that suggestion was
+confident because `SKILL.md` was the only one in the index, and **a unique basename match on a
+fixed format name is not evidence** — the directory is the identity, which is the same thing
+ticket `10` established for `name`. Nothing in the corpus produces it today. It is a defect
+waiting for a repository with one skill and a document naming another, and it deserves its own
+ticket rather than a line in this one.
+
+### What it unblocks
+
+`11`'s `.github/skills/`, which was held by this and nothing else.

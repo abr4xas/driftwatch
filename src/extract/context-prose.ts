@@ -89,6 +89,35 @@ const HEDGED = [
 ]
 
 /**
+ * The document says the path is **somewhere else** — another repository,
+ * another machine, a snapshot this one is not.
+ *
+ * Not a hedge. `HEDGED` is a document being uncertain; this is a document being
+ * certain in the other direction, which is why it reports under its own name.
+ *
+ * Real case (remix-run/react-router), the one ticket `18` was opened for:
+ * "Load these files from `github/gh-aw` (**they are not available locally**)",
+ * introducing a list of forty paths under `.github/aw/`, of which the
+ * repository has none.
+ *
+ * The phrasings are the ones the ecosystem actually writes, counted over 700
+ * repositories rather than invented: "not in this repo" leads by a distance,
+ * and `includes` matching means it covers "not in this repository" too. The
+ * negation is part of every entry on purpose — "available locally" on its own
+ * is twenty-eight repositories saying a thing *is* there.
+ */
+const ELSEWHERE = [
+  'not in this repo',
+  'not part of this repo',
+  'not included in this repo',
+  'not available locally',
+  'no está en este repo',
+  'no esta en este repo',
+  'no está disponible localmente',
+  'no esta disponible localmente',
+]
+
+/**
  * The line is an **instruction to create** something, so the path is a
  * destination and not a claim of existence.
  *
@@ -249,15 +278,43 @@ function isConditional(segment: string): boolean {
 export type ProseReason =
   | 'example'
   | 'hedged'
+  | 'elsewhere'
   | 'another-repo'
   | 'create-instruction'
   | 'conditional'
   | 'external-root'
   | 'creation-target'
 
+/**
+ * The line as **prose**, with its inline code taken out.
+ *
+ * The markers are English phrases and inline code is the claim, not the prose
+ * around it, so a path standing between a marker's two words hid the marker.
+ * Real case (remix-run/react-router): ``If `.github/aw/instructions.md`
+ * exists`` — the one path of forty whose author had guarded it explicitly, and
+ * `HEDGED`'s literal `if exists` could not see it.
+ *
+ * A span becomes a **space** rather than nothing, so that removing it cannot
+ * join two words into a marker neither of them was part of.
+ *
+ * What it gives up is a marker written inside a code span — `` `deprecated` ``
+ * as a token stops reading as the word. That is the right way round: a span is
+ * something being named, and this gate is about what the sentence says.
+ */
+function asProse(text: string): string {
+  // Whitespace is collapsed after the spans go, or `if   exists` fails to be
+  // `if exists`. It also joins a marker a line wrap had split, which is the
+  // same problem in the other axis.
+  return text
+    .replaceAll(/`[^`]*`/gu, ' ')
+    .replaceAll(/\s+/gu, ' ')
+    .toLowerCase()
+}
+
 function markerReason(lower: string): ProseReason | undefined {
   if (EXAMPLE.some((marker) => lower.includes(marker))) return 'example'
   if (HEDGED.some((marker) => lower.includes(marker))) return 'hedged'
+  if (ELSEWHERE.some((marker) => lower.includes(marker))) return 'elsewhere'
   return undefined
 }
 
@@ -312,15 +369,98 @@ export function proseWindowAround(content: string, offset: number): string {
   return lineAround(content, offset).text
 }
 
+/** A heading opens a new subject; a lead-in must not be looked for past one. */
+function isHeading(line: string): boolean {
+  return /^[\s>]*#{1,6}\s/u.test(line)
+}
+
+/**
+ * The line that **introduces the list** a bullet belongs to, if there is one.
+ *
+ * Real case (remix-run/react-router), a skill naming forty paths:
+ *
+ *     Load these files from `github/gh-aw` (they are not available locally).
+ *
+ *     - `.github/aw/agentic-chat.md`
+ *     - … thirty-nine more …
+ *
+ * Every bullet opens its own item, so `lineAround` stopped at the bullet and
+ * the sentence was never read. All forty were reported by a tool whose one
+ * relevant gate could not see the sentence that answers them. Ticket `18`.
+ *
+ * The walk is deliberately short, because this is the widest scope in the file
+ * after `externalRootSections` and width is what makes a gate swallow a
+ * document:
+ *
+ * - **Only from a bullet or a numbered step.** A table row is a sibling of the
+ *   row above it, not an item under a lead-in — that is the cyanheads/
+ *   git-mcp-server case `opensItsOwnItem` was written for, where an `e.g.` in
+ *   one row was silencing the next.
+ * - **At most one blank line**, which is how a list is written under its
+ *   lead-in. Two is a different paragraph.
+ * - **Never past a heading.** Section scope is `externalRootSections`, which
+ *   has its own argument for the width it takes.
+ */
+function indentOf(line: string): number {
+  return (/^\s*/u.exec(line)?.[0] ?? '').length
+}
+
+function leadInStart(content: string, listStart: number, indent: number): number | undefined {
+  let blanks = 0
+  let start = listStart
+  while (start > 0) {
+    const previousStart = content.lastIndexOf('\n', start - 2) + 1
+    const previous = content.slice(previousStart, start - 1)
+    if (previous.trim() === '') {
+      blanks += 1
+      if (blanks > 1) return undefined
+    } else if (isHeading(previous) || /^[\s>]*\|/u.test(previous)) {
+      // A heading starts a new subject; a table row's neighbours are siblings
+      // rather than a list under a lead-in.
+      return undefined
+    } else if (opensItsOwnItem(previous)) {
+      // Only a sibling is walked past. An item at another indent is another
+      // list, and its lead-in is not this one's.
+      if (indentOf(previous) !== indent) return undefined
+    } else {
+      // A line that is not an item is the lead-in, but only if it is at or
+      // outside the list's own indent. Indented further it is the **wrapped
+      // continuation of the item above**, which speaks for that item and not
+      // for this one. Caught by `saubakirov/KZ-IT-telegram-list`, where a
+      // sibling bullet's second line carries an "e.g." about its own paths.
+      return indentOf(previous) <= indent ? previousStart : undefined
+    }
+    start = previousStart
+    if (previousStart === 0) break
+  }
+  return undefined
+}
+
 function lineAround(content: string, offset: number): ProseWindow {
   const lineStart = content.lastIndexOf('\n', offset) + 1
   const end = content.indexOf('\n', offset)
   const lineEnd = end === -1 ? content.length : end
   const line = content.slice(lineStart, lineEnd)
 
-  if (lineStart === 0 || opensItsOwnItem(line)) {
-    return { text: line, claimAt: offset - lineStart }
+  if (opensItsOwnItem(line)) {
+    // A bullet or a step may be one of a list somebody introduced. A table row
+    // or a heading is not, and `leadInStart` refuses both.
+    const lead = /^[\s>]*(?:[-*+]|\d+[.)])\s/u.test(line)
+      ? leadInStart(content, lineStart, indentOf(line))
+      : undefined
+    if (lead === undefined) return { text: line, claimAt: offset - lineStart }
+    // The lead-in and this item, and **nothing in between**. Taking the whole
+    // slice would sweep in the sibling bullets, and one of them saying "for
+    // example" about its own path would silence this one — which is the
+    // cyanheads/git-mcp-server failure this module already knows about,
+    // arriving through a different door. Caught by `openai/codex`, where a
+    // bullet four lines up writes "(for example, `thread/read`)".
+    const leadLine = content.slice(lead, content.indexOf('\n', lead))
+    const text = `${leadLine}\n${line}`
+    return { text, claimAt: leadLine.length + 1 + (offset - lineStart) }
   }
+
+  if (lineStart === 0) return { text: line, claimAt: offset - lineStart }
 
   const previousStart = content.lastIndexOf('\n', lineStart - 2) + 1
   return { text: content.slice(previousStart, lineEnd), claimAt: offset - previousStart }
@@ -383,6 +523,45 @@ function sectionBoundaries(content: string): number[] {
  * hundred claims would otherwise rescan itself two hundred times, and the
  * end-to-end budget is 500 ms.
  */
+/**
+ * The sections that say their paths are **somewhere else**.
+ *
+ * The same scope as `externalRootSections` and for the same reason: one
+ * sentence establishes where a run of paths lives, and the line-level rules see
+ * independent claims and report every one of them. There the root is a
+ * machine's home directory; here it is another repository.
+ *
+ * Real case (remix-run/react-router), the document ticket `18` was opened for:
+ * "Load these files from `github/gh-aw` (they are not available locally)",
+ * then forty paths under `.github/aw/` in two lists under one heading. The
+ * lead-in rule reaches the first list. The second list has a lead-in of its
+ * own that repeats none of it, and only the section reaches those.
+ *
+ * This is the widest gate in the file, so what bounds it is worth stating:
+ * **every `ELSEWHERE` marker carries its own negation.** "not in this repo",
+ * "not available locally" — none of them fires on a document merely mentioning
+ * another repository, which is the difference between this and a list of
+ * project names.
+ *
+ * Priced before it was kept, the way ticket `16` established. Over the 66
+ * certification repositories and over 700 others audited before and after, it
+ * removes **no finding** that the line-level rules had not already removed. A
+ * measured cost of zero is not the same as no cost — the markers are rare, so
+ * the rule rarely fires — and the risk it carries is a long section with one
+ * aside in it. Nothing like that occurred in 766 repositories.
+ */
+function elsewhereSections(content: string): Array<[number, number]> {
+  const bounds = sectionBoundaries(content)
+  const ranges: Array<[number, number]> = []
+  for (let i = 0; i + 1 < bounds.length; i += 1) {
+    const start = bounds[i] ?? 0
+    const end = bounds[i + 1] ?? content.length
+    const text = asProse(content.slice(start, end))
+    if (ELSEWHERE.some((marker) => text.includes(marker))) ranges.push([start, end])
+  }
+  return ranges
+}
+
 function externalRootSections(content: string): Array<[number, number]> {
   if (!content.includes('`~/')) return []
   const bounds = sectionBoundaries(content)
@@ -395,10 +574,7 @@ function externalRootSections(content: string): Array<[number, number]> {
   return ranges
 }
 
-function inExternalRootSection(
-  ranges: ReadonlyArray<readonly [number, number]>,
-  offset: number,
-): boolean {
+function inSection(ranges: ReadonlyArray<readonly [number, number]>, offset: number): boolean {
   return ranges.some(([start, end]) => offset >= start && offset < end)
 }
 
@@ -431,8 +607,9 @@ function proseDisclaims(
   window: ProseWindow,
   ctx: ProseContext = { origin: undefined },
 ): ProseReason | undefined {
-  const lower = window.text.toLowerCase()
-  const marker = markerReason(lower)
+  // Markers read the prose; `namesAnotherRepo` reads the raw line, because the
+  // url it looks for is written as a link and not as prose.
+  const marker = markerReason(asProse(window.text))
   if (marker !== undefined) return marker
   if (namesAnotherRepo(window.text, ctx.origin)) return 'another-repo'
   // These two are tested against the sentence holding the claim, not the whole
@@ -522,6 +699,7 @@ export type ProseGates = {
 
 export function proseGatesFor(content: string, origin: string | undefined): ProseGates {
   const externalRoots = externalRootSections(content)
+  const elsewhere = elsewhereSections(content)
   // Both scans are done once per source rather than once per claim: a document
   // with two hundred claims would otherwise read itself two hundred times, and
   // `SPEC.md` § 9 budgets 500 ms end to end.
@@ -533,7 +711,10 @@ export function proseGatesFor(content: string, origin: string | undefined): Pros
     disclaimedBy(offset) {
       // Section first, then line: the section scope is the broader answer, and
       // it is a lookup against a list computed once.
-      if (inExternalRootSection(externalRoots, offset)) return 'external-root'
+      if (inSection(externalRoots, offset)) return 'external-root'
+      // Section scope before the line rules, like the one above it: it is the
+      // broader answer and it is a lookup against a list computed once.
+      if (inSection(elsewhere, offset)) return 'elsewhere'
       return proseDisclaims(lineAround(content, offset), { origin })
     },
   }

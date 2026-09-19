@@ -1535,3 +1535,91 @@ with it.
 
 That is the honest version of "stop when a root's diff is more review than its findings are
 worth": the diff was not more review, it was a defect.
+
+## Twenty-third round, 2026-09-19: the section that says its files are elsewhere
+
+Ticket `18`. A document can name forty paths and say, in the sentence above them, that none is
+in this repository — and until now no gate could read that sentence. Three near-misses, each
+of which taught something:
+
+| gate | why it missed |
+|---|---|
+| `HEDGED` | window-scoped, and every bullet `opensItsOwnItem`, so the window never reached the lead-in |
+| `namesAnotherRepo` | wants a `github.com` URL; the document writes the bare slug `` `github/gh-aw` `` |
+| `if exists` | a literal string, and the document writes ``If `x` exists`` with the path between the words |
+
+Three changes, each priced separately.
+
+### The markers are read against the prose, not the line
+
+Inline code is the claim; the words around it are the prose. Markers are now matched with the
+code spans removed and whitespace collapsed, so a path standing between a marker's two words no
+longer hides it — and a marker split by a line wrap is read too.
+
+What it gives up is a marker written **inside** a span: `` `deprecated` `` as a token stops
+reading as the word. That is the right way round.
+
+### A line that introduces a list speaks for the list
+
+`lineAround` opened the previous line only for a continuation. A bullet is not a continuation,
+so a list under a disclaiming lead-in was forty independent claims. The walk is bounded, and
+**every bound came from a repository that broke an earlier version of it**:
+
+| bound | what it prevents | found by |
+|---|---|---|
+| lead-in + item, nothing in between | a sibling bullet's `e.g.` silencing this one | `openai/codex` |
+| lead-in indent ≤ the item's | a sibling's wrapped second line read as a lead-in | `saubakirov/KZ-IT-telegram-list` |
+| only siblings at the same indent | an outer list's lead-in reaching a nested item | — |
+| one blank line, never past a heading | a different paragraph, a different subject | — |
+
+Both named repositories lost a finding to an early version, and both got it back.
+
+### `ELSEWHERE`, and why it is its own class
+
+`HEDGED` is a document being uncertain. "not in this repo" is a document being certain in the
+other direction, so it reports under its own name rather than blurring the table `07` produces.
+
+The phrasings were counted over 700 repositories rather than invented: `not in this repo` in
+19, `not available locally` in 5, `not part of this repo` in 3. Every entry carries its own
+**negation** on purpose — `available locally` alone is 28 repositories saying a thing *is*
+there.
+
+It is section-scoped, like `externalRootSections` and for the same reason: the document
+disclaims once and writes two lists under one heading.
+
+### The bill, measured twice
+
+The certification corpus **does not move**: 66 repos · 334 sources · 35 findings, calibration
+23 · validation 12, fixable 2.
+
+That is uninformative on its own — the shape is not in the 66 — so the 700 discovery
+repositories were audited before and after and the findings diffed, the way ticket `16`
+established:
+
+```
+before 1442 · after 1437
+ADDED 0 · REMOVED 5
+```
+
+**Nothing was added**, which is structural: these changes only widen suppression. Of the five
+removed, three are correct — all the ``If `x` exists`` shape, in `cenconq25/claude-code-app-studio`,
+`avatune/avatune` and `caltechads/deployfish`. Two are over-suppression and are the cost:
+
+| repository | what was lost | why |
+|---|---|---|
+| `DocRoms/Kronn` | `docs/linked-repos.md` | the row says to read it when the *task* references something not in this repo; the marker read that as being about the file |
+| `TheAndrewStaker/mcp-midi-control` | `src/protocol/locations.ts` | the lead-in links to another repository about a different file, and the rule carried it to the bullet below |
+
+**Two false negatives in 700 repositories against a class of eighty false positives in one
+file.** `AGENTS.md` § "The rule that orders every decision" settles that direction, and it is
+worth noting the direction is the *only* reason it settles: two real claims went quiet.
+
+Adding the section rule on top removed **nothing further** in 700 repositories. It is kept for
+the document it was written for, where it takes the count from 13 to 0 — and a measured cost
+of zero is not no cost, only a rule that rarely fires.
+
+### What it unblocks
+
+`remix-run/react-router`'s `.github/skills/agentic-workflows/SKILL.md`, audited on its own,
+goes from **80 findings to none**, the fixable one among them. That is ticket `11`'s
+`.github/skills/`, which was held back by this and by nothing else.
