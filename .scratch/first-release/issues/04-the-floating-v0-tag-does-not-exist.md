@@ -7,7 +7,7 @@ requires, or to drop the step.
 
 **Blocked by:** nothing
 
-**Status:** open — found 2026-09-19 while bumping to 0.4.0
+**Status: resolved 2026-09-19.** Step dropped, and it was hiding a worse one. See §"Answer".
 
 ## The contradiction
 
@@ -62,3 +62,49 @@ nothing verifies is a step that will be forgotten — which is what happened her
 
 Exact pins in the documentation stay. That decision is argued, tested and correct; this
 ticket is only about the vestigial line at the end of the procedure.
+
+## Answer
+
+Resolved 2026-09-19. **The step is gone**, and looking for it turned up a broken instruction
+the ticket had ruled out by assertion.
+
+### The ticket was wrong about one thing, and it is the important one
+
+> *"Nothing references it. **Every** documented `uses:` pins an exact release."*
+
+`docs/guide/output.md` pinned **`abr4xas/driftwatch@v1`**, twice — in the two blocks a reader
+copies for `github` and `sarif` output. `v1` does not exist and will not: the project is 0.x.
+Anyone pasting it got a workflow that could not resolve the action.
+
+So the vestigial `v0` was the smaller half. The larger half was a floating tag already in the
+documentation, pointing at a major version that has never been released.
+
+### The guard had a hole exactly where the error was
+
+`docs-links.test.ts` § "the documented action ref" asserts every documented ref matches
+`package.json` — over a list of four files, and `docs/guide/output.md` was not one of them. Its
+pattern would have caught `@v1` fine; the file was simply not looked at.
+
+A guard that checks four files and leaves out the fifth is how the fifth is the one that is
+wrong. `output.md` is in the list now, with a comment saying why the pattern stays permissive:
+a floating `@v1` has to be **caught** by this test, not skipped by it.
+
+### The tags, corrected
+
+This ticket says `git tag -l` lists `v0.1.1` and nothing else. That is true of a fresh clone
+and false of the project: the remote carries **`v0.1.0`, `v0.1.1`, `v0.2.0` and `v0.3.0`**. The
+releases were tagged; the local checkout had not fetched them. The conclusion the ticket drew
+from the tag list survives anyway — `v0` is not among them and never was.
+
+`v0.4.0` is deliberately not tagged: the branch this work is on is not finished.
+
+### The step, and what replaced it
+
+`ROADMAP.md` § "What a release is, by hand" now ends by updating the documented `uses:` lines,
+which the test already holds to `package.json` — the thing that actually has to happen at a
+release and the thing that is actually verified.
+
+The paragraph says plainly that there is no floating tag, that this step was never performed,
+and that adding one later means extending the test **in the same change**. A step nothing
+verified was a step nobody took, which is the shape this product exists to find, in the
+repository that ships it.

@@ -222,8 +222,8 @@ Do not wait for M6 to show the project. Visible cadence is part of what makes so
 
 ### What a release is, by hand
 
-`npm pkg set version=<x.y.z>`, commit, tag `v<x.y.z>`, push the tag. The workflow refuses a tag that disagrees with `package.json` before it sends anything. Then **move the floating action tag**, which nothing automates:
+`npm pkg set version=<x.y.z>`, commit, tag `v<x.y.z>`, push the tag. The workflow refuses a tag that disagrees with `package.json` before it sends anything. Then update the `uses:` lines in the documentation, which `docs-links.test.ts` § "the documented action ref" holds to `package.json`.
 
-```
-git tag -f v0 v<x.y.z> && git push -f origin v0
-```
+**There is no floating tag to move.** This procedure used to end by forcing `v0` to the new release. It was never done — `v0` has never existed — and it contradicted the decision the rest of the project is built on: every documented `uses:` names an exact release, `action.yml` explains why, and a test enforces it. A step nothing verified was a step nobody took, which is the shape this tool exists to find.
+
+If a floating tag is ever wanted, it needs the test extended to cover it in the same change. Otherwise it decays the same way.
