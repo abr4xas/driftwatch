@@ -118,27 +118,27 @@ without a network.
 
 | | Full | Sparse |
 |---|---|---|
-| Total | 3479 MB | **204 MB** |
-| Per repo | 52.7 MB | **3.1 MB** |
-| 2000 repos, projected | ~103 GB | **~6 GB** |
+| Total | 3479 MB | **182 MB** |
+| Per repo | 52.7 MB | **2.8 MB** |
+| 2000 repos, projected | ~103 GB | **~5.4 GB** |
 
 **All 66 produce byte-identical conclusions** — same sources, same claim count, same
 findings with the same messages — against a full clone of the same pinned commit.
 
 The estimate in the body of this ticket was ~1-3 MB per repo and said 2000 discovery repos
-would cost less than the 66 certification repos. The per-repo figure was roughly right and
-**the comparison was wrong**: 6 GB is nearly twice the 3.4 GB the certification corpus
-occupies. 17.1x is the real ratio. Recorded here rather than quietly corrected, because a
-projection cited as a measurement is the failure mode this directory exists to avoid.
+would cost less than the 66 certification repos. The per-repo figure was right and **the
+comparison was wrong**: 5.4 GB is more than the 3.4 GB the certification corpus occupies.
+19.1x is the real ratio. Recorded here rather than quietly corrected, because a projection
+cited as a measurement is the failure mode this directory exists to avoid.
 
-### Five defects found, all fixed
+### Six defects found, all fixed
 
-The cone was derived by reading the source, and reading it was not enough. Three came out of
-running it, two more out of review:
+The cone was derived by reading the source, and reading it was not enough. Three came out
+of running it, three more out of review:
 
-- **`.cursorrules` was missing.** It has no extension, so no wildcard reached it;
-  `classifySource` matches it by exact basename. Found by `colinhacks/zod`, which crashed
-  with `ENOENT` — the safe direction, but still a repo lost.
+- **`.cursorrules` was missing.** No extension, so no wildcard reached it; `classifySource`
+  matches it by exact basename. Found by `colinhacks/zod`, which crashed with `ENOENT` —
+  the safe direction, but still a repo lost.
 - **`Makefile` was missing**, along with the other names in `RUNNERS`. Found by
   `tursodatabase/turso`, and this is the dangerous direction: the target list came back
   empty and a real `script/missing` finding **silently disappeared**. Nothing crashed.
@@ -148,51 +148,57 @@ running it, two more out of review:
   from this one's. `saubakirov/KZ-IT-telegram-list` showed it as 262 claims against 260,
   same sources byte for byte. The remote stays; the network is refused with
   `GIT_ALLOW_PROTOCOL` after the clone instead.
-- **`*.md` does not match `.mdx`.** A gitignore wildcard stops at the dot it matches, so
-  every `.mdx` was outside the cone — and `.mdx` is ordinary documentation, heavily used by
-  exactly the doc-heavy repos this corpus wants. `buildAnchorIndex` opens any link target
-  without filtering by extension, so this was silent. `ANCHOR_TARGETS` now lists `md`,
-  `mdx`, `markdown` and `mdc`, and a test pins that collapsing them back to `*.md` fails.
 - **`core.sparseCheckoutCone` was left unset.** It is inheritable from a user's global
   config, and under cone mode these patterns mean something else — the cone cannot express
-  "every `.md` at any depth". Now set to `false` explicitly.
+  "every `.md` at any depth". Now `false` explicitly.
+- **`--verify` did not check the full clone was at the pinned sha**, so a clone left behind
+  by an older pin would have been diffed against the current commit and every difference
+  misread as a defect in the cone.
+- **The cone carried `.mdx`, `.html` and `.htm` for no reason**, which is the inverse
+  mistake and is the subject of the section below.
 
-The lesson is in the test now. It derives the cone's obligations from `RUNNERS`, from
-`classifySource`, and from a `Record<SourceKind, ...>` that fails the **typecheck** when a
-source kind is added — rather than from a list written by hand, which is what produced the
-first two defects. It also asks **git** whether the cone admits a path, by writing the cone
-into a throwaway repo's `.gitignore` and running `check-ignore --no-index`; the first
-version re-implemented git's matcher as a regex, which made every assertion a statement
-about the regex.
+The lesson is in the test. It derives the cone's obligations from `RUNNERS`, from
+`classifySource`, from `links.ts`'s `MARKDOWN` pattern, and from a
+`Record<SourceKind, ...>` that fails the **typecheck** when a source kind is added — rather
+than from a list written by hand, which is what produced the first two defects. It also asks
+**git** whether the cone admits a path, by writing the cone into a throwaway repo's
+`.gitignore` and running `check-ignore --no-index`; the first version re-implemented git's
+matcher as a regex, which made every assertion a statement about the regex.
 
 ### What is explicitly not covered
 
-Two cases where a list of patterns is the wrong shape of answer. Both are documented in the
-module; neither is papered over by making `sparseClone` tolerant.
+**One case, not two.** An earlier version of this Answer claimed two, and the second was
+wrong — recorded here because the reasoning that produced it is the kind worth not
+repeating.
 
-**A config that declares its own sources.** `sources` can be arbitrary globs and a
-`configured` source is whatever they match. Fails **loudly** with `ENOENT`, so the repo is
-dropped and noticed.
+**The real one: a config that declares its own sources.** `sources` can be arbitrary globs
+and a `configured` source is whatever they match, so no pattern list covers it. It fails
+**loudly** with `ENOENT`, so the runner drops the repo and says so. Correct behaviour: the
+alternative is a finding that is an artifact of the checkout.
 
-**A link anchored at a file that is not a document**, e.g. `[x](src/app.ts#L10)`.
-`buildAnchorIndex` opens any target regardless of extension, and `link/broken` reads "could
-not read" as *silence* — so this one fails **quietly**, which makes it the more dangerous of
-the two.
+**The one that was wrong: a link anchored at a file that is not a document.** The claim was
+that `[x](src/app.ts#L10)` makes `buildAnchorIndex` open `src/app.ts`, which the cone does
+not carry, and that `link/broken` reading an unreadable target as silence makes it a *quiet*
+divergence. Every step of that is true of `buildAnchorIndex` and false of the pipeline: the
+claims it iterates are `kind === 'link'`, and
+[`links.ts`](../../../src/extract/links.ts) only emits those for its `MARKDOWN` pattern,
+`.md` and `.markdown`. Everything else stays a `path` claim, answered from the index and
+never opened.
 
-`.html` was considered for `ANCHOR_TARGETS` and rejected on measurement: over the 66 repos
-it costs **146 MB of 241** — 61% of the checkout, 6989 files, almost all generated docs and
-test fixtures — against **zero** observed anchored links into one. Paying 61% for an unseen
-hazard is the wrong trade, and it would not close the class anyway, since a link into `.ts`
-or `.py` fails the same way and no extension list reaches it.
+Checked rather than argued. A document anchoring into `.ts`, `.mdx`, `.mdc`, `.html`, `.md`
+and `.markdown` produces exactly two link claims: the `.md` and the `.markdown`.
 
-**The follow-on that does close it**, for the runner rather than for this module: detect
-anchored links whose target the cone does not carry, and drop the repo. Cheap, exact, and
-it covers every extension at once. Worth doing before the discovery corpus is used to reason
-about `link/broken` at all.
+**What this cost, and what it bought.** The follow-on this ticket recorded — "detect
+anchored links whose target the cone does not carry and drop the repo" — was started and
+then deleted, because it would have been code checking an impossibility. Chasing it is what
+turned up the actual defect: the cone had been widened to `.mdx` to close the imaginary hole,
+and `.html`/`.htm` had been considered and rejected on a cost argument that was beside the
+point. Removing them took the checkout from 204 MB to **182 MB** with no change in
+conclusions across all 66 repos.
 
-Measured baseline for whoever picks that up: across the 66 repos' sources there are **10
-anchored links to a repo file, 8 of them `.md`**, and the 2 that are not resolve to paths
-absent from both clones — which is why no repo diverged here.
+What replaced the detector is a test that derives the anchor obligation from `MARKDOWN`
+itself, so that widening it — dropping the deliberate `.mdx` exclusion, say — fails until
+the cone follows.
 
 ### Not for the certification corpus
 

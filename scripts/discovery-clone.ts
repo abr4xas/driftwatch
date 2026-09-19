@@ -11,10 +11,10 @@
  * be narrowed to the files something opens with `readFile` — the sources, the
  * manifests, the config and the `.gitignore`s — and nothing else.
  *
- * Measured over all 66 corpus repos at their pinned commits: **3479 MB → 204
- * MB**, 3.1 MB per repo against 52.7, a ratio of 17.1×. All 66 produce
+ * Measured over all 66 corpus repos at their pinned commits: **3479 MB → 182
+ * MB**, 2.8 MB per repo against 52.7, a ratio of 19.1×. All 66 produce
  * byte-identical driftwatch conclusions against a full clone of the same
- * commit. At 2000 repos that projects to ~6 GB rather than ~103 GB.
+ * commit. At 2000 repos that projects to ~5.4 GB rather than ~103 GB.
  *
  * **This is not for the certification corpus.** `corpus.ts` keeps its full
  * shallow clones: it is 66 repos and 3.4 GB, which is nobody's problem, and
@@ -35,34 +35,35 @@ import { messageOf } from '../src/core/errors.ts'
 import { RUNNERS } from '../src/verify/manifest.ts'
 
 /**
- * Extensions a link's anchor can be resolved against.
+ * Extensions whose **contents** get read, and why the list is this short.
  *
- * `buildAnchorIndex` does **not** filter by extension: `anchorTargetOf` returns
- * whatever path the link carries and `readFile` opens it, and `collectAnchors`
- * harvests HTML `id=` attributes as well as markdown headings. So a target that
- * is not on this list reads fine in a full clone and raises `ENOENT` in a
- * narrowed one — and `link/broken` treats "could not read" as **silence**.
- * That is the silent direction, so the list covers every extension people
- * actually write documentation in, and the one exclusion below is argued from
- * measurement rather than from taste.
+ * It is tempting to reason from `buildAnchorIndex`, which opens
+ * `join(root, target)` without looking at the extension — and to conclude that
+ * any file at all can be read, so the cone can never be complete. That
+ * reasoning skips a step. The claims it iterates are `kind === 'link'`, and
+ * [`links.ts`](../src/extract/links.ts) only emits those for a target matching
+ * its own `MARKDOWN` pattern, `.md` and `.markdown`. Everything else stays a
+ * `path` claim, which is resolved against the **index** and never opened.
  *
- * `*.md` does not match `.mdx`: gitignore wildcards stop at the dot they match.
+ * Checked rather than argued. Against a document linking with anchors into
+ * `.ts`, `.mdx`, `.mdc`, `.html`, `.md` and `.markdown`, exactly two become
+ * link claims: the `.md` and the `.markdown`. So `[x](src/app.ts#L10)` cannot
+ * diverge between a full and a narrowed checkout, because nothing opens
+ * `src/app.ts` in either.
  *
- * **`html` is deliberately not here**, and it is the one judgement call in this
- * list. `collectAnchors` does read `id=` attributes, so an anchored link into a
- * committed HTML page would resolve in a full clone and go silent in a narrowed
- * one. But over the 66 corpus repos, `.html` costs **146 MB of 241** — 61% of
- * the checkout, 6989 files, mostly generated documentation and test fixtures —
- * against **zero** measured instances of an anchored link into one.
+ * `.mdx` and `.mdc` are excluded from `MARKDOWN` **deliberately** — `links.ts`
+ * explains that remark cannot see headings emitted by JSX components, so the
+ * anchors collected would be a subset of the real ones and every link into the
+ * rest would be a finding. That exclusion is load-bearing for this list too,
+ * which is why the test derives it from `MARKDOWN` rather than restating it.
  *
- * Paying 61% for a hazard nobody has observed is the wrong trade, and it does
- * not close the class anyway: a link anchored into `.ts` or `.py` has the same
- * failure and no extension list reaches it. The class closes in the runner, by
- * detecting anchored links whose target the cone does not carry and dropping
- * the repo — cheap, exact, and it covers every extension at once. Recorded in
- * ticket `06` as the follow-on.
+ * `.mdc` is in the cone all the same, but as a **source**: `.cursor/rules/*.mdc`
+ * is a context file driftwatch audits, and `discover.ts` reads it.
  */
-const ANCHOR_TARGETS = ['md', 'mdx', 'markdown', 'mdc'] as const
+const ANCHOR_TARGETS = ['md', 'markdown'] as const
+
+/** Source extensions that are not anchor targets. `.mdc` is Cursor's rules. */
+const SOURCE_EXTENSIONS = ['mdc'] as const
 
 /**
  * The extensions `loadConfig` resolves, in `config.ts`'s own order.
@@ -82,9 +83,9 @@ const CONFIG_EXTENSIONS = ['ts', 'js', 'json', 'yaml', 'yml'] as const
  * costs is a file somebody calls `readFile` on, and the list of those is short
  * and knowable. Each entry below names where in `src/` the read happens.
  *
- * - **`ANCHOR_TARGETS` anywhere** — `discover.ts:281` for the sources
- *   themselves, `anchor-index.ts:60` for any document a link's anchor resolves
- *   against.
+ * - **`ANCHOR_TARGETS` and `SOURCE_EXTENSIONS` anywhere** — `discover.ts:281`
+ *   for the sources themselves, `anchor-index.ts:60` for the documents a
+ *   link's anchor resolves against.
  * - **`.cursorrules` anywhere** — `discover.ts` matches it by exact basename,
  *   and having no extension it is reached by no wildcard.
  * - **Every filename in `RUNNERS`, anywhere** — `manifest.ts:206` for a
@@ -111,8 +112,9 @@ const CONFIG_EXTENSIONS = ['ts', 'js', 'json', 'yaml', 'yml'] as const
  * which is the one thing this needs, so `sparseClone` turns it off explicitly.
  */
 export const CONE: readonly string[] = [
-  // Sources, and every document an anchor can be resolved against.
-  ...ANCHOR_TARGETS.map((extension) => `/**/*.${extension}`),
+  // Every document an anchor can be resolved against, and the source
+  // extensions that are not one.
+  ...[...ANCHOR_TARGETS, ...SOURCE_EXTENSIONS].map((extension) => `/**/*.${extension}`),
   // The one source with no extension, matched by exact basename.
   '/**/.cursorrules',
   // Every manifest, taken from the table that decides which file answers for a
@@ -129,29 +131,27 @@ export const CONE: readonly string[] = [
 ]
 
 /*
- * What the cone cannot promise, in the two cases where a pattern list is the
- * wrong shape of answer.
+ * What the cone cannot promise.
  *
- * **A config that declares its own sources.** A repo's config can set `sources`
- * to arbitrary globs, and a `configured` source is whatever they match. This
- * fails the **loud** way: the path is in the index, so discovery finds it and
- * opens it, and the read raises `ENOENT`. A repo that crashes is dropped from
- * the discovery corpus and noticed.
+ * One case, not two. An earlier version of this comment claimed a second — a
+ * link anchored at a file that is not a document, `[x](src/app.ts#L10)`, going
+ * silent because `buildAnchorIndex` opens any target it is given. That is true
+ * of `buildAnchorIndex` and false of the pipeline: the claims it iterates are
+ * `kind === 'link'`, and `links.ts` only emits those for `.md` and `.markdown`.
+ * A link into `src/app.ts` stays a `path` claim, which is answered from the
+ * index. Nothing opens it in either clone, so nothing can diverge. See
+ * `ANCHOR_TARGETS`.
  *
- * **A link anchored at a file that is not a document.** `[x](src/app.ts#L10)`
- * makes `buildAnchorIndex` open `src/app.ts`, which the cone does not carry.
- * This one fails **silently** — `link/broken` reads "could not read" as "say
- * nothing" — so it is the more dangerous of the two. `ANCHOR_TARGETS` covers
- * the extensions people actually anchor into; a link into source code is not
- * reached, and would cost a `link/broken` finding that the full clone would
- * have reported. Measured over the 66 corpus repos: 10 anchored links to a repo
- * file, 8 of them `.md`, and the 2 that are not resolve to paths absent from
- * both clones, so no repo diverged. Worth re-measuring if the discovery corpus
- * ever reports oddly few `link/broken`.
+ * The case that is real: **a config that declares its own sources.** `sources`
+ * can be arbitrary globs and a `configured` source is whatever they match, so
+ * no static cone covers it. It fails the **loud** way — the path is in the
+ * index, discovery finds it, and the read raises `ENOENT`. A repo that crashes
+ * is dropped from the discovery corpus and noticed; a repo that silently
+ * analysed half its sources would be neither.
  *
- * Neither is papered over by making `sparseClone` tolerant. The runner that
- * clones at scale records the failure and drops the repo; a repo that quietly
- * analysed half its sources would be worse than one that stopped.
+ * That is for the runner to survive, by recording the failure and moving on.
+ * Not this module's job, and worth saying because the temptation is to make
+ * `sparseClone` tolerant instead.
  */
 
 /** The cone as `.git/info/sparse-checkout` wants it: one pattern per line. */

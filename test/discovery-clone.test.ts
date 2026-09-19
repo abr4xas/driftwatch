@@ -7,10 +7,11 @@
  * covers, is that the cone still names every file driftwatch reads.
  *
  * The failure mode it exists to catch is the dangerous one, and it is silent:
- * a file type gets added to `discover.ts` or `config.ts`, the cone does not
- * learn about it, and the discovery corpus starts producing findings that are
- * artifacts of the checkout rather than of the repository. A missing source is
- * invisible; a missing link target is a false `path/missing`.
+ * a file type gets added to `discover.ts`, `config.ts`, `manifest.ts` or
+ * `links.ts`, the cone does not learn about it, and the discovery corpus starts
+ * producing conclusions that are artifacts of the checkout rather than of the
+ * repository. A source that is never read is a finding that never fires, and
+ * nothing raises an error on the way.
  */
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -136,15 +137,10 @@ describe('the sparse cone', () => {
     }
   })
 
-  it('admits every document kind an anchor can resolve against', () => {
-    // `link/broken` resolves the *path* against the index, but an anchor needs
-    // the target's headings, so `buildAnchorIndex` opens the target. It does
-    // not filter by extension, and a target it cannot read is read as silence
-    // — so a gap here loses a finding without saying anything.
+  it('admits every source and anchor-target document', () => {
     for (const path of [
       'docs/guide.md',
       'docs/spec/SPEC.md',
-      'docs/guide.mdx',
       'docs/guide.markdown',
       '.cursor/rules/style.mdc',
     ]) {
@@ -152,27 +148,30 @@ describe('the sparse cone', () => {
     }
   })
 
-  it('does not reach .mdx through the .md pattern', () => {
-    // The premise behind listing the extensions separately: a gitignore
-    // wildcard stops at the dot it matches, so `*.md` leaves `.mdx` out. This
-    // fails if someone collapses ANCHOR_TARGETS back to a single `*.md`.
-    const mdOnly = CONE.filter((pattern) => pattern.includes('*.md') && !pattern.includes('mdx'))
-    expect(mdOnly.length).toBeGreaterThan(0)
-    execFileSync('git', ['init', '-q', join(repo, 'probe')], { stdio: 'ignore' })
-    writeFileSync(join(repo, 'probe', '.gitignore'), `${mdOnly.join('\n')}\n`)
-    const matched = (() => {
-      try {
-        execFileSync(
-          'git',
-          ['-C', join(repo, 'probe'), 'check-ignore', '--no-index', '-q', '--', 'docs/guide.mdx'],
-          { stdio: 'ignore' },
-        )
-        return true
-      } catch {
-        return false
-      }
-    })()
-    expect(matched).toBe(false)
+  it('admits every extension links.ts will open for an anchor', () => {
+    // The cone's obligation here is exactly `links.ts`'s `MARKDOWN` pattern:
+    // `buildAnchorIndex` opens a target only when the extractor made it a
+    // `link` claim, and only these extensions do. Derived from that source
+    // rather than restated, so widening `MARKDOWN` — dropping the deliberate
+    // `.mdx` exclusion, say — fails here until the cone follows.
+    const pattern = /const MARKDOWN = \/\\\.\(\?:([^)]+)\)\$\//u.exec(read('extract/links.ts'))
+    expect(pattern, 'MARKDOWN not found in links.ts').not.toBeNull()
+    const extensions = (pattern?.[1] ?? '').split('|')
+    expect(extensions).toContain('md')
+    for (const extension of extensions) {
+      expect(admits(`docs/guide.${extension}`), `anchor target .${extension}`).toBe(true)
+    }
+  })
+
+  it('does not carry extensions nothing ever opens', () => {
+    // The corollary, and the reason the checkout is small. These appear in
+    // links and in prose, but a claim about them is answered from the index:
+    // `.mdx` and `.html` are not in `MARKDOWN`, so no anchor resolves against
+    // them and nothing reads them. Carrying `.html` alone cost 146 MB of 241
+    // across the corpus.
+    for (const path of ['docs/guide.mdx', 'docs/api.html', 'docs/api.htm']) {
+      expect(admits(path), path).toBe(false)
+    }
   })
 
   it('leaves out the bulk of a repository', () => {

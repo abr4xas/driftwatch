@@ -382,18 +382,17 @@ repos at their pinned commits:
 
 | | Full clone | Blobless + sparse |
 |---|---|---|
-| Per repo | 52.7 MB | **3.1 MB** |
-| The 66 together | 3479 MB | 204 MB |
-| 2000 repos, projected | ~103 GB | **~6 GB** |
+| Per repo | 52.7 MB | **2.8 MB** |
+| The 66 together | 3479 MB | 182 MB |
+| 2000 repos, projected | ~103 GB | **~5.4 GB** |
 
 The estimate this table replaces said ~1-3 MB per repo and ~4 GB at 2000, and claimed two
-thousand discovery repos would cost less than the 66 certification repos do today. **That
-last part was wrong**: 6 GB is nearly twice the 3.4 GB the certification corpus occupies.
-The ratio is 17.1×. 6 GB still makes the thing buildable on a laptop, which was the only
-claim that mattered.
+thousand discovery repos would cost less than the 66 certification repos do today. The
+per-repo figure was right; **the comparison was wrong**: 5.4 GB is more than the 3.4 GB the
+certification corpus occupies. The ratio is 19.1×.
 
 All 66 produce **byte-identical driftwatch conclusions** against a full clone of the same
-commit. Five defects were found on the way, all fixed; ticket `06` records them. Two are
+commit. Six defects were found on the way, all fixed; ticket `06` records them. Two are
 worth knowing here because they are the same shape as the bugs this project already
 catalogues:
 
@@ -403,10 +402,20 @@ catalogues:
   `script/missing` finding disappeared without an error**. The cone is now derived from
   `RUNNERS` rather than copied out of it.
 
-One limitation is known and deliberate: an anchored link whose target is not a document
-(`[x](src/app.ts#L10)`) goes silent, because `buildAnchorIndex` opens any target and
-`link/broken` reads an unreadable target as "say nothing". No extension list closes that;
-the runner will close it by detecting such links and dropping the repo.
+One limitation is real and one that was written here on 2026-09-18 was not. The real one:
+a repo whose own config declares `sources` as arbitrary globs can point outside the cone,
+which no pattern list covers. It fails loudly with `ENOENT`, so the runner drops the repo
+and says so.
+
+The one that was wrong: this file claimed an anchored link into a non-document
+(`[x](src/app.ts#L10)`) would go silent, on the grounds that `buildAnchorIndex` opens any
+target it is handed. It does — but the claims it iterates are `kind === 'link'`, and
+`links.ts` only emits those for `.md` and `.markdown`. A link into `src/app.ts` stays a
+`path` claim and is answered from the index, so nothing opens it in either clone and
+nothing can diverge. The detector this called for was started and then deleted: it would
+have been code checking an impossibility. What replaced it is a test deriving the cone's
+anchor obligations from `links.ts`'s own `MARKDOWN` pattern, so that widening that pattern
+fails until the cone follows.
 
 ## What is not changed by any of this
 
