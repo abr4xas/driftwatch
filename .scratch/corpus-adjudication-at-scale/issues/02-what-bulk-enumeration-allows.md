@@ -145,57 +145,91 @@ exists to prevent.
 
 ### The skills.sh half
 
-**1. There is a real API and it is fully enumerable — `/api/v1/skills`**, paginated with
-`page` and `per_page` up to 500, and a `view` parameter of `all-time` / `trending` / `hot`.
-`all-time` with pagination is the whole index, not a ranked head, so the ticket's first
-question comes back the good way: **the tail is reachable in principle**.
+**Measured 2026-09-18** with a project OIDC token, after the first write-up had to stop at
+the 401. Everything below is from the live index rather than from the API reference.
 
-Sibling endpoints: `/api/v1/skills/search`, `/api/v1/skills/curated`,
-`/api/v1/skills/{source}/{skill}`, `/api/v1/skills/audit/{source}/{skill}`.
+**1. The API is real and the whole index comes out in 20 calls.** `/api/v1/skills`, `page`
++ `per_page` up to 500, `view=all-time`. Enumerating everything took 20 requests against a
+600/minute limit.
 
-**2. It is gated on a Vercel OIDC token**, which is the finding that matters. The endpoint
-returns:
+**2. The index is 9,827 skills — and only 1,203 source repositories.** The spec's "at least
+282 entries" was low by a factor of 35, and the repo count is the number that matters:
 
-```
-401 {"error":"authentication_required","message":"This endpoint requires authentication.
-Pass a Vercel OIDC token (Authorization: Bearer <VERCEL_OIDC_TOKEN>)"}
-```
+| | |
+|---|---|
+| Skills in the index | 9,827 |
+| Unique source repos | **1,203** |
+| Of those, `sourceType: github` | 9,085 skills / **742 are `well-known`**, with no repo |
+| Repos contributing exactly one skill | **658** |
+| Skills in the top 8 repos | 1,659 (17% of the index, from 0.7% of the repos) |
 
-Not an API key you request — the documented route is an app *deployed on Vercel*, whose
-project OIDC token is exposed as `VERCEL_OIDC_TOKEN`. The rate limit is then 600
-requests/minute per team and project, which at `per_page=500` enumerates any plausible index
-in seconds. **Neither the size of the tail nor the number of template families could be
-measured here**, and both were what the ticket asked for; they stay open behind that token.
+So **skills.sh supplies at most ~1,200 repositories**, and the "skill is an accessory rather
+than the product" stratum the spec wants is the 658 singles. Set against a single GitHub code
+search facet yielding 784 unique repos per minute, the registry is **not a source of scale**.
+It is a source of a particular *kind* of repo, and a small one.
 
-This repository does deploy its site on Vercel, so the token is probably obtainable via
-`vercel env pull`. Probably, not verified — it was not worth pulling credentials into the
-working tree to find out, and nothing downstream is blocked on it.
+**3. `isDuplicate` is present in the schema and set on nothing.** Zero of 9,827. The ticket
+hoped it would attack the template problem; it is empty, so the deduplication the spec calls
+decisive has no help from the registry and stays ours to do.
 
-**3. No commit sha, and — more importantly — no timestamp.** A listing entry carries `id`,
-`slug`, `name`, `source` (`owner/repo`), `installs`, `sourceType`, `installUrl`, `url` and an
-optional `isDuplicate`. The ticket said the missing sha no longer matters, and that holds.
-The missing **timestamp** does matter and the ticket did not foresee it: the spec defines the
-interesting tail as *"few installs, no recent commits"*, and only the first half is
-expressible from this API. "No recent commits" needs a GitHub call per repo.
+**4. The tail is not where the spec assumed.** Median installs is 2,900 and the minimum is 7,
+but only **167 entries (1.7%) are under 1,000 installs**. "Few installs" barely partitions
+this population. And with no timestamp in the schema, "no recent commits" needs a GitHub call
+per repo. The tail has to be defined structurally — one skill, in a repo that is not a skills
+repo — rather than by the two signals the spec named.
 
-**4. `isDuplicate` exists**, flagging forks and copies. That is aimed at the template problem
-this ticket calls decisive — but it is **their** heuristic answering **our** question, and
-the spec's worry is families of near-identical skills generated from a shared template, not
-forks. Useful as a first filter, not as the answer.
+### The finding that outranks the ticket: driftwatch does not look where skills live
 
-**5. A free result nobody asked for.** The detail endpoint returns `files` — relative paths
-**and full text contents**. So `skill/frontmatter` can be measured over thousands of real
-skills **without cloning anything at all**: the check reads only the frontmatter of the
-`SKILL.md` it is given. That does not make the check less silent — round eleven and the
-spec's §"what it quietly does not solve" explain why published skills are well formed — but
-it makes the measurement nearly free, if the token appears.
+The detail endpoint returns each `SKILL.md`'s full text, so 249 real skills were pulled,
+244 materialised into `.claude/skills/<slug>/SKILL.md` in a scratch repo, and
+`skill/frontmatter` **actually run** over them. Three findings came out — and all three are
+artefacts of that materialisation, not of the skills:
 
-### What this changes
+- `microsoft/azure-skills`: frontmatter `name: finetuning`, but skills.sh's slug is
+  `microsoft-foundry`, so the directory was named from the slug and the mismatch is ours.
+- `nozomio-labs/nia-skill`: its `SKILL.md` is at the **repo root**.
+- `hamen/material-3-skill`: the `user-invokable` unknown key is genuine, but the file lives
+  at `skills/material-3/SKILL.md`.
+
+Chasing why led to the real result. Across **70 sampled publisher repos**, where does a
+`SKILL.md` actually live?
+
+| Location | Repos | |
+|---|---|---|
+| somewhere else (`skill/`, nested plugins, …) | 31 | 44.3% |
+| `skills/` at the repo root | 27 | 38.6% |
+| repo root | 8 | 11.4% |
+| **`.claude/skills/`** | **4** | **5.7%** |
+
+`classifySource` requires the `.claude` + `skills` pair, so **driftwatch does not classify
+94% of published skills as skills at all.** They are never audited, by any check.
+
+This changes the spec's explanation of the silence. §"what it quietly does not solve" says
+`skill/frontmatter` is mute because published skills are well formed. That is *also* true —
+244 correctly-placed real skills produced **zero** genuine findings, which is round eleven's
+result at eight times the mass. But it is the second reason, not the first. The first is that
+the check almost never runs.
+
+Both hold at once, and together they are stronger than either: adding skills.sh mass cannot
+wake this check, for two independent reasons.
+
+**What this does not settle** is whether `classifySource` should widen. `skills/` at the root
+is `npx skills`'s convention, not Claude Code's, and matching any `skills/` directory in any
+repository is exactly the shape of rule this project refuses without evidence — `docs/` was
+rejected for the same reason in ADR-0008. It is a decision with a false-positive cost, so it
+belongs in a ticket of its own rather than at the end of this one.
+
+### What this changes### What this changes
 
 - The spec's §"Stage 1 — acquisition" and §"Acquisition: the GitHub API, filtered" both
   describe facetting by `path:`. Corrected to `filename:` in the spec, with the measured
   numbers.
-- `04` is unblocked in the sense that mattered: it wanted the difference between code search
-  and the registry, and code search is now known to work and known to be cheap. The registry
-  side of that subtraction is still behind the token.
+- `04` is unblocked and half-answered. It wanted the difference between code search and the
+  registry; code search works and is cheap, and the registry side is now enumerated — 1,203
+  repos, 658 of them singles. What `04` has to reckon with is the layout finding: the
+  unpublished-skill population it is after is defined by `.claude/skills/`, which is where
+  only 5.7% of the *published* ones are.
+- A new ticket is owed for the layout question. Whether `classifySource` widens beyond
+  `.claude/skills/` is a product decision with a false-positive cost, and it is now the
+  single largest known gap in what driftwatch audits.
 - Nothing here needs `01` or `05`.

@@ -267,6 +267,12 @@ Three smaller limits, all real:
 **What it solves** is real. There is no cheap way today to *enumerate* repos carrying
 `.claude/skills/*/SKILL.md`; the registry hands over the universe in one call, with an API.
 
+**Measured 2026-09-18 (ticket `02`):** the index is **9,827 skills in 1,203 repositories**,
+658 of which contribute exactly one. So the registry supplies at most ~1,200 repos against
+784 from a single minute of GitHub code search — it is not a source of scale. And the reason
+it cannot wake `skill/frontmatter` turned out to be double: see ticket `08`, where only 5.7%
+of published skills sit anywhere driftwatch would even classify as a skill.
+
 **What it does not solve is the stratum everyone would assume it solves.** Round eleven of
 `CLASSIFICATION.md` already read **30 real skills and produced 0 findings**, and it recorded
 why: four of the five rules are arithmetic over two strings (`name` against its directory,
@@ -445,7 +451,8 @@ same day.
 | `06` | Blobless + sparse clone seam: does `ls-files` stay complete and `check-ignore` still work? | task | **new**, and the only unblocked one |
 | `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | **new**, highest ceiling |
 | `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration — ToS, rate limits, pinning? | research | **resolved**: GitHub is enough and costs ~10 min; skills.sh is gated on a Vercel OIDC token |
-| `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | unchanged |
+| `08` | Where do skills actually live — should `classifySource` widen beyond `.claude/skills/`? | research | **new**: 94% of published skills are invisible to driftwatch |
+| `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | half-answered by `02`; now has to reckon with `08` |
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` already names? | research | **reframed**: a smoke test of job 1, not a calibration of verdicts |
 | `05` | Pre-register the decision rule for condition 6 | task | no longer blocking, see above |
 | `03` | ~~Sampling design for a model-adjudicated corpus~~ | — | **withdrawn**: nothing is model-adjudicated |
