@@ -202,7 +202,13 @@ Chasing why led to the real result. Across **70 sampled publisher repos**, where
 | **`.claude/skills/`** | **4** | **5.7%** |
 
 `classifySource` requires the `.claude` + `skills` pair, so **driftwatch does not classify
-94% of published skills as skills at all.** They are never audited, by any check.
+the overwhelming majority of published skills as skills at all.** They are never audited, by
+any check.
+
+**Corrected in `08`:** a larger and registry-independent sample — 780 repos from code
+search, 771 of them not in this index — puts the visible share at **11.4%, not 5.7%**. This
+sample was per-publisher over a registry and biased low. The direction holds; the magnitude
+did not.
 
 This changes the spec's explanation of the silence. §"what it quietly does not solve" says
 `skill/frontmatter` is mute because published skills are well formed. That is *also* true —

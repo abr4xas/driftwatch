@@ -7,8 +7,7 @@
 
 **Blocked by:** nothing
 
-**Status:** open — **the largest known gap in what driftwatch audits**, found 2026-09-18
-while answering `02`
+**Status: resolved 2026-09-18 — with a decision not to widen.** See §"Answer".
 
 ## The measurement
 
@@ -82,3 +81,116 @@ decision, it is two.
 This does not touch the two-corpus split, and it needs no discovery corpus to act on: the
 measurement above took 70 API calls. It is the cheapest open ticket in this directory and
 the only one whose subject is the shipped tool rather than the research around it.
+
+## Answer
+
+### The sample was widened first, as step 1 asked, and it moved the number
+
+The 70-repo figure in the body came from repos that publish to skills.sh, one row per
+publisher. A second sample — 1000 code search results, **780 unique repos, 771 of them not in
+the skills.sh index** — is both larger and independent of the registry:
+
+| Where the `SKILL.md` lives | Repos | |
+|---|---|---|
+| `skills/` nested (`.agents/skills/`, `plugins/*/skills/`, `src/skills/`, …) | 344 | 44.6% |
+| `skills/` at the repo root | 122 | 15.8% |
+| no `skills` segment at all | 110 | 14.3% |
+| repo root | 105 | 13.6% |
+| **`.claude/skills/`** | **88** | **11.4%** |
+
+So the direction holds and the magnitude does not: **11.4%, not 5.7%.** The first sample was
+biased by being per-publisher over a registry. Recorded rather than quietly replaced, because
+the 5.7% has already been cited in `02` and in a commit message.
+
+### What the candidate rules would actually cover
+
+| Rule | Coverage |
+|---|---|
+| A — `.claude/skills/` (today) | 11.5% |
+| B — `<tool-root>/skills/`, reusing `foreign-tools.ts`'s list | 19.0% |
+| C — any `skills/<dir>/SKILL.md` | 71.2% |
+| D — any file named `SKILL.md` | 97.7% |
+
+B is the tempting one, because the list already exists and `.agents/skills/` and
+`.cursor/skills/` do show up in the data. It buys 7.5 points.
+
+### The measurement that decides it
+
+125 real `SKILL.md` files were fetched across the five layouts, 25 each, and parsed **with
+driftwatch's own `parseFrontmatter`** rather than with a hand-rolled reader. That choice
+mattered: a naive parser reported 15 descriptions under the 20-character floor, and the real
+one reports **zero** — all fifteen were block scalars (`description: >`) that the naive
+regex read as empty. Round eleven's 50-character margin stands.
+
+The rule that decides is the first one, `name` matches its directory:
+
+| bucket | comparable | mismatch | rate |
+|---|---|---|---|
+| `.claude/skills/` | 23 | 2 | **9%** |
+| `skills/` at root | 22 | 1 | 5% |
+| `skills/` nested | 23 | 4 | 17% |
+| elsewhere | 22 | 4 | 18% |
+| repo root | 0 | — | 22 files with no directory to compare against |
+
+And reading all eleven mismatches, **eight are not drift**:
+
+```
+Sales Pipeline Tracker     dir=sales-pipeline-tracker     title case vs kebab
+Hook Development           dir=hook-development           title case vs kebab
+Bankr Dev - Portfolio      dir=bankr-dev-portfolio        title case vs kebab
+Writing for Developers     dir=writing-for-developer      title case, and a plural
+Agent Browser              dir=sakaen736jih_agent-...     directory is generated
+graph                      dir=2026-08-24T09-20-09-850Z   directory is a timestamp
+new-skill                  dir=skills                     no skill directory at all
+skill-name                 dir=skill                      a template's placeholder
+```
+
+Three are plausibly real: `inov8-orthopedics-design` vs `inov8-orthopedics`,
+`flutter-animating-apps` vs `animations`, `testbench-package-testing` vs `testbench-docs`.
+
+**So widening `classifySource` to layout D would add roughly one false positive for every
+eleven skills found.** ADR-0006's conditions 3 through 6 count repos with *zero* false
+positives, and a repo with thirty skills would trip them on its own. The answer to step 2 is
+that no path pattern is safe, and a content gate does not save it either: the gate is about
+whether the file is a skill, and the false positives here are skills — it is the **rule**
+that does not travel, not the classification.
+
+### Decision
+
+**`classifySource` does not widen.** `docs/spec/ROADMAP.md` provides for exactly this
+outcome: tune the heuristics, or accept that the check does not get there and say so. This is
+saying so, with a number attached.
+
+What the check covers is 11.4% of the `SKILL.md` files in the world, and that is the honest
+figure to cite for `skill/frontmatter` from now on — not as a defect to fix, but as the scope
+of what it claims.
+
+### Two things this turned up that are not about widening
+
+**1. A fixable false positive in the check as it ships today.** Reproduced against real
+driftwatch:
+
+```
+.claude/skills/bankr-dev-portfolio/SKILL.md
+  ✗ 2  name  name does not match the directory  → bankr-dev-portfolio?
+1 fixable with --fix
+```
+
+`name: Bankr Dev - Portfolio` is a human-readable title; the directory is its kebab-case
+form. driftwatch offers to **rewrite the title into the slug**. ADR-0006 condition 2 admits
+no false positive among the fixable findings at any rate, and this one is one — if a
+title-cased `name` is legitimate. That is the part this ticket cannot settle: whether Claude
+Code requires `name` to equal the directory is a question about Claude Code's contract, not
+about driftwatch, and it has to be answered from that specification before anything changes.
+It appeared in **1 of 23** real `.claude/skills/` skills sampled, which is not rare.
+
+**2. The container case is already handled.** `.claude/skills/SKILL.md`, with no skill
+directory of its own, produces no finding — checked, not assumed. Comparing `name` against
+`skills` would have been meaningless and the code already declines to.
+
+### What was not done, and why
+
+No code changed. Step 4 of this ticket priced a `classifySource` change at "the corpus
+snapshots move and every diff needs hand review", and the measurement says the change should
+not happen. Paying that cost for a rule that adds a false positive every eleven skills would
+be the treadmill of rounds 13-16 with the direction reversed.
