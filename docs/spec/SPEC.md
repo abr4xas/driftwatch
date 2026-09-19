@@ -378,3 +378,5 @@ Budget, measured on a repo of 5,000 files with 20 sources:
 | **Total end-to-end** | **< 500 ms** |
 
 CLI cold start (require + arg parsing) has to stay under 80 ms. That rules out heavy dependencies on the main path: no `typescript`, `ts-morph` or `esbuild` loaded eagerly.
+
+**How these are measured.** The budgets are asserted in the test suite, which runs one worker per test file — so a single wall-clock sample measures the scheduler alongside the code. Each budget is therefore the **fastest of several runs** (`test/helpers/budget.ts`): contention only ever adds time, so the minimum converges on what the code costs with the machine to itself, and work that genuinely exceeds a budget has no run under it. Raising a budget because it failed is not an option; that is how a budget stops being one.
