@@ -36,12 +36,12 @@ async function indexWith(files: Record<string, string>) {
 describe('suggestPath', () => {
   it('suggests nothing without namesakes', async () => {
     const index = await indexWith({ 'src/other.ts': '' })
-    expect(suggestPath(index, 'src/auth.ts')).toBeUndefined()
+    expect(suggestPath(index, 'src/auth.ts', 'AGENTS.md')).toBeUndefined()
   })
 
   it('a single candidate in a similar directory gives confidence 1 and is fixable', async () => {
     const index = await indexWith({ 'src/auth/auth.ts': '' })
-    expect(suggestPath(index, 'src/lib/auth.ts')).toEqual({
+    expect(suggestPath(index, 'src/lib/auth.ts', 'AGENTS.md')).toEqual({
       value: 'src/auth/auth.ts',
       confidence: 1,
       fixable: true,
@@ -50,7 +50,7 @@ describe('suggestPath', () => {
 
   it('a single candidate in a different directory gives 0.6 and is not fixable', async () => {
     const index = await indexWith({ 'packages/internal/auth.ts': '' })
-    expect(suggestPath(index, 'src/lib/auth.ts')).toEqual({
+    expect(suggestPath(index, 'src/lib/auth.ts', 'AGENTS.md')).toEqual({
       value: 'packages/internal/auth.ts',
       confidence: 0.6,
       fixable: false,
@@ -59,24 +59,24 @@ describe('suggestPath', () => {
 
   it('several namesakes give 0.3 and are never fixable', async () => {
     const index = await indexWith({ 'src/auth.ts': '', 'test/auth.ts': '' })
-    const suggestion = suggestPath(index, 'src/lib/auth.ts')
+    const suggestion = suggestPath(index, 'src/lib/auth.ts', 'AGENTS.md')
     expect(suggestion?.confidence).toBe(0.3)
     expect(suggestion?.fixable).toBe(false)
   })
 
   it('with several namesakes it proposes the one in the most similar directory', async () => {
     const index = await indexWith({ 'src/auth.ts': '', 'vendor/legacy/auth.ts': '' })
-    expect(suggestPath(index, 'src/lib/auth.ts')?.value).toBe('src/auth.ts')
+    expect(suggestPath(index, 'src/lib/auth.ts', 'AGENTS.md')?.value).toBe('src/auth.ts')
   })
 
   it('on a similarity tie it picks the first alphabetically, to stay stable', async () => {
     const index = await indexWith({ 'b/x/auth.ts': '', 'a/y/auth.ts': '' })
-    expect(suggestPath(index, 'z/auth.ts')?.value).toBe('a/y/auth.ts')
+    expect(suggestPath(index, 'z/auth.ts', 'AGENTS.md')?.value).toBe('a/y/auth.ts')
   })
 
   it('suggests for a directory, not only for a file', async () => {
     const index = await indexWith({ 'src/images/logo.png': '' })
-    expect(suggestPath(index, 'public/images')).toBeUndefined()
+    expect(suggestPath(index, 'public/images', 'AGENTS.md')).toBeUndefined()
   })
 })
 
@@ -127,5 +127,56 @@ describe('suggestAnchor', () => {
     // ADR-0006's hard floor. Every case where the fix is obvious is one the
     // canonical key already accepts and never reports.
     expect(suggestAnchor(anchors, 'installl')?.fixable).toBe(false)
+  })
+})
+
+const oneSkillRepo = (): string =>
+  makeTempRepo({ files: { '.agents/skills/agentic-workflows/SKILL.md': '# router\n' } })
+
+describe('a document is never the answer to its own claim', () => {
+  /**
+   * Ticket `22`. `parentSimilarity` divides by the **shorter** directory, so a
+   * target sitting above the claim agrees on every segment it has and scores
+   * 1.00 — the same as a target exactly where the claim said. Confidence 1 is
+   * fixable.
+   *
+   * A claim written relative to a nested source is resolved under that source's
+   * own directory, which makes the source's own siblings prefixed by it for
+   * free. In a repository with a single `SKILL.md`, a skill referring to a
+   * different skill gets offered **itself**:
+   *
+   *     source  .agents/skills/agentic-workflows/SKILL.md
+   *     claim   skills/otel-queries/SKILL.md
+   *     local   .agents/skills/agentic-workflows/skills/otel-queries/SKILL.md
+   *
+   * The guard is not about the score. A document cannot be telling you to read
+   * itself under another name, whatever the arithmetic says.
+   */
+  it('refuses a suggestion that is the file making the claim', async () => {
+    const index = await buildRepoIndex(oneSkillRepo())
+    const source = '.agents/skills/agentic-workflows/SKILL.md'
+    const local = '.agents/skills/agentic-workflows/skills/otel-queries/SKILL.md'
+    expect(suggestPath(index, local, source)).toBeUndefined()
+  })
+
+  it('still suggests it to a different document', async () => {
+    // The guard is about the claim's own file and nothing wider. Another
+    // document naming the same missing path is an ordinary suggestion.
+    const index = await buildRepoIndex(oneSkillRepo())
+    const local = 'docs/skills/otel-queries/SKILL.md'
+    expect(suggestPath(index, local, 'README.md')?.value).toBe(
+      '.agents/skills/agentic-workflows/SKILL.md',
+    )
+  })
+
+  it('leaves every other suggestion where it was', async () => {
+    const index = await buildRepoIndex(
+      makeTempRepo({ files: { 'src/helpers/date.ts': 'export const a = 1\n' } }),
+    )
+    expect(suggestPath(index, 'src/util/date.ts', 'AGENTS.md')).toEqual({
+      value: 'src/helpers/date.ts',
+      confidence: 1,
+      fixable: true,
+    })
   })
 })

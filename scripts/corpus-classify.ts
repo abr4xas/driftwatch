@@ -74,8 +74,9 @@ export function rowsIn(doc: string): Row[] {
 
 /** Every class a person has named, which is the list Jev chooses from. */
 export function classesIn(rows: readonly Row[]): string[] {
-  return [...new Set(rows.filter((row) => row.className !== '—').map((row) => row.className))]
-    .toSorted()
+  return [
+    ...new Set(rows.filter((row) => row.className !== '—').map((row) => row.className)),
+  ].toSorted()
 }
 
 /**
@@ -147,7 +148,8 @@ export function questionsFor(
         'The reported path or script really is missing or wrong, so the document is out of date about this repository and a maintainer would want to fix it.',
       criteria: {
         true: 'The document asserts something about this repository that is no longer so.',
-        false: 'The document is fine and the tool misread it — the string is not a claim about this repository, or it is satisfied in a way the tool cannot see.',
+        false:
+          'The document is fine and the tool misread it — the string is not a claim about this repository, or it is satisfied in a way the tool cannot see.',
       },
     },
     className: {
@@ -173,7 +175,7 @@ const DESCRIPTIONS: Record<string, string> = {
   'comma-separated-globs':
     'A frontmatter value holding several paths in one string, which the extractor claimed as a single path. Each path in it exists; the joined string does not.',
   'crate-nickname':
-    "A short name for a path that exists under a longer one — `gateway/run.rs` for `crates/edgecrab-gateway/src/run.rs`. The file is there under its real name.",
+    'A short name for a path that exists under a longer one — `gateway/run.rs` for `crates/edgecrab-gateway/src/run.rs`. The file is there under its real name.',
   'foreign-project':
     'A path belonging to a different project the document is comparing itself to or citing.',
   'generated-bundle':
@@ -198,7 +200,9 @@ const DESCRIPTIONS: Record<string, string> = {
  */
 type Answer = { isReal: number; jevClass: string; jevConfidence: number }
 
-async function jevAsk(): Promise<(state: ClassifyState, classes: readonly string[]) => Promise<Answer>> {
+async function jevAsk(): Promise<
+  (state: ClassifyState, classes: readonly string[]) => Promise<Answer>
+> {
   const { experimental_evaluate: evaluate } = await import('ai')
   return async (state, classes) => {
     const { answers } = await evaluate({

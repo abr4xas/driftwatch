@@ -274,8 +274,8 @@ describe('condition 6 is divided from the rows it is about', () => {
   }
 
   it('cites the count the per-finding rows produce', () => {
-    const cited = /\*\*(\d+) of (\d+) = [\d.]+%\*\*; validation \*\*(\d+) of (\d+) = [\d.]+%\*\*/u
-      .exec(doc)
+    const cited =
+      /\*\*(\d+) of (\d+) = [\d.]+%\*\*; validation \*\*(\d+) of (\d+) = [\d.]+%\*\*/u.exec(doc)
     if (cited === null) throw new Error('CLASSIFICATION.md does not cite condition 6 both ways')
     const [clean = 0, total = 0, cleanValidation = 0, totalValidation = 0] = cited
       .slice(1)

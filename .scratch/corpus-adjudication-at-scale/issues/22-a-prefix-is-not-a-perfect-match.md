@@ -8,7 +8,7 @@ claim said".
 
 **Blocked by:** nothing
 
-**Status:** open
+**Status: resolved 2026-09-19.** Option 3, and the divisor was left alone. See §"Answer".
 
 ## The mechanism
 
@@ -90,3 +90,67 @@ because a reader will reach for the divisor first, and it is a dead end.
 flag, read edit by edit. Then the 700 repositories before and after, diffed, the way ticket
 `16` established — the certification corpus contains none of this shape, so it can only show
 that nothing else moved.
+
+## Answer
+
+Resolved 2026-09-19. **A suggestion is never the file making the claim.** One filter in
+`suggestPath`, and the divisor is untouched.
+
+### The guard
+
+```ts
+const candidates = candidatesFor(index, basenameOf(rel)).filter(
+  (candidate) => candidate !== source,
+)
+```
+
+`path/missing` passes `claim.source.path`. The argument is not about the arithmetic and
+deliberately so: **a document cannot be telling you to read itself under another name**,
+whatever the score says. That holds if the divisor changes, if `SIMILAR` moves, and if the
+resolution rules change underneath it.
+
+### The reproduction, before and after
+
+The ticket-18 case no longer reproduces from the original file — round twenty-three's
+`ELSEWHERE` section rule silences that document entirely now — so it was rebuilt minimally: one
+repository, one skill, referring to another skill by a path relative to a skills root.
+
+```
+before   ✗ 8  skills/otel-queries/SKILL.md  path does not exist  → .agents/skills/router/SKILL.md?
+              1 fixable with --fix
+after    ✗ 8  skills/otel-queries/SKILL.md  path does not exist
+```
+
+### What it cost
+
+Nothing that can be measured.
+
+| | before | after |
+|---|---|---|
+| certification corpus | 38 findings, 6 fixable | **unchanged** |
+| 700 discovery repositories | 1407 findings, 50 fixable | **unchanged** |
+
+`pnpm corpus --fixes` prints the same six edits and each was read again. The guard fires only
+on a candidate that is the claiming document, and no repository in either corpus contains that
+shape — which is the same position ticket `10` was in and answered the same way: check it
+outside the corpus rather than wait for the corpus to produce it.
+
+### The divisor was a dead end, and that was measured too
+
+§"What to decide" predicted it and the numbers hold. Dividing by the **longer** path leaves
+every real instance above `SIMILAR`: the four wild cases score 0.5, 0.67, 0.5 and 0.5, and the
+constructed one 0.6. All still confidence 1, all still fixable. **Changing the divisor fixes
+nothing**, and it would have been the first thing a reader reached for.
+
+### What is left, and it is not a defect
+
+Five of the 50 fixable findings over 700 repositories score 1.00 because the target's parent is
+a strict prefix of the claim's — and **four of the five look right**: a skill that moved from
+`.claude` to `.agents` (twice), a doubled path segment, a directory renamed from `projects/` to
+`examples/`. The fifth, `jvkersch/tmtools`, rewrites `src/_wrapper.cpp/_wrapper.h` into
+`src/_wrapper.h`, and the document appears to be naming two files.
+
+So the scoring produces mostly good fixes by an argument that does not hold. That is worth
+knowing and it is not worth changing on this evidence: one questionable edit in 700
+repositories, against a rule whose alternative has no candidate. If a second instance turns up,
+it has a ticket to be added to.
