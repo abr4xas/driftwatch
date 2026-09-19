@@ -155,3 +155,55 @@ describe('the gates that read the document', () => {
     expect(disclaims(line, 'acme/tool')).toBe(false)
   })
 })
+
+/**
+ * A path the document elsewhere tells you to create is a destination, not a
+ * claim that it exists.
+ *
+ * `isCreateInstruction` already covers the sentence the claim sits in. This is
+ * the other half: the instruction is somewhere else in the same document, and
+ * the sentence holding the claim only refers to the thing being created.
+ */
+function declaresDestination(content: string, text: string): boolean {
+  return proseGatesFor(content, undefined).declaresDestination(text)
+}
+
+describe('a path the document tells you to create', () => {
+  // Real case (remix-run/react-router), the two findings that broke ADR-0006
+  // condition 2. The claims are on the "Review whether" and "Use" lines; the
+  // instruction to create the file is on the bullets between them.
+  const RELEASE_NOTES = [
+    '4. Review whether `scripts/changes/whats-changed.md` is needed:',
+    '   - Read `CHANGELOG.md` examples or `references/whats-changed.md` when uncertain',
+    '   - Add `scripts/changes/whats-changed.md` only for features, migration guidance,',
+    '     or complex behavior that needs long-form text',
+    '   - Do not add it for ordinary bug fixes or internal refactors',
+    '',
+    '## Guidance',
+    '',
+    'Use `scripts/changes/whats-changed.md` for release-level narrative.',
+    '',
+  ].join('\n')
+
+  it('recognises a path the document adds elsewhere', () => {
+    expect(declaresDestination(RELEASE_NOTES, 'scripts/changes/whats-changed.md')).toBe(true)
+  })
+
+  it('says nothing about a path the document only reads', () => {
+    // `references/whats-changed.md` is on a "Read ..." bullet. Same basename,
+    // and the document treats it as a different file that already exists.
+    expect(declaresDestination(RELEASE_NOTES, 'references/whats-changed.md')).toBe(false)
+    expect(declaresDestination(RELEASE_NOTES, 'CHANGELOG.md')).toBe(false)
+  })
+
+  it('recognises `save ... at`, which is how a scratch file gets written', () => {
+    // Real case (remix-run/react-router), the third finding of the same class.
+    const content = 'Save the resolved decisions to a scratch file at `tasks/rfc-decisions.md`.\n'
+    expect(declaresDestination(content, 'tasks/rfc-decisions.md')).toBe(true)
+  })
+
+  it('does not fire on a document that never instructs', () => {
+    const content = 'The entry point is `src/index.ts` and the config is `tsconfig.json`.\n'
+    expect(declaresDestination(content, 'src/index.ts')).toBe(false)
+  })
+})

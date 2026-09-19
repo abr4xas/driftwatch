@@ -110,6 +110,12 @@ const CREATE_IMPERATIVES = [
   // exist because nobody has written a skill yet, which is what the sentence
   // is for.
   'write',
+  // Real case (remix-run/react-router): "Save the resolved decisions to a
+  // scratch file at `tasks/rfc-decisions.md`." A scratch file is written by the
+  // agent following the instruction, so the path is a destination.
+  'save',
+  'guardar',
+  'guarda',
   'escribir',
   'escribe',
   'escribí',
@@ -409,14 +415,71 @@ function proseDisclaims(window: ProseWindow, ctx: ProseContext = { origin: undef
  * scanned for `~/` roots once, and the end-to-end budget in `SPEC.md` § 9 is
  * 500 ms.
  */
+/**
+ * Every path the document **instructs the reader to create**, anywhere in it.
+ *
+ * `isCreateInstruction` asks whether the sentence holding the claim opens with
+ * an imperative. That is the common shape and it is not the only one: a
+ * document can say "Add `x`" in one bullet and refer to `x` two lines above and
+ * fifty lines below, and those other mentions are about the same destination.
+ *
+ * Real case (remix-run/react-router), which broke ADR-0006 condition 2:
+ *
+ *     4. Review whether `scripts/changes/whats-changed.md` is needed:
+ *        - Read `CHANGELOG.md` examples or `references/whats-changed.md` …
+ *        - **Add** `scripts/changes/whats-changed.md` only for features, …
+ *        - Do not add it for ordinary bug fixes …
+ *
+ * The two findings were on the "Review whether" line and on a "Use `…`" line
+ * further down. The document spends four bullets on when to create the file, so
+ * it plainly does not claim the file is there — and driftwatch offered to
+ * **autofix** it into `references/whats-changed.md`, a different file the
+ * document mentions one line above.
+ *
+ * Only backticked spans count. A path in prose without code formatting is not
+ * something this project extracts as a claim either, so widening here would
+ * collect strings no gate is ever asked about.
+ *
+ * What it costs is a document that says "Create `x`" in one place and asserts
+ * `x` exists in another. That document contradicts itself, and this project
+ * takes the quiet reading of a contradiction every time.
+ */
+function creationTargets(content: string): ReadonlySet<string> {
+  const targets = new Set<string>()
+  for (const line of content.split('\n')) {
+    // Sentence by sentence, because one line carries several: the laravel/vet
+    // case `segmentAround` was written for.
+    for (const sentence of line.split(/(?<=[.!?])\s+/u)) {
+      if (!isCreateInstruction(sentence)) continue
+      for (const match of sentence.matchAll(/`([^`\n]+)`/gu)) {
+        const value = (match[1] ?? '').trim()
+        if (value !== '') targets.add(value)
+      }
+    }
+  }
+  return targets
+}
+
 export type ProseGates = {
   /** Whether the prose around `offset` says there is no claim here. */
   disclaims(offset: number): boolean
+  /**
+   * Whether the document instructs the reader to create this exact path, in
+   * any sentence. See `creationTargets`.
+   */
+  declaresDestination(text: string): boolean
 }
 
 export function proseGatesFor(content: string, origin: string | undefined): ProseGates {
   const externalRoots = externalRootSections(content)
+  // Both scans are done once per source rather than once per claim: a document
+  // with two hundred claims would otherwise read itself two hundred times, and
+  // `SPEC.md` § 9 budgets 500 ms end to end.
+  const destinations = creationTargets(content)
   return {
+    declaresDestination(text) {
+      return destinations.has(text)
+    },
     disclaims(offset) {
       // Section first, then line: the section scope is the broader answer, and
       // it is a lookup against a list computed once.

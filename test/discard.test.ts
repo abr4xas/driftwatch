@@ -90,6 +90,31 @@ describe('rule 4: looks like a file and is not', () => {
   })
 })
 
+/**
+ * `path/to/…` is the metasyntactic *path*, and it is a sequence rather than a
+ * word — which is why it cannot live in `METASYNTACTIC`, whose members are
+ * tested one segment at a time. `path` and `to` are both ordinary directory
+ * names on their own.
+ */
+describe('the metasyntactic path', () => {
+  it.each([
+    'path/to/file.ts',
+    'path/to/your-file.md',
+    'path/to/',
+    'some/path/to/thing.ts',
+    'Path/To/File.ts',
+  ])('discards %s', (text) => {
+    expect(discardReason(text)).toBe('metasyntactic')
+  })
+
+  it.each(['src/path/resolve.ts', 'lib/to/index.ts', 'path/index.ts', 'docs/to-do.md'])(
+    'leaves %s alone, because the two words are only a placeholder together',
+    (text) => {
+      expect(discardReason(text)).toBeUndefined()
+    },
+  )
+})
+
 describe('rule 5: normalization', () => {
   it('strips the leading ./', () => {
     expect(normalizePathText('./src/index.ts')).toBe('src/index.ts')

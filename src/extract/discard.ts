@@ -222,8 +222,31 @@ export function isPlaceholderName(word: string): boolean {
   )
 }
 
+/**
+ * `path/to/…`, the metasyntactic path.
+ *
+ * It is a **sequence**, not a word, which is why it cannot join
+ * `METASYNTACTIC`: that set is tested one segment at a time, and `path` and
+ * `to` are both ordinary directory names on their own — `src/path/resolve.ts`,
+ * `lib/to/index.ts`. Only adjacent do they stop naming anything.
+ *
+ * Real case (`withastro/astro`), in a template for the review output a skill
+ * should produce:
+ *
+ *     `[medium][requirements]` `path/to/file.ts:87` - Short title. Explain the
+ *     unmet requirement, impact, and minimal remediation direction.
+ *
+ * Matched at any position rather than only at the front, because a document
+ * writes `some/path/to/thing` as readily as `path/to/thing`, and case-
+ * insensitively because prose capitalises it.
+ */
+function hasMetasyntacticPath(text: string): boolean {
+  const segments = text.toLowerCase().split('/')
+  return segments.some((segment, i) => segment === 'path' && segments[i + 1] === 'to')
+}
+
 function hasMetasyntacticSegment(text: string): boolean {
-  return text.split('/').some(isPlaceholderName)
+  return hasMetasyntacticPath(text) || text.split('/').some(isPlaceholderName)
 }
 
 function isNotAFile(text: string): boolean {

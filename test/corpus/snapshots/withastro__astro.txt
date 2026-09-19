@@ -1,7 +1,7 @@
 # withastro/astro
 
 sources: 9
-errors: 1
+errors: 0
 warnings: 0
 fixable: 0
 
@@ -17,4 +17,4 @@ skill  .agents/skills/writing-comments/SKILL.md
 agents-md  AGENTS.md
 
 ## findings
-.agents/skills/astro-code-review/SKILL.md:373:29  [path/missing] inline-code  path/to/file.ts  -> packages/astro/src/content/loaders/file.ts (0.6)
+(none)

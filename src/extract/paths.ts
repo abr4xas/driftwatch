@@ -203,6 +203,9 @@ export function extractPathClaims({
     // Rule 8: the line may be saying that this is an example, or that the
     // path may not exist. In both cases there is no claim to verify.
     if (prose.disclaims(span.offset[0])) continue
+    // Rule 9: somewhere else in this document, the reader is told to create
+    // this exact path. See `creationTargets`.
+    if (prose.declaresDestination(span.value)) continue
     push(span.value, span.value, span.offset, 'inline-code')
   }
 
@@ -210,6 +213,7 @@ export function extractPathClaims({
     const target = withoutAnchor(link.value)
     if (target === undefined) continue
     if (prose.disclaims(link.offset[0])) continue
+    if (prose.declaresDestination(link.value)) continue
     // The offset still points at the full url, anchor included, because that
     // is what is written in the file and what --fix would have to replace.
     push(link.value, decodeTarget(target), link.offset, 'link')

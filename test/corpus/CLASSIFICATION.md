@@ -2,9 +2,9 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 56 findings.**
+Corpus: **66 public repos pinned to a commit, 52 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below. Of those 30, **2 are true and 28 are false**, which takes the corpus to 56 findings, 22 true and 34 false.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Round nineteen then closed two of those classes, removing 4 more. The corpus stands at **52 findings, 22 true and 30 false**.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -16,7 +16,7 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | 3 fixable, **2 false** (`react-router`, round 18) | **broken** |
+| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 19 |
 | 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
@@ -25,9 +25,9 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **3**, of which **2 are false**. Both arrived in round eighteen and both are the same claim in `remix-run/react-router`, so **ADR-0006 condition 2 is broken**: it admits no false positive among the fixable at any rate. The class is named in round eighteen and is not yet closed.
+Fixable findings: **1**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them.
 
-**Eight of nine conditions are met, and condition 2 is broken** by round eighteen. The validation-group conditions are untouched, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
+**All nine conditions are met again** after round nineteen repaired condition 2, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
 
 Four rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together, because two of them broke conditions and two repaired them:
 
@@ -1248,3 +1248,59 @@ Nothing in validation: all 48 landed in calibration, so no repo moved groups and
 2. Price class A's rule — a first segment matching a package name in the repo.
 3. Add `path/to` to `METASYNTACTIC`, which closes class D's largest member for one line.
 4. The two replacement validation repos owed since M2 are **still** owed. This round did not pay them and burned nothing: every finding it produced landed in calibration.
+
+---
+
+## Nineteenth round, 2026-09-19: two classes closed, and condition 2 repaired
+
+Round eighteen left four things owed. Two of them are done here, and they are the two that cost a rule each.
+
+### The metasyntactic path
+
+`path/to/file.ts`, in `withastro/astro`'s review-output template:
+
+    `[medium][requirements]` `path/to/file.ts:87` - Short title. Explain the unmet
+    requirement, impact, and minimal remediation direction.
+
+Round eighteen called this "the cheapest correction in this round — add `path/to` to `METASYNTACTIC`, one line". **That was wrong about where it goes.** `METASYNTACTIC` is tested one segment at a time, and `path` and `to` are both ordinary directory names: `src/path/resolve.ts`, `lib/to/index.ts`. Adding either would have been one of the widest false-negative rules in the file.
+
+`path/to` is a **sequence**, so it gets its own test: two adjacent segments, at any position, case-insensitive. `some/path/to/thing` is as much a placeholder as `path/to/thing`, and a repository with a real `path/to/` directory is not a thing.
+
+One finding closed, in a calibration repo. Free.
+
+### A path the document tells you to create, somewhere else in the document
+
+This is the one that broke condition 2, and the class is worth stating precisely because the existing rule was so close to catching it.
+
+`CREATE_IMPERATIVES` asks whether **the sentence holding the claim** opens with an imperative. In `remix-run/react-router` the instruction and the claims are in different sentences:
+
+> 4. Review whether `scripts/changes/whats-changed.md` is needed:
+>    - Read `CHANGELOG.md` examples or `references/whats-changed.md` when uncertain
+>    - **Add** `scripts/changes/whats-changed.md` only for features, …
+>    - Do not add it for ordinary bug fixes …
+
+The two findings sat on the "Review whether" line and on a "Use `…`" line fifty lines below. Both refer to a file the document spends four bullets explaining when to create.
+
+So the gate now also collects **every backticked path in any sentence that opens with a create imperative**, once per document, and a claim naming one of them is not a claim. Only backticked spans count, because a path without code formatting is not extracted as a claim in the first place.
+
+`save` joins the imperatives, for the third finding of the same class: *"Save the resolved decisions to a scratch file at `tasks/rfc-decisions.md`."*
+
+**What it costs** is a document that says "Create `x`" in one place and asserts `x` exists in another. Such a document contradicts itself, and this project takes the quiet reading of a contradiction every time.
+
+### The bill
+
+Three findings closed in `react-router`, one in `astro`. Both are **calibration** repos, so nothing moved groups and no replacement is owed — the first round in a while where closing a class cost nothing, and only because round eighteen's findings all landed in calibration.
+
+| | round 18 | round 19 |
+|---|---|---|
+| findings | 56 | **52** |
+| fixable | 3 | **1** |
+| false fixable | 2 | **0** |
+
+**Condition 2 is repaired.** The one remaining fixable finding is `fireSeqSearch`, true since round 14.
+
+### Still owed from round eighteen
+
+1. Class A, the package-name prefix — 16 findings, and a rule shape that exists: a first segment matching a package name in the repo. Not taken here because it is the only one of the four that needs the manifests, and it deserves its own round.
+2. Class C, an absolute path that is a documentation-site URL — 3 findings, and a judgement about next.js rather than about a string.
+3. The two replacement validation repos owed since M2.
