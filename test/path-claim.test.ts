@@ -18,7 +18,11 @@ function group(paths: readonly string[]): Map<string, string[]> {
  * every rule it composes is answered from the index and from the git set, so
  * the matrix below needs no temporary directory and no clone.
  */
-function indexOf(files: readonly string[], dirs: readonly string[] = []): RepoIndex {
+function indexOf(
+  files: readonly string[],
+  dirs: readonly string[] = [],
+  packages: readonly string[] = [],
+): RepoIndex {
   const allDirs = new Set(dirs)
   for (const file of files) {
     const segments = file.split('/')
@@ -30,7 +34,9 @@ function indexOf(files: readonly string[], dirs: readonly string[] = []): RepoIn
     dirs: allDirs,
     byBasename: group(files),
     dirsByBasename: group([...allDirs]),
-    manifests: new Map(),
+    manifests: new Map(
+      packages.map((name, i) => [`packages/p${i}`, { dir: `packages/p${i}`, name, scripts: {} }]),
+    ),
     listing: 'git',
   }
 }
@@ -159,5 +165,59 @@ describe('the order the rules are asked in', () => {
       contextOf(indexOf(['node_modules/x/index.js'])),
     )
     expect(verdict).toEqual({ kind: 'unanswerable', rule: 'generated' })
+  })
+})
+
+/**
+ * A path whose first segment is the name of a package **in this repo** is a
+ * package specifier, not a path from the repo root.
+ *
+ * Real case (remix-run/react-router), sixteen findings in one skill, which
+ * states the convention itself:
+ *
+ *     When this skill references `react-router/docs/...`, read the matching
+ *     file under `node_modules/react-router/docs/`. If the installed version
+ *     does not include local docs, use the repo `docs/` directory
+ *
+ * That sentence is one of the sixteen.
+ */
+describe('a path prefixed with a package name', () => {
+  const INDEX = indexOf(
+    ['docs/start/modes.md', 'packages/react-router/package.json'],
+    [],
+    ['react-router'],
+  )
+
+  it('declines a claim whose first segment names a package in the repo', () => {
+    expect(verifyPathClaim(claimOf('react-router/docs/start/modes.md'), contextOf(INDEX))).toEqual({
+      kind: 'unanswerable',
+      rule: 'package-specifier',
+    })
+  })
+
+  it('still answers when the first segment is a real top-level directory', () => {
+    // The gate is absence, as in `belongsToAbsentTool`. A repo with a package
+    // called `docs` *and* a `docs/` directory is talking about the directory,
+    // and a file missing from it is drift like any other.
+    const index = indexOf(['docs/start/modes.md'], [], ['docs'])
+    expect(verifyPathClaim(claimOf('docs/gone.md'), contextOf(index))).toEqual({
+      kind: 'missing',
+      local: 'docs/gone.md',
+    })
+  })
+
+  it('leaves a path alone when no package carries that name', () => {
+    expect(verifyPathClaim(claimOf('other-pkg/docs/x.md'), contextOf(INDEX))).toEqual({
+      kind: 'missing',
+      local: 'other-pkg/docs/x.md',
+    })
+  })
+
+  it('does not fire on a single segment, which is not a path anyway', () => {
+    // `bare-word` discards these before they reach here (ADR-0003), and the
+    // index answers this one as a suffix of `packages/react-router`. What
+    // matters is that *this* rule is not the one declining.
+    const verdict = verifyPathClaim(claimOf('react-router'), contextOf(INDEX))
+    expect(verdict.kind === 'unanswerable' && verdict.rule).not.toBe('package-specifier')
   })
 })

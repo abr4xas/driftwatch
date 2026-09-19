@@ -31,7 +31,7 @@
  * the list next year costs a detection nobody was relying on. Falling behind is
  * free; being wrong is not possible.
  */
-import { hasDir, type RepoIndex } from './repo-index.ts'
+import { allManifests, hasDir, type RepoIndex } from './repo-index.ts'
 
 /**
  * `.claude` is on the list too, and it is the interesting entry.
@@ -86,4 +86,46 @@ export function belongsToAbsentTool(index: RepoIndex, asWritten: string): boolea
   const first = asWritten.split('/')[0] ?? ''
   if (!TOOL_ROOTS.has(first)) return false
   return !hasDir(index, first)
+}
+
+/**
+ * Whether the path's first segment names a package **this repo publishes**.
+ *
+ * Real case (remix-run/react-router), sixteen findings in one skill — and the
+ * skill states the convention itself, in a sentence that is one of the sixteen:
+ *
+ *     When this skill references `react-router/docs/...`, read the matching
+ *     file under `node_modules/react-router/docs/`. If the installed version
+ *     does not include local docs, use the repo `docs/` directory
+ *
+ * `react-router/docs/start/modes.md` is the published package's copy of a file
+ * the repo keeps at `docs/start/modes.md`. The prefix is a **package
+ * specifier**, the same as `link:` or `#lib/` in `discard.ts`, except that this
+ * one cannot be recognised from syntax: it is an ordinary-looking path, and the
+ * only thing that tells you otherwise is knowing the package's name.
+ *
+ * Which this tool does know. `buildRepoIndex` parses every `package.json` it
+ * walks past, so the set of names the repo publishes is already in hand.
+ *
+ * **Gated on absence**, exactly like `belongsToAbsentTool` above, and for the
+ * same reason. If a top-level directory with that name exists, the document is
+ * talking about the directory and a missing file under it is drift like any
+ * other. It is only when the name resolves to nothing in the tree that a
+ * package is the remaining explanation. A monorepo publishing a package called
+ * `docs` while keeping a real `docs/` therefore keeps every finding it had.
+ *
+ * What it costs is a repo that publishes a package named after a directory it
+ * deleted. That is a narrow case, and it reads as a false negative rather than
+ * a false positive, which is the trade this project takes every time.
+ */
+export function isPackageSpecifier(index: RepoIndex, asWritten: string): boolean {
+  // A single segment is not a path (ADR-0003) and `bare-word` has already
+  // discarded it; requiring the slash keeps this from answering about one.
+  if (!asWritten.includes('/')) return false
+  const first = asWritten.split('/')[0] ?? ''
+  if (first === '' || hasDir(index, first)) return false
+  for (const [, manifest] of allManifests(index)) {
+    if (manifest.name === first) return true
+  }
+  return false
 }
