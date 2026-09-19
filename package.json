@@ -51,6 +51,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "corpus": "node --experimental-strip-types scripts/corpus.ts",
+    "corpus-classify": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/corpus-classify.ts",
     "discovery": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/discovery.ts",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
