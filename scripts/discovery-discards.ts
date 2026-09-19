@@ -63,6 +63,13 @@ export type DiscardRecord = {
    * **Absent when the question does not apply.** `pnpm build` is not a path and
    * neither is `#installation`, so nothing is asserted about them; they are
    * counted as worth reading, which is what they are — there are 60 of them.
+   *
+   * Even at its narrowest this column is an **upper bound**, and ticket `16`
+   * found out how loose it can be: the rules that decline to answer a claim —
+   * `exists-as-suffix` above all — run *after* the discard rules and catch what
+   * they let through, so a gate can look expensive here and cost nothing. A row
+   * says where to look and not what anything costs. What it cost in one case is
+   * in the ticket, where a count over these repositories belongs.
    */
   exists?: boolean
 }

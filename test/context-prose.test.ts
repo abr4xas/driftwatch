@@ -207,3 +207,54 @@ describe('a path the document tells you to create', () => {
     expect(declaresDestination(content, 'src/index.ts')).toBe(false)
   })
 })
+
+describe('`optional`, which was measured and left alone', () => {
+  /**
+   * Ticket `16`. `optional` is matched as a substring against the **two-line
+   * window**, wide enough to reach a sentence the word has nothing to do with,
+   * and it fires more often than any other marker in `HEDGED`.
+   *
+   * It was scoped to the sentence, the way `CONDITIONAL` is, and then measured
+   * over the discovery corpus: the change produced new findings, removed none,
+   * and every new one was a false positive. A discard is not a finding, and the
+   * rules that decline to answer a claim — `exists-as-suffix` above all — catch
+   * what this gate lets through. So the wide scope was kept, and `AGENTS.md`'s
+   * rule about what a false positive costs is why. The counts are in the
+   * ticket.
+   *
+   * These cases pin what was kept, so the next reader finds the measurement
+   * instead of repeating it.
+   */
+  it('silences the sentence it is in', () => {
+    expect(disclaims('- Optional: existing `‸design/concept.md` for the draft\n')).toBe(true)
+  })
+
+  it('reaches across the window, which is the part that looked wrong', () => {
+    // haddocking/haddock3 asserts three files exist in three consecutive
+    // sentences and the word in one of them silences the others. All three
+    // resolve under `src/haddock/`, so not one was ever going to be reported.
+    const wrapped =
+      'Optional top-level parameters (`preprocess`) are in\n' +
+      '`core/optional.yaml`. Global execution parameters are in `‸modules/defaults.yaml`.\n'
+    expect(disclaims(wrapped)).toBe(true)
+  })
+
+  /**
+   * **Accidental, and recorded rather than endorsed.**
+   *
+   * cloudfoundry/uaa-release: "produces `config/uaa.yml` … on the target VM …
+   * and optionally an LDAP/SAML IdP". Those files are rendered onto a machine
+   * that is not the repository, and `HEDGED` has no marker for that — what
+   * keeps them quiet is `optional` matching inside `optionally`, two clauses
+   * away.
+   *
+   * So this asserts a substring match nobody designed. `CONDITIONAL` uses
+   * `\b${modal}\b` and this list does not; making the two agree is a
+   * defensible change and it would break this case. Anyone making it should
+   * **re-run the measurement** rather than delete the assertion — the ledger
+   * that kept the wide scope is what this case is holding up.
+   */
+  it('matches inside a longer word, which is an accident that prevents two findings', () => {
+    expect(disclaims('It produces `‸config/uaa.yml` and optionally an LDAP IdP.\n')).toBe(true)
+  })
+})

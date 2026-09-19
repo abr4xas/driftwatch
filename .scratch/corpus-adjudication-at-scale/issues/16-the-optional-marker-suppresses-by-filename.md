@@ -7,7 +7,7 @@ it fires more than any other marker in the list and defends nothing the corpus h
 
 **Blocked by:** nothing — `07` produced the evidence
 
-**Status:** open
+**Status: resolved 2026-09-19.** Measured and **left alone** — option 3. See §"Answer".
 
 ## What `07` measured, over 700 repositories
 
@@ -87,3 +87,86 @@ gate" requires the corpus before and after with the diff read by hand.
 
 The other entries in `HEDGED`. `07` looked at every `hedged` discard's marker and this is the
 only one whose *scope* is wrong rather than merely costly.
+
+## Answer
+
+Resolved 2026-09-19. **The change was made, measured, and reverted.** `optional` stays where
+it is, and the reason is the opposite of what this ticket expected.
+
+### What was implemented
+
+Option 1, as recommended: `optional` and `opcional` out of `HEDGED` and into a
+sentence-scoped list, the way `CONDITIONAL` already is. Tests first, all passing, and the
+certification corpus unchanged at 66 repos · 320 sources · 33 findings — exactly as this
+ticket predicted, and exactly as uninformative as it warned: *"the 66 do not contain the
+shape at all, which is why nothing moved"*.
+
+### What the measurement the corpus could not give said
+
+The 700 discovery repositories were audited twice, once with the marker in the window and once
+with it scoped to the sentence, and the findings diffed:
+
+```
+before 1440 findings · after 1442
+ADDED 2 · REMOVED 0
+```
+
+**Two new findings in 700 repositories, and both are false positives.**
+`cloudfoundry/uaa-release`'s `CLAUDE.md`:
+
+> ERB templates under `jobs/uaa/templates/` are rendered with those properties → produces
+> `config/uaa.yml`, `config/bpm.yml`, … **on the target VM** … and **optionally** an LDAP/SAML
+> IdP per configured properties.
+
+Those files are rendered at deploy time onto a machine that is not this repository, and the
+sentence says so. `HEDGED` has no marker for "produces on the target VM" — what was keeping
+them quiet is `optional` matching inside **`optionally`**, two clauses away. An accident, with
+the right outcome.
+
+### Why the cost this ticket measured was not a cost
+
+The headline case was `haddocking/haddock3`, three files asserted in three consecutive
+sentences and all three silenced. They are at:
+
+```
+src/haddock/core/mandatory.yaml
+src/haddock/core/optional.yaml
+src/haddock/modules/defaults.yaml
+```
+
+The document is written relative to `src/haddock/`. `path-claim.ts`'s `exists-as-suffix` rule
+answers every one of them, so **not one was ever going to be reported**, whatever the gate did.
+Releasing 43 candidates from the gate produced zero true findings.
+
+So the marker's ledger, **in these 700 repositories and given the rules that run after it**,
+is: prevents 2 false positives, costs 0 findings. Against `AGENTS.md` — one false positive
+costs more than ten false negatives — that is not a close call. Option 3.
+
+Two things keep that from being a general claim, and both are worth stating rather than
+leaving implied. The rescue is `exists-as-suffix`, which is **contingent**: it answers these
+candidates because haddock3's document happens to be written relative to a subdirectory, not
+because there is a general backstop behind the discard rules. And "both are false positives"
+is my reading of two documents, not a human verdict — the discovery corpus carries none by
+definition, which is the whole reason `AGENTS.md` keeps it apart from the 66. A different 700
+repositories could ledger differently.
+
+### What this says about `07`'s method, which is the more useful half
+
+`07`'s table has an `absent` column, and its docstring already said it is *"not 'would have
+been a finding'"*. This is that caveat with a number on it: **43 discards released, 14 of them
+in the `absent` column, 0 new true findings.** Everything `path-claim.ts` declines to answer —
+`exists-as-suffix`, `generated`, `ignored-by-git`, `absent-tool` — runs after the discard rules
+and catches what they let through.
+
+The discard table therefore reads as an **upper bound on a rule's cost, not its cost**, and a
+row that looks expensive can be free. Any future ticket mining that table has to do what this
+one did: change the rule, audit the discovery corpus twice, and diff the findings. The table
+says where to look; only the diff says what it costs.
+
+### What is left as a known fragility
+
+`HEDGED` has no marker for a file a deployment renders onto another machine, and two real
+claims are quiet only because an unrelated adverb contains a marker. Worth knowing; not worth a
+new suppression rule on one repository's evidence. The tests in `test/context-prose.test.ts`
+now pin all three behaviours — the sentence case, the across-the-window case, and the
+`optionally` substring — so the next reader finds the measurement instead of repeating it.

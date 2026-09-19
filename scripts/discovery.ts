@@ -57,15 +57,7 @@ import { messageOf } from '../src/core/errors.ts'
 import type { RunOptions, RunResult } from '../src/run.ts'
 import { CORPUS, slugOf } from './corpus-repos.ts'
 import { sparseClone } from './discovery-clone.ts'
-import {
-  CURSOR,
-  jsonlIn,
-  LIST,
-  readList,
-  REPOS_DIR,
-  RESULTS,
-  ROOT,
-} from './discovery-files.ts'
+import { CURSOR, jsonlIn, LIST, readList, REPOS_DIR, RESULTS, ROOT } from './discovery-files.ts'
 
 // --- Enumeration ------------------------------------------------------------
 

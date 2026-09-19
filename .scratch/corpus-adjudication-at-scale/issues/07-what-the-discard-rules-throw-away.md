@@ -203,7 +203,16 @@ the whole gate, where the next marker down fires 32. It is tested as a substring
 neighbours — `haddocking/haddock3` asserts three files exist in three consecutive sentences
 and loses all three. Dropping it leaves the certification corpus identical, finding for
 finding, and `CLASSIFICATION.md` names no false positive it prevents. Ticket `16`, with the
-evidence and the options; it is a change to `src/extract/`, so it is not made here.
+evidence and the options; it is a change to `src/extract/`, so it was not made here.
+
+**It was then made, measured and reverted** — see `16`, and the sentence above is left as it
+was written rather than quietly corrected. "The one rule whose scope is wrong" was the reading
+this table supported and it did not survive contact with the findings: scoping `optional` to
+the sentence released 43 candidates and produced, over the same 700 repositories, **two new
+findings and no removals, both of which I read as false positives**. The headline case silenced
+three files that all resolve under `src/haddock/`, which `path-claim.ts`'s `exists-as-suffix`
+rule answers whatever the gate does. In that sample, and given the rules that run after it, the
+marker prevents two false positives and costs no findings.
 
 **`conditional` fires rarely and is wrong more often than not when it fires.** 32 discards in
 700 repositories, 26 absent, and reading them: roughly half are real claims where the modal
@@ -240,12 +249,27 @@ Nothing, by construction. The certification corpus is unchanged through all of i
 320 sources · 33 findings, calibration 21 · validation 12 — which is also the evidence that
 the instrumentation is behaviour-neutral: a sink nobody attaches changes no finding anywhere.
 
+### The limit of this table
+
+Every row is an **upper bound on a rule's cost, not its cost**, and that part is definitional
+rather than discovered: releasing N candidates from a rule can produce at most N findings, and
+usually fewer, because everything `path-claim.ts` declines to answer runs *after* the discard
+rules and catches what they let through. `absent` narrows the bound and does not close it —
+the column's own docstring says it is not "would have been a finding".
+
+What `16` added is the one thing the definition does not give: **how loose the bound can get.**
+43 discards released from a gate, 14 of them in the `absent` column, and zero new true
+findings. That is one measurement of one gate and it is not a rate, but it is enough to stop
+anybody reading a row as a cost.
+
+So the method for arguing about a rule is: change it, audit the discovery corpus before and
+after, and diff the findings. This table says where to look and nothing more.
+
 ### What is left
 
-`16` is the one rule this justifies changing, and it is left open on purpose: a rule mined
-here gets written by hand in `src/` and measured against the 66 repositories that carry human
-verdicts, and the measurement that exists so far covers what dropping `optional` does to the
-66 and not what it costs elsewhere.
+Nothing in this ticket. `16` is resolved — the one rule that looked worth changing was changed,
+measured and left alone — and `15` is fixed. The instrumentation stays for the next rule
+somebody wants to argue about.
 
 ### What a review caught
 

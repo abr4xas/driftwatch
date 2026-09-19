@@ -215,6 +215,8 @@ Everything the corpus measures is on one side of the tool: findings are counted 
 
 `ExtractContext` carries an optional `DiscardSink`, absent on every ordinary run, and the three extractors that consult a discard rule — `paths.ts`, `links.ts`, `scripts.ts` — report to it every candidate they refuse, with the rule's name, the prose window the rule read, and whether the repository turns out to have that path anyway. `scripts/discovery-discards.ts` runs it over the discovery corpus and prints one row per rule; `pnpm discovery sample` prints the windows a person then reads.
 
+The table is an **upper bound on what a rule costs, not its cost**: a discard is not a finding, and everything `path-claim.ts` declines to answer runs after these rules and catches what they let through. Ticket `16` found that bound loose enough for a gate to look expensive and cost nothing. Deciding whether a rule is mistuned means changing it and diffing the findings before and after, not reading a row.
+
 Three things keep the table honest. A prose gate is only credited with a candidate the other rules would have let through, since the gates run first and inline code is mostly not paths at all. All three extractors report, because the gates are shared and a table that counted one of them would report a rule's cost as smaller than it is. And nothing computed there is a precision: see `AGENTS.md` § "The discovery corpus is not a corpus in the same sense", which `formatTable` prints alongside the table because the table is the part that gets pasted somewhere.
 
 ---
