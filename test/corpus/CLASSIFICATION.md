@@ -1550,14 +1550,22 @@ of which taught something:
 
 Three changes, each priced separately.
 
-### The markers are read against the prose, not the line
+### The hedge whose two halves a path stands between
 
-Inline code is the claim; the words around it are the prose. Markers are now matched with the
-code spans removed and whitespace collapsed, so a path standing between a marker's two words no
-longer hides it — and a marker split by a line wrap is read too.
+`HEDGED` holds literal strings and a document writes ``If `x` exists``: the marker split by the
+very thing it is hedging about. It is now one **pattern**, `if … exists`, read against the line
+with each code span masked to a single character.
 
-What it gives up is a marker written **inside** a span: `` `deprecated` `` as a token stops
-reading as the word. That is the right way round.
+Both halves of that came from getting it wrong, and a reviewer found the first while a
+measurement found the second:
+
+| attempt | what broke |
+|---|---|
+| strip every span before matching | "Pick a name such `foo` as the slug" becomes the marker "such as" |
+| leave the spans in place | `` `CREATE TABLE IF NOT EXISTS` `` reads as a hedge about `src/schema.sql` on the same line (edmundmiller/dotfiles) |
+
+A mask is not whitespace, so it cannot join two phrases; and it hides what is inside a span,
+which is something being named rather than something being said.
 
 ### A line that introduces a list speaks for the list
 
@@ -1597,13 +1605,15 @@ repositories were audited before and after and the findings diffed, the way tick
 established:
 
 ```
-before 1442 · after 1437
-ADDED 0 · REMOVED 5
+before 1442 · after 1430
+ADDED 0 · REMOVED 12
 ```
 
-**Nothing was added**, which is structural: these changes only widen suppression. Of the five
-removed, three are correct — all the ``If `x` exists`` shape, in `cenconq25/claude-code-app-studio`,
-`avatune/avatune` and `caltechads/deployfish`. Two are over-suppression and are the cost:
+**Nothing was added**, which is structural: these changes only widen suppression. Ten of the
+twelve are correct, and every one is the ``if … exists`` shape a document wrote explicitly —
+`cenconq25/claude-code-app-studio` (three), `christopher-buss/bedrock` (three),
+`vmDeshpande/ai-agent-automation` (two), `crafts69guy/.dotfiles`, `meain/dotfiles`,
+`avatune/avatune`, `caltechads/deployfish`. Two are over-suppression and are the cost:
 
 | repository | what was lost | why |
 |---|---|---|
@@ -1611,7 +1621,7 @@ removed, three are correct — all the ``If `x` exists`` shape, in `cenconq25/cl
 | `TheAndrewStaker/mcp-midi-control` | `src/protocol/locations.ts` | the lead-in links to another repository about a different file, and the rule carried it to the bullet below |
 
 **Two false negatives in 700 repositories against a class of eighty false positives in one
-file.** `AGENTS.md` § "The rule that orders every decision" settles that direction, and it is
+file**, and ten real hedges heard that were not being heard before. `AGENTS.md` § "The rule that orders every decision" settles that direction, and it is
 worth noting the direction is the *only* reason it settles: two real claims went quiet.
 
 Adding the section rule on top removed **nothing further** in 700 repositories. It is kept for
@@ -1635,6 +1645,11 @@ source and no findings**, where before it contributed eighty.
 | `remix-run/react-router` | +1 | **0** |
 | `github/spec-kit` | +2 | 0 |
 | `securego/gosec` [validation] | +4 | **4**, all fixable |
+
+It also adds two findings in `iTwin/itwinjs-core`, which are not in the certification corpus
+and so move nothing here. One of them, `docs/changehistory/X.X.0.md`, is a version template
+`PLACEHOLDER_TEMPLATE` does not match — it looks for `X.Y.Z`. Recorded because it was found,
+not because this round acts on it.
 
 ### The four, adjudicated
 

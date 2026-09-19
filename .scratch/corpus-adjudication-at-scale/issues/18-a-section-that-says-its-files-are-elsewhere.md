@@ -126,13 +126,11 @@ findings to none**. Adjudicated as round twenty-three of `CLASSIFICATION.md`.
 
 ### What was built, against the three near-misses this ticket named
 
-1. **Markers read the prose, not the line.** Inline code is the claim and the words around it
-   are the prose, so markers are matched with the code spans removed and whitespace collapsed.
-   ``If `x` exists`` reads as `if exists`; so does a marker a line wrap had split. One rule for
-   the whole list, instead of a second spelling of every entry.
-2. **A line that introduces a list speaks for the list.** The third option in §"What to do"
-   was to fix `if exists` alone and it would have fixed 1 of 80; this is what reaches the other
-   39.
+1. **One pattern for the hedge a path stands inside**, `if … exists`, read against the line
+   with each code span masked to a single character. The third option in §"What to do" was to
+   fix `if exists` alone; this is that, and it turned out to be worth more than the 1-of-80 the
+   ticket estimated — ten real hedges across 700 repositories were not being heard.
+2. **A line that introduces a list speaks for the list.** This is what reaches the other 39.
 3. **`ELSEWHERE`, section-scoped.** Not a hedge — `HEDGED` is a document being uncertain and
    this is one being certain in the other direction — so it reports under its own name and
    keeps `07`'s table readable.
@@ -162,11 +160,12 @@ ticket predicted would be uninformative, so the 700 discovery repositories were 
 and after:
 
 ```
-before 1442 · after 1437 · ADDED 0 · REMOVED 5
+before 1442 · after 1430 · ADDED 0 · REMOVED 12
 ```
 
-Nothing added, which is structural: every change here only widens suppression. Three of the
-five removals are correct — the ``If `x` exists`` shape. **Two are the cost**: `DocRoms/Kronn`,
+Nothing added, which is structural: every change here only widens suppression. Ten of the
+twelve removals are correct and every one is the ``if … exists`` shape a document wrote
+explicitly. **Two are the cost**: `DocRoms/Kronn`,
 where a table row says to read a file when the *task* references something not in this repo and
 the marker read that as being about the file; and `TheAndrewStaker/mcp-midi-control`, where a
 lead-in linking to another repository about a different file reached the bullet below it.
@@ -196,3 +195,34 @@ ticket rather than a line in this one.
 ### What it unblocks
 
 `11`'s `.github/skills/`, which was held by this and nothing else.
+
+### What a review caught, and two of them were mine to have caught
+
+Four findings, and the first is the one that mattered.
+
+**The lead-in silently re-scoped the two sentence rules.** `CONDITIONAL`'s own comment says it
+is "tested against the **sentence** holding the claim, never the two-line window" — and a
+lead-in usually ends in a **colon**, which `segmentAround` does not split on. So "You could
+restructure it like this:" became part of every bullet's sentence and silenced all of them.
+The gate hung on the lead-in's punctuation: ending it with a full stop restored the old
+behaviour. `ProseWindow` now carries where sentence scope may begin — 0 for a wrapped line,
+because there the two lines really are one sentence, and the item's start for a lead-in.
+
+**Stripping every code span manufactures markers.** "Pick a name such `foo` as the slug in
+`src/slug.ts`" became "such as". Replaced with one pattern over a **masked** line, and the
+measurement then found the mirror image: leaving spans in place reads `` `CREATE TABLE IF NOT
+EXISTS` `` as a hedge. A mask fixes both, because it is neither whitespace nor readable.
+
+**A 27-line docstring was attached to the wrong function** — `indentOf` had been inserted
+between it and `leadInStart`, so the function carrying the risk had nothing at its signature.
+
+**The measurement was written into `src/`**, again: "over 700 others audited before and after…
+766 repositories" as the reason a suppression rule is kept. Fourth time on this branch. It
+lives in `CLASSIFICATION.md` round twenty-three and the file now says so.
+
+Two more the reviewer raised are **recorded rather than fixed**, because fixing either widens
+suppression and neither has evidence beyond one constructed case. `blanks` counts one blank
+line in the whole walk rather than one per gap, so a loose list loses its lead-in from the
+second item on — arbitrary, and it errs towards reporting. And `elsewhereSections` treats a
+document with no `#` heading as one section; that is not new, `externalRootSections` has shared
+`sectionBoundaries` and the same property since it shipped.

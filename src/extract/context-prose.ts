@@ -286,34 +286,41 @@ export type ProseReason =
   | 'creation-target'
 
 /**
- * The line as **prose**, with its inline code taken out.
+ * The hedge whose two halves a path can stand between.
  *
- * The markers are English phrases and inline code is the claim, not the prose
- * around it, so a path standing between a marker's two words hid the marker.
- * Real case (remix-run/react-router): ``If `.github/aw/instructions.md`
- * exists`` — the one path of forty whose author had guarded it explicitly, and
- * `HEDGED`'s literal `if exists` could not see it.
+ * `HEDGED` is a list of literal strings, and a document writes ``If
+ * `.github/aw/instructions.md` exists`` — the marker split by the very thing
+ * it is hedging about. It was the one path of forty in
+ * `remix-run/react-router` whose author had guarded it explicitly, and it was
+ * reported like the rest. Three more turned up across the discovery corpus.
  *
- * A span becomes a **space** rather than nothing, so that removing it cannot
- * join two words into a marker neither of them was part of.
+ * A pattern rather than a transform of the line, and it reads the line with
+ * each span **masked to one character** rather than removed. Both halves of
+ * that came from getting it wrong:
  *
- * What it gives up is a marker written inside a code span — `` `deprecated` ``
- * as a token stops reading as the word. That is the right way round: a span is
- * something being named, and this gate is about what the sentence says.
+ * - Removing the spans manufactures markers nobody wrote. "Pick a name such
+ *   `foo` as the slug in `src/slug.ts`" becomes "such as" and silences a real
+ *   claim. A mask cannot join two phrases, because it is not whitespace.
+ * - Leaving the spans lets a marker inside one fire as prose. Real case
+ *   (edmundmiller/dotfiles): "Preserve `CREATE TABLE IF NOT EXISTS`" is SQL,
+ *   and it read as a hedge about `src/schema.sql` on the same line.
+ *
+ * What stands between the two words is anything short of a sentence ending, so
+ * a hedge a line wrap has split reads too. The `if` itself has to be a word in
+ * the prose rather than a segment of a path: without that, `src/if.ts` in one
+ * clause and "exists" in the next is a hedge nobody wrote.
  */
-function asProse(text: string): string {
-  // Whitespace is collapsed after the spans go, or `if   exists` fails to be
-  // `if exists`. It also joins a marker a line wrap had split, which is the
-  // same problem in the other axis.
-  return text
-    .replaceAll(/`[^`]*`/gu, ' ')
-    .replaceAll(/\s+/gu, ' ')
-    .toLowerCase()
+const HEDGED_SPLIT = [/(?<![\w/.-])if\b(?:(?![.!?;]\s)[\s\S]){0,80}?\bexists\b/u]
+
+/** One character per inline code span: not whitespace, not part of a word. */
+function withMaskedCode(text: string): string {
+  return text.replaceAll(/`[^`]*`/gu, '\u0001').toLowerCase()
 }
 
-function markerReason(lower: string): ProseReason | undefined {
+function markerReason(lower: string, masked: string): ProseReason | undefined {
   if (EXAMPLE.some((marker) => lower.includes(marker))) return 'example'
   if (HEDGED.some((marker) => lower.includes(marker))) return 'hedged'
+  if (HEDGED_SPLIT.some((pattern) => pattern.test(masked))) return 'hedged'
   if (ELSEWHERE.some((marker) => lower.includes(marker))) return 'elsewhere'
   return undefined
 }
@@ -355,6 +362,23 @@ type ProseWindow = {
   text: string
   /** Where the claim starts inside `text`. Locates the sentence to test. */
   claimAt: number
+  /**
+   * Where the **sentence-scoped** rules may start reading, which is not always
+   * 0.
+   *
+   * A wrapped line is one sentence across two lines, so the window is both and
+   * the sentence may span them — that is what `segmentAround` is written for.
+   * A **lead-in** is not: it is a different sentence about a different thing,
+   * and it is in the window only so the markers can see it.
+   *
+   * Without this the lead-in rule silently re-scoped `CONDITIONAL` and
+   * `CREATE_IMPERATIVES` to the window, which the comment on `CONDITIONAL`
+   * states it must never be. A lead-in usually ends in a colon and
+   * `segmentAround` splits on `.!?`, so "You could restructure like this:"
+   * became part of every bullet's sentence and silenced all of them. The gate
+   * hung on the lead-in's punctuation.
+   */
+  sentenceFrom: number
 }
 
 /**
@@ -372,6 +396,10 @@ export function proseWindowAround(content: string, offset: number): string {
 /** A heading opens a new subject; a lead-in must not be looked for past one. */
 function isHeading(line: string): boolean {
   return /^[\s>]*#{1,6}\s/u.test(line)
+}
+
+function indentOf(line: string): number {
+  return (/^\s*/u.exec(line)?.[0] ?? '').length
 }
 
 /**
@@ -401,10 +429,6 @@ function isHeading(line: string): boolean {
  * - **Never past a heading.** Section scope is `externalRootSections`, which
  *   has its own argument for the width it takes.
  */
-function indentOf(line: string): number {
-  return (/^\s*/u.exec(line)?.[0] ?? '').length
-}
-
 function leadInStart(content: string, listStart: number, indent: number): number | undefined {
   let blanks = 0
   let start = listStart
@@ -412,6 +436,10 @@ function leadInStart(content: string, listStart: number, indent: number): number
     const previousStart = content.lastIndexOf('\n', start - 2) + 1
     const previous = content.slice(previousStart, start - 1)
     if (previous.trim() === '') {
+      // One blank in the **whole walk**, not one per gap: a loose list, blank
+      // line between every item, loses its lead-in from the second item on.
+      // Arbitrary, and it errs towards reporting, which is the safe direction —
+      // so it is written down rather than widened without a measurement.
       blanks += 1
       if (blanks > 1) return undefined
     } else if (isHeading(previous) || /^[\s>]*\|/u.test(previous)) {
@@ -448,7 +476,9 @@ function lineAround(content: string, offset: number): ProseWindow {
     const lead = /^[\s>]*(?:[-*+]|\d+[.)])\s/u.test(line)
       ? leadInStart(content, lineStart, indentOf(line))
       : undefined
-    if (lead === undefined) return { text: line, claimAt: offset - lineStart }
+    if (lead === undefined) {
+      return { text: line, claimAt: offset - lineStart, sentenceFrom: 0 }
+    }
     // The lead-in and this item, and **nothing in between**. Taking the whole
     // slice would sweep in the sibling bullets, and one of them saying "for
     // example" about its own path would silence this one — which is the
@@ -457,20 +487,25 @@ function lineAround(content: string, offset: number): ProseWindow {
     // bullet four lines up writes "(for example, `thread/read`)".
     const leadLine = content.slice(lead, content.indexOf('\n', lead))
     const text = `${leadLine}\n${line}`
-    return { text, claimAt: leadLine.length + 1 + (offset - lineStart) }
+    return {
+      text,
+      claimAt: leadLine.length + 1 + (offset - lineStart),
+      // The sentence rules read this item and not the lead-in.
+      sentenceFrom: leadLine.length + 1,
+    }
   }
 
-  if (lineStart === 0) return { text: line, claimAt: offset - lineStart }
+  if (lineStart === 0) return { text: line, claimAt: offset - lineStart, sentenceFrom: 0 }
 
+  // A wrapped sentence: the window is both lines and so is the sentence.
   const previousStart = content.lastIndexOf('\n', lineStart - 2) + 1
-  return { text: content.slice(previousStart, lineEnd), claimAt: offset - previousStart }
+  return {
+    text: content.slice(previousStart, lineEnd),
+    claimAt: offset - previousStart,
+    sentenceFrom: 0,
+  }
 }
 
-/**
- * Whether the line surrounding the claim marks it as an example or leaves it
- * uncertain. The whole line is inspected, not just what comes before it: an
- * "(if exists)" arrives after the path.
- */
 /**
  * A section that **roots its paths somewhere else**, so the paths under it are
  * not claims about this repo.
@@ -543,12 +578,16 @@ function sectionBoundaries(content: string): number[] {
  * another repository, which is the difference between this and a list of
  * project names.
  *
- * Priced before it was kept, the way ticket `16` established. Over the 66
- * certification repositories and over 700 others audited before and after, it
- * removes **no finding** that the line-level rules had not already removed. A
- * measured cost of zero is not the same as no cost — the markers are rare, so
- * the rule rarely fires — and the risk it carries is a long section with one
- * aside in it. Nothing like that occurred in 766 repositories.
+ * Priced before it was kept, the way ticket `16` established; the audit is in
+ * `CLASSIFICATION.md` round twenty-three, where a count over driftwatch's own
+ * output belongs. What it found is that the section rule removes nothing the
+ * line-level rules had not already removed — a measured cost of zero, which is
+ * not the same as no cost, because the markers are rare and the rule rarely
+ * fires.
+ *
+ * Its real risk is a long section with one aside in it, and a document with no
+ * `#` heading is one section. That is not new: `externalRootSections` shares
+ * `sectionBoundaries` and has had the same property since it shipped.
  */
 function elsewhereSections(content: string): Array<[number, number]> {
   const bounds = sectionBoundaries(content)
@@ -556,7 +595,7 @@ function elsewhereSections(content: string): Array<[number, number]> {
   for (let i = 0; i + 1 < bounds.length; i += 1) {
     const start = bounds[i] ?? 0
     const end = bounds[i + 1] ?? content.length
-    const text = asProse(content.slice(start, end))
+    const text = content.slice(start, end).toLowerCase()
     if (ELSEWHERE.some((marker) => text.includes(marker))) ranges.push([start, end])
   }
   return ranges
@@ -609,14 +648,15 @@ function proseDisclaims(
 ): ProseReason | undefined {
   // Markers read the prose; `namesAnotherRepo` reads the raw line, because the
   // url it looks for is written as a link and not as prose.
-  const marker = markerReason(asProse(window.text))
+  const marker = markerReason(window.text.toLowerCase(), withMaskedCode(window.text))
   if (marker !== undefined) return marker
   if (namesAnotherRepo(window.text, ctx.origin)) return 'another-repo'
   // These two are tested against the sentence holding the claim, not the whole
   // window: see `segmentAround`. The imperative because what matters is how
   // *that* sentence opens; the conditional because it is the broadest rule
   // here and the window would carry it into a neighbouring claim.
-  const sentence = segmentAround(window.text, window.claimAt)
+  const from = window.sentenceFrom
+  const sentence = segmentAround(window.text.slice(from), window.claimAt - from)
   if (isCreateInstruction(sentence)) return 'create-instruction'
   return isConditional(sentence) ? 'conditional' : undefined
 }
