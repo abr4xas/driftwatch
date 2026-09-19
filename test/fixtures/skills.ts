@@ -184,6 +184,36 @@ export const skills: Fixture = {
       '---',
       '',
     ].join('\n'),
+    /**
+     * 68 characters, which the specification's 64-character limit forbids —
+     * and **nothing is reported**. Length is a gate on the autofix, not a
+     * finding: a name too long is as wrong the day it is written as a year
+     * later, so it is not drift and not driftwatch's to say. The fixture below
+     * is the other half of that asymmetry.
+     */
+    /**
+     * The half that matters: a directory that is kebab-case and **over the
+     * limit**, with a name that disagrees with it. The mismatch is reported —
+     * that one is drift — and the fix is **withheld**, because rewriting the
+     * name to this directory would produce a skill `skills-ref validate`
+     * rejects. `SPEC.md` § 8: a fix whose output is a finding is not a fix.
+     */
+    '.claude/skills/pppppppppp-qqqqqqqqqq-rrrrrrrrrr-ssssssssss-tttttttttt-uuuuuuuuuu-vv/SKILL.md':
+      [
+        '---',
+        'name: mismatched',
+        'description: Its directory is valid kebab-case and four characters too long',
+        '---',
+        '',
+      ].join('\n'),
+    '.claude/skills/aaaaaaaaaa-bbbbbbbbbb-cccccccccc-dddddddddd-eeeeeeeeee-ffffffffff-gg/SKILL.md':
+      [
+        '---',
+        'name: aaaaaaaaaa-bbbbbbbbbb-cccccccccc-dddddddddd-eeeeeeeeee-ffffffffff-gg',
+        'description: Its name is four characters over the documented limit of sixty-four',
+        '---',
+        '',
+      ].join('\n'),
     '.claude/commands/ship.md': ['---', 'description: Go', '---', ''].join('\n'),
   },
   expected: [
@@ -252,6 +282,15 @@ export const skills: Fixture = {
       column: 1,
       text: 'name',
       message: 'name is empty',
+    },
+    {
+      check: 'skill/frontmatter',
+      severity: 'error',
+      file: '.claude/skills/pppppppppp-qqqqqqqqqq-rrrrrrrrrr-ssssssssss-tttttttttt-uuuuuuuuuu-vv/SKILL.md',
+      line: 2,
+      column: 1,
+      text: 'name',
+      message: 'name does not match the directory',
     },
     {
       check: 'skill/frontmatter',

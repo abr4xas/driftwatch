@@ -348,6 +348,10 @@ Autofixable:
 - `path/missing` with a single candidate by basename.
 - `script/missing` with a single script at edit distance ≤ 2.
 - `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's). Withheld when the directory name is not itself kebab-case: applying it would trade the finding for the kebab-case one, and a fix whose output is a finding is not a fix.
+
+  Withheld, equally, when the directory is longer than 64 characters, which is the [specification](https://agentskills.io/specification.md)'s limit and what `skills-ref validate` enforces. That limit is a **gate and not a rule**: an over-long `name` is reported nowhere, because it is as wrong the day it is written as a year later and this tool is about documents that no longer match their repository. It still has to be known here, or the fix hands somebody an edit that makes their skill invalid.
+
+  Verified against the ecosystem rather than against the specification alone, because ADR-0006 condition 2 admits no false positive here at any rate (ticket `10`). `skills-ref validate` — the reference implementation the specification names — rejects the unfixed skill on exactly this rule and calls the fixed one **valid**; the alternative resolution, renaming the directory to match the name, leaves it invalid. `npx skills` was observed to install by the source **directory** and leave the frontmatter untouched, and Claude Code's command name is the directory per its documentation, so rewriting `name` changes no identity anything invokes by.
 - `link/broken` with a single candidate target.
 
 Never autofixable: any tier 2 check, and any case with more than one candidate.

@@ -132,6 +132,14 @@ A Markdown link to `docs/SECURITY.md`. The directory is `Docs/`, capitalised, so
 
 This is the corpus's **only fixable finding**, and round seventeen checked it at the level of the edit rather than the finding: the rewrite replaces the path and nothing around it. It is what condition 2 rests on, on a sample of one.
 
+**The second autofix the tool can produce is not in this corpus, and it was audited anyway.** `skill/frontmatter` offers to rewrite a `name` that disagrees with its directory, and the rule has never fired on these 66 repositories — so condition 2 has never had anything to say about it. Ticket `10` settled it outside the corpus, and the verdict is recorded here because condition 2 is what it bears on:
+
+- **`skills-ref validate`**, the reference implementation <https://agentskills.io/specification.md> names, rejects the unfixed skill on exactly this rule — *"Directory name 'bankr-dev-portfolio' must match skill name 'Bankr Dev - Portfolio'"* — and calls the fixed one **valid**.
+- **The other resolution does not work.** Renaming the directory to match the name leaves the skill invalid, because the name is not lowercase. When the directory is already kebab-case, rewriting the name is the *only* repair — which is the gate the code has had since it shipped.
+- **Nothing invokes a skill by that field.** Claude Code's command name is the directory; `npx skills` installs to the source directory and matches its lockfile on either form. Across 141 skills installed on this machine, **0** have a `name` that disagrees with their directory.
+
+Not a corpus measurement and not counted as one: no repository here produces the finding, and the numbers above are properties of the tools rather than of a sample. The autofix stays.
+
 **7. `CrossPaste/crosspaste-desktop` `CLAUDE.md:41`**
 
 `app/src/commonMain/sqldelight/`. The directory does not exist.

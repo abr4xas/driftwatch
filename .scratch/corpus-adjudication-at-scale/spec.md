@@ -452,10 +452,11 @@ same day.
 | `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration? | research | **resolved**: GitHub is enough and costs ~10 min; skills.sh is gated on a Vercel OIDC token |
 | `08` | Where do skills actually live — should `classifySource` widen? | research | **in progress**: widened to three roots; 48 findings awaiting a verdict |
 | `09` | The acquisition runner — the missing half between `02` and `06` | task | **resolved**: `scripts/discovery.ts`, 2486 repos enumerated, 135 audited |
-| `10` | Is `skill/frontmatter`'s one autofix offered on a non-drift finding? | research | **new**: the only open ticket about a defect that ships today |
+| `10` | Is `skill/frontmatter`'s one autofix offered on a non-drift finding? | research | **resolved**: no — `skills-ref` rejects before and accepts after |
 | `11` | The skills roots not yet read — `.flue`, `.codex`, `.github`, `.opencode` | task | **new**, blocked by `08` step 3 |
 | `12` | Let a repository declare where its skills are | research | **new**, deferred by agreement |
 | `13` | A source git lists but cannot be read is reported as a driftwatch bug | bug | **resolved**: skipped and named in `pretty`, `json` and `sarif` |
+| `14` | `skill/frontmatter` mixes drift with lint — does format validation belong here? | research | **new**, raised while reviewing `10` |
 | `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | highest ceiling; **unblocked** by `09` |
 | `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | half-answered by `02`; now has to reckon with `08` |
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` names? | research | a smoke test of job 1, gating nothing |

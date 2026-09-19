@@ -4,7 +4,11 @@
 
 **Blocked by:** nothing. Ticket `01` shipped the flag and the template.
 
-**Status:** ready-for-agent
+**Status: done.** `src/cli/init.ts` writes `driftwatch.config.yaml`, and ADR-0013 later
+withdrew the `.ts` and `.js` loaders entirely, so the format this ticket argued against is
+no longer loadable at all. The status line said `ready-for-agent` until 2026-09-19, which was
+stale bookkeeping: the work shipped with the config-format change and nobody came back to the
+file.
 
 **Decided 2026-09-12: YAML.**
 

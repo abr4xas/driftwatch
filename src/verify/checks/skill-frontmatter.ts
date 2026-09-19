@@ -23,8 +23,36 @@ const REQUIRED: readonly string[] = ['name', 'description']
  */
 const MIN_DESCRIPTION = 20
 
-/** Lowercase alphanumerics in hyphen-separated words. */
+/**
+ * Lowercase alphanumerics in hyphen-separated words.
+ *
+ * It answers four of the specification's five `name` rules at once — lowercase
+ * alphanumerics and hyphens, no leading hyphen, no trailing hyphen, no
+ * consecutive hyphens — because each of those is a way to fail this shape.
+ */
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
+
+/**
+ * <https://agentskills.io/specification.md> caps `name` at 64 characters, and
+ * `skills-ref validate` rejects a longer one — 64 accepted, 65 not.
+ *
+ * **This is a gate and not a rule**, and the difference is the scope of the
+ * product. A name over the limit is not *drift*: it is as wrong on the day it
+ * is written as it is a year later, nothing about the repository changed under
+ * it, and `BRIEF.md` is about documents that describe a repository they no
+ * longer match. Ticket `10` added it as a finding and it was withdrawn to this
+ * on Angel's objection, having reported nothing anyway.
+ *
+ * What it is still needed for is the **autofix**. The fix rewrites a `name`
+ * into its directory, so the directory has to be usable as a name — and a
+ * kebab-case directory of 68 characters is not. Without this the tool offered
+ * exactly that, producing a skill `skills-ref` rejects.
+ *
+ * Counting with `String.length` is UTF-16 code units rather than characters,
+ * which is safe only because `KEBAB` is checked first: a name holding anything
+ * outside `a-z0-9-` has already failed, so by here the two counts agree.
+ */
+const MAX_NAME = 64
 
 /**
  * The keys the format documents. It is **not** an allowlist whose complement
@@ -36,6 +64,10 @@ const KNOWN_KEYS: readonly string[] = [
   'name',
   'description',
   'license',
+  // Documented by <https://agentskills.io/specification.md> and accepted by
+  // `skills-ref validate`; the list had fallen a key behind it. Adding one can
+  // only make this rule quieter, which is the direction it is allowed to move.
+  'compatibility',
   'allowed-tools',
   'metadata',
   'model',
@@ -94,14 +126,29 @@ function checkBlock(claim: Claim, fact: SkillFact): CheckReport | null {
  * directory and both are wrong, which is the shape where the two names really
  * do have to change together.
  */
+/**
+ * Whether a string could be this skill's `name` without breaking a rule.
+ *
+ * Only the autofix asks. It is deliberately **stricter than what the check
+ * reports**: `MAX_NAME` is a gate and not a finding, so a directory 68
+ * characters long is refused as a replacement while a *name* 68 characters
+ * long is passed over in silence. The asymmetry is the point — driftwatch is
+ * not here to lint somebody's naming, but it must not hand them an edit that
+ * makes their skill invalid.
+ */
+function usableAsName(value: string): boolean {
+  return KEBAB.test(value) && value.length <= MAX_NAME
+}
+
 function checkName(claim: Claim, value: string): CheckReport | null {
   const directory = skillDirectoryOf(claim.source.path)
 
   if (directory !== undefined && value !== directory) {
-    // `SPEC.md` § 8 lists this as the check's one autofix. The fix is only
-    // offered when it produces a valid name: correcting a name to a directory
-    // that is not kebab-case would trade this finding for the next one.
-    const suggestion: Suggestion | undefined = KEBAB.test(directory)
+    // `SPEC.md` § 8 lists this as the check's one autofix, and it is offered
+    // only when the directory is itself usable as a name: a fix whose output
+    // is a finding is not a fix, and one whose output the reference
+    // implementation rejects is worse.
+    const suggestion: Suggestion | undefined = usableAsName(directory)
       ? { value: directory, confidence: 1, fixable: true }
       : undefined
     return finding(claim, 'name does not match the directory', suggestion)
