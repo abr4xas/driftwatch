@@ -249,6 +249,22 @@ Nothing, by construction. The certification corpus is unchanged through all of i
 320 sources · 33 findings, calibration 21 · validation 12 — which is also the evidence that
 the instrumentation is behaviour-neutral: a sink nobody attaches changes no finding anywhere.
 
+### A second limit, and this one is an error in the reading above
+
+The `conditional` paragraph says "roughly half are real claims", counted over occurrences. Over
+700 repositories those 26 occurrences are **18 distinct texts**, and `./assets/` is counted
+four times — two repositories carrying the same `.agents/skills/teach/SKILL.md`, which differ
+by one byte, a comma promoted to an em dash. One document, four votes.
+
+The direction of the paragraph survives: `conditional` fires rarely and the modal usually
+qualifies something other than the path. The proportion does not, and it was reported before
+it was caught.
+
+Exact duplication is not the cause and does not need a model: over the same 700 clones, 21
+document contents appear in more than one repository and **zero findings come from any of
+them**. The pair that did the damage is a *near* duplicate, which no hash sees. That is ticket
+`17`, and it is the thing to build before anything else reads this corpus for classes.
+
 ### The limit of this table
 
 Every row is an **upper bound on a rule's cost, not its cost**, and that part is definitional
