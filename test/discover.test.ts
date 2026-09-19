@@ -32,10 +32,15 @@ describe('classifySource', () => {
    * `.opencode`. Treating `.claude/skills/` as the location was reading our own
    * installer as the format.
    */
-  it('recognizes a skill under each of the three main install roots', () => {
+  it('recognizes a skill under each install root that is read', () => {
     expect(classifySource('.claude/skills/deploy/SKILL.md')).toBe('skill')
     expect(classifySource('.agents/skills/deploy/SKILL.md')).toBe('skill')
     expect(classifySource('.cursor/skills/deploy/SKILL.md')).toBe('skill')
+    // Ticket `11`, added after the first three and ordered by how many
+    // **repositories** use them rather than how many files they hold: a root
+    // that eleven files share inside one project is one project's convention.
+    expect(classifySource('.codex/skills/deploy/SKILL.md')).toBe('skill')
+    expect(classifySource('.opencode/skills/deploy/SKILL.md')).toBe('skill')
   })
 
   it('recognizes a skill nested deeper under a skills root', () => {
@@ -45,12 +50,24 @@ describe('classifySource', () => {
   })
 
   it('leaves install roots it does not know alone', () => {
-    // `.flue`, `.codex` and `.opencode` are all in the corpus, and a bare
-    // `skills/` is OpenClaw's target. They are deliberately not recognised yet:
-    // widening is priced one root at a time against the corpus diff, not by
-    // pasting somebody else's list.
+    // Each of these was weighed by ticket `11` and left out for its own reason,
+    // which is why they are one case rather than a list.
+    //
+    // `.flue` holds eleven `SKILL.md` files — the most of the four candidates —
+    // and all eleven are in **one repository**, the same one in the
+    // certification corpus and in 700 discovery repositories. Eleven files is
+    // not a root, it is a project.
+    //
+    // `.github/skills/` is used by thirteen discovery repositories and would be
+    // next by that measure. It is held back by ticket `18`: adding it exposes a
+    // document that names forty files and says in the same breath that they are
+    // not available locally, and no gate reads that. Eighty false positives
+    // from one file is not a price this pays to widen a root.
+    //
+    // A bare `skills/` is OpenClaw's target and an ordinary English word.
     for (const rel of [
       '.flue/skills/repro/SKILL.md',
+      '.github/skills/code-review/SKILL.md',
       'skills/engineering/grill-me/SKILL.md',
       'answer-reviewers/SKILL.md',
     ]) {

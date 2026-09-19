@@ -1,11 +1,12 @@
 # cloudflare/workers-sdk
 
-sources: 10
+sources: 11
 errors: 1
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .opencode/skills/local-explorer/SKILL.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 agents-md  packages/auto-triage-bot/AGENTS.md

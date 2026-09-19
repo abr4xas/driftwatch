@@ -1,15 +1,28 @@
 # openai/codex
 
-sources: 2
-errors: 3
+sources: 13
+errors: 5
 warnings: 0
-fixable: 0
+fixable: 1
 
 ## sources
+skill  .codex/skills/babysit-pr/SKILL.md
+skill  .codex/skills/code-review-breaking-changes/SKILL.md
+skill  .codex/skills/code-review-change-size/SKILL.md
+skill  .codex/skills/code-review-context/SKILL.md
+skill  .codex/skills/code-review-testing/SKILL.md
+skill  .codex/skills/code-review/SKILL.md
+skill  .codex/skills/codex-pr-body/SKILL.md
+skill  .codex/skills/path-types/SKILL.md
+skill  .codex/skills/remote-tests/SKILL.md
+skill  .codex/skills/test-tui/SKILL.md
+skill  .codex/skills/update-v8-version/SKILL.md
 agents-md  AGENTS.md
 agents-md  codex-rs/tui/src/bottom_pane/AGENTS.md
 
 ## findings
+.codex/skills/code-review-breaking-changes/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> code-review-breaking-changes (1, fixable)
+.codex/skills/code-review-breaking-changes/SKILL.md:3:1  [skill/frontmatter] frontmatter  description
 AGENTS.md:35:51  [path/missing] inline-code  codex-rs/codex-mcp/src/mcp_connection_manager.rs
 AGENTS.md:265:4  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs
 AGENTS.md:275:133  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs

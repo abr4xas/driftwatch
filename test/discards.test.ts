@@ -140,8 +140,8 @@ describe('the gates are shared, so the count is too', () => {
   /**
    * `conditional` refuses a path, an anchor link and a script name with the
    * same list. Counting only the first reports the rule's cost as smaller than
-   * it is — measured over 700 repositories, 10 of its 32 discards come from the
-   * other two extractors.
+   * it is, and measurably so: a large share of its discards come from the other
+   * two extractors. The count is in ticket `07`.
    */
   function causesFrom(
     extract: (context: ExtractContext) => unknown,

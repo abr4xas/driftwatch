@@ -8,7 +8,8 @@ roots discovery already reads, and in what order.
 **Blocked by:** `08` step 3 — the conditions are in suspense until round eighteen closes, and
 adding roots while they are would stack two unadjudicated diffs
 
-**Status:** open
+**Status: resolved 2026-09-19.** Two roots in, two out, and the ordering was the finding.
+See §"Answer".
 
 ## What is left on the table
 
@@ -58,3 +59,74 @@ stopgap for the roots common enough to be worth hard-coding while that is decide
 2. Take them in corpus-volume order, measuring the diff each time.
 3. Stop when a root's diff is more review than its findings are worth, and record where that
    line fell — that number is more useful than the roots themselves.
+
+## Answer
+
+Resolved 2026-09-19. `.codex/` and `.opencode/` are read; `.flue/` is not and `.github/` is
+held behind ticket `18`. Adjudicated as round twenty-two of `CLASSIFICATION.md`.
+
+### The ticket's own ordering was wrong, and that is the useful part
+
+Step 2 says to take them "in corpus-volume order", which the table at the top of this ticket
+gives in files. Counted by **repositories** the order inverts almost exactly:
+
+| root | files | repos in the corpus | repos, discovery † |
+|---|---|---|---|
+| `.github` | 7 | 3 | **13** |
+| `.codex` | 11 | 1 | 6 |
+| `.opencode` | 3 | 2 | 5 |
+| `.flue` | **11** | **1** | **1** |
+
+† The last column is over the discovery corpus, which is disposable and unsnapshotted: it is
+a reading of the ecosystem taken once, not a figure anybody can re-derive from this repository.
+It is used here to tell a convention from a project, which is a question about the population
+and the one thing that corpus is for. The `.codex` cell also undercounts slightly — two more
+repositories have a `.codex/skills/` directory holding no `SKILL.md`.
+
+`.flue`'s eleven files are one project — `emdash-cms/emdash`, the same repository in the
+certification corpus and the only one of 700 discovery repositories that uses it. **A file
+count cannot tell a convention from a project**, and this ticket's premise was a file count.
+
+That answers step 3: the line falls at `.flue`, and the reason is not review cost. Eleven
+files was the largest number on the table and it was the weakest case on it.
+
+### What each root cost
+
+| root | sources | findings | verdict |
+|---|---|---|---|
+| `.codex` | +11, all `openai/codex` | 2 | both true, 1 fixable and correct |
+| `.opencode` | +3, `sst/opencode` and `cloudflare/workers-sdk` | **0** | — |
+
+`.opencode` is a free widening: three sources more and nothing to rule on. The two `.codex`
+findings are in one file — a `name` that lost a word against its directory, and a 16-character
+`description`. Both true; the fix is the class ticket `10` settled, and `pnpm corpus --fixes`
+prints it correctly.
+
+Corpus: **66 repos · 334 sources · 35 findings**, fixable 1 → 2, false unchanged at 11.
+`openai/codex` is calibration, so nothing moved groups.
+
+### `.github/skills/` is the one this ticket got most wrong
+
+This ticket's §"What makes this different" worried that `.github/` "means something different
+from the others". That is true and it is not why it is held out.
+
+It is the **most widely used** of the four — 13 of 700 discovery repositories, more than
+`.cursor/`, which already ships. Adding it produces 84 findings, and 80 come from one file:
+`remix-run/react-router`'s `.github/skills/agentic-workflows/SKILL.md` lists forty paths under
+`.github/aw/` and says, one line above the list, *"Load these files from `github/gh-aw` (they
+are not available locally)"*.
+
+**That is not a fact about the root.** The same file under `.agents/skills/` produces the same
+80 findings today, so this is a live defect that widening happened to expose. Ticket `18` has
+the three near-misses that let it through. The four true fixable findings `.github/` would
+also bring — `securego/gosec`, title-cased names against kebab-case directories — are held
+with it.
+
+The general shape of the mistake is worth naming: **a root's cost is not a property of the
+root.** Three of the four measurements here were about documents that happened to live under
+it.
+
+### What is still open
+
+`12`, the escape hatch, is unchanged by this and is still the general answer: five hard-coded
+roots is better than three and it is not a design. And `18` has to land before `.github/` can.

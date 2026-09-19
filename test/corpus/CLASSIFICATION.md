@@ -2,7 +2,7 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 33 findings.**
+Corpus: **66 public repos pinned to a commit, 35 findings.**
 
 Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **33 findings, 22 true and 11 false**.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
@@ -25,7 +25,7 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **1**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them.
+Fixable findings: **2**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`, and it is true.
 
 **All nine conditions are met again** after round nineteen repaired condition 2, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
 
@@ -1442,3 +1442,96 @@ Every class it opened has a verdict and a rule or a reason:
 | F3/F4 | 2 | **true**, reported and correct |
 
 What is left open is three findings in three unrelated shapes, which is the tail this document has always had rather than a class anyone can close.
+
+## Twenty-second round, 2026-09-19: two more skills roots, and the one that counts repositories
+
+Ticket `11` took the four skills roots round eighteen left on the table. Two were added, two
+were not, and the useful part is not which — it is what the numbers turned out to mean.
+
+### Order by repositories, not by files
+
+The ticket says to take them "in corpus-volume order", counting `SKILL.md` files. Counted that
+way the order is `.flue` (11), `.codex` (11), `.github` (7), `.opencode` (3). Counted by
+**repositories** it inverts almost exactly:
+
+| root | files | repos in the corpus | repos, discovery † |
+|---|---|---|---|
+| `.github` | 7 | 3 | **13** |
+| `.codex` | 11 | 1 | 6 |
+| `.opencode` | 3 | 2 | 5 |
+| `.flue` | 11 | **1** | **1** |
+
+† A reading of the ecosystem over the discovery corpus, which is disposable and unsnapshotted.
+It is not a measurement of driftwatch and moves no condition of ADR-0006; it is here because
+telling a convention from a project is a question about the population, not about this tool.
+
+`.flue`'s eleven files are one project, `emdash-cms/emdash` — the same repository in the
+certification corpus and the only one of 700 discovery repositories that uses it. A root one
+project uses is that project's convention, and a file count cannot tell the two apart.
+
+**That is where the line fell**, which is what step 3 of the ticket asked to record.
+
+### What was added, and what it cost
+
+| root | sources | findings | verdict |
+|---|---|---|---|
+| `.codex` | +11, all in `openai/codex` | 2 | both true |
+| `.opencode` | +3, in `sst/opencode` and `cloudflare/workers-sdk` | **0** | — |
+
+`.opencode` is a free widening: three sources more, nothing to rule on.
+
+The two `.codex` findings are in one file, `.codex/skills/code-review-breaking-changes/SKILL.md`:
+
+| finding | verdict |
+|---|---|
+| `name: code-breaking-changes` in `code-review-breaking-changes/` | **true**, and fixable |
+| `description: Breaking changes`, 16 characters | **true** by the rule as it ships |
+
+The first is the class round eighteen opened and ticket `10` settled: the directory is
+kebab-case, so rewriting `name` to match it is the only repair `skills-ref` accepts. The name
+has simply lost a word. `pnpm corpus --fixes` prints the edit and it is right:
+
+```
+- name: code-breaking-changes
++ name: code-review-breaking-changes
+```
+
+The second is a `description` under the 20-character minimum — true by the shipped rule, and
+one more instance of the question ticket `14` is about, since nothing in the repository changed
+underneath it.
+
+### Condition 2 holds
+
+The corpus goes from one fixable finding to two, and both are true. `openai/codex` is a
+**calibration** repo, so nothing moves groups and no replacement is owed.
+
+| | round 21 | round 22 |
+|---|---|---|
+| sources | 320 | **334** |
+| findings | 33 | **35** |
+| fixable | 1 | **2** |
+| false | 11 | 11 |
+
+### `.github/skills/` is held out, and not because of the root
+
+It is the most widely used of the four — 13 of 700 discovery repositories, more than `.cursor`,
+which already ships. Adding it produces **84 findings**, and 80 of them come from a single file:
+`remix-run/react-router`'s `.github/skills/agentic-workflows/SKILL.md`, which lists forty paths
+under `.github/aw/` and says, one line above the list:
+
+> Load these files from `github/gh-aw` (**they are not available locally**).
+
+The document could not be clearer and no gate reads it. The sentence is a heading for a bullet
+list, so the two-line window never reaches it — each bullet opens its own item — and
+`namesAnotherRepo` wants a `github.com` URL where this writes a bare slug. The first path is
+hedged too, as ``If `.github/aw/instructions.md` exists``, which `HEDGED`'s `if exists` misses
+because the path sits between the two words.
+
+**None of that is a fact about `.github/`.** The same file under `.agents/skills/` produces the
+same 80 findings; the root only made it visible. So the root is held behind ticket `18`, which
+is about the gate, and the other four findings it would add — `securego/gosec`, four
+title-cased `name` fields against kebab-case directories, all true and all fixable — are held
+with it.
+
+That is the honest version of "stop when a root's diff is more review than its findings are
+worth": the diff was not more review, it was a defect.

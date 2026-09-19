@@ -26,15 +26,17 @@ By default, from the repo root (the directory holding `.git`, or the cwd if ther
 |---|---|
 | `CLAUDE.md`, `CLAUDE.local.md` (in any directory) | `claude-md` |
 | `AGENTS.md` (in any directory) | `agents-md` |
-| `.claude/skills/**/SKILL.md`, `.agents/skills/**/SKILL.md`, `.cursor/skills/**/SKILL.md` | `skill` |
+| `.claude/`, `.agents/`, `.cursor/`, `.codex/`, `.opencode/` + `skills/**/SKILL.md` | `skill` |
 | `.claude/agents/*.md` | `subagent` |
 | `.claude/commands/**/*.md` | `command` |
 | `.cursor/rules/**/*.mdc`, `.cursorrules` | `cursor-rule` |
 | `.github/copilot-instructions.md` | `copilot` |
 
-**On the skills roots.** There is no single install location and `.claude/skills/` is not the busiest one. `npx skills add` writes to `.agents/skills/` by default — the "universal" target covering Amp, Cline, Codex, Cursor, GitHub Copilot, Gemini CLI, Kilo, Kimi, OpenCode, Warp and Zed among others — and offers fifty-odd more behind a picker, including `.aider-desk/skills`, `.augment/skills`, `.bob/skills`, `data/skills`, and a bare `skills/` for OpenClaw. The corpus agrees: 83 `SKILL.md` files under `.agents/skills/` against 32 under `.claude/skills/`, with `.flue/`, `.codex/`, `.github/` and `.opencode/` behind them.
+**On the skills roots.** There is no single install location and `.claude/skills/` is not the busiest one. `npx skills add` writes to `.agents/skills/` by default — the "universal" target covering Amp, Cline, Codex, Cursor, GitHub Copilot, Gemini CLI, Kilo, Kimi, OpenCode, Warp and Zed among others — and offers fifty-odd more behind a picker, including `.aider-desk/skills`, `.augment/skills`, `.bob/skills`, `data/skills`, and a bare `skills/` for OpenClaw. The corpus agrees: 83 `SKILL.md` files under `.agents/skills/` against 32 under `.claude/skills/`.
 
-Three roots are read today. The rest are a deliberate omission rather than an oversight: each root added audits more files in every repository that has one, which moves corpus snapshots and has to be priced against that diff (ADR-0007). They are taken one at a time, with the measurement in hand.
+Five roots are read today. The rest are a deliberate omission rather than an oversight: each root added audits more files in every repository that has one, which moves corpus snapshots and has to be priced against that diff (ADR-0007). They are taken one at a time, with the measurement in hand.
+
+What that measurement should count is **repositories, not files**. `.flue/skills/` holds eleven `SKILL.md` files — more than any other candidate root — and all eleven are in one project, which is the same project in the certification corpus and the only one of 700 repositories sampled from the wider ecosystem. A file count cannot tell a convention from a project. `.github/skills/` is the most widely used root not yet read and is held back by a separate defect rather than by its cost.
 
 Rules:
 - `.gitignore` is respected. `node_modules`, `dist`, `build`, `.next`, `vendor`, `target` are never walked into.

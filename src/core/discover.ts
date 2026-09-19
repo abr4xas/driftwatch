@@ -36,17 +36,31 @@ function basenameOf(rel: string): string {
  * `data/skills` and a bare `skills` for OpenClaw. Every agent picks its own.
  *
  * The corpus agrees, and by a wide margin: 83 `SKILL.md` files live under
- * `.agents/skills/` against 32 under `.claude/skills/`, with `.flue`, `.codex`,
- * `.github` and `.opencode` behind them.
+ * `.agents/skills/` against 32 under `.claude/skills/`.
  *
- * These three are the ones taken so far. The rest are **not** an oversight and
- * not a list to paste in: each root added is more sources audited in every repo
- * that has one, which moves corpus snapshots and has to be priced against the
- * diff (ADR-0007). Widening happens one root at a time, with the measurement in
- * hand, which is why a list of fifty-six is the wrong shape of answer even
- * though it exists.
+ * These are **not** a list pasted from the installer, and the ones missing are
+ * not an oversight: each root added is more sources audited in every repo that
+ * has one, which moves corpus snapshots and has to be priced against the diff
+ * (ADR-0007). Widening happens one root at a time, with the measurement in
+ * hand.
+ *
+ * What that measurement should count is **repositories, not files**: the root
+ * with the most `SKILL.md` files of the ones not read here has all of them in
+ * one project, and a file count cannot tell a convention from a project. The
+ * roots that are missing and why is `CLASSIFICATION.md`'s round twenty-two;
+ * repeating it here would be two records of one decision.
+ *
+ * The general answer is not a longer list. It is a repository saying where its
+ * skills are, which is still undecided. This is the stopgap for the roots
+ * common enough to be worth hard-coding meanwhile.
  */
-export const SKILL_ROOTS: readonly string[] = ['.claude', '.agents', '.cursor']
+export const SKILL_ROOTS: readonly string[] = [
+  '.claude',
+  '.agents',
+  '.cursor',
+  '.codex',
+  '.opencode',
+]
 
 /**
  * Finds the position of a pair of consecutive segments, such as

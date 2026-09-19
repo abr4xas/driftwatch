@@ -20,9 +20,10 @@ export type Discard = {
    *
    * The prose gates are shared: the same `conditional` that refuses a path also
    * refuses an anchor link and a script name, and a table that counted only the
-   * first would report a rule's cost as smaller than it is. Measured over 700
-   * repositories the difference is 60 discards in 94,972 — and 10 of the 32
-   * `conditional` ones, which is the row where it matters.
+   * first would report a rule's cost as smaller than it is. It was measured
+   * both ways, and the difference lands almost entirely on the smallest and
+   * riskiest row; the counts are in ticket `07`, where a figure over the
+   * discovery corpus belongs.
    *
    * It is carried rather than folded in because the three are not
    * interchangeable: "does the repository have this path" is a question about a
