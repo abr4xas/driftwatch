@@ -2,9 +2,9 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 74 findings.**
+Corpus: **66 public repos pinned to a commit, 56 findings.**
 
-**48 of those 74 are unadjudicated**, added by round eighteen when discovery widened to the other skills roots. Everything under that round's heading is a ledger of work to do, not a measurement. The conditions below are reported against the 26 that have verdicts, and are **in suspense** until the rest are ruled on.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below. Of those 30, **2 are true and 28 are false**, which takes the corpus to 56 findings, 22 true and 34 false.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -16,7 +16,7 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 14 |
+| 2 | Zero false positives among `fixable` findings | 3 fixable, **2 false** (`react-router`, round 18) | **broken** |
 | 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
@@ -25,9 +25,9 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **3**, of which **0 are false** — and that line reports only what has been ruled on. Two of the three arrived in round eighteen and are **unadjudicated**, so ADR-0006 condition 2 is in suspense rather than met. It admits no false positive among the fixable at any rate, which makes those two the first thing to rule on.
+Fixable findings: **3**, of which **2 are false**. Both arrived in round eighteen and both are the same claim in `remix-run/react-router`, so **ADR-0006 condition 2 is broken**: it admits no false positive among the fixable at any rate. The class is named in round eighteen and is not yet closed.
 
-**All nine conditions are met**, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
+**Eight of nine conditions are met, and condition 2 is broken** by round eighteen. The validation-group conditions are untouched, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
 
 Four rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together, because two of them broke conditions and two repaired them:
 
@@ -1162,39 +1162,89 @@ Two results nobody predicted:
 - **Widening did not wake `skill/frontmatter`.** Zero of the 48 are its findings. The corpus's skills are well formed wherever they live, which is round eleven's result again across three roots and 83 more files.
 - **`link/broken` produced the first two findings of its existence.** It had read zero since it landed in round nine.
 
-### The 48, grouped by shape
+### The verdicts
 
-Grouped, not ruled on. The class names are descriptions of what the strings look like, and each one needs a person to open the repository and decide.
+48 findings arrived. **18 were a bug in driftwatch and no longer exist**; the other 30 are ruled on here: **2 true, 28 false**.
 
-| # | Shape | Count | Where |
+| # | Class | n | Verdict |
 |---|---|---|---|
-| A | A path prefixed with the repo's own name — `react-router/docs/start/modes.md` in `react-router` | 16 | `react-router` |
-| B | The same skill copied into nine templates, each claiming `.emdash/types.ts` and `.emdash/schema.json` | 18 | `emdash` |
-| C | An absolute path that is a **documentation URL**, not a file — `/docs/app/glossary`, `/docs/app/` | 3 | `next.js` |
-| D | A literal placeholder — `path/to/file.ts`, `#anchor-a`, `#anchor-b`, `+types/` | 4 | `astro`, `next.js`, `react-router` |
-| E | A path in the **user's** project, not this repo — `app/entry.server.tsx` | 1 | `react-router` |
-| F | Everything else, one at a time | 6 | `goose`, `next.js`, `react-router` |
+| B | `.emdash/types.ts` and `.emdash/schema.json`, in nine template copies | 18 | **false — and a bug**, see below |
+| A | A path prefixed with a package name — `react-router/docs/start/modes.md` | 16 | false |
+| C | An absolute path that is a documentation-site URL — `/docs/app/glossary` | 3 | false |
+| D | A literal placeholder — `path/to/file.ts`, `#anchor-a`, `+types/` | 4 | false |
+| F1 | A file the document tells you to create — `scripts/changes/whats-changed.md`, `tasks/rfc-decisions.md` | 3 | false, **2 of them fixable** |
+| E | A path in the **reader's** project, not this repo — `app/entry.server.tsx` | 1 | false |
+| F2 | A runtime log — `agent/goose.txt` | 1 | false |
+| F3 | `docs/upgrading/future-flags.md` | 1 | **true** |
+| F4 | `src/client/components/image.tsx` | 1 | **true** |
 
-**Class B is the template problem arriving in the corpus.** One drifted path in one skill, copied into nine starter templates, is eighteen findings from two mistakes. Counting it as eighteen would overstate this round's mass by a factor of nine, which is the same shape as round fifteen's eight findings in a single document.
+### Class B was not a class. It was a bug, and it had been there all along.
 
-**Class D is the one that looks closable on sight.** `path/to/file.ts` is the universal metasyntactic path and `discard.ts` already keeps a `METASYNTACTIC` set — it holds `foo`, `bar`, `baz`, `qux`, `fulano`, `ejemplo`, and not `path/to`. `#anchor-a` and `#anchor-b` are a documentation example of what an anchor looks like. Looking closable and being closable are different, and that is what the review is for.
-
-**Class C is a real question and not a typo.** In a repository that publishes a documentation site, `/docs/app/glossary` is a URL. driftwatch resolves a leading `/` against the repo root, finds nothing, and reports it. Whether that is drift depends on whether the site's routes are supposed to track the repo's files, which is a judgement about next.js and not about the string.
-
-### The two fixable ones, which come first
+The eighteen `emdash` findings are paths its own `.gitignore` covers — `.emdash/` is line 35 of it — and `gitIgnoredPaths` exists precisely so that a path git ignores is never reported missing. It did not fire, and the reason is worth the space:
 
 ```
-.agents/skills/prepare-release-notes/SKILL.md:30:20  scripts/changes/whats-changed.md
-  -> .agents/skills/prepare-release-notes/references/whats-changed.md  (confidence 1, fixable)
-.agents/skills/prepare-release-notes/SKILL.md:76:6   scripts/changes/whats-changed.md
+$ git check-ignore -n -v -- <380 paths including '.agents/skills/__driftwatch_probe__'>
+fatal: pathspec '.agents/skills/__driftwatch_probe__' is beyond a symbolic link
+```
+
+`.agents/skills` in `emdash` is a **symlink**. `check-ignore` refuses a pathspec that crosses one by aborting the **whole invocation** with exit 128 and no output — and `git.ts` treated an empty stdout as "none of these is ignored", which is what exit 1 means. So one refused path silently cancelled the gitignore suppression for **up to 400 others**.
+
+Fixed by distinguishing exit 1 from a real failure, and by halving a refused batch until the offending paths are alone. The 18 findings disappeared with it and the corpus went from 74 to 56.
+
+**This is the round's most valuable result and it is not about skills.** The bug was reachable from any repository with a symlink on a claimed path; widening discovery only supplied one. It had been live since `gitIgnoredPaths` landed.
+
+### Condition 2 is broken, by two findings of one claim
+
+```
+.agents/skills/prepare-release-notes/SKILL.md:30  scripts/changes/whats-changed.md
   -> .agents/skills/prepare-release-notes/references/whats-changed.md  (confidence 1, fixable)
 ```
 
-ADR-0006 condition 2 admits **no** false positive among the fixable findings, at any rate, with no percentage modulating it. Two arrived unadjudicated, so the condition is in suspense. They are the first thing to rule on, and if either is false the class closes before anything else in this round is discussed.
+The document's own next four bullets settle it:
+
+> 4. Review whether `scripts/changes/whats-changed.md` is needed:
+>    - Read `CHANGELOG.md` examples or `references/whats-changed.md` when uncertain
+>    - **Add** `scripts/changes/whats-changed.md` only for features, …
+>    - **Do not add it** for ordinary bug fixes, …
+
+The file is written during a release when the change warrants it. The document does not claim it exists; it spends four bullets on when to create it. Both findings are false.
+
+The autofix is worse than the finding. It would rewrite `scripts/changes/whats-changed.md` — the release artifact — into `references/whats-changed.md`, the skill's own reference document, which the line directly above mentions as a **different** file. The suggestion earns confidence 1 because the basenames match exactly, and the directories have nothing to do with each other.
+
+ADR-0006 condition 2 admits no false positive among the fixable findings at any rate. It is broken until this closes, and there are two shapes of fix: the finding (a path the document elsewhere says to create) or the autofix (a candidate sharing a basename but no ancestry).
+
+### The two true positives, which are why the widening was worth it
+
+```
+remix-run/react-router  .agents/skills/implement-rfc/SKILL.md:143
+  `docs/upgrading/future-flags.md`
+```
+
+`docs/upgrading/` exists and holds `component-routes.md`, `future.md`, `index.md`. The document was renamed to `future.md` and the skill's table still points at the old name. **That is the drift this tool exists to find**, and before round eighteen nobody was looking: the file is under `.agents/skills/`, which discovery did not read.
+
+```
+vercel/next.js  .agents/skills/update-docs/SKILL.md:50
+  `src/client/components/image.tsx` → `docs/01-app/.../image.mdx`
+```
+
+A code-to-docs mapping table. The real file is `packages/next/src/client/image-component.tsx` — different directory, different name. Recorded as true with less confidence than the first: the table may be describing a path shape rather than a file.
+
+### The classes that stay open
+
+Four, none of them new in kind, all of them semantic:
+
+- **A, a package-name prefix.** The skill says so in prose: *"When this skill references `react-router/docs/...`, read the matching file under `node_modules/react-router/docs/`"* — and that sentence is itself one of the sixteen findings. A rule shape does exist here and is worth pricing: the repo contains `packages/react-router/package.json` with `"name": "react-router"`, so a first segment that matches a package name in the repo is a package specifier, not a path.
+- **C, an absolute path that is a site URL.** `/docs/app/glossary` in a repository that publishes a documentation site. Whether it is drift depends on whether the site's routes track the repo's files, which is a judgement about next.js.
+- **D, placeholders.** `path/to/file.ts` is the universal metasyntactic path and `discard.ts` keeps a `METASYNTACTIC` set that does not include it. The cheapest correction in this round.
+- **F1, a file the document tells you to create.** `CREATE_IMPERATIVES` already covers `add` and `write` at the start of a sentence; it does not cover *"**Save** the resolved decisions to a scratch file at `tasks/rfc-decisions.md`"*, nor an instruction that appears two lines below the claim rather than in it.
+
+### What this round cost
+
+Nothing in validation: all 48 landed in calibration, so no repo moved groups and no replacement is owed. `emdash` contributed 18 findings that were never real, and its snapshot is now clean.
 
 ### What is owed
 
-1. Rule on the 48, by class where the class is honest and one by one where it is not.
-2. Decide class B's counting rule: nine copies of one mistake are one observation or nine, and this document has taken the "one" position before.
-3. Re-read conditions 1 through 9 afterwards. They are quoted above as of round seventeen and they stay quoted that way until this round closes.
-4. The two replacement validation repos owed since M2 are **still** owed. This round did not pay them and did not burn any new ones.
+1. **Repair condition 2.** Two false fixable findings, one class, two possible shapes of fix.
+2. Price class A's rule — a first segment matching a package name in the repo.
+3. Add `path/to` to `METASYNTACTIC`, which closes class D's largest member for one line.
+4. The two replacement validation repos owed since M2 are **still** owed. This round did not pay them and burned nothing: every finding it produced landed in calibration.

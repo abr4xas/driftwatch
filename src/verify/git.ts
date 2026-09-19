@@ -19,6 +19,78 @@ const BATCH = 400
  * Only the paths some check is going to look up are asked about, which is a few
  * dozen per run.
  */
+/**
+ * What one `check-ignore` invocation produced, and whether git answered at all.
+ *
+ * The distinction is the whole point. `check-ignore` exits **1** when nothing
+ * matched, which is an answer; it exits **128** when it refuses a pathspec,
+ * which is not. Both arrive as a thrown error with an empty stdout, and
+ * conflating them is how a whole batch of suppressions disappears.
+ */
+type BatchResult = { stdout: string; answered: boolean }
+
+async function askGit(root: string, batch: readonly string[]): Promise<BatchResult> {
+  try {
+    // `-n` so the path does not need to exist, which is exactly the case here.
+    const result = await run('git', ['-C', root, 'check-ignore', '-n', '-v', '--', ...batch], {
+      maxBuffer: 16 * 1024 * 1024,
+      encoding: 'utf8',
+    })
+    return { stdout: result.stdout, answered: true }
+  } catch (cause) {
+    const error = cause as { stdout?: string; code?: unknown }
+    const stdout = typeof error.stdout === 'string' ? error.stdout : ''
+    // Exit 1 is "none of these is ignored" and is a complete answer, whether or
+    // not it printed anything. Anything else — no git, a refused pathspec — is
+    // a failure, and a failure with no output tells us nothing about this batch.
+    const answered = error.code === 1 || stdout.length > 0
+    return { stdout, answered }
+  }
+}
+
+function collect(stdout: string, into: Set<string>): void {
+  for (const line of stdout.split('\n')) {
+    // -v format: `<source>:<line>:<pattern>\t<path>`. With no pattern, `::`.
+    const tab = line.lastIndexOf('\t')
+    if (tab === -1) continue
+    if (line.slice(0, tab) === '::') continue
+    into.add(line.slice(tab + 1))
+  }
+}
+
+/**
+ * Asks about a batch, and on a refusal splits it until the refused paths are
+ * alone.
+ *
+ * `git check-ignore` aborts the **entire invocation** when one pathspec crosses
+ * a symlink — `fatal: pathspec 'x' is beyond a symbolic link`, exit 128, no
+ * output — so a single such path used to cost the suppression of up to 400
+ * others. `emdash-cms/emdash` reported 18 findings for paths its own
+ * `.gitignore` covers, because `.agents/skills` there is a symlink and its
+ * directory probe poisoned the batch.
+ *
+ * Halving rather than dropping to one: the refused paths are usually few, so
+ * this costs O(log n) extra invocations in the bad case and none in the good
+ * one. A single path that git still refuses is the only thing lost, and losing
+ * it means treating it as not-ignored, which is the direction that reports
+ * rather than the direction that hides.
+ */
+async function askSplitting(
+  root: string,
+  batch: readonly string[],
+  into: Set<string>,
+): Promise<void> {
+  const { stdout, answered } = await askGit(root, batch)
+  if (answered) {
+    collect(stdout, into)
+    return
+  }
+  if (batch.length === 1) return
+  const half = Math.ceil(batch.length / 2)
+  await askSplitting(root, batch.slice(0, half), into)
+  await askSplitting(root, batch.slice(half), into)
+}
+
 export async function gitIgnoredPaths(
   root: string,
   paths: readonly string[],
@@ -27,31 +99,7 @@ export async function gitIgnoredPaths(
   if (paths.length === 0) return ignored
 
   for (let i = 0; i < paths.length; i += BATCH) {
-    const batch = paths.slice(i, i + BATCH)
-    let stdout: string
-    try {
-      // `-n` so the path does not need to exist, which is exactly the case
-      // here. `check-ignore` exits 1 when nothing matches, so the catch covers
-      // both "none ignored" and "no git available".
-      const result = await run('git', ['-C', root, 'check-ignore', '-n', '-v', '--', ...batch], {
-        maxBuffer: 16 * 1024 * 1024,
-        encoding: 'utf8',
-      })
-      stdout = result.stdout
-    } catch (cause) {
-      // Exit 1 with empty stdout means "none ignored", not a failure.
-      const partial = (cause as { stdout?: string }).stdout
-      if (typeof partial !== 'string' || partial.length === 0) continue
-      stdout = partial
-    }
-
-    for (const line of stdout.split('\n')) {
-      // -v format: `<source>:<line>:<pattern>\t<path>`. With no pattern, `::`.
-      const tab = line.lastIndexOf('\t')
-      if (tab === -1) continue
-      if (line.slice(0, tab) === '::') continue
-      ignored.add(line.slice(tab + 1))
-    }
+    await askSplitting(root, paths.slice(i, i + BATCH), ignored)
   }
 
   return ignored

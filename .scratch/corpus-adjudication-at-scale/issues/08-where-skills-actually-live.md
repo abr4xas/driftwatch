@@ -7,8 +7,8 @@
 
 **Blocked by:** nothing
 
-**Status: in progress.** Discovery widened to three roots 2026-09-19; the corpus diff is
-saved and unadjudicated. Originally **REOPENED 2026-09-18**. It was resolved the same day with a decision not to widen,
+**Status: resolved 2026-09-19.** Discovery widened to three roots, the 48 findings adjudicated
+in `CLASSIFICATION.md` round eighteen. Originally **REOPENED 2026-09-18**. It was resolved the same day with a decision not to widen,
 and that decision was wrong. The reasoning is kept in §"Answer" and overturned in
 §"Correction", because the way it failed is worth more than the conclusion was.
 
@@ -463,3 +463,38 @@ different things and only one of them can be done by running a command.
 shapes, decide whether nine copies of one mistake count once or nine times, and check the two
 new fixable findings against ADR-0006 condition 2 first, because that condition admits no
 false positive among them at any rate.
+
+## Step 3, done
+
+The 48 are ruled on in [`CLASSIFICATION.md`](../../../test/corpus/CLASSIFICATION.md) round
+eighteen: **2 true, 28 false, and 18 that were a bug in driftwatch rather than findings at
+all.**
+
+**The bug is the round's real result and it has nothing to do with skills.** The eighteen
+`emdash` findings were paths its own `.gitignore` covers. `git check-ignore` refuses a
+pathspec that crosses a symlink by aborting the *entire invocation* with exit 128 and no
+output, and `git.ts` read an empty stdout as "none of these is ignored" — which is what exit
+1 means. One refused path silently cancelled gitignore suppression for up to 400 others.
+Live since `gitIgnoredPaths` landed, reachable from any repository with a symlink on a
+claimed path. Widening discovery did not cause it; it supplied a repository that triggered
+it.
+
+**Condition 2 is broken** by the two fixable findings this round added, both false, both the
+same claim. That is recorded in the round and is the first thing owed.
+
+**Two true positives justify the change on its own terms.** `react-router`'s skill points at
+`docs/upgrading/future-flags.md`, which was renamed to `future.md` — drift of exactly the
+kind this tool exists to report, in a file nothing was reading before this ticket.
+
+### What this ticket got wrong on the way, in order
+
+1. Decided not to widen, against an invented `name` convention, without reading the
+   specification that was linked from the repository that prompted the question.
+2. Corrected that, and still treated `.claude/skills/` as the canonical root with everything
+   else an exception — when `.agents/skills/` is the installer's default and outnumbers it
+   83 to 32 in this very corpus.
+3. Proposed a content gate that would have made `frontmatter is missing` unreportable, which
+   the check's own code would have shown in a minute.
+
+Each was caught by looking at something that was already there: the published spec, the
+installer's output, the check's source. None needed new data.

@@ -1,7 +1,7 @@
 # emdash-cms/emdash
 
 sources: 41
-errors: 19
+errors: 1
 warnings: 0
 fixable: 0
 
@@ -50,21 +50,3 @@ agents-md  templates/starter/AGENTS.md
 
 ## findings
 AGENTS.md:398:56  [path/missing] inline-code  tests/e2e/
-templates/blank/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/blank/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/blog-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/blog-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/blog/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/blog/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/marketing-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/marketing-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/marketing/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/marketing/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/portfolio-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/portfolio-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/portfolio/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/portfolio/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/starter-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/starter-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
-templates/starter/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
-templates/starter/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
