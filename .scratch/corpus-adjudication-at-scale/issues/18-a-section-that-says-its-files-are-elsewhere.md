@@ -150,9 +150,18 @@ it:
 | the window is lead-in **+ item**, nothing in between | `openai/codex` — a sibling bullet writes "(for example, `thread/read`)" four lines up |
 | the lead-in must be indented no further than the item | `saubakirov/KZ-IT-telegram-list` — a sibling's wrapped second line carries an `e.g.` about its own paths |
 
-Both lost a true finding to an early version and both have it back. Neither would have been
-visible without running the corpus between attempts, which is the argument `AGENTS.md` makes
-for running it before *and* after.
+Both lost a finding to an early version and both have it back, and only one of those is good
+news. `openai/codex`'s is **true** (round one: there is no `v2.rs`). `saubakirov`'s
+`.tfw/adapters/antigravity/rules/` is a **known false positive** — round thirteen, left open
+deliberately by round eighteen's class B — so the early version silenced it correctly by
+accident and the bound reports it again.
+
+The bound is kept for the codex case and costs the other. An earlier version of this answer
+said both were true; the verdict was fourteen hundred lines away in a document with no
+per-finding index, which is the cost ticket `01` names and the reason it is worth paying.
+
+Neither case would have been visible without running the corpus between attempts, which is the
+argument `AGENTS.md` makes for running it before *and* after.
 
 ### The measurement, both halves
 

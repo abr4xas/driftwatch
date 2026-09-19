@@ -4,7 +4,7 @@ Hand review of every finding against the real repo. First measured 2026-09-09; r
 
 Corpus: **66 public repos pinned to a commit, 39 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **33 findings, 22 true and 11 false**.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **39 findings, 28 true and 11 false** after rounds twenty-two and twenty-four widened the skills roots.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -66,41 +66,104 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **26 findings, 20 true and 6 false**, so 76.9% aggregate — and the aggregate is
-the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
+The corpus produces **39 findings, 28 true and 11 false**, so 71.8% aggregate — and the aggregate
+is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
 Every row below is derived from the committed snapshots in `snapshots/` and the `holdout` field in
-`scripts/corpus-repos.ts`. The verdicts are the ones recorded in the rounds named in the last column;
-no finding appears here without one.
+`scripts/corpus-repos.ts`, and the per-finding record is the table after it.
 
-| Repo | Findings | True | False | Group | Verdict recorded in |
-|---|---|---|---|---|---|
-| `tursodatabase/turso` | 4 | 4 | 0 | calibration | rounds 8, 12 |
-| `openai/codex` | 3 | 3 | 0 | calibration | round 1 |
-| `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | **validation** | round 8 |
-| `1amageek/SwiftAgent` | 2 | 2 | 0 | **validation** | round 13 |
-| `raphaelmansuy/edgecrab` | 2 | 0 | 2 | **validation** | round 13 |
-| `fancy1108/Clutch` | 2 | 1 | 1 | **validation** | round 16 |
-| `Endle/fireSeqSearch` | 1 | 1 | 0 | **validation** | rounds 13, 17 |
-| `CrossPaste/crosspaste-desktop` | 1 | 1 | 0 | **validation** | round 13 |
-| `northword/zotero-format-metadata` | 1 | 0 | 1 | **validation** | round 13 |
-| `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration | round 1 |
-| `calcom/cal.com` | 1 | 1 | 0 | calibration | round 1 |
-| `colinhacks/zod` | 1 | 1 | 0 | calibration | round 10 |
-| `emdash-cms/emdash` | 1 | 1 | 0 | calibration | rounds 6, 8 |
-| `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration | rounds 6, 7 |
-| `saubakirov/KZ-IT-telegram-list` | 1 | 0 | 1 | calibration | round 13 |
-| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration | round 3 |
-| the other 50 | 0 | — | — | — | — |
+| Repo | Findings | True | False | Group |
+|---|---|---|---|---|
+| `openai/codex` | 5 | 5 | 0 | calibration |
+| `securego/gosec` | 4 | 4 | 0 | validation |
+| `tursodatabase/turso` | 4 | 4 | 0 | calibration |
+| `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | validation |
+| `remix-run/react-router` | 3 | 1 | 2 | calibration |
+| `vercel/next.js` | 3 | 1 | 2 | calibration |
+| `1amageek/SwiftAgent` | 2 | 2 | 0 | validation |
+| `fancy1108/Clutch` | 2 | 1 | 1 | validation |
+| `raphaelmansuy/edgecrab` | 2 | 0 | 2 | validation |
+| `block/goose` | 1 | 0 | 1 | calibration |
+| `calcom/cal.com` | 1 | 1 | 0 | calibration |
+| `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
+| `colinhacks/zod` | 1 | 1 | 0 | calibration |
+| `CrossPaste/crosspaste-desktop` | 1 | 1 | 0 | validation |
+| `emdash-cms/emdash` | 1 | 1 | 0 | calibration |
+| `Endle/fireSeqSearch` | 1 | 1 | 0 | validation |
+| `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration |
+| `northword/zotero-format-metadata` | 1 | 0 | 1 | validation |
+| `saubakirov/KZ-IT-telegram-list` | 1 | 0 | 1 | calibration |
+| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration |
 
 **`github/spec-kit` is no longer in this table.** It carried the corpus's first false positive, open
 from round one — `.goose/recipes/`, another tool's convention — and round fourteen closed the class
 that produced it. The repo is still in the corpus and is now silent. The finding and the argument it
 generated stay in the history below, where they happened.
 
-Split by group: **validation 12 findings, 8 true and 4 false**, in 7 of its 32 repos; **calibration
-14 findings, 12 true and 2 false**, in 9 of its 34 repos. Only the first half measures anything.
+Split by group: **validation 16 findings, 12 true and 4 false**; **calibration 23 findings, 16
+true and 7 false**, over 20 repositories in all. Only the first half measures anything.
+
+The two sections that follow walk the findings adjudicated up to round seventeen. They are kept as
+written — the reasoning is the point — and the **complete** record, rounds one to twenty-four, is
+the per-finding table above.
+
+### Every finding, one row
+
+The table above is a summary; **this is the record**. One row per finding in `snapshots/`, with
+the verdict and the round that adjudicated it. `corpus-bookkeeping.test.ts` asserts that every
+snapshot finding appears here exactly once and that the counts agree, so it cannot go stale the
+way the per-repo table did — that one said 26 findings while the snapshots held 39, and thirteen
+adjudications from rounds 18 to 24 lived only in prose.
+
+That is not a tidiness problem. Round twenty-three justified a bound with a finding it called
+true which round thirteen had ruled **false**, because the verdict was fourteen hundred lines
+away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
+be fed to a model; the error is the argument for it.
+
+**28 true, 11 false, 39 findings.**
+
+| # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
+|---|---|---|---|---|---|---|---|
+| 1 | `1amageek/SwiftAgent` | `AGENTS.md:701:34` | `path/missing` | `docs/SECURITY.md` | **true** | — | validation, round 4 |
+| 2 | `1amageek/SwiftAgent` | `CLAUDE.md:701:34` | `path/missing` | `docs/SECURITY.md` | **true** | — | validation, round 4 |
+| 3 | `block/goose` | `evals/harbor/.agents/skills/compare-tasks/SKILL.md:94:60` | `path/missing` | `agent/goose.txt` | **false** | runtime-log | calibration, round 18, F2 |
+| 4 | `calcom/cal.com` | `AGENTS.md:130:24` | `path/missing` | `packages/features/ee/workflows/lib/constants.ts` | **true** | — | calibration, round 10 |
+| 5 | `cloudflare/workers-sdk` | `AGENTS.md:140:8` | `path/missing` | `.github/PULL_REQUEST_TEMPLATE.md` | **true** | — | calibration, round 10 |
+| 6 | `colinhacks/zod` | `.claude/skills/security-advisory/SKILL.md:3:1` | `frontmatter/invalid` | `description: Triage a draft security advisory in colinh…` | **true** | — | calibration, round 17 |
+| 7 | `CrossPaste/crosspaste-desktop` | `CLAUDE.md:41:4` | `path/missing` | `app/src/commonMain/sqldelight/` | **true** | — | validation, round 14 |
+| 8 | `emdash-cms/emdash` | `AGENTS.md:398:56` | `path/missing` | `tests/e2e/` | **true** | — | calibration, rounds 6, 8 |
+| 9 | `Endle/fireSeqSearch` | `CLAUDE.md:145:16` | `path/missing` | `fire_seq_search_server/src/query_engine/semantic_query.rs` | **true** | — | validation, round 17 |
+| 10 | `fancy1108/Clutch` | `.cursor/rules/cli-whitelist-docs.mdc:3:8` | `path/missing` | `services/orchestrator/src/tools_status.py,apps/desktop/…` | **false** | comma-separated-globs | validation, round 16 |
+| 11 | `fancy1108/Clutch` | `CLAUDE.md:190:42` | `path/missing` | `docs/adr/` | **true** | — | validation, round 16 |
+| 12 | `mattpocock/course-video-manager` | `CLAUDE.md:27:252` | `path/missing` | `.github/workflows/test.yml` | **true** | — | calibration, rounds 6, 7 |
+| 13 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:87:13` | `path/missing` | `packages/server/src/server/sse.ts` | **true** | — | validation, round 14 |
+| 14 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:93:60` | `path/missing` | `packages/server/src/server/auth/` | **true** | — | validation, round 14 |
+| 15 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:98:79` | `path/missing` | `packages/client/src/client/auth-extensions.ts` | **true** | — | validation, round 14 |
+| 16 | `northword/zotero-format-metadata` | `AGENTS.md:44:89` | `path/missing` | `content/scripts/linter.js` | **false** | generated-bundle | validation, round 14 |
+| 17 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | calibration, round 22 |
+| 18 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:3:1` | `skill/frontmatter` | `description` | **true** | — | calibration, round 22 |
+| 19 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
+| 20 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 21 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
+| 23 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
+| 24 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
+| 25 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
+| 26 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:25:17` | `path/missing` | `+types/` | **false** | placeholder | calibration, round 18, D |
+| 27 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
+| 28 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 29 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 30 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 31 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 33 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 34 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 35 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
+| 36 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
+| 37 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
+| 38 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
+| 39 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
 
 ---
 
@@ -1580,7 +1643,17 @@ so a list under a disclaiming lead-in was forty independent claims. The walk is 
 | only siblings at the same indent | an outer list's lead-in reaching a nested item | — |
 | one blank line, never past a heading | a different paragraph, a different subject | — |
 
-Both named repositories lost a finding to an early version, and both got it back.
+Both repositories lost a finding to an early version and both got it back, and **that is only
+good news for one of them.** `openai/codex`'s `app-server-protocol/src/protocol/v2.rs` is
+**true**, adjudicated in round one — there is no `v2.rs` — so restoring it is the bound working.
+`saubakirov/KZ-IT-telegram-list`'s `.tfw/adapters/antigravity/rules/` is a **known false
+positive**, round thirteen, and round eighteen's class B left it open deliberately. The early
+version silenced it by accident and the bound reports it again.
+
+So the bound's ledger is one true finding recovered and one known false positive restored, and
+it is kept for the first. An earlier version of this round said both were true, which was wrong:
+the verdict was fourteen hundred lines away in a document with no per-finding index. Ticket `01`
+is about exactly that.
 
 ### `ELSEWHERE`, and why it is its own class
 

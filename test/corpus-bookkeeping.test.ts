@@ -161,3 +161,80 @@ describe('CLASSIFICATION.md agrees with the snapshots', () => {
     })
   })
 })
+
+/**
+ * The per-finding record, which is the one thing in `CLASSIFICATION.md` that
+ * has to stay exactly in step with the snapshots.
+ *
+ * It went stale once and it was not noticed: the per-repo table said 26
+ * findings while the snapshots held 39, and thirteen adjudications from rounds
+ * 18 to 24 lived only in the prose of the rounds that made them. Round
+ * twenty-three then justified a bound with a finding it called true which round
+ * thirteen had ruled false — a mistake nobody could have caught by reading,
+ * because there was nowhere to look the verdict up.
+ *
+ * These assertions are the reason that cannot happen twice. They check
+ * bookkeeping, not verdicts: whether a finding is true is a judgement and
+ * ADR-0007 keeps judgements out of CI.
+ */
+describe('every finding has a row and a verdict', () => {
+  const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
+
+  /** `repo location` for every finding the snapshots carry. */
+  function snapshotFindings(): string[] {
+    const found: string[] = []
+    for (const name of snapshotNames()) {
+      const text = snapshot(name)
+      const [, findings = ''] = text.split('## findings\n')
+      const repo = /^# (.+)$/mu.exec(text)?.[1] ?? name
+      for (const line of findings.split('\n')) {
+        const location = /^(\S+:\d+:\d+)\s/u.exec(line.trim())?.[1]
+        if (location !== undefined) found.push(`${repo} ${location}`)
+      }
+    }
+    return found
+  }
+
+  /** The rows of the per-finding table, as `repo location` plus its verdict. */
+  function recordedFindings(): Map<string, string> {
+    const rows = new Map<string, string>()
+    for (const line of doc.split('\n')) {
+      const row =
+        /^\| \d+ \| `([^`]+)` \| `([^`]+)` \| `[^`]+` \| .* \| \*\*(true|false)\*\* \|/u.exec(line)
+      if (row !== null) rows.set(`${row[1]} ${row[2]}`, row[3] ?? '')
+    }
+    return rows
+  }
+
+  it('records every finding the snapshots carry, and invents none', () => {
+    const recorded = recordedFindings()
+    const snapshots = snapshotFindings()
+    expect(snapshots.filter((finding) => !recorded.has(finding))).toEqual([])
+    expect([...recorded.keys()].filter((row) => !snapshots.includes(row))).toEqual([])
+  })
+
+  it('records each one exactly once', () => {
+    expect(recordedFindings().size).toBe(snapshotFindings().length)
+  })
+
+  it('agrees with the count it states about itself', () => {
+    const cited = /\*\*(\d+) true, (\d+) false, (\d+) findings\.\*\*/u.exec(doc)
+    if (cited === null) throw new Error('CLASSIFICATION.md does not state its per-finding totals')
+    const [trueCount = 0, falseCount = 0, total = 0] = cited.slice(1).map(Number)
+    const verdicts = [...recordedFindings().values()]
+    expect({
+      true: verdicts.filter((verdict) => verdict === 'true').length,
+      false: verdicts.filter((verdict) => verdict === 'false').length,
+      total: verdicts.length,
+    }).toEqual({ true: trueCount, false: falseCount, total })
+  })
+
+  it('agrees with the aggregate the document opens with', () => {
+    const cited = /corpus produces \*\*(\d+) findings, (\d+) true and (\d+) false\*\*/u.exec(doc)
+    if (cited === null) throw new Error('CLASSIFICATION.md does not cite its aggregate')
+    const [total = 0, trueCount = 0] = cited.slice(1).map(Number)
+    const verdicts = [...recordedFindings().values()]
+    expect(verdicts).toHaveLength(total)
+    expect(verdicts.filter((verdict) => verdict === 'true')).toHaveLength(trueCount)
+  })
+})
