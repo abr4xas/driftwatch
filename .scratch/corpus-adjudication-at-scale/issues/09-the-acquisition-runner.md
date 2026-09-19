@@ -69,7 +69,8 @@ network nor a disk.
 ### What it does, measured rather than projected
 
 **Enumeration: 2486 repositories from 26 pages of code search**, a few minutes of rate limit.
-The list is committed at `scripts/discovery-repos.txt`.
+The list lands in `test/discovery/repos.txt`, with the clones and the cursor, and is not
+committed.
 
 The facets turned out to overlap by almost nothing: every page of 100 hits contributed
 between 77 and 100 repositories the list did not already have. `02`'s 784-unique-per-1000
@@ -108,16 +109,26 @@ arrived at the worse way.
 
 ### The three open questions, decided
 
-**Where the repo list lives — committed, with no shas.** Both halves of the ticket's argument
-are right about different artifacts. The list is *provenance*: it says which repositories a
-class was seen in, and it is what a reader checks a claim about the discovery corpus against.
-The shas would be reproducibility of a *snapshot*, and there are no snapshots here — nothing
-is compared against a stored result, so a moving upstream costs nothing. Pinning 2000 shas
-would also make the file 2000 lines that change for reasons that mean nothing.
+**Where the repo list lives — in `test/discovery/`, uncommitted, with no shas.**
 
-Its header names **the queries that were actually spent**, not the twelve facets. A run that
-reached its target after one facet has searched one facet, and a header claiming all twelve
-would attribute a repository to a search that never ran.
+The first answer to this was "committed, with no shas", and it was **wrong**, corrected the
+same day on Angel's objection. The ticket frames the choice as provenance versus disposability
+and that framing hides the actual option: the list is not the only record of where a
+repository came from. **`FACETS` is.** Twelve lines of committed code, the enumeration is
+deterministic given them, and "the repositories `filename:SKILL.md size:>10000` returns" is a
+reproducible description. Committing the generated list bought nothing that the queries do
+not already give, and cost a 2500-line artifact under review that changes by hundreds of
+lines every time somebody raises `--target`.
+
+What is lost is the exact membership on a given day. That is the same thing the
+no-shas decision already gave up, for the same reason: nothing here is compared against a
+stored result. A corpus that is disposable in every other respect does not get one file that
+is not.
+
+The header of the file still names **the queries that were actually spent**, not the twelve
+facets, and that matters more now rather than less — it is the part a reader would quote. A
+run that reached its target after one facet has searched one facet, and a header claiming all
+twelve would attribute a repository to a search that never ran.
 
 **Disk — a ratio, not a threshold.** Refuse when free space is under twice the expected
 weight. A fixed number of gigabytes ages badly against a list whose length is an argument,

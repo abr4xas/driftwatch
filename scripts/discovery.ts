@@ -12,7 +12,7 @@
  * reasons: enumeration runs out of rate limit, cloning runs out of network or
  * disk, and a run dies on one repository at a time.
  *
- *   pnpm discovery enumerate [--target N]   fill scripts/discovery-repos.txt
+ *   pnpm discovery enumerate [--target N]   fill test/discovery/repos.txt
  *   pnpm discovery clone     [--limit N]    sparse-clone what the list names
  *   pnpm discovery run       [--limit N]    audit each clone, record the result
  *   pnpm discovery status                   what exists so far
@@ -57,22 +57,31 @@ import { CORPUS, slugOf } from './corpus-repos.ts'
 import { sparseClone } from './discovery-clone.ts'
 
 const HERE = import.meta.dirname
-/**
- * The list is committed; everything it leads to is not.
- *
- * Ticket `09` leaves this open and argues both sides: a disposable corpus may
- * have a disposable list, but a rule mined from a run nobody can reproduce is a
- * rule with no provenance. Committing the list and **not** pinning the shas
- * settles it in the only way that is consistent with what each artifact is
- * for. The list is provenance — it says which repositories a class was seen in,
- * and it is what a reader checks a claim about the discovery corpus against.
- * The shas are reproducibility of a *snapshot*, and there are no snapshots
- * here: nothing is compared against a stored result, so a moving upstream
- * costs nothing. Pinning 2000 shas would also make the file 2000 lines that
- * change for reasons that mean nothing.
- */
-const LIST = join(HERE, 'discovery-repos.txt')
 const ROOT = join(HERE, '..', 'test', 'discovery')
+/**
+ * The list is disposable like everything else here, and provenance lives in
+ * the queries instead.
+ *
+ * Ticket `09` argues both sides: a disposable corpus may have a disposable
+ * list, but a rule mined from a run nobody can reproduce is a rule with no
+ * provenance. The first version resolved that by committing the list, which was
+ * the wrong half — it put a 2500-line generated artifact under review, changing
+ * by hundreds of lines every time somebody raised `--target`, for a repository
+ * whose every other generated thing is ignored.
+ *
+ * Provenance survives without it, because the list is not the primary record:
+ * `FACETS` is. The queries are twelve lines of committed code, the enumeration
+ * is deterministic given them, and "the repositories `filename:SKILL.md
+ * size:>10000` returns" is a reproducible description that does not go stale
+ * the way a snapshot of its results does. What is lost is the exact membership
+ * on a given day — which is the same thing the decision not to pin shas already
+ * gave up, and for the same reason: nothing here is compared against a stored
+ * result.
+ *
+ * So it sits in `test/discovery/` with the clones and the cursor, and the whole
+ * directory is one `.gitignore` line.
+ */
+const LIST = join(ROOT, 'repos.txt')
 const REPOS_DIR = join(ROOT, 'repos')
 /**
  * Which (facet, page) pairs have been spent. Disposable, like the clones.
@@ -190,7 +199,7 @@ export function mergeRepos(known: readonly string[], found: readonly string[]): 
 }
 
 const LIST_HEADER = [
-  '# The discovery corpus: repositories, no shas, disposable by design.',
+  '# The discovery corpus: repositories, no shas, not committed, disposable.',
   '#',
   '# Written by `pnpm discovery enumerate`. Nothing measured over these',
   '# repositories is a precision and none of it enters CLASSIFICATION.md;',
