@@ -8,7 +8,8 @@ able to take.
 
 **Blocked by:** `06`
 
-**Status:** open — highest ceiling in this directory
+**Status: resolved 2026-09-19.** Instrumented, run over 700 repositories, read. See
+§"Answer".
 
 ## The gap
 
@@ -80,3 +81,196 @@ The most likely result is that the broad rules are boringly correct and the inte
 signal is in one or two of the narrow ones. That is still worth having: "`isBareWord`
 discards 40,000 strings and 30 of them looked like claims" converts an argued design
 decision into a measured one, and ADR-0003 currently rests on the argument.
+
+## Answer
+
+Resolved 2026-09-19. The extractor reports its discards when somebody asks, the table exists,
+and the outcome is the one this ticket § "The honest outcome to be prepared for" predicted:
+**the broad rules are boringly correct and the signal is in two of the narrow ones.**
+
+### What was built
+
+`ExtractContext` carries an optional `DiscardSink`, **absent on every ordinary run**, and the
+three extractors that consult a discard rule report to it every candidate they refuse — the
+rule's name, the text as written, the offset and line, and the prose window the rule read.
+`scripts/discovery-discards.ts` reads it over the clones: `discards` writes one JSONL line per
+candidate and prints the table, `sample` prints the windows a person then reads.
+
+Four decisions shape whether the table means anything.
+
+**The prose gates now say which one closed.** `disclaims(offset)` answered yes or no, which
+is all any extractor needs — a disclaimed claim is not emitted either way. It is now
+`disclaimedBy(offset)` and answers with the name, because "the prose suppressed forty" is not
+an answer to this ticket's question. `EXAMPLE` and `HEDGED` are reported apart although
+`proseDisclaims` still tests them together: the file documents them as two arguments and the
+riskiest list in it cannot share a row with the safest.
+
+**All three extractors report, because the gates are shared.** The first version wired only
+`extract/paths.ts`, and a review caught what that costs: the same `conditional` that refuses a
+path also refuses an anchor link and a script name, so the gate rows would have been the
+gates' cost *on path candidates* while being presented as the rules' cost. Measured both ways,
+the difference is 60 discards in 94,972 — and **10 of `conditional`'s 32**, which is the row
+where it matters, because it is the smallest and the one the file calls riskiest. `Discard`
+carries the claim kind rather than folding the three together: "does the repository have this
+path" is a question about a path and nobody asks it of `pnpm build`, so `exists` is simply
+absent for the other two.
+
+**A gate is only credited with a candidate the shape rules would have let through.** The
+gates run first and inline code is mostly not paths at all, so without this condition
+`conditional` is charged with every backticked `true` and `pnpm test` in the corpus. A table
+that blames the riskiest rule in the file for the frequency of ordinary inline code is worse
+than no table, because it reads like evidence. The counterfactual is paid for only when a
+sink is listening.
+
+**A column the ticket did not ask for: `absent`.** Whether the repository has that
+path anyway, resolved both ways a claim resolves. A rule that threw away four thousand
+strings naming files that are right there threw away nothing, and separating those first is
+what makes the reading tractable — it is the difference between 94,912 discards and the few
+hundred worth a person's attention. It is **not** "would have been a finding": everything
+`path-claim.ts` declines to answer — generated, absent tool, ignored by git — runs after this
+and is not asked. A candidate that was never a path counts as absent, because it is one of the
+ones worth reading and there are 60 of them.
+
+`discards.jsonl` is rewritten whole on every run rather than appended to, the opposite of
+`results.jsonl`. That file resumes because it is bought with rate limit and hours of network;
+this pass is local and costs a minute per hundred repositories. What resuming would buy is
+small and what it would cost is a file half computed by one version of `discard.ts` and half
+by another — a table over which is a table about no rule that exists.
+
+The caveat is printed **with** the table rather than left here, because a table of counts over
+somebody else's repositories is the thing most likely to be pasted somewhere and it looks
+exactly like a measurement of driftwatch.
+
+### The table
+
+Over **700 discovery repositories, 94,972 discards**. `count` is discards, `distinct` is
+distinct texts, `repos` is how many repositories the rule fired in, and `absent` is the subset
+not known to be satisfied — the ones a person then reads. Of the 1023 discards the prose gates
+account for, 963 were path candidates, 54 script names and 6 anchor links.
+
+| rule | count | distinct | repos | absent |
+|---|---|---|---|---|
+| `bare-word` | 58713 | 26161 | 631 | 54944 |
+| `has-spaces` | 14678 | 9462 | 551 | 14646 |
+| `glob-or-placeholder` | 6263 | 3805 | 417 | 6247 |
+| `bare-directory` | 3902 | 994 | 399 | 1744 |
+| `module-specifier` | 3408 | 1739 | 281 | 3373 |
+| `not-path-shaped` | 2978 | 1822 | 357 | 2144 |
+| `absolute-path` | 2702 | 1255 | 214 | 2555 |
+| `url` | 945 | 586 | 188 | 945 |
+| `hedged` | 266 | 219 | 84 | 106 |
+| `create-instruction` | 232 | 196 | 82 | 97 |
+| `home-path` | 225 | 161 | 60 | 225 |
+| `example` | 216 | 191 | 95 | 87 |
+| `creation-target` | 177 | 73 | 33 | 115 |
+| `metasyntactic` | 122 | 35 | 19 | 122 |
+| `external-root` | 70 | 61 | 17 | 21 |
+| `conditional` | 32 | 24 | 17 | 26 |
+| `another-repo` | 30 | 28 | 15 | 7 |
+| `not-a-file` | 13 | 9 | 3 | 10 |
+
+**This is not a recall figure and must not be quoted as one.** No number in it is a precision,
+none of it enters `CLASSIFICATION.md`, and none of it moves a condition of ADR-0006. What it
+is is a map of where to read.
+
+### What the reading found
+
+Samples were taken with an even stride through the file — not the head, which is one or two
+documents and would be reading their habits — and restricted to the `absent` column.
+
+**The three broadest rules are right, and now measurably so.** Fourteen `bare-word` discards
+read end to end are identifiers, branch names, environment variables, CLI flags, CSS class
+names and C# types; not one is a claim about a path. `has-spaces` is commands, keystrokes and
+frontmatter descriptions. `glob-or-placeholder` is globs, CSS selectors, TOML table headers
+and JSX. `url` and `home-path` have no doubtful case at all. **ADR-0003 and ADR-0004 were
+arguments and are now measurements**, which is exactly what this ticket said would be worth
+having even if nothing else came of it.
+
+**`absolute-path` costs what `discard.ts` says it costs.** The sample is slash-commands
+(`/skill-creator`, `/ship`, `/tdd`, `/exit`), HTTP routes and `/tmp`. One real claim turned up
+— `first-digital-finance/pyrmq`'s "`/tests/` - Test suite" — which is the 1.6% the module
+already documents, found in the wild.
+
+**`bare-directory` is the honest cost, and most of it is not a cost.** 1744 of 3902 name
+something absent, and the recurring names are `dist/`, `build/`, `node_modules/`, `.venv/` —
+generated or ignored, and suppressed downstream anyway — alongside `src/`, `test/`, `specs/`
+and `references/`, which are ADR-0004's actual case: a single segment that does not pin down a
+location, usually written by a monorepo about one of its packages.
+
+**`hedged` holds the one rule whose scope is wrong.** `optional` fires 87 times, a third of
+the whole gate, where the next marker down fires 32. It is tested as a substring against the
+**two-line window**, so a sentence about optional *parameters* silences the claims of its
+neighbours — `haddocking/haddock3` asserts three files exist in three consecutive sentences
+and loses all three. Dropping it leaves the certification corpus identical, finding for
+finding, and `CLASSIFICATION.md` names no false positive it prevents. Ticket `16`, with the
+evidence and the options; it is a change to `src/extract/`, so it is not made here.
+
+**`conditional` fires rarely and is wrong more often than not when it fires.** 32 discards in
+700 repositories, 26 absent, and reading them: roughly half are real claims where the modal
+qualifies something other than the path — "components stored in `./assets/`: anything a second
+lesson **could** reuse", "`store/layout.ts` restore" inside a sentence about what *would*
+happen. The scoping to the sentence works as volume control, and within that volume the word
+usually belongs to a different noun. The file calls this "the riskiest list" and says its
+44-repo measurement was "evidence, not proof"; at 700 repositories it is still 22 discards,
+which is the part that keeps it defensible.
+
+**`create-instruction` and `creation-target` are correct.** Every sampled case is a
+destination the document tells the reader to make. `example`, `external-root` and
+`another-repo` behave; the `example` exceptions are the two-line window bleeding into a
+neighbouring bullet, the same shape as `optional` and much rarer.
+
+**Two small classes nobody had named.** A candidate written `./name.md` loses its one locating
+signal to normalization and then dies as a bare word — 21 discards, 7 absent, and at least two
+of those seven would have been false positives, so it is visible and not clean. And `NOT_FILES`
+matches the last segment, so a real `dist/vue.js` is discarded as the framework `vue.js`.
+Neither is worth a ticket on this evidence; both are written down here.
+
+### What the run produced that was not a discard
+
+**`petems/terraform-provider-extip` ended the pass with "this is a driftwatch bug".** A
+`.cursor/rules/*.mdc` whose frontmatter says `globs: *.go` — an alias to an anchor that does
+not exist — parses cleanly and throws in `doc.toJS()`, one line past the guard
+`parseFrontmatter` was written around. Ticket `15`, fixed: 7 files in 4 of the 700
+repositories, and the 4 now audit instead of exiting 2 with nothing looked at. The final pass
+over 700 read **0 failed**.
+
+### What this does to ADR-0006
+
+Nothing, by construction. The certification corpus is unchanged through all of it — 66 repos ·
+320 sources · 33 findings, calibration 21 · validation 12 — which is also the evidence that
+the instrumentation is behaviour-neutral: a sink nobody attaches changes no finding anywhere.
+
+### What is left
+
+`16` is the one rule this justifies changing, and it is left open on purpose: a rule mined
+here gets written by hand in `src/` and measured against the 66 repositories that carry human
+verdicts, and the measurement that exists so far covers what dropping `optional` does to the
+66 and not what it costs elsewhere.
+
+### What a review caught
+
+Two reviewers read this against the tickets and against `AGENTS.md`. Four things were worth
+changing and one of them changed the numbers.
+
+**Only one extractor was reporting.** The gates are shared and the table said "rule", so the
+prose rows understated every gate. Fixed above, and it moved `conditional` from 22 to 32.
+
+**A discovery-corpus count had been written into `test/frontmatter.test.ts`** — "4 of the ~700
+repositories" — four lines of reasoning away from the rule that forbids it. Same mistake ticket
+`09` recorded, in a new file. The provenance sentence stays and the count lives in `15`.
+
+**`discards.jsonl` dropped the offset** the ticket asks for, keeping only the line. A line does
+not locate a span; both are written now.
+
+**The module was 250 lines of a second job inside the acquisition runner.**
+`discovery-discards.ts` splits it, with `discovery-files.ts` underneath holding the on-disk
+layout — which is not only tidiness: `discovery.ts` ends in a top-level `await`, so a module it
+imports on demand cannot import it back without deadlocking. That deadlock happened and is why
+the third file exists.
+
+Two caveats the review raised are recorded rather than fixed, because they are properties of
+the design and not defects. The table is **first-rule-wins**: a candidate both disclaimed and
+declared a destination is credited to whichever gate ran first, exactly as `discardReason`'s
+internal order already decides between shape rules — so a row means "what this rule was the
+first to throw away". And for a frontmatter candidate the `window` is the YAML line rather
+than prose any gate read, which is what that column can be there.

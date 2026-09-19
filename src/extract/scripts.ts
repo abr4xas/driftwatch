@@ -12,6 +12,7 @@
 import type { Claim, ScriptFact, ScriptRunner } from '../core/types.ts'
 import type { FenceSpan } from '../parse/markdown.ts'
 import { rangeFor } from '../parse/positions.ts'
+import { proseWindowAround } from './context-prose.ts'
 import { isPlaceholderName } from './discard.ts'
 import type { ExtractContext } from './context.ts'
 
@@ -312,13 +313,33 @@ function isShellFence(fence: FenceSpan): boolean {
  * path inside an example is part of the example, but a command block *is* how a
  * context file tells an agent how to build the project.
  */
-export function extractScriptClaims({ source, doc, table, prose }: ExtractContext): Claim[] {
+export function extractScriptClaims({
+  source,
+  doc,
+  table,
+  prose,
+  discards,
+}: ExtractContext): Claim[] {
   const claims: Claim[] = []
 
   const push = (text: string, offset: [number, number], context: Claim['context']): void => {
+    // Parsed first, so the gate is only credited with something that was going
+    // to be a script claim. See `gatedOut` in `paths.ts` for the argument.
     const command = parseCommand(text)
     if (command === undefined) return
-    if (prose.disclaims(offset[0])) return
+    const disclaimed = prose.disclaimedBy(offset[0])
+    if (disclaimed !== undefined) {
+      discards?.({
+        source,
+        kind: 'script',
+        cause: disclaimed,
+        text,
+        offset,
+        line: rangeFor(table, offset[0], offset[1]).line,
+        window: proseWindowAround(source.content, offset[0]),
+      })
+      return
+    }
     claims.push({
       kind: 'script',
       source,

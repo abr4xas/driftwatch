@@ -15,6 +15,8 @@
  *   pnpm discovery enumerate [--target N]   fill test/discovery/repos.txt
  *   pnpm discovery clone     [--limit N]    sparse-clone what the list names
  *   pnpm discovery run       [--limit N]    audit each clone, record the result
+ *   pnpm discovery discards  [--limit N]    what the extractor threw away (`07`)
+ *   pnpm discovery sample    [--sample N]   n of each rule's discards, to read
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and
@@ -55,43 +57,15 @@ import { messageOf } from '../src/core/errors.ts'
 import type { RunOptions, RunResult } from '../src/run.ts'
 import { CORPUS, slugOf } from './corpus-repos.ts'
 import { sparseClone } from './discovery-clone.ts'
-
-const HERE = import.meta.dirname
-const ROOT = join(HERE, '..', 'test', 'discovery')
-/**
- * The list is disposable like everything else here, and provenance lives in
- * the queries instead.
- *
- * Ticket `09` argues both sides: a disposable corpus may have a disposable
- * list, but a rule mined from a run nobody can reproduce is a rule with no
- * provenance. The first version resolved that by committing the list, which was
- * the wrong half — it put a 2500-line generated artifact under review, changing
- * by hundreds of lines every time somebody raised `--target`, for a repository
- * whose every other generated thing is ignored.
- *
- * Provenance survives without it, because the list is not the primary record:
- * `FACETS` is. The queries are twelve lines of committed code, the enumeration
- * is deterministic given them, and "the repositories `filename:SKILL.md
- * size:>10000` returns" is a reproducible description that does not go stale
- * the way a snapshot of its results does. What is lost is the exact membership
- * on a given day — which is the same thing the decision not to pin shas already
- * gave up, and for the same reason: nothing here is compared against a stored
- * result.
- *
- * So it sits in `test/discovery/` with the clones and the cursor, and the whole
- * directory is one `.gitignore` line.
- */
-const LIST = join(ROOT, 'repos.txt')
-const REPOS_DIR = join(ROOT, 'repos')
-/**
- * Which (facet, page) pairs have been spent. Disposable, like the clones.
- *
- * A key is `${query}#${page}`, and the page is read back off the **last** `#`
- * because a query contains none but could one day; `queriesOf` is the only
- * reader and `test/discovery.test.ts` pins the round trip.
- */
-const CURSOR = join(ROOT, 'enumerated.json')
-const RESULTS = join(ROOT, 'results.jsonl')
+import {
+  CURSOR,
+  jsonlIn,
+  LIST,
+  readList,
+  REPOS_DIR,
+  RESULTS,
+  ROOT,
+} from './discovery-files.ts'
 
 // --- Enumeration ------------------------------------------------------------
 
@@ -220,17 +194,6 @@ const LIST_HEADER = [
 export function formatList(repos: readonly string[], spent: Iterable<string>): string {
   const queries = [...new Set(spent)].toSorted().map((query) => `#   ${query}`)
   return `${[...LIST_HEADER, ...queries, '', ...repos].join('\n')}\n`
-}
-
-export function parseList(text: string): string[] {
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith('#'))
-}
-
-function readList(): string[] {
-  return existsSync(LIST) ? parseList(readFileSync(LIST, 'utf8')) : []
 }
 
 /**
@@ -590,17 +553,7 @@ type Outcome =
  */
 export function recordedIn(text: string): Set<string> {
   const done = new Set<string>()
-  for (const line of text.split('\n')) {
-    if (line.trim() === '') continue
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(line)
-    } catch {
-      // The half-written last line of an interrupted run. Skipping it is the
-      // whole reason the file is JSONL: one torn line costs one repository,
-      // where a torn JSON array would cost the file.
-      continue
-    }
+  for (const parsed of jsonlIn(text)) {
     const repo: unknown = (parsed as { repo?: unknown }).repo
     if (typeof repo === 'string') done.add(repo)
   }
@@ -739,11 +692,22 @@ async function main(argv: readonly string[]): Promise<number> {
       return cloneMain(numberFlag(argv, '--limit'))
     case 'run':
       return runMain(numberFlag(argv, '--limit'))
+    case 'discards': {
+      // Imported on demand, like `run.ts` below: `enumerate` and `clone` have
+      // no use for the analyser and they are what a long session spends its
+      // time in.
+      const { discardsMain } = await import('./discovery-discards.ts')
+      return discardsMain(numberFlag(argv, '--limit'))
+    }
+    case 'sample': {
+      const { sampleMain } = await import('./discovery-discards.ts')
+      return sampleMain(numberFlag(argv, '--sample') ?? 20)
+    }
     case 'status':
     case undefined:
       return statusMain()
     default:
-      process.stderr.write('usage: discovery <enumerate|clone|run|status>\n')
+      process.stderr.write('usage: discovery <enumerate|clone|run|discards|sample|status>\n')
       return 2
   }
 }

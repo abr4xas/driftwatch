@@ -233,7 +233,33 @@ function isConditional(segment: string): boolean {
   return CONDITIONAL.some((modal) => new RegExp(`\\b${modal}\\b`, 'u').test(lower))
 }
 
-const MARKERS = [...EXAMPLE, ...HEDGED]
+/**
+ * Which prose gate closed on a claim.
+ *
+ * `disclaims` used to answer yes or no, which is all the extractors need: a
+ * claim the prose disclaims is not emitted either way. Ticket `07` needs the
+ * name, because the table it asks for is **per rule** — "`conditional`
+ * suppressed forty candidates and thirty of them looked like real claims" is
+ * an answer, and "the prose suppressed forty" is not.
+ *
+ * `EXAMPLE` and `HEDGED` are reported apart even though `proseDisclaims`
+ * tests them together: they are two different arguments, and the file
+ * documents them as two.
+ */
+export type ProseReason =
+  | 'example'
+  | 'hedged'
+  | 'another-repo'
+  | 'create-instruction'
+  | 'conditional'
+  | 'external-root'
+  | 'creation-target'
+
+function markerReason(lower: string): ProseReason | undefined {
+  if (EXAMPLE.some((marker) => lower.includes(marker))) return 'example'
+  if (HEDGED.some((marker) => lower.includes(marker))) return 'hedged'
+  return undefined
+}
 
 /**
  * Whether a line **opens** an item of its own instead of continuing the
@@ -272,6 +298,18 @@ type ProseWindow = {
   text: string
   /** Where the claim starts inside `text`. Locates the sentence to test. */
   claimAt: number
+}
+
+/**
+ * The prose a discarded candidate sat in, for ticket `07`'s instrumentation.
+ *
+ * It is the **same** window `disclaimedBy` judges, deliberately: a table that
+ * says "`conditional` threw this away" beside a wider or narrower excerpt than
+ * the rule read would be evidence about a different rule. Exported here rather
+ * than recomputed in the extractor for the same reason.
+ */
+export function proseWindowAround(content: string, offset: number): string {
+  return lineAround(content, offset).text
 }
 
 function lineAround(content: string, offset: number): ProseWindow {
@@ -389,16 +427,21 @@ function namesAnotherRepo(line: string, origin: string | undefined): boolean {
   return false
 }
 
-function proseDisclaims(window: ProseWindow, ctx: ProseContext = { origin: undefined }): boolean {
+function proseDisclaims(
+  window: ProseWindow,
+  ctx: ProseContext = { origin: undefined },
+): ProseReason | undefined {
   const lower = window.text.toLowerCase()
-  if (MARKERS.some((marker) => lower.includes(marker))) return true
-  if (namesAnotherRepo(window.text, ctx.origin)) return true
+  const marker = markerReason(lower)
+  if (marker !== undefined) return marker
+  if (namesAnotherRepo(window.text, ctx.origin)) return 'another-repo'
   // These two are tested against the sentence holding the claim, not the whole
   // window: see `segmentAround`. The imperative because what matters is how
   // *that* sentence opens; the conditional because it is the broadest rule
   // here and the window would carry it into a neighbouring claim.
   const sentence = segmentAround(window.text, window.claimAt)
-  return isCreateInstruction(sentence) || isConditional(sentence)
+  if (isCreateInstruction(sentence)) return 'create-instruction'
+  return isConditional(sentence) ? 'conditional' : undefined
 }
 
 /**
@@ -461,8 +504,15 @@ function creationTargets(content: string): ReadonlySet<string> {
 }
 
 export type ProseGates = {
-  /** Whether the prose around `offset` says there is no claim here. */
-  disclaims(offset: number): boolean
+  /**
+   * The gate that says there is no claim around `offset`, or `undefined` when
+   * none of them does.
+   *
+   * It answers with a name rather than a boolean for one reason, and it is not
+   * the extractors': they only ever ask whether to emit the claim. See
+   * `ProseReason`.
+   */
+  disclaimedBy(offset: number): ProseReason | undefined
   /**
    * Whether the document instructs the reader to create this exact path, in
    * any sentence. See `creationTargets`.
@@ -480,10 +530,10 @@ export function proseGatesFor(content: string, origin: string | undefined): Pros
     declaresDestination(text) {
       return destinations.has(text)
     },
-    disclaims(offset) {
+    disclaimedBy(offset) {
       // Section first, then line: the section scope is the broader answer, and
       // it is a lookup against a list computed once.
-      if (inExternalRootSection(externalRoots, offset)) return true
+      if (inExternalRootSection(externalRoots, offset)) return 'external-root'
       return proseDisclaims(lineAround(content, offset), { origin })
     },
   }

@@ -1,6 +1,7 @@
 import type { Claim, ClaimFact } from '../core/types.ts'
 import { rangeFor } from '../parse/positions.ts'
-import type { ExtractContext } from './context.ts'
+import { proseWindowAround } from './context-prose.ts'
+import type { DiscardCause, ExtractContext } from './context.ts'
 import {
   discardReason,
   normalizePathText,
@@ -162,6 +163,14 @@ function decodeTarget(target: string): string {
 }
 
 /**
+ * A link target is a url by construction and cannot be a command; everything
+ * else can. See `hasSpaces` in `discard.ts`.
+ */
+function optionsFor(context: Claim['context']): DiscardOptions {
+  return { couldBeCommand: context !== 'link' }
+}
+
+/**
  * Path claims from inline code, Markdown links and frontmatter.
  *
  * The body of code fences is deliberately not scanned: a path inside a shell
@@ -173,8 +182,45 @@ export function extractPathClaims({
   frontmatter,
   table,
   prose,
+  discards,
 }: ExtractContext): Claim[] {
   const claims: Claim[] = []
+
+  const report = (text: string, cause: DiscardCause, offset: [number, number]): void => {
+    discards?.({
+      source,
+      kind: 'path',
+      cause,
+      text,
+      offset,
+      line: rangeFor(table, offset[0], offset[1]).line,
+      window: proseWindowAround(source.content, offset[0]),
+    })
+  }
+
+  /**
+   * A candidate a prose gate refused, recorded **only if the shape rules would
+   * have let it through**.
+   *
+   * Without that condition the prose rules get credited with every backticked
+   * `true`, `pnpm test` and `--fix` in the corpus, because the gates run before
+   * the shape rules and inline code is mostly not paths at all. Ticket `07`
+   * asks what a rule threw away, and a candidate three other rules would have
+   * thrown away anyway was not thrown away by this one.
+   *
+   * The evaluation is paid for only when a sink is listening; on an ordinary
+   * run this function returns on its first line.
+   */
+  const gatedOut = (
+    candidate: string,
+    cause: DiscardCause,
+    offset: [number, number],
+    context: Claim['context'],
+  ): void => {
+    if (discards === undefined) return
+    if (evaluatePathText(candidate, optionsFor(context)).kind !== 'path') return
+    report(candidate, cause, offset)
+  }
 
   const push = (
     raw: string,
@@ -183,10 +229,11 @@ export function extractPathClaims({
     context: Claim['context'],
     fact?: ClaimFact,
   ): void => {
-    const evaluated = evaluatePathText(candidate, {
-      couldBeCommand: context !== 'link',
-    })
-    if (evaluated.kind === 'discarded') return
+    const evaluated = evaluatePathText(candidate, optionsFor(context))
+    if (evaluated.kind === 'discarded') {
+      report(candidate, evaluated.reason, offset)
+      return
+    }
     claims.push({
       kind: 'path',
       source,
@@ -202,21 +249,36 @@ export function extractPathClaims({
   for (const span of doc.inlineCode) {
     // Rule 8: the line may be saying that this is an example, or that the
     // path may not exist. In both cases there is no claim to verify.
-    if (prose.disclaims(span.offset[0])) continue
+    const disclaimed = prose.disclaimedBy(span.offset[0])
+    if (disclaimed !== undefined) {
+      gatedOut(span.value, disclaimed, span.offset, 'inline-code')
+      continue
+    }
     // Rule 9: somewhere else in this document, the reader is told to create
     // this exact path. See `creationTargets`.
-    if (prose.declaresDestination(span.value)) continue
+    if (prose.declaresDestination(span.value)) {
+      gatedOut(span.value, 'creation-target', span.offset, 'inline-code')
+      continue
+    }
     push(span.value, span.value, span.offset, 'inline-code')
   }
 
   for (const link of doc.links) {
     const target = withoutAnchor(link.value)
     if (target === undefined) continue
-    if (prose.disclaims(link.offset[0])) continue
-    if (prose.declaresDestination(link.value)) continue
+    const candidate = decodeTarget(target)
+    const disclaimed = prose.disclaimedBy(link.offset[0])
+    if (disclaimed !== undefined) {
+      gatedOut(candidate, disclaimed, link.offset, 'link')
+      continue
+    }
+    if (prose.declaresDestination(link.value)) {
+      gatedOut(candidate, 'creation-target', link.offset, 'link')
+      continue
+    }
     // The offset still points at the full url, anchor included, because that
     // is what is written in the file and what --fix would have to replace.
-    push(link.value, decodeTarget(target), link.offset, 'link')
+    push(link.value, candidate, link.offset, 'link')
   }
 
   for (const value of frontmatter?.values ?? []) {

@@ -16,13 +16,13 @@ import {
   facetQuery,
   formatList,
   mergeRepos,
-  parseList,
   pauseFor,
   queriesOf,
   recordedIn,
   refuseForDisk,
   reposIn,
 } from '../scripts/discovery.ts'
+import { parseList } from '../scripts/discovery-files.ts'
 
 describe('the facets', () => {
   it('asks with filename:, which is the syntax the API implements', () => {

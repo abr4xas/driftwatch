@@ -4,7 +4,7 @@ import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
 import type { Claim, ClaimKind, Finding, SkippedSource, Source } from './core/types.ts'
 import { proseGatesFor } from './extract/context-prose.ts'
-import type { ExtractContext } from './extract/context.ts'
+import type { DiscardSink, ExtractContext } from './extract/context.ts'
 import { extractClaims } from './extract/index.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
@@ -30,6 +30,11 @@ export type RunOptions = {
   skip?: readonly string[]
   /** `false` when `--no-tier2` was passed. Absent means tier 2 runs. */
   tier2?: boolean
+  /**
+   * Where to report candidates the extractor threw away. Absent on every
+   * ordinary run; see `DiscardSink`. No CLI flag sets it.
+   */
+  discards?: DiscardSink
 }
 
 export type RunResult = {
@@ -69,7 +74,11 @@ type Analysis = {
  * They come from the same mdast tree, so parsing twice would be the only cost
  * of keeping them apart.
  */
-function analyze(sources: readonly Source[], origin: string | undefined): Analysis {
+function analyze(
+  sources: readonly Source[],
+  origin: string | undefined,
+  discards: DiscardSink | undefined,
+): Analysis {
   const claims: Claim[] = []
   const ignores = new Map<Source, IgnoreIndex>()
   for (const source of sources) {
@@ -84,6 +93,7 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
       frontmatter,
       table,
       prose: proseGatesFor(source.content, origin),
+      ...(discards === undefined ? {} : { discards }),
     }
     claims.push(...extractClaims(context))
     ignores.set(source, parseIgnores(doc, table))
@@ -185,7 +195,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     ...(config.sources === undefined ? {} : { sources: config.sources }),
   })
 
-  const { claims, ignores } = analyze(sources, await originSlug(root))
+  const { claims, ignores } = analyze(sources, await originSlug(root), options.discards)
 
   // git is asked about every candidate path in one go, before running the
   // checks: a path git ignores cannot be claimed to be missing.

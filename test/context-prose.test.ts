@@ -12,7 +12,7 @@ function disclaims(marked: string, origin?: string): boolean {
   const offset = marked.indexOf('‸')
   if (offset === -1) throw new Error('the case has to mark the claim with ‸')
   const content = marked.replace('‸', '')
-  return proseGatesFor(content, origin).disclaims(offset)
+  return proseGatesFor(content, origin).disclaimedBy(offset) !== undefined
 }
 
 describe('a claim nothing disclaims', () => {
