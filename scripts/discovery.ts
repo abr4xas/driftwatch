@@ -566,7 +566,19 @@ async function cloneMain(limit: number | undefined): Promise<number> {
  * half-written JSONL file is.
  */
 type Outcome =
-  | { repo: string; ok: true; sources: number; claims: number; findings: readonly unknown[] }
+  | {
+      repo: string
+      ok: true
+      sources: number
+      /**
+       * Documents git listed that the working tree did not have. Recorded
+       * because a repository that audited 3 of 4 sources and one that audited
+       * 4 are not the same observation, and `07` reads this file.
+       */
+      skipped: number
+      claims: number
+      findings: readonly unknown[]
+    }
   | { repo: string; ok: false; stage: 'clone' | 'audit'; error: string }
 
 /**
@@ -624,6 +636,7 @@ async function auditOne(run: Run, repo: string, dir: string): Promise<Outcome> {
     repo,
     ok: true,
     sources: result.sources.length,
+    skipped: result.skipped.length,
     claims: result.claims,
     findings: result.findings.map((finding) => ({
       check: finding.check,

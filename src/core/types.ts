@@ -42,6 +42,37 @@ export type Source = {
   aliases: readonly string[]
 }
 
+/**
+ * Why a document git lists was not audited. **The one place this policy is
+ * written down**; everything else that touches a skip points here.
+ *
+ * Two members, and the split is by what was *observed* rather than by what is
+ * suspected. `dangling-symlink` is checked: `lstat` succeeds, so the entry is
+ * there and its target is not. `absent-from-worktree` is the rest — the path
+ * itself is gone, which an uninitialised submodule, a `git rm --cached` and a
+ * file deleted while the run was in flight all look like, and nothing here can
+ * tell those apart. Neither name asserts a cause that was not checked.
+ *
+ * Deliberately narrow. Only a read that fails with `ENOENT` becomes a skip: a
+ * permission error, a directory where a file was expected, an I/O fault are
+ * not facts about a checkout anybody can act on, and admitting them would turn
+ * every future read bug into silence. Ticket `13`.
+ *
+ * A skip is **neither a finding nor an error**. Nothing in the document went
+ * stale, so there is no drift and no claim to carry a verdict; the tool did not
+ * fail, so the run is not a tool failure. What it is, is the difference between
+ * "no drift" and "no drift in the files I could open" — which is why every
+ * output format that a person or a pipeline reads has to say it.
+ */
+export type SkipReason = 'dangling-symlink' | 'absent-from-worktree'
+
+/** A document that was found and could not be read. */
+export type SkippedSource = {
+  /** Relative to the repo root, with posix separators. */
+  path: string
+  reason: SkipReason
+}
+
 export type ClaimKind = 'path' | 'script' | 'dep' | 'symbol' | 'link' | 'frontmatter'
 
 /** Where the fragment appeared. It is what separates a real path from an example. */

@@ -91,7 +91,7 @@ describe('discoverSources', () => {
 
   it('finds the sources and skips what is not one', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: [] })
     expect(sources.map((s) => s.path)).toEqual([
       '.claude/skills/deploy/SKILL.md',
       'CLAUDE.md',
@@ -101,13 +101,13 @@ describe('discoverSources', () => {
 
   it('respects .gitignore', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: [] })
     expect(sources.some((s) => s.path.startsWith('ignored/'))).toBe(false)
   })
 
   it('each source carries its own baseDir, which is its directory', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: [] })
     const byPath = new Map(sources.map((s) => [s.path, s]))
     expect(byPath.get('CLAUDE.md')?.baseDir).toBe('')
     expect(byPath.get('packages/api/CLAUDE.md')?.baseDir).toBe('packages/api')
@@ -116,25 +116,25 @@ describe('discoverSources', () => {
 
   it('reads the content of each source', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: [] })
     expect(sources.find((s) => s.path === 'CLAUDE.md')?.content).toBe('# root\n')
   })
 
   it('a positional argument that is a directory narrows the scope', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: ['packages'] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: ['packages'] })
     expect(sources.map((s) => s.path)).toEqual(['packages/api/CLAUDE.md'])
   })
 
   it('a positional argument that is a file audits only that file', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: ['CLAUDE.md'] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: ['CLAUDE.md'] })
     expect(sources.map((s) => s.path)).toEqual(['CLAUDE.md'])
   })
 
   it('a positional containing no sources returns nothing, without erroring', async () => {
     const root = makeTempRepo({ files })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: ['README.md'] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: ['README.md'] })
     expect(sources).toEqual([])
   })
 
@@ -142,7 +142,7 @@ describe('discoverSources', () => {
     const root = makeTempRepo({
       files: { 'pack/CLAUDE.md': '#\n', 'packages/api/CLAUDE.md': '#\n' },
     })
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: ['pack'] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: ['pack'] })
     expect(sources.map((s) => s.path)).toEqual(['pack/CLAUDE.md'])
   })
 })
@@ -165,7 +165,7 @@ function repoWithSymlink(): string {
 describe('a symlinked source is the same file, not a second one', () => {
   it('audits it once, with the link as an alias', async () => {
     const root = repoWithSymlink()
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: [] })
     expect(sources.map((source) => source.path)).toEqual(['AGENTS.md'])
     expect(sources[0]?.aliases).toEqual(['.claude/CLAUDE.md'])
   })
@@ -174,7 +174,7 @@ describe('a symlinked source is the same file, not a second one', () => {
   // link as the source and the real file as its alias, which is backwards.
   it('the real file wins over the link, not alphabetical order', async () => {
     const root = repoWithSymlink()
-    const sources = await discoverSources(await buildRepoIndex(root), { paths: [] })
+    const { sources } = await discoverSources(await buildRepoIndex(root), { paths: [] })
     expect(sources[0]?.path).toBe('AGENTS.md')
   })
 })

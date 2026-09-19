@@ -121,6 +121,35 @@ function resultOf(finding: Finding, entry: FixEntry | undefined): Record<string,
   }
 }
 
+/**
+ * The skipped sources, as SARIF's own notion of "something the run could not
+ * do".
+ *
+ * `toolExecutionNotifications` is the field for exactly this: not an alert
+ * about the code, a note about the invocation. It is `note` level, because it
+ * is neither a finding nor a failure — see `SkipReason`.
+ *
+ * SARIF gets this and `github` does not, and the asymmetry is on purpose. The
+ * GitHub format emits annotations "and nothing else" (SPEC.md § 5) because the
+ * job log is its transport and anything else is noise. SARIF has a place to
+ * put it, and it is the format that feeds Code Scanning — which is the one
+ * place a run over an incomplete checkout would otherwise be an entirely
+ * silent green.
+ */
+function notificationsFor(result: RunResult): Array<Record<string, unknown>> {
+  return result.skipped.map((source) => ({
+    level: 'note',
+    message: { text: `${source.path} was not audited: ${source.reason}` },
+    locations: [
+      {
+        physicalLocation: {
+          artifactLocation: { uri: source.path, uriBaseId: SRCROOT },
+        },
+      },
+    ],
+  }))
+}
+
 export function renderSarif(result: RunResult, options: SarifOptions = {}): string {
   const planned = plannedBy(options.fixes)
   const document = {
@@ -139,6 +168,16 @@ export function renderSarif(result: RunResult, options: SarifOptions = {}): stri
         // A trailing slash: SARIF resolves a relative uri against this, and
         // without it the last path segment of the root is dropped.
         originalUriBaseIds: { [SRCROOT]: { uri: `${pathToFileURL(result.root).href}/` } },
+        // Omitted entirely when there is nothing to report: an empty
+        // `invocations` array is a claim that the run recorded nothing about
+        // itself, which is different from having nothing to record.
+        ...(result.skipped.length === 0
+          ? {}
+          : {
+              invocations: [
+                { executionSuccessful: true, toolExecutionNotifications: notificationsFor(result) },
+              ],
+            }),
         results: result.findings.map((finding) => resultOf(finding, planned.get(finding))),
       },
     ],

@@ -2,8 +2,8 @@ import { lstatSync, realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { allFiles, hasFile, type RepoIndex } from '../verify/repo-index.ts'
-import { UserError } from './errors.ts'
-import type { Source, SourceKind } from './types.ts'
+import { codeOf, UserError } from './errors.ts'
+import type { SkipReason, SkippedSource, Source, SourceKind } from './types.ts'
 
 export type DiscoverOptions = {
   /** Positional arguments that narrow the scope. Empty audits the whole repo. */
@@ -266,10 +266,75 @@ function collapseSymlinks(
   return out
 }
 
+/** What discovery found: the documents it read, and the ones it could not. */
+export type Discovered = {
+  sources: Source[]
+  skipped: SkippedSource[]
+}
+
+/** A document found in the index, before anything has been read off disk. */
+type Candidate = {
+  path: string
+  kind: SourceKind
+  absPath: string
+  aliases: string[]
+}
+
+type ReadResult = { ok: true; source: Source } | { ok: false; skipped: SkippedSource }
+
+/**
+ * Which of `SkipReason`'s two the path is, asked of the filesystem.
+ *
+ * `lstat` does not follow the link, so it succeeds exactly when the entry is
+ * there and its target is not. That is the only part of the cause this can
+ * observe, and the rest stays unnamed rather than guessed.
+ */
+function whyAbsent(absPath: string): SkipReason {
+  try {
+    lstatSync(absPath)
+    return 'dangling-symlink'
+  } catch {
+    return 'absent-from-worktree'
+  }
+}
+
+/**
+ * Reads one document, or reports that the working tree does not have it.
+ *
+ * `SkipReason` carries the policy and the reasoning. The case that produced it:
+ * `Rspoon3/Shotbot`'s `CLAUDE.md` is a symlink into a git submodule that was
+ * never initialised, so both entries are in the index and neither file is on
+ * disk. Before ticket `13` this threw, and the run answered with "internal
+ * failure … this is a driftwatch bug; report it" — sending the reader to the
+ * one place the answer was not, and auditing none of the repository's other
+ * documents.
+ */
+async function readSource(entry: Candidate): Promise<ReadResult> {
+  let content: string
+  try {
+    content = await readFile(entry.absPath, 'utf8')
+  } catch (cause) {
+    if (codeOf(cause) !== 'ENOENT') throw cause
+    return { ok: false, skipped: { path: entry.path, reason: whyAbsent(entry.absPath) } }
+  }
+  const slash = entry.path.lastIndexOf('/')
+  return {
+    ok: true,
+    source: {
+      path: entry.path,
+      absPath: entry.absPath,
+      kind: entry.kind,
+      content,
+      baseDir: slash === -1 ? '' : entry.path.slice(0, slash),
+      aliases: entry.aliases,
+    },
+  }
+}
+
 export async function discoverSources(
   index: RepoIndex,
   options: DiscoverOptions,
-): Promise<Source[]> {
+): Promise<Discovered> {
   const matched: Array<{ path: string; kind: SourceKind }> = []
   for (const rel of allFiles(index)) {
     if (!isInScope(rel, options.paths)) continue
@@ -298,21 +363,14 @@ export async function discoverSources(
     matched.map((entry) => ({ ...entry, absPath: join(index.root, entry.path) })),
   )
 
-  const read = await Promise.all(
-    unique.map(async ({ path, kind, absPath, aliases }) => {
-      const slash = path.lastIndexOf('/')
-      return {
-        path,
-        absPath,
-        kind,
-        content: await readFile(absPath, 'utf8'),
-        baseDir: slash === -1 ? '' : path.slice(0, slash),
-        aliases,
-      }
-    }),
-  )
+  const sources: Source[] = []
+  const skipped: SkippedSource[] = []
+  for (const entry of await Promise.all(unique.map(readSource))) {
+    if (entry.ok) sources.push(entry.source)
+    else skipped.push(entry.skipped)
+  }
 
-  return collapseDuplicates(read)
+  return { sources: collapseDuplicates(sources), skipped }
 }
 
 /**

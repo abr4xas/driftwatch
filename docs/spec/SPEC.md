@@ -180,8 +180,17 @@ Formatting rules:
 - Colors: red for errors, yellow for warnings, dim for suggestions. Turned off if `NO_COLOR` is set or if stdout is not a TTY.
 - The quoted fragment is truncated to 40 characters with `…`.
 - With no problems: `✓ 14 files · no drift · 210ms`.
+- A document git lists and the working tree does not have gets a dim line **above** the summary, because it qualifies everything the summary says:
+
+  ```
+  skipped CLAUDE.md: a symlink whose target is not in the working tree
+  ```
+
+  Dim, and with no symbol: `✗ ⚠ ✓` are the three this format allows, and none of them fits something that is not a finding.
 - No emojis. Only the `✗ ⚠ ✓` symbols.
 - When autofixes are available, close with: `3 fixable with --fix`.
+
+`--quiet` drops the summary and keeps the skipped-source lines: a document that was found and not opened is nearer a problem than it is to the summary, and it is the one line that changes how the list above should be read.
 
 `--quiet` and colour are `pretty` concepts. The other three formats ignore both: a JSON document without its summary is not quieter, it is invalid against its own contract.
 
@@ -192,11 +201,14 @@ Emits one native GitHub Actions annotation per finding, and **nothing else** —
 ::error file=CLAUDE.md,line=12,col=4,endColumn=19,title=path/missing::path does not exist → src/auth/index.ts?
 ```
 
+Skipped sources are **not** emitted here, and that is the one format where they are not: the job log is the transport, so anything that is not an annotation about a finding is noise in the output. They reach CI through `sarif` instead.
+
 `::warning` for a warning-severity finding. `title` carries the check id, which is the only stable label to group and search by. Property values escape `%`, `\r`, `\n`, `:` and `,`; the message escapes the first three. A run with no findings emits nothing at all.
 
 ### `sarif` format
 SARIF 2.1.0, for upload to GitHub Code Scanning. One `run`, with:
 
+- `invocations[0].toolExecutionNotifications` — one `note` per skipped source, present only when there is one. SARIF's own notion of "something the run could not do", and this is the format that feeds Code Scanning, which is where an incomplete checkout would otherwise be an entirely silent green.
 - `tool.driver` carrying `name`, `informationUri`, `semanticVersion` and **`rules[]`** — one rule per check that *ran*, with its title, its description and a `helpUri` into `docs/guide/checks.md`. The rules are what make an alert readable a month after it was raised.
 - `results[]` with `ruleId`, `level`, `message.text` and a physical location resolved against `%SRCROOT%`.
 - `fixes[]`, SARIF's own, under `--fix --dry-run`. See § 6 for why only then.
@@ -214,7 +226,7 @@ Stable contract. Breaking changes only on a major.
   "version": 1,
   "root": "/abs/path/to/repo",
   "durationMs": 340,
-  "summary": { "sources": 14, "claims": 212, "errors": 4, "warnings": 1, "fixable": 3 },
+  "summary": { "sources": 14, "claims": 212, "skipped": 0, "errors": 4, "warnings": 1, "fixable": 3 },
   "findings": [
     {
       "check": "path/missing",
@@ -232,6 +244,27 @@ Stable contract. Breaking changes only on a major.
 ```
 
 `file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line.
+
+### Sources that were found and not read
+
+`summary.skipped` counts the documents git lists that the working tree does not have, and a top-level `skipped[]` names them:
+
+```jsonc
+"skipped": [{ "path": "CLAUDE.md", "reason": "absent-from-worktree" }]
+```
+
+`summary.skipped` is **always present**, at zero when there is nothing to report. A consumer that has to tell "nothing was skipped" from "this version does not report skips" is a consumer that will get it wrong.
+
+Two `reason` values, split by what was **observed** rather than by what is suspected:
+
+| `reason` | What was checked |
+|---|---|
+| `dangling-symlink` | `lstat` succeeds: the entry is there and its target is not |
+| `absent-from-worktree` | the path itself is gone — an uninitialised submodule, a `git rm --cached`, or a file deleted while the run was in flight, and nothing can tell those apart |
+
+Only a read that fails with `ENOENT` becomes a skip. A permission error, a directory where a file was expected, an I/O fault: none of those is a fact about a checkout anybody can act on, and admitting them would turn every future read bug into silence.
+
+They are not findings and they do not move the exit code. Nothing in the document went stale, so it is not drift; the tool did not fail, so it is not a tool failure. What they are is the difference between "no drift" and "no drift in the files I could open".
 
 ### The fix plan
 

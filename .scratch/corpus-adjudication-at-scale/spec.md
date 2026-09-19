@@ -455,7 +455,7 @@ same day.
 | `10` | Is `skill/frontmatter`'s one autofix offered on a non-drift finding? | research | **new**: the only open ticket about a defect that ships today |
 | `11` | The skills roots not yet read — `.flue`, `.codex`, `.github`, `.opencode` | task | **new**, blocked by `08` step 3 |
 | `12` | Let a repository declare where its skills are | research | **new**, deferred by agreement |
-| `13` | A source git lists but cannot be read is reported as a driftwatch bug | bug | **new**, found by the first discovery run |
+| `13` | A source git lists but cannot be read is reported as a driftwatch bug | bug | **resolved**: skipped and named in `pretty`, `json` and `sarif` |
 | `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | highest ceiling; **unblocked** by `09` |
 | `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | half-answered by `02`; now has to reckon with `08` |
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` names? | research | a smoke test of job 1, gating nothing |
@@ -481,9 +481,10 @@ was one facet exhausted over ten pages, where a repository repeats *within* a fa
 facets the `size:` bands are as disjoint at the repository level as at the file level, and
 every page of 100 hits contributed 77 to 100 new repositories.
 
-It has already returned a product defect. One of the 135 repositories crashed the tool with
-a message telling the user to file a bug about their own checkout — a `CLAUDE.md` symlinked
-into an uninitialised submodule, ticket `13`. That is the discovery corpus doing the job it
+It has already returned a product defect, and it is fixed. One of the 135 repositories
+crashed the tool with a message telling the user to file a bug about their own checkout — a
+`CLAUDE.md` symlinked into an uninitialised submodule, ticket `13`, now skipped and named
+instead of fatal. The rate it gave: 1 unreadable source in 1070, across 201 repositories. That is the discovery corpus doing the job it
 was designed for on its first outing, and it is not a number, so nothing about it is
 governed by §"The hard limit".
 

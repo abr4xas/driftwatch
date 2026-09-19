@@ -95,11 +95,15 @@ export function renderJson(result: RunResult, options: JsonOptions = {}): string
     summary: {
       sources: result.sources.length,
       claims: result.claims,
+      // Always present, even at zero: a consumer that has to tell "nothing was
+      // skipped" from "this version does not report skips" will get it wrong.
+      skipped: result.skipped.length,
       errors: result.counts.errors,
       warnings: result.counts.warnings,
       fixable: result.fixable,
     },
     findings: result.findings.map((finding) => findingOf(finding, planned.get(finding))),
+    skipped: result.skipped.map((source) => ({ path: source.path, reason: source.reason })),
     ...(options.fixes === undefined ? {} : { fixes: fixesOf(options.fixes) }),
   }
   return `${JSON.stringify(document, null, 2)}\n`

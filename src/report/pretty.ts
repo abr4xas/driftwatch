@@ -1,4 +1,4 @@
-import type { Finding } from '../core/types.ts'
+import type { Finding, SkipReason } from '../core/types.ts'
 import type { RunResult } from '../run.ts'
 import { colorsFor, type Colors } from './colors.ts'
 import type { FixEntry, FixOutcome } from './types.ts'
@@ -133,6 +133,28 @@ function renderFixes(outcome: FixOutcome, c: Colors): string {
   return `${c.dim(outcome.dryRun ? 'would fix' : 'fixed')}\n${body}\n`
 }
 
+/** What each `SkipReason` means to somebody who has to go and fix it. */
+const SKIP_MESSAGE: Record<SkipReason, string> = {
+  'dangling-symlink': 'a symlink whose target is not in the working tree',
+  'absent-from-worktree': 'listed by git, absent from the working tree',
+}
+
+/**
+ * The documents that were found and could not be opened. See `SkipReason`.
+ *
+ * Above the summary rather than beside it, because it qualifies everything the
+ * summary says: `no drift` means "in the files I could open". Dim, and with no
+ * symbol — `✗ ⚠ ✓` are the three SPEC.md § 5 allows, and none of them fits
+ * something that is not a finding.
+ */
+function skippedLines(result: RunResult, c: Colors): string {
+  if (result.skipped.length === 0) return ''
+  const rows = result.skipped
+    .map((source) => c.dim(`skipped ${source.path}: ${SKIP_MESSAGE[source.reason]}\n`))
+    .join('')
+  return `${rows}\n`
+}
+
 function summary(result: RunResult, c: Colors, fixes: FixOutcome | undefined): string {
   const files = count(result.sources.length, 'file', 'files')
   const ms = `${Math.round(result.durationMs)}ms`
@@ -156,7 +178,11 @@ export function renderPretty(result: RunResult, options: PrettyOptions): string 
   const body = [...groupByFile(result.findings)]
     .map(([, findings]) => renderGroup(findings, c))
     .join('')
-  if (options.quiet) return body
+  // `--quiet` drops the summary, not this. SPEC.md § 5 calls it "problems
+  // only", and a document that was found and not opened is nearer a problem
+  // than it is to the summary: it is the one line that changes how the list
+  // above should be read, and a reader who asked for less still has to have it.
+  if (options.quiet) return `${body}${skippedLines(result, c)}`
   const fixes = options.fixes === undefined ? '' : renderFixes(options.fixes, c)
-  return `${body}${fixes}${summary(result, c, options.fixes)}`
+  return `${body}${fixes}${skippedLines(result, c)}${summary(result, c, options.fixes)}`
 }
