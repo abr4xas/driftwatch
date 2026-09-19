@@ -42,6 +42,9 @@ export const DISCARDS = join(ROOT, 'discards.jsonl')
  * rather than take it — ticket `17`: it groups, it does not adjudicate.
  */
 export const FAMILIES = join(ROOT, 'families.json')
+/** The acquisition filter's judgements, one line per document. Ticket `12`'s
+ * neighbour: see `discovery-filter.ts`. */
+export const FILTER = join(ROOT, 'filter.jsonl')
 export const VERDICTS = join(ROOT, 'family-verdicts.jsonl')
 
 export function parseList(text: string): string[] {
