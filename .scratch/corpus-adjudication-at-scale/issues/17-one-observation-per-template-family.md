@@ -8,7 +8,8 @@ repositories is one observation and not forty.
 
 **Blocked by:** nothing — `07` produced the evidence and the corpus is on disk
 
-**Status:** open
+**Status: resolved 2026-09-19.** Built, run with Jev, and it corrects the count it was
+opened for. See §"Answer".
 
 ## Why now, and not when `09` skipped it
 
@@ -104,3 +105,82 @@ the path exists", and that turned out to be the wrong question — the determini
 audits answered the real one. The job here is different in kind: it is not a judgement the
 tool could have made itself, it is a judgement about **which observations are independent**,
 which nothing in the tool can see.
+
+## Answer
+
+Resolved 2026-09-19. **3980 documents collapse to 3570 families, and 50 span more than one
+repository** where hashing alone found 20. `pnpm discovery families`.
+
+### The model is Jev, and getting there was the interesting part
+
+Angel asked for Jev and I reached for a chat model through the gateway instead. That was
+wrong twice over, and the second way is the one worth recording: **Jev is not a language
+model.** The gateway says so outright —
+
+```
+Model 'typesafe-ai/jev' is an evaluation model, not a language model.
+Use the evaluation generation API instead.
+```
+
+— and the shape that follows from it is the reason this is the right tool. `evaluate()` takes
+**shared state** and **typed questions**, and a `boolean` question comes back as `P(true)`.
+No prose is generated and none is wanted: the question is asked 137 times over near-identical
+inputs, nobody reads an explanation, and what the code needs is a number it can threshold. The
+first attempt asked a chat model for `{ same, why }` and was paying for a paragraph nothing
+consumed.
+
+### The question, and what the criteria are for
+
+A Noul, phrased as a statement, with both criteria spelled out:
+
+> **true** — one is derived from the other, or both from one source.
+> **false** — two documents written independently. They may describe the same tool, follow the
+> same convention, or share boilerplate, and still be two documents.
+
+The `false` criterion is doing the work. `overlapOf` has already established that the pair is
+alike — that is why it is a candidate — so what Jev is being asked for is **derivation, not
+similarity**. Without saying so the question collapses into the one the set intersection
+already answered.
+
+`MERGE_AT = 0.8`, and strict on purpose: merging is the **claim** here. Calling two documents
+one takes an observation out of every count that follows, which is the same shape as a false
+positive in the tool. A wrong split only leaves the bias where it already was. Every
+probability is written to `family-verdicts.jsonl`, because a threshold nobody can re-run is a
+threshold nobody can argue with.
+
+### What it answered
+
+**137 pairs, 0 unjudged, 133 merged.** The four it refused are the evidence that the question
+is the right one:
+
+| pair | overlap | P(same) |
+|---|---|---|
+| `openspec-ff-change` ~ `openspec-propose` (×3) | 0.70 | **0.60** |
+| `domain-modeling` ~ `grill-with-docs` | 0.77 | **0.79** |
+
+Different skills from the same toolkit, similar prose, genuinely two documents. That is exactly
+the distinction a line-overlap cannot make, and it is the whole reason a judgement was bought.
+
+### It corrects the count it was opened for
+
+Over the discards `07` reads, **5055 of 95314 are a copy of another repository's document** —
+5.3%. And the row `07` adjudicated by hand:
+
+| | occurrences | after collapsing |
+|---|---|---|
+| `conditional`, not known to be satisfied | 26 | **23** |
+
+The `./assets/` that was counted four times is counted once. `pnpm discovery sample` now reads
+one document per family per rule — two *rules* firing on one document are still two
+observations, which is the distinction that keeps this from collapsing the thing being read.
+
+With no family table the sampler behaves exactly as before, so a corpus nobody has run
+`families` over still works.
+
+### What it must not do, kept
+
+Jev grouped; it adjudicated nothing. What came out is a table of families, and every rule that
+comes out of reading them is still written by hand in `src/` and measured against the 66. The
+certification corpus is untouched by all of this — 66 repos · 341 sources · 39 findings — and
+`src/` has **zero changed lines**: `ai` and `zod` are devDependencies, `tsdown` builds `src/`
+alone, and the tarball is unchanged at 25 files.

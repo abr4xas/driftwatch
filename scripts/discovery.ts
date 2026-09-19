@@ -704,7 +704,9 @@ async function main(argv: readonly string[]): Promise<number> {
     case undefined:
       return statusMain()
     default:
-      process.stderr.write('usage: discovery <enumerate|clone|run|discards|sample|families|status>\n')
+      process.stderr.write(
+        'usage: discovery <enumerate|clone|run|discards|sample|families|status>\n',
+      )
       return 2
   }
 }

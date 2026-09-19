@@ -254,42 +254,65 @@ function excerptOf(content: string): string {
 }
 
 /**
- * One narrow question, and it is deliberately not "are these similar".
+ * The one judgement, as a Noul.
  *
- * Similarity is what `overlapOf` already answered and it is why the pair is
- * here. What a model adds is the thing a set intersection cannot see: whether
- * two documents are one **template** two repositories installed, or two
- * documents that happen to describe the same tool. The second is common — every
- * repository using the same framework writes similar prose about it — and it is
- * exactly the case a high overlap cannot distinguish.
+ * Jev is an **evaluation** model rather than a language model: it reads shared
+ * state, answers typed questions, and returns a probability instead of prose.
+ * That is the whole reason it is the right tool here. The question is asked
+ * 137 times over near-identical inputs, nobody reads an explanation, and what
+ * the code needs is a number it can threshold — which is also why the first
+ * attempt at this, a chat model asked for `{ same, why }`, was paying for a
+ * paragraph nothing consumed.
+ *
+ * Phrased as a **statement** rather than a question, which the Noul docs give
+ * as one of the two forms, and with both criteria spelled out. The `false`
+ * criterion is the one that matters: `overlapOf` already established that the
+ * two documents are alike, so the distinction Jev is being asked for is
+ * derivation, not similarity. Two projects writing their own instructions for
+ * the same framework are two documents however alike the prose, and without
+ * saying so the question collapses into the one the set intersection answered.
  */
-export function judgementPrompt(a: Doc, b: Doc): string {
-  return [
-    'Two documents from different repositories.',
-    '',
-    `A — ${a.repo} ${a.path}`,
-    '---',
-    excerptOf(a.content),
-    '---',
-    '',
-    `B — ${b.repo} ${b.path}`,
-    '---',
-    excerptOf(b.content),
-    '---',
-    '',
-    'Is B the same document as A, copied and edited?',
-    '',
-    'Answer yes only if one is derived from the other: the same document, installed',
-    'into two repositories, possibly with edits. Answer no if they are two documents',
-    'that merely describe the same tool or follow the same convention — two projects',
-    'writing their own instructions for the same framework are two documents, however',
-    'alike the prose.',
-  ].join('\n')
+export const SAME_DOCUMENT = {
+  type: 'boolean',
+  instructions: 'Document B is document A, copied into another repository and possibly edited.',
+  criteria: {
+    true: 'One is derived from the other, or both from one source: the same document installed in two repositories, with or without edits.',
+    false:
+      'Two documents written independently. They may describe the same tool, follow the same convention, or share boilerplate, and still be two documents.',
+  },
+} as const
+
+/**
+ * How sure Jev has to be before two documents are called one.
+ *
+ * Merging is the **claim** here. Calling two documents one takes an
+ * observation out of every count that follows, so a wrong merge quietly hides
+ * evidence — which is the same shape as a false positive in the tool, and gets
+ * the same treatment. A wrong split only leaves the bias ticket `17` is about
+ * where it already was.
+ *
+ * So: strict, and the probability is written to `family-verdicts.jsonl` beside
+ * every pair, because a threshold somebody cannot re-run is a threshold nobody
+ * can argue with.
+ */
+export const MERGE_AT = 0.8
+
+/** One document as Jev reads it. A type alias, so it satisfies `JSONObject`. */
+type Side = { repo: string; path: string; excerpt: string }
+
+/** The state one judgement reads: two documents, named and excerpted. */
+export type JudgementState = { a: Side; b: Side }
+
+export function judgementState(a: Doc, b: Doc): JudgementState {
+  return {
+    a: { repo: a.repo, path: a.path, excerpt: excerptOf(a.content) },
+    b: { repo: b.repo, path: b.path, excerpt: excerptOf(b.content) },
+  }
 }
 
 // --- The runner -----------------------------------------------------------
 
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'anthropic/claude-haiku-4-5'
+const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
 
 /**
  * The gateway key, refused early rather than one request in.
@@ -324,17 +347,18 @@ function docsOf(repo: string, dir: string): Doc[] {
   return docs
 }
 
-type Verdict = { pair: [string, string]; same: boolean; why: string }
+type Verdict = { pair: [string, string]; overlap: number; probability: number; same: boolean }
 
 /**
  * Asks about one pair. A failure is recorded and is **not** a `no`.
  *
  * The difference matters: a model that could not be reached has said nothing,
  * and treating that as "two documents" would quietly restore the bias this
- * whole pass exists to remove.
+ * whole pass exists to remove. A dropped pair is a pair nobody judged, and it
+ * shows up in the run's own summary as one.
  */
 async function judge(
-  ask: (prompt: string) => Promise<{ same: boolean; why: string }>,
+  ask: (state: JudgementState) => Promise<number>,
   candidate: Candidate,
   docs: ReadonlyMap<string, Doc>,
 ): Promise<Verdict | undefined> {
@@ -342,29 +366,34 @@ async function judge(
   const b = docs.get(keyOf(candidate.b))
   if (a === undefined || b === undefined) return undefined
   try {
-    const answer = await ask(judgementPrompt(a, b))
-    return { pair: [keyOf(candidate.a), keyOf(candidate.b)], same: answer.same, why: answer.why }
+    const probability = await ask(judgementState(a, b))
+    return {
+      pair: [keyOf(candidate.a), keyOf(candidate.b)],
+      overlap: Number(candidate.overlap.toFixed(3)),
+      probability,
+      same: probability >= MERGE_AT,
+    }
   } catch (cause) {
     process.stderr.write(`  ${keyOf(candidate.a)} ~ ${keyOf(candidate.b)}: ${messageOf(cause)}\n`)
     return undefined
   }
 }
 
-/** The AI Gateway call, loaded on demand so the other subcommands never see it. */
-async function gatewayAsk(): Promise<(prompt: string) => Promise<{ same: boolean; why: string }>> {
-  const { generateText, Output } = await import('ai')
-  const { z } = await import('zod')
-  const schema = z.object({
-    same: z.boolean().describe('true when one document is the other, copied and edited'),
-    why: z.string().describe('one short sentence naming what decided it'),
-  })
-  return async (prompt: string) => {
-    const { output } = await generateText({
+/**
+ * Jev through the AI Gateway, loaded on demand so the other subcommands never
+ * import it — and it is an `evaluation` model, so `generateText` refuses it.
+ */
+async function jevAsk(): Promise<(state: JudgementState) => Promise<number>> {
+  const { experimental_evaluate: evaluate } = await import('ai')
+  return async (state) => {
+    const { answers } = await evaluate({
       model: MODEL,
-      output: Output.object({ schema }),
-      prompt,
+      state,
+      questions: { sameDocument: SAME_DOCUMENT },
     })
-    return output
+    const answer = answers.sameDocument
+    if (answer.type !== 'boolean') throw new Error(`expected a boolean answer, got ${answer.type}`)
+    return answer.probability
   }
 }
 
@@ -397,7 +426,7 @@ export async function familiesMain(limit: number | undefined, dryRun: boolean): 
       )
     }
   } else {
-    const ask = await gatewayAsk()
+    const ask = await jevAsk()
     for (const [i, candidate] of candidates.entries()) {
       const verdict = await judge(ask, candidate, byKey)
       if (verdict !== undefined) verdicts.push(verdict)
@@ -405,14 +434,15 @@ export async function familiesMain(limit: number | undefined, dryRun: boolean): 
     }
   }
 
-  const confirmed = verdicts.filter((v) => v.same).map((v) => v.pair)
+  const confirmed = verdicts.filter((verdict) => verdict.same).map((verdict) => verdict.pair)
   const families = familiesOf(prints, confirmed)
   writeFileSync(FAMILIES, `${JSON.stringify([...families.values()], null, 2)}\n`, 'utf8')
   if (verdicts.length > 0) {
     writeFileSync(VERDICTS, verdicts.map((v) => JSON.stringify(v)).join('\n') + '\n', 'utf8')
   }
   process.stderr.write(
-    `\n${confirmed.length} of ${verdicts.length} judged pairs are one document\n` +
+    `\n${confirmed.length} of ${verdicts.length} judged pairs are one document ` +
+      `(p >= ${MERGE_AT}); ${candidates.length - verdicts.length} went unjudged\n` +
       `families in ${FAMILIES}\n\n`,
   )
   process.stdout.write(`${formatFamilies(families)}\n`)

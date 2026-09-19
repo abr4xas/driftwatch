@@ -10,6 +10,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   candidatePairs,
+  judgementState,
+  MERGE_AT,
+  SAME_DOCUMENT,
   familiesOf,
   fingerprint,
   formatFamilies,
@@ -162,5 +165,41 @@ describe('the families', () => {
     const out = formatFamilies(fam)
     expect(out).toContain('1 span more than one repository')
     expect(out).toContain('a/one, b/two')
+  })
+})
+
+describe('the question Jev is asked', () => {
+  /**
+   * Jev is an evaluation model: it reads shared state, answers typed questions
+   * and returns a probability. No prose comes back and none is wanted — the
+   * question is asked over a hundred times and what the code needs is a number
+   * it can threshold.
+   */
+  it('is a statement with both criteria spelled out', () => {
+    expect(SAME_DOCUMENT.type).toBe('boolean')
+    // The `false` criterion is the one doing the work: `overlapOf` already
+    // established that the two are alike, so what is being asked for is
+    // derivation and not similarity.
+    expect(SAME_DOCUMENT.criteria.false).toMatch(/independently/u)
+    expect(SAME_DOCUMENT.criteria.true).toMatch(/derived|same document/u)
+  })
+
+  it('merges only on a strict probability, because merging is the claim', () => {
+    // Calling two documents one takes an observation out of every count that
+    // follows. A wrong split only leaves the bias where it already was.
+    expect(MERGE_AT).toBeGreaterThanOrEqual(0.8)
+  })
+
+  it('gives Jev both documents, named and bounded', () => {
+    const state = judgementState(
+      doc('a/one', 'x/SKILL.md', 'z'.repeat(5000)),
+      doc('b/two', 'y/SKILL.md', 'short'),
+    )
+    expect(state.a.repo).toBe('a/one')
+    expect(state.b.path).toBe('y/SKILL.md')
+    // Bounded: a template keeps its opening, and sending nine kilobytes twice
+    // to be told what one shows is a judgement nobody priced.
+    expect(state.a.excerpt.length).toBeLessThan(1400)
+    expect(state.b.excerpt).toBe('short')
   })
 })

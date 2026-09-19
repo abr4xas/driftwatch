@@ -29,7 +29,7 @@ import { normalizePathText } from '../src/extract/discard.ts'
 import { buildRepoIndex, hasDir, hasFile, type RepoIndex } from '../src/verify/repo-index.ts'
 import { resolveInRepo } from '../src/verify/resolve.ts'
 import { slugOf } from './corpus-repos.ts'
-import { DISCARDS, jsonlIn, readList, REPOS_DIR } from './discovery-files.ts'
+import { DISCARDS, FAMILIES, jsonlIn, readList, REPOS_DIR } from './discovery-files.ts'
 
 /**
  * One discarded candidate, as one line of JSONL.
@@ -154,6 +154,61 @@ export function discardsIn(text: string): DiscardRecord[] {
  * stride is deterministic, which is what lets a judgement recorded in the
  * ticket be checked by somebody who re-runs this.
  */
+/**
+ * One discard per template family, when the family table exists.
+ *
+ * Ticket `17`, and it is the whole reason that table is built. `07` read 26
+ * `conditional` discards and reported a proportion; four of them were one
+ * `.agents/skills/teach/SKILL.md` living in two repositories. A reader asking
+ * "how often does this rule misfire" wants documents, and every copy answers
+ * the same way the original did.
+ *
+ * With no table this returns the records untouched, so the sampler works on a
+ * corpus nobody has run `families` over — it just reads copies, the way it did
+ * before.
+ */
+export function collapseToFamilies(
+  records: readonly DiscardRecord[],
+  families: ReadonlyMap<string, string>,
+): DiscardRecord[] {
+  if (families.size === 0) return [...records]
+  const seen = new Set<string>()
+  const kept: DiscardRecord[] = []
+  for (const discard of records) {
+    const family = families.get(`${discard.repo}|${discard.path}`)
+    if (family === undefined) {
+      kept.push(discard)
+      continue
+    }
+    // One document per family per rule: the same rule firing on two copies is
+    // one observation, and on two rules it is two.
+    const key = `${family}|${discard.cause}|${discard.text}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    kept.push(discard)
+  }
+  return kept
+}
+
+/** `owner/repo|path` to the family it belongs to, from `families.json`. */
+export function familyIndex(raw: string): Map<string, string> {
+  const index = new Map<string, string>()
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return index
+  }
+  if (!Array.isArray(parsed)) return index
+  for (const family of parsed) {
+    if (!Array.isArray(family) || family.length < 2) continue
+    const root = family.find((m) => typeof m === 'string')
+    if (typeof root !== 'string') continue
+    for (const member of family) if (typeof member === 'string') index.set(member, root)
+  }
+  return index
+}
+
 export function sampleOf(
   records: readonly DiscardRecord[],
   cause: DiscardCause,
@@ -296,7 +351,15 @@ export function sampleMain(n: number): number {
     process.stderr.write(`${DISCARDS} is missing; run pnpm discovery discards first\n`)
     return 2
   }
-  const records = discardsIn(readFileSync(DISCARDS, 'utf8'))
+  const all = discardsIn(readFileSync(DISCARDS, 'utf8'))
+  const families = existsSync(FAMILIES) ? familyIndex(readFileSync(FAMILIES, 'utf8')) : new Map()
+  const records = collapseToFamilies(all, families)
+  if (records.length !== all.length) {
+    process.stderr.write(
+      `${all.length - records.length} of ${all.length} discards are copies of another ` +
+        `repository's document; reading one of each (${FAMILIES})\n`,
+    )
+  }
   for (const row of tabulate(records)) {
     process.stdout.write(`\n## ${row.cause} (${row.count})\n\n`)
     for (const discard of sampleOf(records, row.cause, n)) {

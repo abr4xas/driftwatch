@@ -9,7 +9,13 @@
  * that asserts a repository lacks a file nobody called a file.
  */
 import { describe, expect, it } from 'vitest'
-import { discardsIn, sampleOf, tabulate } from '../scripts/discovery-discards.ts'
+import {
+  collapseToFamilies,
+  discardsIn,
+  familyIndex,
+  sampleOf,
+  tabulate,
+} from '../scripts/discovery-discards.ts'
 
 const record = (cause: string, repo: string, text: string, exists = false): string =>
   JSON.stringify({
@@ -111,5 +117,60 @@ describe('the sample a person reads', () => {
       ),
     )
     expect(sampleOf(records, 'bare-word', 20).map((discard) => discard.text)).toEqual(['gone.ts'])
+  })
+})
+
+const inTwo = (repo: string): string =>
+  JSON.stringify({
+    repo,
+    path: '.agents/skills/teach/SKILL.md',
+    kind: 'path',
+    cause: 'conditional',
+    text: './assets/',
+    line: 65,
+    offset: [0, 9],
+    window: '',
+    exists: false,
+  })
+
+describe('reading documents instead of copies', () => {
+  /**
+   * Ticket `17`, and it exists because `07` counted one
+   * `.agents/skills/teach/SKILL.md` four times: two repositories carrying the
+   * same skill, and a reader asking how often a rule misfires got four votes
+   * from one document.
+   */
+  const FAMILY = JSON.stringify([
+    ['a/one|.agents/skills/teach/SKILL.md', 'b/two|.agents/skills/teach/SKILL.md'],
+  ])
+
+  it('counts one document once, however many repositories carry it', () => {
+    const records = discardsIn([inTwo('a/one'), inTwo('b/two')].join('\n'))
+    expect(records).toHaveLength(2)
+    expect(collapseToFamilies(records, familyIndex(FAMILY))).toHaveLength(1)
+  })
+
+  it('leaves a discard belonging to no family alone', () => {
+    const records = discardsIn([inTwo('a/one'), record('url', 'c/three', 'x')].join('\n'))
+    expect(collapseToFamilies(records, familyIndex(FAMILY))).toHaveLength(2)
+  })
+
+  it('keeps two different rules firing on one document', () => {
+    // The same rule on two copies is one observation. Two rules on one
+    // document are two, and collapsing those would lose the thing being read.
+    const other = inTwo('b/two').replace('"conditional"', '"hedged"')
+    const records = discardsIn([inTwo('a/one'), other].join('\n'))
+    expect(collapseToFamilies(records, familyIndex(FAMILY))).toHaveLength(2)
+  })
+
+  it('reads the records untouched when no family table has been built', () => {
+    const records = discardsIn([inTwo('a/one'), inTwo('b/two')].join('\n'))
+    expect(collapseToFamilies(records, new Map())).toHaveLength(2)
+  })
+
+  it('survives a family file that is not what it expects', () => {
+    expect(familyIndex('not json').size).toBe(0)
+    expect(familyIndex('{"a":1}').size).toBe(0)
+    expect(familyIndex('[["only-one"]]').size).toBe(0)
   })
 })
