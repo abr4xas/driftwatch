@@ -7,8 +7,8 @@ committed before the corpus grows.
 
 **Blocked by:** nothing
 
-**Status:** open, and **overtaken** as of 2026-09-19 — the thing it was meant to pre-empt has
-already happened. See §"What overtook it" and ticket `20`.
+**Status: resolved 2026-09-19.** Written as `CLASSIFICATION.md` § "When a condition fails",
+a round late for condition 6 and in time for the next one. See §"What overtook it".
 
 ## What changed
 
@@ -46,6 +46,15 @@ rather than after it.
 
 The value of the ticket is unchanged and its timing is spent. That is worth recording plainly:
 a pre-registration written after the fact is not one.
+
+**Written on 2026-09-19** as `CLASSIFICATION.md` § "When a condition fails", five steps, with
+the admission in its first line that it is a round late. It is not what this ticket asked for
+— that was a rule committed before a number — and it is the closest thing still available.
+
+The step this failure needed and did not have is the first: **divide again before anything
+else.** The criterion table had carried a numerator from round sixteen while six rounds changed
+it, and nothing in the project recomputed the fraction. That is now
+`corpus-bookkeeping.test.ts`'s job.
 
 ## The arithmetic
 

@@ -7,7 +7,7 @@ corpus — which of the open false-positive classes gets a rule, or whether M1 i
 
 **Blocked by:** nothing
 
-**Status:** open
+**Status: resolved 2026-09-19.** Recorded, not chased. See §"Answer".
 
 ## The arithmetic
 
@@ -96,3 +96,61 @@ procedure to follow now.
 The eight other conditions, which are met. The validation measurement, which is unchanged at
 90.6% and is the only out-of-sample number the project has. And the eleven false positives
 themselves — every one has been adjudicated and none is in dispute.
+
+## Answer
+
+Resolved 2026-09-19. **Recorded and restated; the remedy is being weighed separately.** Angel
+took the fourth option after the three above were priced, and it is the one that keeps the
+criterion worth having.
+
+### What was decided
+
+Condition 6 is unmet on the whole corpus and met out of sample, and that is now what every
+document says — including the two a user reads. `PRODUCT.md` and `docs/guide/precision.md`
+carried **92.4%**; they carry 87.9% and say it is below the bar. `ROADMAP.md`'s M1 record has
+the round. The criterion table here is derived from the per-finding rows rather than carried
+forward by hand, and `corpus-bookkeeping.test.ts` holds it there.
+
+### Why not option 1, which would have worked
+
+Restoring the bar needs **two classes closed, not one** — that was computed after the options
+were written and it changes them. `vercel/next.js` needs `placeholder`; `remix-run/react-router`
+needs `placeholder` **and** `readers-project`; the other six each need a class with no rule
+proposed. Any pair that clears two repositories lands on 60 of 66 = **90.9%**, nine tenths of a
+point of margin.
+
+So the move was never "close the one clean class". It was "close two, one of which has no
+argument yet, to buy a margin one new false positive erases". A rule derived that way is the
+mistake ADR-0009 already paid for once.
+
+### Why not option 3, which has a real argument
+
+ADR-0009's own reasoning is that calibration findings measure how much you tuned rather than
+precision, so counting calibration repositories in a precision condition is arguably a category
+error. That argument may well be right. It is **unusable now**, because it arrives at the
+moment the number fell, and ADR-0009 § "The threshold is not a priori" already admits 90% was
+chosen with 93.2% and 88.89% in view. A second admission of the same kind ends the criterion.
+
+It is also worse arithmetic than it looks: validation is 29 of 32, **0.6 points** above the
+bar on a denominator of 32. Re-scoping to the thinner measurement makes the criterion more
+fragile, not less — one more unquiet validation repo takes it to 87.5%.
+
+### What happens to the remedy
+
+Ticket `21`. The placeholder class is worth closing **if it is worth closing** — measured over
+700 repositories the way ticket `16` established, with the findings diffed, and with condition 6
+deliberately out of the frame. If it earns its place the bar may recover by itself, and nobody
+will have tuned to the test. If it does not, the condition stays unmet and stays recorded.
+
+Ticket `21` also names the thing that made this class look easier than it is: `+types/` is not
+a placeholder. It is a directory typegen writes, which is the *generated* reasoning, and a rule
+built to cover both would be built to cover a coincidence of rounds.
+
+### What ticket 05 asked for
+
+`CLASSIFICATION.md` § "When a condition fails" — five steps, written now rather than after the
+next number, and honest about being a round late for this one. `05` is resolved by it.
+
+The first step is the one this failure needed and did not have: **divide again before anything
+else**. A condition is a fraction, both halves move, and the criterion table had been carrying
+a numerator from round sixteen while rounds eighteen through twenty-four changed it.

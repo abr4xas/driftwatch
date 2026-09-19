@@ -48,8 +48,8 @@ Name is lowercase `driftwatch`. Voice in the existing docs is declarative, unhed
 
 Real and citable:
 
-- 66 public repositories pinned to a commit, nine languages (`next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable`, others). 26 findings: 20 true, 6 false.
-- **61 of 66 repos produce zero false positives (92.4%)**; over the 32-repo validation group alone, 90.6%. No single repo sees more than 2. Across all 66, `--fix` would apply exactly one edit, and it is correct.
+- 66 public repositories pinned to a commit, nine languages (`next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable`, others). 38 findings: 27 true, 11 false.
+- **58 of 66 repos produce zero false positives (87.9%)** — below the project's own 90% bar, and said so here rather than quietly. Over the 32-repo validation group alone, 90.6%, above it. No single repo sees more than 2. Across all 66, `--fix` would apply six edits and every one is correct.
 - 17 rounds of measurement, every finding classified by hand, in `test/corpus/CLASSIFICATION.md`. Eleven false-positive classes found and closed, each with a fixture and a test naming the repo and line it came from.
 - Real CLI output for every format, in `docs/guide/output.md`. A real clean run on this repo: `✓ 4 files · no drift · 192ms`.
 - ADRs 0001–0012 record the decisions, including the ones that cost precision.

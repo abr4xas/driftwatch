@@ -82,6 +82,35 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 **What to do about it:** loosen nothing and invent no new threshold. What is needed is more finding mass, and the natural route is M2: every new check (`script/missing`, `link/broken`, `skill/frontmatter`, `frontmatter/invalid`) produces its own findings over the same corpus. Once the validation group reaches ~10 findings, condition 6 becomes a measurement again rather than a formality. Until then, the honest number to cite is not "100% precision" but "3 of 3, with 7 of 8 repos silent".
 
+## When a condition fails
+
+Written on 2026-09-19, after condition 6 was found below its bar and **not** before — which is
+the point of writing it down now, so that the next one is decided before the number is in view.
+Ticket `05` asked for this and was overtaken; this is what it asked for, a round late.
+
+`ROADMAP.md` already states the rule: *tune the heuristics, or accept that the check does not
+get there and say so.* What it does not say is the order, and the order is where the mistake
+lives.
+
+1. **Divide again before anything else.** A condition is a fraction. Both halves move, and the
+   one that moved is not always the one being discussed. `corpus-bookkeeping.test.ts` now
+   derives conditions 6 from the per-finding rows so this step cannot be skipped.
+2. **Say the number, in public, before deciding what to do about it.** `PRODUCT.md` and
+   `docs/guide/precision.md` carry the figure a user reads. They are updated in the same commit
+   that finds the failure, not in the one that fixes it.
+3. **A rule may only be derived from evidence that is independent of the condition.** Closing a
+   false-positive class is the intended remedy — ADR-0009 chose this shape precisely because
+   improving the tool improves the number. But the justification has to stand without the
+   condition: measured over the discovery corpus before and after, with the findings diffed,
+   the way ticket `16` established. If the only argument for a rule is that it restores a bar,
+   it is not an argument.
+4. **The threshold does not move.** Not down, not re-scoped to the half that still passes, not
+   redefined as "the one that was always meaningful". ADR-0009 § "The threshold is not a priori"
+   admits 90% was chosen with 93.2% and 88.89% in view. That admission is survivable once.
+5. **If no rule earns its place, the criterion is unmet and stays unmet**, recorded here and in
+   `ROADMAP.md`, until one does. An unmet condition carried honestly is worth more than a met
+   one nobody believes.
+
 ## The full corpus
 
 The corpus produces **38 findings, 27 true and 11 false**, so 71.1% aggregate — and the aggregate
