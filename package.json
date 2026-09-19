@@ -51,18 +51,20 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "corpus": "node --experimental-strip-types scripts/corpus.ts",
-    "discovery": "node --experimental-strip-types scripts/discovery.ts",
+    "discovery": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/discovery.ts",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.5.0",
+    "ai": "^7.0.106",
     "oxlint": "^1.82.0",
     "prettier": "^3.9.6",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "zod": "^4.6.5"
   },
   "dependencies": {
     "ignore": "^7.0.8",

@@ -17,6 +17,7 @@
  *   pnpm discovery run       [--limit N]    audit each clone, record the result
  *   pnpm discovery discards  [--limit N]    what the extractor threw away (`07`)
  *   pnpm discovery sample    [--sample N]   n of each rule's discards, to read
+ *   pnpm discovery families  [--dry-run]    one observation per template (`17`)
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and
@@ -695,11 +696,15 @@ async function main(argv: readonly string[]): Promise<number> {
       const { sampleMain } = await import('./discovery-discards.ts')
       return sampleMain(numberFlag(argv, '--sample') ?? 20)
     }
+    case 'families': {
+      const { familiesMain } = await import('./discovery-families.ts')
+      return familiesMain(numberFlag(argv, '--limit'), argv.includes('--dry-run'))
+    }
     case 'status':
     case undefined:
       return statusMain()
     default:
-      process.stderr.write('usage: discovery <enumerate|clone|run|discards|sample|status>\n')
+      process.stderr.write('usage: discovery <enumerate|clone|run|discards|sample|families|status>\n')
       return 2
   }
 }

@@ -34,6 +34,15 @@ export const RESULTS = join(ROOT, 'results.jsonl')
  * any rule that exists.
  */
 export const DISCARDS = join(ROOT, 'discards.jsonl')
+/**
+ * Which documents are the same template, and the judgements behind it.
+ *
+ * Disposable like everything else here. The families are derived from the
+ * clones and the verdicts are kept beside them so a reader can check the model
+ * rather than take it — ticket `17`: it groups, it does not adjudicate.
+ */
+export const FAMILIES = join(ROOT, 'families.json')
+export const VERDICTS = join(ROOT, 'family-verdicts.jsonl')
 
 export function parseList(text: string): string[] {
   return text
