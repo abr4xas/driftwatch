@@ -36,7 +36,7 @@ Five checks ship today, all tier 1:
 - `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes. Never fixable.
 - `skill/frontmatter` — the structural rules a `SKILL.md` must meet to be invocable. Suggests and is fixable.
 
-Requires Node 24 or newer. Published as `@abr4xas/driftwatch`; the command is `driftwatch`; the action is `abr4xas/driftwatch@v0.3.0`. Current published version is 0.3.0 — the README carries it via badge so no prose goes stale, and the site must do the same rather than hardcode a version in copy.
+Requires Node 24 or newer. Published as `@abr4xas/driftwatch`; the command is `driftwatch`; the action is `abr4xas/driftwatch@v0.4.0`. Current published version is 0.4.0 — the README carries it via badge so no prose goes stale, and the site must do the same rather than hardcode a version in copy.
 
 Not decided / not true yet: `--watch` and `--strict` parse but belong to a later milestone. Tier 2 checks land in M5. There is no service, no account, no web app, no hosted dashboard — and the site must never imply one.
 
