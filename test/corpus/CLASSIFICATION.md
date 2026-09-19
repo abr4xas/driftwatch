@@ -40,7 +40,9 @@ That sequence is the treadmill this document named in round three, running in pu
 
 That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **18**, and the two conditions that decide precision rest on **49 and 18 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
-**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`. Round five's warning does not apply to either: that round's 100% was flattered by the failing repo leaving the group, and both of these leave **clean**, fixed rather than removed. Validation reads 100% with them or without them.
+~~**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`.~~ **Paid in round thirteen** and left standing here for six rounds — `scripts/corpus-repos.ts` records that the thirteen repos added then "also settle the two replacements owed for `course-video-manager` and `emdash`", and the header of this document has said "No replacement is outstanding" since. Two statements in one file disagreeing about a debt is drift in the document that records drift, and it was repeated as fact in rounds eighteen and nineteen before anyone checked. Corrected 2026-09-19.
+
+What the sentence was about, for whoever reads this next: ADR-0006 condition 9 prices a rule derived from a validation repo's finding — that repo moves to calibration, and a new one has to join validation to keep the group's size honest. Both of these moved that way, both left clean, and both were replaced.
 
 What remains unfixed is two false positives: a third-party convention kept by design, and one **not reachable by any prose rule**.
 
@@ -1247,7 +1249,7 @@ Nothing in validation: all 48 landed in calibration, so no repo moved groups and
 1. **Repair condition 2.** Two false fixable findings, one class, two possible shapes of fix.
 2. Price class A's rule — a first segment matching a package name in the repo.
 3. Add `path/to` to `METASYNTACTIC`, which closes class D's largest member for one line.
-4. The two replacement validation repos owed since M2 are **still** owed. This round did not pay them and burned nothing: every finding it produced landed in calibration.
+4. ~~The two replacement validation repos owed since M2 are still owed.~~ Wrong when written: they were paid in round thirteen. This round burned nothing either — every finding it produced landed in calibration.
 
 ---
 
@@ -1303,4 +1305,4 @@ Three findings closed in `react-router`, one in `astro`. Both are **calibration*
 
 1. Class A, the package-name prefix — 16 findings, and a rule shape that exists: a first segment matching a package name in the repo. Not taken here because it is the only one of the four that needs the manifests, and it deserves its own round.
 2. Class C, an absolute path that is a documentation-site URL — 3 findings, and a judgement about next.js rather than about a string.
-3. The two replacement validation repos owed since M2.
+3. ~~The two replacement validation repos owed since M2.~~ Not owed: paid in round thirteen. See the correction in §"What happened, and why the caveat was right".
