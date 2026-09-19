@@ -12,7 +12,7 @@ Static HTML/CSS/JS, no framework of any kind (user constraint, stated explicitly
 
 ## Users
 
-Developers and teams who keep agent context files in their repo — `CLAUDE.md`, `AGENTS.md`, `.claude/skills/*/SKILL.md`, Cursor rules. They are already running linters and CI, and they already use `npx`. The evaluating visitor is a developer deciding in under a minute whether to run one command, arriving from a README badge, an npm page, a GitHub Action listing, or a link from another developer.
+Developers and teams who keep agent context files in their repo — `CLAUDE.md`, `AGENTS.md`, `.agents/skills/*/SKILL.md` and its `.claude/` and `.cursor/` equivalents, Cursor rules. They are already running linters and CI, and they already use `npx`. The evaluating visitor is a developer deciding in under a minute whether to run one command, arriving from a README badge, an npm page, a GitHub Action listing, or a link from another developer.
 
 ## Product Purpose
 

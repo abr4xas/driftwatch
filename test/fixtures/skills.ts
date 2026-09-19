@@ -147,6 +147,30 @@ export const skills: Fixture = {
       '',
     ].join('\n'),
 
+    /**
+     * The same two shapes under `.agents/skills/`, which is where `npx skills
+     * add` installs by default and where the corpus keeps most of its skills.
+     *
+     * The rootless one is the regression guard: `skillDirectoryOf` used to
+     * recognise the skills root by the literal string `.claude/skills`, so a
+     * `SKILL.md` sitting in any other root had its name compared against
+     * `skills` and was reported for not matching a container.
+     */
+    '.agents/skills/SKILL.md': [
+      '---',
+      'name: rootless-elsewhere',
+      "description: Sits in a skills root that is not Claude Code's, and is fine",
+      '---',
+      '',
+    ].join('\n'),
+    '.agents/skills/renamed/SKILL.md': [
+      '---',
+      'name: was-called-this',
+      'description: The directory was renamed and the frontmatter was not, which is drift',
+      '---',
+      '',
+    ].join('\n'),
+
     // The block does not parse: one finding, and it is `frontmatter/invalid`'s.
     // There is no structure to read, so this check stays silent.
     '.claude/skills/unparseable/SKILL.md': ['---', 'name: [unclosed', '---', ''].join('\n'),
@@ -163,6 +187,16 @@ export const skills: Fixture = {
     '.claude/commands/ship.md': ['---', 'description: Go', '---', ''].join('\n'),
   },
   expected: [
+    {
+      check: 'skill/frontmatter',
+      severity: 'error',
+      file: '.agents/skills/renamed/SKILL.md',
+      line: 2,
+      column: 1,
+      text: 'name',
+      message: 'name does not match the directory',
+      suggestion: { value: 'renamed', confidence: 1, fixable: true },
+    },
     {
       check: 'skill/frontmatter',
       severity: 'error',

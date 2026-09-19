@@ -1,3 +1,4 @@
+import { SKILL_ROOTS } from '../../core/discover.ts'
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
 import { skillFactOf } from '../../extract/skill.ts'
 import { suggestKey } from '../../fix/suggest.ts'
@@ -44,17 +45,23 @@ const KNOWN_KEYS: readonly string[] = [
 ]
 
 /**
- * The skill's directory name, which is the identity Claude Code invokes.
+ * The skill's directory name, which is the identity an agent invokes.
  *
- * `undefined` when the file sits directly in the skills root: there is no
+ * `undefined` when the file sits directly in a skills root: there is no
  * directory of its own to compare a name against. The test is on the parent's
  * whole **path** and not on its name, so a skill legitimately called `skills`
  * (`.claude/skills/skills/SKILL.md`) keeps the rule.
+ *
+ * Every root `discover.ts` classifies counts, not just `.claude`. That was a
+ * real bug the moment discovery widened: a `SKILL.md` in the root of
+ * `.agents/skills/` had its name compared against `skills`, and was reported
+ * for not matching a container it was never named after.
  */
 function skillDirectoryOf(path: string): string | undefined {
   const segments = path.split('/')
   const parent = segments.slice(0, -1)
-  if (parent.join('/').endsWith('.claude/skills')) return undefined
+  const parentPath = parent.join('/')
+  if (SKILL_ROOTS.some((root) => parentPath.endsWith(`${root}/skills`))) return undefined
   return parent.at(-1)
 }
 

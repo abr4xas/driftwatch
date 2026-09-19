@@ -7,7 +7,8 @@
 
 **Blocked by:** nothing
 
-**Status: REOPENED 2026-09-18.** It was resolved the same day with a decision not to widen,
+**Status: in progress.** Discovery widened to three roots 2026-09-19; the corpus diff is
+saved and unadjudicated. Originally **REOPENED 2026-09-18**. It was resolved the same day with a decision not to widen,
 and that decision was wrong. The reasoning is kept in §"Answer" and overturned in
 §"Correction", because the way it failed is worth more than the conclusion was.
 
@@ -353,3 +354,105 @@ the ticket's original middle option was right:
 The open question that is genuinely open: whether `classifySource` should also carry the
 character rules, or whether those belong in `skill/frontmatter` where the directory rule
 already lives.
+
+## Second correction: `.claude/skills/` was never the location either
+
+Both the decision and its correction still assumed `.claude/skills/` was the canonical place
+and everything else was an exception. That is also wrong, and the installer says so. `npx
+skills add` presents:
+
+```
+── Universal (.agents/skills) ── always included ────────────
+  • Amp • Cline • Codex • Cursor • Droid • Gemini CLI
+  • GitHub Copilot • Kilo Code • Kimi Code CLI • OpenCode • Warp • Zed
+  …and 8 more
+
+── Additional agents ─────────────────────────────
+  ○ AiderDesk (.aider-desk/skills)    ○ AstrBot (data/skills)
+  ○ Autohand Code CLI (.autohand/skills)  ○ Augment (.augment/skills)
+  ○ IBM Bob (.bob/skills)             ● Claude Code (.claude/skills)
+  ○ OpenClaw (skills)                 ○ CodeArts Agent (.codeartsdoer/skills)
+  ↓ 48 more
+```
+
+**`.agents/skills/` is the default and the universal one**; `.claude/skills/` is one entry in
+a picker of fifty-six. The corpus had been saying it all along and it was read as noise:
+
+| root | `SKILL.md` | repos |
+|---|---|---|
+| **`.agents/skills/`** | **83** | 9 |
+| `.claude/skills/` | 32 | 8 |
+| `.flue/skills/` | 11 | |
+| `.codex/skills/` | 11 | |
+| `.github/skills/` | 7 | |
+| `.opencode/skills/` | 3 | |
+| `.cursor/skills/` | 1 | 1 |
+
+Reading our own installer as the format is the same error as inventing the `name` convention,
+one level up: both times the specification of somebody else's thing was assumed rather than
+looked at.
+
+## What was built (steps 1 and 2)
+
+`SKILL_ROOTS = ['.claude', '.agents', '.cursor']` in `discover.ts`, and `skillDirectoryOf` in
+`skill-frontmatter.ts` generalised to match — it recognised the skills root by the literal
+string `.claude/skills`, so a `SKILL.md` in the root of `.agents/skills/` had its name
+compared against `skills` and was reported for not matching a container. Tests cover each
+root, nesting below a root, the monorepo case, and the roots deliberately left out.
+
+Three roots rather than fifty-six, and that is the point rather than a shortcut: each root
+audits more files in every repository that has one, which moves snapshots and costs hand
+review. They get taken one at a time with a measurement in hand.
+
+### The corpus diff, which is step 2's whole output
+
+| | before | after |
+|---|---|---|
+| sources | 236 | **320** |
+| findings | 26 | **74** |
+| calibration / validation | 14 / 12 | **62 / 12** |
+| fixable | 1 | **3** |
+| snapshots changed | — | 10 of 66 |
+
+**Validation did not move.** All 48 new findings landed in calibration, so ADR-0006's
+conditions measured over the validation group are untouched by this change. `edgecrab`, the
+repo this was expected to hurt most, did not change at all: its skills are under `plugins/`,
+which is not a root being read.
+
+The new findings are **46 `path/missing` and 2 `link/broken`** — and **zero
+`skill/frontmatter`**. Two things follow, and neither was predicted:
+
+1. **Widening did not wake the check it was aimed at.** The corpus's skills are well formed,
+   wherever they live. That is round eleven's finding again, now across `.agents/` too.
+2. **`link/broken` produced its first findings ever.** The check has read zero since it
+   landed. It reads two now.
+
+### The class waiting in the diff
+
+Most of the new `path/missing` in `vercel/next.js` are one shape:
+
+```
+/docs/app/glossary#static-shell   [path/missing] inline-code
+/docs/app/glossary                [path/missing] link
+/docs/app/                        [path/missing] inline-code
+```
+
+Absolute paths that are **URLs on a documentation site**, not files in the repo. Not a defect
+of widening — a false-positive class that existed and was invisible because these files were
+never read. Also visible: `emdash` carries the same skill in nine `templates/*/` copies, so
+one drifted path becomes nine findings, which is the template problem the spec predicted,
+arriving in the corpus.
+
+### Why the snapshots are not committed
+
+Regenerating them turns three bookkeeping tests red, and correctly: `CLASSIFICATION.md` cites
+26 findings and 1 fixable, and those numbers are the human record. Accepting a corpus diff
+means adjudicating it, which is exactly what ADR-0007 says a person does.
+
+The diff is saved at [`skill-roots-corpus.diff`](../skill-roots-corpus.diff), 340 lines, so
+the work is not lost. The code and its tests are committed; the corpus is deliberately left
+showing `CHANGED`.
+
+**Step 3 is the open work:** rule on 48 findings, close the absolute-path class if it is one,
+and check the two new fixable findings against ADR-0006 condition 2, which admits no false
+positive among them at any rate.

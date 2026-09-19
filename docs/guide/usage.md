@@ -46,7 +46,7 @@ With `--fix`, the code describes what is left **after** fixing: a repo whose onl
 |---|---|
 | `agents-md` | `AGENTS.md`, at any depth |
 | `claude-md` | `CLAUDE.md`, `CLAUDE.local.md` |
-| `skill` | `.claude/skills/**/SKILL.md` |
+| `skill` | `.claude/skills/**/SKILL.md`, and the same under `.agents/` and `.cursor/` |
 | `subagent` | `.claude/agents/*.md` |
 | `command` | `.claude/commands/**/*.md` |
 | `cursor-rule` | `.cursorrules`, `.cursor/rules/**/*.mdc` |

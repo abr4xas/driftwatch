@@ -19,8 +19,48 @@ describe('classifySource', () => {
     expect(classifySource('.github/copilot-instructions.md')).toBe('copilot')
   })
 
+  /**
+   * `.claude/skills/` is one install target among dozens, and not the busiest.
+   * `npx skills add` writes to `.agents/skills/` **by default** — it is the
+   * "universal" destination covering Amp, Cline, Codex, Cursor, Copilot, Gemini
+   * CLI, Kilo, OpenCode, Warp, Zed and a dozen more — and offers 50-odd others
+   * behind a picker: `.aider-desk/skills`, `.augment/skills`, `.bob/skills`,
+   * `data/skills`, a bare `skills` for OpenClaw, and so on.
+   *
+   * The corpus says the same thing: 83 `SKILL.md` under `.agents/skills/`
+   * against 32 under `.claude/skills/`, plus `.flue`, `.codex`, `.github` and
+   * `.opencode`. Treating `.claude/skills/` as the location was reading our own
+   * installer as the format.
+   */
+  it('recognizes a skill under each of the three main install roots', () => {
+    expect(classifySource('.claude/skills/deploy/SKILL.md')).toBe('skill')
+    expect(classifySource('.agents/skills/deploy/SKILL.md')).toBe('skill')
+    expect(classifySource('.cursor/skills/deploy/SKILL.md')).toBe('skill')
+  })
+
+  it('recognizes a skill nested deeper under a skills root', () => {
+    // mattpocock/skills groups by category: skills/engineering/<skill>/SKILL.md.
+    // The identity is the immediate parent, so depth below the root is fine.
+    expect(classifySource('.agents/skills/engineering/grill-me/SKILL.md')).toBe('skill')
+  })
+
+  it('leaves install roots it does not know alone', () => {
+    // `.flue`, `.codex` and `.opencode` are all in the corpus, and a bare
+    // `skills/` is OpenClaw's target. They are deliberately not recognised yet:
+    // widening is priced one root at a time against the corpus diff, not by
+    // pasting somebody else's list.
+    for (const rel of [
+      '.flue/skills/repro/SKILL.md',
+      'skills/engineering/grill-me/SKILL.md',
+      'answer-reviewers/SKILL.md',
+    ]) {
+      expect(classifySource(rel), rel).toBeUndefined()
+    }
+  })
+
   it('recognizes the anchored patterns nested in a monorepo too', () => {
     expect(classifySource('packages/api/.claude/skills/build/SKILL.md')).toBe('skill')
+    expect(classifySource('packages/api/.agents/skills/build/SKILL.md')).toBe('skill')
     expect(classifySource('apps/web/.github/copilot-instructions.md')).toBe('copilot')
   })
 
