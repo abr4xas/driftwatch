@@ -3,6 +3,9 @@ dist/
 .DS_Store
 # The clones are a local cache; the snapshots are committed.
 test/corpus/repos/
+# The discovery clones are a cache too, and nothing about them is committed:
+# the discovery corpus is disposable by design. See discovery-clone.ts.
+test/discovery/
 *.tsbuildinfo
 .vercel
 .env*

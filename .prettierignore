@@ -1,6 +1,7 @@
 dist
 node_modules
 test/corpus
+test/discovery
 pnpm-lock.yaml
 
 # The documents are primary source. A formatter puts churn through them that

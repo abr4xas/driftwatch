@@ -377,19 +377,36 @@ and `.gitignore` for `git check-ignore`. A `--filter=blob:none` clone with a spa
 of `*.md`, `package.json`, `.gitignore` and `.claude/**` carries what is needed and nothing
 else.
 
+**Built and measured 2026-09-18** (`scripts/discovery-clone.ts`), over **all 66** corpus
+repos at their pinned commits:
+
 | | Full clone | Blobless + sparse |
 |---|---|---|
-| Per repo | ~52 MB | ~1-3 MB |
-| 2000 repos | ~104 GB | **~4 GB** |
+| Per repo | 52.7 MB | **3.1 MB** |
+| The 66 together | 3479 MB | 204 MB |
+| 2000 repos, projected | ~103 GB | **~6 GB** |
 
-Two thousand discovery repos would then cost less on disk than the 66 certification repos
-do today. That inverts the whole economics of the deferred plan, and it is pure
-deterministic code with no model and no decision attached to it — which is why it is the
-one piece here that could be built before anything else is settled. Ticket `06`.
+The estimate this table replaces said ~1-3 MB per repo and ~4 GB at 2000, and claimed two
+thousand discovery repos would cost less than the 66 certification repos do today. **That
+last part was wrong**: 6 GB is nearly twice the 3.4 GB the certification corpus occupies.
+The ratio is 17.1×. 6 GB still makes the thing buildable on a laptop, which was the only
+claim that mattered.
 
-Worth checking rather than assuming: whether `git check-ignore` behaves identically under a
-sparse checkout, and whether a blobless clone's `ls-files` is complete. Both are cheap to
-verify on one repo.
+All 66 produce **byte-identical driftwatch conclusions** against a full clone of the same
+commit. Five defects were found on the way, all fixed; ticket `06` records them. Two are
+worth knowing here because they are the same shape as the bugs this project already
+catalogues:
+
+- Removing the remote to prevent lazy fetching **silently disabled `namesAnotherRepo`**,
+  because that rule reads `remote.origin.url` to learn which repo it is in.
+- A hand-copied list of manifest filenames fell one entry behind `RUNNERS` and **a real
+  `script/missing` finding disappeared without an error**. The cone is now derived from
+  `RUNNERS` rather than copied out of it.
+
+One limitation is known and deliberate: an anchored link whose target is not a document
+(`[x](src/app.ts#L10)`) goes silent, because `buildAnchorIndex` opens any target and
+`link/broken` reads an unreadable target as "say nothing". No extension list closes that;
+the runner will close it by detecting such links and dropping the repo.
 
 ## What is not changed by any of this
 
