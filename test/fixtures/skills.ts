@@ -91,10 +91,11 @@ export const skills: Fixture = {
     ].join('\n'),
 
     /**
-     * A name that is not kebab-case **and agrees with its directory**. This is
-     * the only shape in which the kebab rule fires on its own: when the name
-     * disagrees with the directory, the directory finding carries the fix and
-     * this one would be noise about a name that is being replaced anyway.
+     * A name that is not kebab-case and **agrees with its directory**. Silent
+     * since ticket `14`: `Ship_It` is not a false statement about this
+     * repository, it is a naming convention, and `BRIEF.md` § Non-goals puts
+     * both style and quality outside this tool. `skills-ref validate` is the
+     * thing that answers it.
      */
     '.claude/skills/Ship_It/SKILL.md': [
       '---',
@@ -257,26 +258,6 @@ export const skills: Fixture = {
     {
       check: 'skill/frontmatter',
       severity: 'error',
-      file: '.claude/skills/mistyped/SKILL.md',
-      line: 4,
-      column: 1,
-      text: 'allowed_tools',
-      message: 'unknown key',
-      suggestion: { value: 'allowed-tools', confidence: 0.6, fixable: false },
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
-      file: '.claude/skills/mistyped/SKILL.md',
-      line: 5,
-      column: 1,
-      text: 'licence',
-      message: 'unknown key',
-      suggestion: { value: 'license', confidence: 0.6, fixable: false },
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
       file: '.claude/skills/nameless/SKILL.md',
       line: 2,
       column: 1,
@@ -305,30 +286,12 @@ export const skills: Fixture = {
     {
       check: 'skill/frontmatter',
       severity: 'error',
-      file: '.claude/skills/Ship_It/SKILL.md',
-      line: 2,
-      column: 1,
-      text: 'name',
-      message: 'name is not kebab-case',
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
       file: '.claude/skills/skills/SKILL.md',
       line: 2,
       column: 1,
       text: 'name',
       message: 'name does not match the directory',
       suggestion: { value: 'skills', confidence: 1, fixable: true },
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
-      file: '.claude/skills/terse/SKILL.md',
-      line: 3,
-      column: 1,
-      text: 'description',
-      message: 'description is shorter than 20 characters',
     },
     {
       check: 'skill/frontmatter',

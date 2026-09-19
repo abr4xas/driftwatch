@@ -1,7 +1,7 @@
 # openai/codex
 
 sources: 13
-errors: 5
+errors: 4
 warnings: 0
 fixable: 1
 
@@ -22,7 +22,6 @@ agents-md  codex-rs/tui/src/bottom_pane/AGENTS.md
 
 ## findings
 .codex/skills/code-review-breaking-changes/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> code-review-breaking-changes (1, fixable)
-.codex/skills/code-review-breaking-changes/SKILL.md:3:1  [skill/frontmatter] frontmatter  description
 AGENTS.md:35:51  [path/missing] inline-code  codex-rs/codex-mcp/src/mcp_connection_manager.rs
 AGENTS.md:265:4  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs
 AGENTS.md:275:133  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs

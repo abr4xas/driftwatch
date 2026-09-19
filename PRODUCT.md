@@ -34,7 +34,7 @@ Five checks ship today, all tier 1:
 - `script/missing` — `npm/pnpm/yarn/bun run S`, `deno task S`, `make S`, against the nearest `package.json`, `Makefile` or `deno.json`. Suggests and is fixable.
 - `link/broken` — a Markdown link to an anchor no heading in the target produces. Suggests, never fixable.
 - `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes. Never fixable.
-- `skill/frontmatter` — the structural rules a `SKILL.md` must meet to be invocable. Suggests and is fixable.
+- `skill/frontmatter` — a `SKILL.md` whose `name` is not the directory it lives in. Suggests and is fixable. It does not validate the format; see `BRIEF.md` § Non-goals.
 
 Requires Node 24 or newer. Published as `@abr4xas/driftwatch`; the command is `driftwatch`; the action is `abr4xas/driftwatch@v0.4.0`. Current published version is 0.4.0 — the README carries it via badge so no prose goes stale, and the site must do the same rather than hardcode a version in copy.
 

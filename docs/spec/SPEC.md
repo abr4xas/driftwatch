@@ -86,12 +86,11 @@ Nor is a command claimed at all when:
 If the script does not exist but there is one with a similar name (edit distance ≤ 2), it is suggested and autofixable.
 
 #### `skill/frontmatter`
-Structural problems in a `SKILL.md` frontmatter:
-- Missing `name` or `description`.
-- `name` does not match the containing directory's name.
-- `name` is not kebab-case.
-- `description` empty or shorter than 20 characters (a poor description means the skill never gets invoked).
-- Unknown keys in the frontmatter.
+A `SKILL.md` whose `name` is not the directory it lives in — the directory was renamed and the frontmatter did not follow.
+
+Reported with the two shapes that make the question unanswerable: frontmatter missing outright, and frontmatter with no `name` or `description` (or an empty one). Those say "could not look", not "is malformed".
+
+**The format itself is not checked**, and that is § Non-goals in `BRIEF.md` rather than an omission: a `name` in snake_case, a short `description` and a key the format does not list are all wrong the day they are written, and this tool reports what a repository has since made false. `skills-ref validate` is what answers the other question.
 
 #### `link/broken`
 A relative Markdown link to a file that does not exist, or to an anchor (`#section`) that does not exist in the target file.

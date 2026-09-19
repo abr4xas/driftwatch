@@ -1,27 +1,42 @@
 import { SKILL_ROOTS } from '../../core/discover.ts'
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
 import { skillFactOf } from '../../extract/skill.ts'
-import { suggestKey } from '../../fix/suggest.ts'
 import type { Claim, SkillFact, Suggestion } from '../../core/types.ts'
 import type { Check, CheckReport } from '../check.ts'
 
 /**
- * `SPEC.md` § 3: the five structural rules of a `SKILL.md` frontmatter.
+ * A `SKILL.md` that names itself something other than its directory.
  *
- * Structure, and only structure. Ticket `06` settled the division: a field
- * whose **type** is wrong is `frontmatter/invalid`'s finding, and a
- * `description` that is a list has no length to be too short. So every rule
- * here runs on a field whose type is already right, and a block that does not
- * parse produces one finding rather than six.
+ * **One rule, and it is the only one of the original five that is drift.** The
+ * directory gets renamed and the frontmatter does not follow, which is the
+ * sentence `BRIEF.md` opens with: a document describing a convention the repo
+ * has already changed.
+ *
+ * The other four went with ticket `14`, and the argument is in `BRIEF.md`
+ * § Non-goals rather than anywhere new:
+ *
+ * > It is not a Markdown linter (it does not check style, formatting or
+ * > spelling). It does not judge whether the content is *good*, only whether it
+ * > is *true*.
+ *
+ * A `description` under twenty characters is not false. `allowed_tools` for
+ * `allowed-tools` is not false. A `name` in snake_case is not false. They are
+ * format and they are quality, and both are named there as things this tool
+ * does not do. Measured over 700 repositories before the rules were removed:
+ * the three of them produced 23 findings from **five distinct mistakes**, while
+ * the rule that stays produced 23 from 23.
+ *
+ * What is left beside it is not a fifth rule, it is the **precondition** for
+ * the first: with no frontmatter, or no `name` in it, there is nothing to
+ * compare a directory against. Those say "could not look", not "is malformed".
+ *
+ * Ticket `06` settled the other division and it still holds: a field whose
+ * **type** is wrong is `frontmatter/invalid`'s finding, so the rule here runs
+ * on a field whose type is already right.
  */
 
 /** The two fields the format requires. */
 const REQUIRED: readonly string[] = ['name', 'description']
-
-/**
- * `SPEC.md` § 3: "a poor description means the skill never gets invoked".
- */
-const MIN_DESCRIPTION = 20
 
 /**
  * Lowercase alphanumerics in hyphen-separated words.
@@ -53,28 +68,6 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
  * outside `a-z0-9-` has already failed, so by here the two counts agree.
  */
 const MAX_NAME = 64
-
-/**
- * The keys the format documents. It is **not** an allowlist whose complement
- * is reported: an unknown key only produces a finding when it is a near-miss
- * of one of these (`suggestKey`), so a field added to the format after this
- * list was written goes undetected rather than reported.
- */
-const KNOWN_KEYS: readonly string[] = [
-  'name',
-  'description',
-  'license',
-  // Documented by <https://agentskills.io/specification.md> and accepted by
-  // `skills-ref validate`; the list had fallen a key behind it. Adding one can
-  // only make this rule quieter, which is the direction it is allowed to move.
-  'compatibility',
-  'allowed-tools',
-  'metadata',
-  'model',
-  'argument-hint',
-  'disable-model-invocation',
-  'user-invocable',
-]
 
 /**
  * The skill's directory name, which is the identity an agent invokes.
@@ -117,16 +110,6 @@ function checkBlock(claim: Claim, fact: SkillFact): CheckReport | null {
 }
 
 /**
- * The `name` rules, in the order that keeps them from doubling each other.
- *
- * A name that disagrees with its directory is reported as the disagreement,
- * not as its own spelling: the directory finding carries the fix, and
- * complaining about the case of a name that is about to be replaced wholesale
- * is noise. The kebab rule therefore fires when the name **agrees** with the
- * directory and both are wrong, which is the shape where the two names really
- * do have to change together.
- */
-/**
  * Whether a string could be this skill's `name` without breaking a rule.
  *
  * Only the autofix asks. It is deliberately **stricter than what the check
@@ -154,26 +137,19 @@ function checkName(claim: Claim, value: string): CheckReport | null {
     return finding(claim, 'name does not match the directory', suggestion)
   }
 
-  return KEBAB.test(value) ? null : finding(claim, 'name is not kebab-case')
-}
-
-function checkDescription(claim: Claim, value: string): CheckReport | null {
-  const text = value.trim()
-  if (text.length === 0) return finding(claim, 'description is empty')
-  if (text.length < MIN_DESCRIPTION) {
-    return finding(claim, `description is shorter than ${MIN_DESCRIPTION} characters`)
-  }
+  // A name that agrees with its directory is this check's business finished.
+  // Whether either is well-formed is `skills-ref validate`'s question.
   return null
 }
 
 export const skillFrontmatter: Check = {
   id: 'skill/frontmatter',
-  title: 'A SKILL.md frontmatter is not invocable',
+  title: 'A SKILL.md names itself something other than its directory',
   description:
-    'A SKILL.md is missing a required field, names itself something other than ' +
-    'its directory, or carries a description too short to make the skill ' +
-    'discoverable. Structure only: a field whose type is wrong is reported by ' +
-    'frontmatter/invalid.',
+    'The directory was renamed and the frontmatter did not follow, so the name ' +
+    'and the folder disagree. Reported with the frontmatter that is missing ' +
+    'outright, or missing a name, because without one there is nothing to ' +
+    'compare. Format is not checked: see BRIEF.md, Non-goals.',
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['frontmatter'],
@@ -189,27 +165,19 @@ export const skillFrontmatter: Check = {
     const fact = frontmatterFactOf(claim)
     if (fact?.subject !== 'key') return null
 
-    /**
-     * The unknown-key rule is answered **before** the type gates below,
-     * because it does not read the value: `allowed_tools: [Read, Bash]` is the
-     * commonest spelling of that mistake, and gating it on the value being a
-     * string is how it went undetected in the first draft.
-     */
-    if (!REQUIRED.includes(fact.key)) {
-      if (KNOWN_KEYS.includes(fact.key)) return null
-      const suggestion = suggestKey(KNOWN_KEYS, fact.key)
-      // No near-miss, no claim: a key nobody on the list resembles is far more
-      // likely somebody's own than a mistake (ADR-0011).
-      return suggestion === undefined ? null : finding(claim, 'unknown key', suggestion)
-    }
+    // Somebody else's key is somebody else's business. The near-miss rule that
+    // used to live here went with ticket `14`: `allowed_tools` for
+    // `allowed-tools` is a real mistake and it is not a false statement about
+    // this repository.
+    if (!REQUIRED.includes(fact.key)) return null
 
     // An empty value is the absence of a value, and it reads the same for both
-    // required fields. Any other wrong type is `frontmatter/invalid`'s finding.
+    // required fields — the same "could not look" as a missing key rather than
+    // a judgement about the text. Any other wrong type is
+    // `frontmatter/invalid`'s finding.
     if (fact.type === 'empty') return finding(claim, `${fact.key} is empty`)
     if (fact.type !== 'string' || fact.scalar === undefined) return null
 
-    return fact.key === 'name'
-      ? checkName(claim, fact.scalar)
-      : checkDescription(claim, fact.scalar)
+    return fact.key === 'name' ? checkName(claim, fact.scalar) : null
   },
 }

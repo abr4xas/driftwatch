@@ -2,9 +2,9 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 39 findings.**
+Corpus: **66 public repos pinned to a commit, 38 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **39 findings, 28 true and 11 false** after rounds twenty-two and twenty-four widened the skills roots.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **38 findings, 27 true and 11 false**: rounds twenty-two and twenty-four widened the skills roots, and round twenty-five took the lint rules out of `skill/frontmatter`.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -66,7 +66,7 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 ## The full corpus
 
-The corpus produces **39 findings, 28 true and 11 false**, so 71.8% aggregate — and the aggregate
+The corpus produces **38 findings, 27 true and 11 false**, so 71.1% aggregate — and the aggregate
 is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
@@ -101,7 +101,7 @@ from round one — `.goose/recipes/`, another tool's convention — and round fo
 that produced it. The repo is still in the corpus and is now silent. The finding and the argument it
 generated stay in the history below, where they happened.
 
-Split by group: **validation 16 findings, 12 true and 4 false**; **calibration 23 findings, 16
+Split by group: **validation 16 findings, 12 true and 4 false**; **calibration 22 findings, 15
 true and 7 false**, over 20 repositories in all. Only the first half measures anything.
 
 The two sections that follow walk the findings adjudicated up to round seventeen. They are kept as
@@ -121,7 +121,7 @@ true which round thirteen had ruled **false**, because the verdict was fourteen 
 away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
 be fed to a model; the error is the argument for it.
 
-**28 true, 11 false, 39 findings.**
+**27 true, 11 false, 38 findings.**
 
 | # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
 |---|---|---|---|---|---|---|---|
@@ -142,28 +142,27 @@ be fed to a model; the error is the argument for it.
 | 15 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:98:79` | `path/missing` | `packages/client/src/client/auth-extensions.ts` | **true** | — | validation, round 14 |
 | 16 | `northword/zotero-format-metadata` | `AGENTS.md:44:89` | `path/missing` | `content/scripts/linter.js` | **false** | generated-bundle | validation, round 14 |
 | 17 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | calibration, round 22 |
-| 18 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:3:1` | `skill/frontmatter` | `description` | **true** | — | calibration, round 22 |
-| 19 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
-| 20 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
-| 21 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
-| 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
-| 23 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
-| 24 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
-| 25 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
-| 26 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:25:17` | `path/missing` | `+types/` | **false** | placeholder | calibration, round 18, D |
-| 27 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
-| 28 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 29 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 30 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 31 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 33 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 34 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 35 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
-| 36 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
-| 37 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
-| 38 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
-| 39 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
+| 18 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
+| 19 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 20 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 21 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
+| 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
+| 23 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
+| 24 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
+| 25 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:25:17` | `path/missing` | `+types/` | **false** | placeholder | calibration, round 18, D |
+| 26 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
+| 27 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 28 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 29 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 30 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 31 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 33 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 34 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
+| 35 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
+| 36 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
+| 37 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
+| 38 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
 
 ---
 
@@ -1759,3 +1758,77 @@ that produces a valid skill; renaming the directory to match leaves it invalid.
 their count: they were produced by a rule nobody tuned against them, on a repository nobody
 opened to tune it. Nothing moved groups — no validation finding was used to change a rule
 here; a root was added and this is the measurement.
+
+## Twenty-fifth round, 2026-09-19: `skill/frontmatter` stops linting
+
+Ticket `14`, raised by Angel while reviewing ticket `10` and settled by him here. The check
+shipped in M2 with five rules and only one of them was ever drift.
+
+### The argument is in `BRIEF.md`, not anywhere new
+
+> **Non-goals.** It is not a Markdown linter (it does not check style, formatting or spelling).
+> It does not judge whether the content is *good*, only whether it is *true*.
+
+A `description` under twenty characters is not false. `allowed_tools` where the format says
+`allowed-tools` is not false. A `name` in snake_case is not false. They are format and they are
+quality, and that line names both as things this tool does not do.
+
+The argument the other way, as ticket `14` recorded it, was `BRIEF.md` § "Why it actually
+hurts": *"unlike code, these files have no compiler, no tests, no linter."* Read in place that
+is the **reason drift hurts** — lying about the repository has no mechanical consequence — and
+not a mandate to validate a format. The ticket cited it as the latter, which was a misreading
+by the person who wrote the ticket.
+
+### What the rules were worth, measured before removing them
+
+Over 700 discovery repositories, `skill/frontmatter` with all five rules:
+
+| rule | findings | repos | kind |
+|---|---|---|---|
+| `name` does not match the directory | 23, all fixable | 5 | **drift** |
+| frontmatter missing / no required field | 19 | 7 | precondition |
+| unknown key | 18 | **2** | lint |
+| `description` shorter than 20 | 4 | 2 | lint |
+| `name` not kebab-case | 1 | 1 | lint |
+
+The drift rule fires most, and the lint rules yield far less than their count suggests. The
+eighteen unknown keys are **two mistakes**: `meain/dotfiles` writes `user_invocable` in
+fourteen skills and `aegntic/cldcde` writes `allowed_tools` in four, each the same snake_case
+slip copied across a repository. Three of the four short descriptions are inside
+`LF-Decentralized-Trust-labs/gitmesh`'s **test fixtures**, which are deliberately malformed
+skills used as input data.
+
+So: 23 lint findings from five distinct mistakes, against 23 drift findings from 23.
+
+### What stays, and why it is not a fifth rule
+
+`frontmatter is missing`, `frontmatter has no name or description`, and an empty required
+value. Those are not judgements about a format — they are the **precondition** for the rule
+that remains. With no frontmatter, or no `name` in it, there is nothing to compare a directory
+against. They say "could not look", which is the same thing `13`'s skipped sources say.
+
+`KEBAB` and `MAX_NAME` survive as the **autofix gate**, which is where ticket `10` had already
+put `MAX_NAME`: the fix rewrites a `name` into its directory, so the directory has to be usable
+as one. The gate is now strictly stricter than anything the check reports, which is the right
+way round.
+
+### The bill
+
+| | round 24 | round 25 |
+|---|---|---|
+| findings | 39 | **38** |
+| true | 28 | **27** |
+| false | 11 | 11 |
+| fixable | 6 | 6 |
+
+**One finding**, `openai/codex`'s 16-character description, and it was **true** — a real
+instance of a rule this project has decided not to have. Calibration goes 23 → 22; validation
+is untouched, so nothing condition 5 or 6 rests on moved.
+
+### What is knowingly given up
+
+`allowed_tools` and `user_invocable` are real mistakes that stop a key from doing anything, and
+no other tool in the ecosystem is widely run — `skills-ref validate` exists and ticket `08`
+found 1 of 23 sampled skills invalid, which is the measure of how little it is used. Reporting
+them was useful. It was not this tool's job, and a tool that does a neighbouring job because
+nobody else will is how a scope stops meaning anything.
