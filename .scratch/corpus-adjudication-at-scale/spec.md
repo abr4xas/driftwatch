@@ -83,6 +83,10 @@ An open registry of agent skills — Claude Code and others — with 1,441,658 r
 installations and a leaderboard of at least 282 entries. Browsable by topic, by agent and
 by trending window; each entry links to its GitHub repo; there is a documented API.
 
+Ticket `02` established what that API is: `/api/v1/skills`, fully enumerable with `page` and
+`per_page` up to 500 — and **gated on a Vercel OIDC token**, which is the thing that decides
+whether any of the skills.sh material is reachable at all.
+
 ## Where Jev does not go: the runtime
 
 Recorded so the door stays shut, because it is the obvious idea and it is wrong.
@@ -318,8 +322,8 @@ model earns the most per unit of risk.
 
 Assembling two thousand repos by hand is not on the table — it was not on the table at 300,
 which is why phase 2's "1-2 days" was optimistic. GitHub code search caps at 1000 results
-per query at ~10 requests per minute, so the universe has to be assembled by facetting
-(`path:` × language × stars × date), and every facet returns a mixture: real agent context
+per query at 10 requests per minute, so the universe has to be assembled by facetting
+(`filename:` × `size:` ranges), and every facet returns a mixture: real agent context
 files, specifications that are not one
 ([ADR-0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md)), template
 clones, vendored copies of somebody else's context file, and forks of all of the above.
@@ -440,16 +444,20 @@ same day.
 |---|---|---|---|
 | `06` | Blobless + sparse clone seam: does `ls-files` stay complete and `check-ignore` still work? | task | **new**, and the only unblocked one |
 | `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | **new**, highest ceiling |
-| `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration — ToS, rate limits, pinning? | research | widened to the GitHub API |
+| `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration — ToS, rate limits, pinning? | research | **resolved**: GitHub is enough and costs ~10 min; skills.sh is gated on a Vercel OIDC token |
 | `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | unchanged |
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` already names? | research | **reframed**: a smoke test of job 1, not a calibration of verdicts |
 | `05` | Pre-register the decision rule for condition 6 | task | no longer blocking, see above |
 | `03` | ~~Sampling design for a model-adjudicated corpus~~ | — | **withdrawn**: nothing is model-adjudicated |
 
-`06` is the one worth doing first, and it is the only item here that depends on no decision
-about Jev, no API terms and no reopening of the deferred plan: it is deterministic code that
-makes 2000 repos cost less on disk than 66 do today. Until it exists, everything else is
-arithmetic about a corpus nobody can hold.
+`06` was done first and is resolved: 66 of 66 corpus repos reproduce byte-identical
+conclusions from a checkout averaging 2.8 MB against 52.7.
+
+`02` is resolved too, and it moved the difficulty rather than removing it. Acquisition turned
+out to be cheap — one facet of GitHub code search yields ~780 unique repositories per minute
+of rate limit, so 2000 is five to ten minutes — which means **the discovery corpus is now
+buildable end to end** and the open question is what to do with it rather than how to get it.
+The one thing `02` could not answer is anything behind skills.sh's token.
 
 `07` is the one with the most to find, because it is the only measurement the project has
 never been able to take at all.
