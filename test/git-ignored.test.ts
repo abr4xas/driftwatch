@@ -6,7 +6,7 @@
  * It asks git in batches, and a batch is where the risk lives: one pathspec git
  * refuses can take the other 399 with it.
  */
-import { execFileSync, execFile } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
