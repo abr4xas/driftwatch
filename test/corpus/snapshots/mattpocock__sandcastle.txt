@@ -1,11 +1,12 @@
 # mattpocock/sandcastle
 
-sources: 1
+sources: 2
 errors: 0
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .agents/skills/pre-release/SKILL.md
 agents-md  AGENTS.md
 
 ## findings

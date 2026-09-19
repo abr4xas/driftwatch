@@ -46,7 +46,13 @@ import { hasDir, type RepoIndex } from './repo-index.ts'
  */
 const TOOL_ROOTS = new Set([
   '.claude',
+  // Both spellings, because they are two different things. `.agent/` is
+  // Antigravity's, and the `KZ-IT` case this module was written against names
+  // it *after deleting it* — which is the shape the absence gate exists for.
+  // `.agents/` is the universal skills target `npx skills add` writes to by
+  // default; the corpus has it in 12 repos and `.agent/` in none.
   '.agent',
+  '.agents',
   '.cursor',
   '.windsurf',
   '.aider',

@@ -2,12 +2,16 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 26 findings.**
+Corpus: **66 public repos pinned to a commit, 74 findings.**
+
+**48 of those 74 are unadjudicated**, added by round eighteen when discovery widened to the other skills roots. Everything under that round's heading is a ledger of work to do, not a measurement. The conditions below are reported against the 26 that have verdicts, and are **in suspense** until the rest are ruled on.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 65 sources, 12 findings, 8 true and 4 false.**
+Validation group measurement: **32 repos, 67 sources, 12 findings, 8 true and 4 false.**
+
+Round eighteen added two sources to the validation group and **no findings**: all 48 of its new findings landed in calibration. The validation measurement is unchanged, which is why the conditions below can still be read at all.
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
@@ -21,7 +25,7 @@ Validation group measurement: **32 repos, 65 sources, 12 findings, 8 true and 4 
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **1**, of which **0 are false**.
+Fixable findings: **3**, of which **0 are false** — and that line reports only what has been ruled on. Two of the three arrived in round eighteen and are **unadjudicated**, so ADR-0006 condition 2 is in suspense rather than met. It admits no false positive among the fixable at any rate, which makes those two the first thing to rule on.
 
 **All nine conditions are met**, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
 
@@ -1118,3 +1122,79 @@ Unmoved. Nothing in M3 touched a heuristic, the snapshots are byte-identical, an
 
 The five open false-positive classes in the round-sixteen ledger are all still open and none of them is fixable, so none of them can become a bad autofix. The two replacement validation repos owed since M2's close are still owed; this round did not pay them, because it changed no rule and burned no repo.
 
+
+---
+
+## Eighteenth round, 2026-09-19: the other skills roots, and 48 findings nobody has ruled on
+
+**This round is not a measurement.** It is the ledger of a corpus diff, opened here rather than left in a patch file, because this document is where findings live and a diff sitting in `.scratch/` is a finding nobody will ever read.
+
+### What changed in the tool
+
+`classifySource` read `.claude/skills/**/SKILL.md` and nothing else. It now reads `.agents/skills/` and `.cursor/skills/` as well. The reason is that `.claude/skills/` was never the location: `npx skills add` writes to **`.agents/skills/` by default** — the universal target covering Amp, Cline, Codex, Cursor, GitHub Copilot, Gemini CLI, Kilo, Kimi, OpenCode, Warp and Zed — and offers fifty-odd others behind a picker. This corpus had been saying so since it was assembled and it was read as noise:
+
+| root | `SKILL.md` | repos |
+|---|---|---|
+| **`.agents/skills/`** | **83** | 9 |
+| `.claude/skills/` | 32 | 8 |
+| `.flue/skills/` | 11 | |
+| `.codex/skills/` | 11 | |
+| `.github/skills/` | 7 | |
+| `.opencode/skills/` | 3 | |
+| `.cursor/skills/` | 1 | 1 |
+
+Three roots were taken, not seven and not fifty-six. Each one audits more files in every repository that has it, which is exactly the cost this document exists to price.
+
+### The arithmetic
+
+| | round 17 | round 18 |
+|---|---|---|
+| sources | 236 | **320** |
+| findings | 26 | **74** |
+| calibration / validation | 14 / 12 | **62 / 12** |
+| fixable | 1 | **3** |
+| snapshots changed | — | 10 of 66 |
+
+**Validation did not move.** All 48 new findings are in calibration, so conditions 3 through 7 read exactly as they did after round seventeen. That is luck rather than design, and it is the only reason this round can be left open without invalidating the certification.
+
+Two results nobody predicted:
+
+- **Widening did not wake `skill/frontmatter`.** Zero of the 48 are its findings. The corpus's skills are well formed wherever they live, which is round eleven's result again across three roots and 83 more files.
+- **`link/broken` produced the first two findings of its existence.** It had read zero since it landed in round nine.
+
+### The 48, grouped by shape
+
+Grouped, not ruled on. The class names are descriptions of what the strings look like, and each one needs a person to open the repository and decide.
+
+| # | Shape | Count | Where |
+|---|---|---|---|
+| A | A path prefixed with the repo's own name — `react-router/docs/start/modes.md` in `react-router` | 16 | `react-router` |
+| B | The same skill copied into nine templates, each claiming `.emdash/types.ts` and `.emdash/schema.json` | 18 | `emdash` |
+| C | An absolute path that is a **documentation URL**, not a file — `/docs/app/glossary`, `/docs/app/` | 3 | `next.js` |
+| D | A literal placeholder — `path/to/file.ts`, `#anchor-a`, `#anchor-b`, `+types/` | 4 | `astro`, `next.js`, `react-router` |
+| E | A path in the **user's** project, not this repo — `app/entry.server.tsx` | 1 | `react-router` |
+| F | Everything else, one at a time | 6 | `goose`, `next.js`, `react-router` |
+
+**Class B is the template problem arriving in the corpus.** One drifted path in one skill, copied into nine starter templates, is eighteen findings from two mistakes. Counting it as eighteen would overstate this round's mass by a factor of nine, which is the same shape as round fifteen's eight findings in a single document.
+
+**Class D is the one that looks closable on sight.** `path/to/file.ts` is the universal metasyntactic path and `discard.ts` already keeps a `METASYNTACTIC` set — it holds `foo`, `bar`, `baz`, `qux`, `fulano`, `ejemplo`, and not `path/to`. `#anchor-a` and `#anchor-b` are a documentation example of what an anchor looks like. Looking closable and being closable are different, and that is what the review is for.
+
+**Class C is a real question and not a typo.** In a repository that publishes a documentation site, `/docs/app/glossary` is a URL. driftwatch resolves a leading `/` against the repo root, finds nothing, and reports it. Whether that is drift depends on whether the site's routes are supposed to track the repo's files, which is a judgement about next.js and not about the string.
+
+### The two fixable ones, which come first
+
+```
+.agents/skills/prepare-release-notes/SKILL.md:30:20  scripts/changes/whats-changed.md
+  -> .agents/skills/prepare-release-notes/references/whats-changed.md  (confidence 1, fixable)
+.agents/skills/prepare-release-notes/SKILL.md:76:6   scripts/changes/whats-changed.md
+  -> .agents/skills/prepare-release-notes/references/whats-changed.md  (confidence 1, fixable)
+```
+
+ADR-0006 condition 2 admits **no** false positive among the fixable findings, at any rate, with no percentage modulating it. Two arrived unadjudicated, so the condition is in suspense. They are the first thing to rule on, and if either is false the class closes before anything else in this round is discussed.
+
+### What is owed
+
+1. Rule on the 48, by class where the class is honest and one by one where it is not.
+2. Decide class B's counting rule: nine copies of one mistake are one observation or nine, and this document has taken the "one" position before.
+3. Re-read conditions 1 through 9 afterwards. They are quoted above as of round seventeen and they stay quoted that way until this round closes.
+4. The two replacement validation repos owed since M2 are **still** owed. This round did not pay them and did not burn any new ones.

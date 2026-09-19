@@ -1,7 +1,7 @@
 # emdash-cms/emdash
 
-sources: 14
-errors: 1
+sources: 41
+errors: 19
 warnings: 0
 fixable: 0
 
@@ -11,15 +11,60 @@ agents-md  infra/blog-demo/AGENTS.md
 agents-md  infra/cache-demo/AGENTS.md
 agents-md  infra/do-demo/AGENTS.md
 agents-md  infra/do-solo-demo/AGENTS.md
+skill  templates/blank/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/blank/.agents/skills/creating-plugins/SKILL.md
+skill  templates/blank/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/blank/AGENTS.md
+skill  templates/blog-cloudflare/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/blog-cloudflare/.agents/skills/creating-plugins/SKILL.md
+skill  templates/blog-cloudflare/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/blog-cloudflare/AGENTS.md
+skill  templates/blog/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/blog/.agents/skills/creating-plugins/SKILL.md
+skill  templates/blog/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/blog/AGENTS.md
+skill  templates/marketing-cloudflare/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/marketing-cloudflare/.agents/skills/creating-plugins/SKILL.md
+skill  templates/marketing-cloudflare/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/marketing-cloudflare/AGENTS.md
+skill  templates/marketing/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/marketing/.agents/skills/creating-plugins/SKILL.md
+skill  templates/marketing/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/marketing/AGENTS.md
+skill  templates/portfolio-cloudflare/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/portfolio-cloudflare/.agents/skills/creating-plugins/SKILL.md
+skill  templates/portfolio-cloudflare/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/portfolio-cloudflare/AGENTS.md
+skill  templates/portfolio/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/portfolio/.agents/skills/creating-plugins/SKILL.md
+skill  templates/portfolio/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/portfolio/AGENTS.md
+skill  templates/starter-cloudflare/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/starter-cloudflare/.agents/skills/creating-plugins/SKILL.md
+skill  templates/starter-cloudflare/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/starter-cloudflare/AGENTS.md
+skill  templates/starter/.agents/skills/building-emdash-site/SKILL.md
+skill  templates/starter/.agents/skills/creating-plugins/SKILL.md
+skill  templates/starter/.agents/skills/emdash-cli/SKILL.md
 agents-md  templates/starter/AGENTS.md
 
 ## findings
 AGENTS.md:398:56  [path/missing] inline-code  tests/e2e/
+templates/blank/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/blank/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/blog-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/blog-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/blog/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/blog/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/marketing-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/marketing-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/marketing/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/marketing/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/portfolio-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/portfolio-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/portfolio/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/portfolio/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/starter-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/starter-cloudflare/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json
+templates/starter/.agents/skills/emdash-cli/SKILL.md:100:9  [path/missing] inline-code  .emdash/types.ts  -> apps/labeler/evals/types.ts (0.3)
+templates/starter/.agents/skills/emdash-cli/SKILL.md:100:56  [path/missing] inline-code  .emdash/schema.json

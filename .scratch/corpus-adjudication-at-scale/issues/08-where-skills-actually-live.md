@@ -443,16 +443,23 @@ never read. Also visible: `emdash` carries the same skill in nine `templates/*/`
 one drifted path becomes nine findings, which is the template problem the spec predicted,
 arriving in the corpus.
 
-### Why the snapshots are not committed
+### Where the 48 live
 
-Regenerating them turns three bookkeeping tests red, and correctly: `CLASSIFICATION.md` cites
-26 findings and 1 fixable, and those numbers are the human record. Accepting a corpus diff
-means adjudicating it, which is exactly what ADR-0007 says a person does.
+In [`CLASSIFICATION.md`](../../../test/corpus/CLASSIFICATION.md) § "Eighteenth round", which
+is where findings belong. The first version of this left them in a `.diff` under `.scratch/`,
+which was wrong twice over: a patch file is not a ledger, and a finding nobody will read is a
+finding nobody will rule on.
 
-The diff is saved at [`skill-roots-corpus.diff`](../skill-roots-corpus.diff), 340 lines, so
-the work is not lost. The code and its tests are committed; the corpus is deliberately left
-showing `CHANGED`.
+The snapshots **are** committed, and the document's cited totals moved with them — 74
+findings, 320 sources, 3 fixable — so the bookkeeping tests pass and the numbers are true.
+What the document now says, and did not before, is that **48 of the 74 have no verdict**, so
+the conditions are reported against the 26 that do and are in suspense until the rest are
+ruled on.
 
-**Step 3 is the open work:** rule on 48 findings, close the absolute-path class if it is one,
-and check the two new fixable findings against ADR-0006 condition 2, which admits no false
-positive among them at any rate.
+That is the honest state: the diff is accepted as *observed*, not as *adjudicated*. Those are
+different things and only one of them can be done by running a command.
+
+**Step 3 is the open work**, and round eighteen lists it: rule on the 48 grouped into six
+shapes, decide whether nine copies of one mistake count once or nine times, and check the two
+new fixable findings against ADR-0006 condition 2 first, because that condition admits no
+false positive among them at any rate.

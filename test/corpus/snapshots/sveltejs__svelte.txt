@@ -1,11 +1,12 @@
 # sveltejs/svelte
 
-sources: 1
+sources: 2
 errors: 0
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .agents/skills/performance-investigation/SKILL.md
 agents-md  AGENTS.md
 
 ## findings

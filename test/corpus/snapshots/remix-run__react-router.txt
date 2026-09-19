@@ -1,13 +1,40 @@
 # remix-run/react-router
 
-sources: 2
-errors: 0
+sources: 8
+errors: 22
 warnings: 0
-fixable: 0
+fixable: 2
 
 ## sources
+skill  .agents/skills/create-pr/SKILL.md
+skill  .agents/skills/finish-line/SKILL.md
+skill  .agents/skills/fix-bug/SKILL.md
+skill  .agents/skills/implement-rfc/SKILL.md
+skill  .agents/skills/prepare-release-notes/SKILL.md
+skill  .agents/skills/react-router/SKILL.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-(none)
+.agents/skills/implement-rfc/SKILL.md:85:51  [path/missing] inline-code  tasks/rfc-decisions.md
+.agents/skills/implement-rfc/SKILL.md:143:28  [path/missing] inline-code  docs/upgrading/future-flags.md
+.agents/skills/prepare-release-notes/SKILL.md:30:20  [path/missing] inline-code  scripts/changes/whats-changed.md  -> .agents/skills/prepare-release-notes/references/whats-changed.md (1, fixable)
+.agents/skills/prepare-release-notes/SKILL.md:76:6  [path/missing] inline-code  scripts/changes/whats-changed.md  -> .agents/skills/prepare-release-notes/references/whats-changed.md (1, fixable)
+.agents/skills/react-router/SKILL.md:22:4  [path/missing] inline-code  app/entry.server.tsx
+.agents/skills/react-router/SKILL.md:25:17  [path/missing] inline-code  +types/
+.agents/skills/react-router/SKILL.md:86:29  [path/missing] inline-code  react-router/docs/
+.agents/skills/react-router/SKILL.md:119:43  [path/missing] inline-code  react-router/docs/start/modes.md  -> docs/start/modes.md (0.6)
+.agents/skills/react-router/SKILL.md:119:79  [path/missing] inline-code  react-router/docs/start/data/routing.md  -> docs/start/data/routing.md (0.3)
+.agents/skills/react-router/SKILL.md:119:122  [path/missing] inline-code  react-router/docs/start/data/data-loading.md  -> docs/start/data/data-loading.md (0.3)
+.agents/skills/react-router/SKILL.md:119:170  [path/missing] inline-code  react-router/docs/start/data/actions.md  -> docs/start/data/actions.md (0.3)
+.agents/skills/react-router/SKILL.md:120:43  [path/missing] inline-code  react-router/docs/start/modes.md  -> docs/start/modes.md (0.6)
+.agents/skills/react-router/SKILL.md:120:79  [path/missing] inline-code  react-router/docs/start/framework/routing.md  -> docs/start/data/routing.md (0.3)
+.agents/skills/react-router/SKILL.md:120:127  [path/missing] inline-code  react-router/docs/start/framework/route-module.md  -> docs/start/framework/route-module.md (0.6)
+.agents/skills/react-router/SKILL.md:120:180  [path/missing] inline-code  react-router/docs/how-to/route-module-type-safety.md  -> docs/how-to/route-module-type-safety.md (0.6)
+.agents/skills/react-router/SKILL.md:121:43  [path/missing] inline-code  react-router/docs/start/framework/rendering.md  -> docs/start/framework/rendering.md (0.6)
+.agents/skills/react-router/SKILL.md:121:93  [path/missing] inline-code  react-router/docs/how-to/spa.md  -> docs/how-to/spa.md (0.6)
+.agents/skills/react-router/SKILL.md:121:128  [path/missing] inline-code  react-router/docs/how-to/pre-rendering.md  -> docs/how-to/pre-rendering.md (0.6)
+.agents/skills/react-router/SKILL.md:121:173  [path/missing] inline-code  react-router/docs/start/framework/data-loading.md  -> docs/start/data/data-loading.md (0.3)
+.agents/skills/react-router/SKILL.md:121:226  [path/missing] inline-code  react-router/docs/start/framework/actions.md  -> docs/start/data/actions.md (0.3)
+.agents/skills/react-router/SKILL.md:122:43  [path/missing] inline-code  react-router/docs/upgrading/future.md  -> docs/upgrading/future.md (0.6)
+.agents/skills/react-router/SKILL.md:122:108  [path/missing] inline-code  react-router/docs/upgrading/
