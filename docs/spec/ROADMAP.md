@@ -59,7 +59,7 @@ Condition 5 then failed on one repo, `mattpocock/course-video-manager`, with fiv
 
 **Both classes behind it were closed and the corpus re-run.** One snapshot changed, from 6 findings to 1: the five false positives gone, the true one kept, nothing moved across the other 48 repos.
 
-**Condition 6 is unmet again, and this time nobody noticed for six rounds.** The corpus is 66 repos with 32 in validation, 38 findings, 27 true and 11 false. Against condition 6: **58 of 66 = 87.9%** over the whole corpus, below the bar, and **29 of 32 = 90.6%** over validation, above it. **Eight of nine conditions.**
+**Condition 6 is unmet again, and this time nobody noticed for six rounds.** The corpus is 66 repos with 32 in validation, 37 findings, 27 true and 10 false. Against condition 6: **58 of 66 = 87.9%** over the whole corpus, below the bar, and **29 of 32 = 90.6%** over validation, above it. **Eight of nine conditions.**
 
 Nothing regressed in the code, which is exactly why nothing caught it. Round eighteen widened discovery to the other skills roots and deliberately left three classes of false positive open — two synthesised anchors and a generated directory in `vercel/next.js` and `remix-run/react-router`, a path in the reader's own project, a runtime log in `block/goose`. Three previously quiet repositories joined the count. The criterion table carried the old figure forward by hand, and the number was never divided again.
 

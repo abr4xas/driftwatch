@@ -98,6 +98,20 @@ const MATRIX: readonly {
     expected: { kind: 'unanswerable', rule: 'generated' },
   },
   {
+    /**
+     * Ticket `21`. React Router's typegen writes `+types/` next to every route
+     * module and nothing tracks it — not in `remix-run/react-router` itself,
+     * and not in any of the three discovery repositories that mention it. It
+     * is the same category as `.react-router`, `.next` and `.astro`, which the
+     * list already carries: a framework's generated output, named in context
+     * files because that is where the types come from.
+     */
+    name: 'a path through a framework directory written by codegen',
+    claim: claimOf('app/routes/+types/home.ts'),
+    index: indexOf(['app/routes/home.tsx']),
+    expected: { kind: 'unanswerable', rule: 'generated' },
+  },
+  {
     name: 'a path git ignores',
     claim: claimOf('reports/latest.html'),
     index: indexOf(['src/x.ts']),

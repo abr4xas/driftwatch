@@ -24,7 +24,7 @@ They share a shape: **the document is not asserting that the path exists.** It a
 
 Measured over **66 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable` and others, in nine languages — running over the context files their authors wrote without knowing driftwatch exists.
 
-**38 findings: 27 true, 11 false.** The ratio is the least useful number here, so these are the numbers the project holds itself to:
+**37 findings: 27 true, 10 false.** The ratio is the least useful number here, so these are the numbers the project holds itself to:
 
 - **58 of the 66 repos produce no false positive at all** — 87.9%, **below the 90% bar**. Over the validation group alone, 29 of 32 = 90.6%, above it.
 - **No repo sees more than 2**, and **all six autofixable findings are correct.**
@@ -33,7 +33,7 @@ The first bar is not met and that is said here rather than in a file nobody read
 
 That last number is the one to read sceptically, and the project reads it that way: across all 66 repositories `--fix` would apply **one** edit. It was checked by hand at the level of the edit and not only of the finding — the document is one directory out of date and the rewrite is the one a maintainer would have made — but a floor met on a sample of one is proven once and unproven at scale. More repositories is the only thing that moves it.
 
-Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one. It carries 16 of the 38 findings.
+Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one. It carries 16 of the 37 findings.
 
 ## The bar, and why it is two numbers
 

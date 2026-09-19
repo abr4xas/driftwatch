@@ -7,7 +7,8 @@ having — judged on what it costs over 700 repositories, and **not** on what it
 
 **Blocked by:** nothing
 
-**Status:** open
+**Status: resolved 2026-09-19.** Two questions, two answers: `+types/` yes, the anchors no.
+See §"Answer".
 
 ## Why this ticket exists separately
 
@@ -77,3 +78,61 @@ A rule that suppresses any true finding in the discovery diff. A rule whose only
 `vercel/next.js`. A rule that has to reach `+types/` to be worth writing. Any of those and the
 class stays open and the ticket says so — which is a fine outcome, and the one `20` is already
 written for.
+
+## Answer
+
+Resolved 2026-09-19. **They were two classes and they got two answers.** `+types/` is
+generated and is now suppressed; the anchors are not a class and the ecosystem said so.
+Round twenty-six. Condition 6 is unmoved, which is the point.
+
+### `+types/` — yes, and it is one word
+
+Not a placeholder. React Router's typegen writes it beside every route module, and the skill
+names it the plainest way there is: *"imports from `./+types/...`"*. Nothing tracks it — not in
+`remix-run/react-router`, not in any of the three discovery repositories that mention it.
+
+So it is `GENERATED`'s category, sitting with `.react-router`, `.next`, `.nuxt`, `.svelte-kit`
+and `.astro`, which are the same thing for other frameworks. One entry.
+
+| | before | after |
+|---|---|---|
+| corpus | 38 findings, 11 false | **37, 10 false** |
+| 700 discovery repositories | 1407 findings | **1407** |
+
+One false positive removed and nothing else moved, anywhere.
+
+### The anchors — no, and this is the half worth having
+
+§"The case against" guessed that a rule narrow enough to be safe might be narrow enough to be
+about one repository. The discovery corpus was more definite than that: **both candidate rules
+are wrong, not merely thin.**
+
+| rule | what it would suppress |
+|---|---|
+| an anchor beginning with `anchor` | 8 repositories write one, **7 mean it** — `#anchor-versions`, `#anchor-system`, `#anchormanager`, `#anchorbasedwriter` |
+| `word-<single character>` | **57 distinct links in 15 repositories** — `#layer-1`, `#item-5`, `#state-1`, `#quote-s` |
+
+Numbered and lettered headings are how documents number and letter their headings. Either rule
+trades dozens of real, checkable anchors for two stand-ins in one repository, which is the
+trade this project exists to refuse.
+
+What makes `#anchor-a` obviously a placeholder to a reader is that the **whole sentence** is a
+specimen of output the skill is telling an agent to write. That is a property of the
+surrounding prose, not of the anchor, and nothing in `links.ts` reads prose. It is not
+unreachable — the prose gates do exactly this for path claims — but it is a different piece of
+work and no finding in either corpus is asking for it.
+
+### Condition 6, looked at last and on purpose
+
+`remix-run/react-router` keeps `app/entry.server.tsx`, so it is still unquiet.
+`vercel/next.js` keeps both anchors. **58 of 66 = 87.9%**, unchanged.
+
+The justified change did not move the bar and the change that would move it is not justified.
+That is the ticket working as designed: had these been weighed together with the bar in view,
+the anchor rule is exactly the one somebody would have talked themselves into.
+
+### What §"What would make the answer no" asked for
+
+All three of its conditions were met by the anchor half — a rule whose only real case is
+`vercel/next.js`, and one that would suppress true findings in the wild. The class stays open
+and this ticket says so, which §"What would make the answer no" already called a fine outcome.

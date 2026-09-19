@@ -2,9 +2,9 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 38 findings.**
+Corpus: **66 public repos pinned to a commit, 37 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **38 findings, 27 true and 11 false**: rounds twenty-two and twenty-four widened the skills roots, and round twenty-five took the lint rules out of `skill/frontmatter`.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **37 findings, 27 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, and round twenty-six closed one class and measured another away.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -113,7 +113,7 @@ lives.
 
 ## The full corpus
 
-The corpus produces **38 findings, 27 true and 11 false**, so 71.1% aggregate — and the aggregate
+The corpus produces **37 findings, 27 true and 10 false**, so 73.0% aggregate — and the aggregate
 is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
@@ -148,8 +148,8 @@ from round one — `.goose/recipes/`, another tool's convention — and round fo
 that produced it. The repo is still in the corpus and is now silent. The finding and the argument it
 generated stay in the history below, where they happened.
 
-Split by group: **validation 16 findings, 12 true and 4 false**; **calibration 22 findings, 15
-true and 7 false**, over 20 repositories in all. Only the first half measures anything.
+Split by group: **validation 16 findings, 12 true and 4 false**; **calibration 21 findings, 15
+true and 6 false**, over 20 repositories in all. Only the first half measures anything.
 
 The two sections that follow walk the findings adjudicated up to round seventeen. They are kept as
 written — the reasoning is the point — and the **complete** record, rounds one to twenty-four, is
@@ -168,7 +168,7 @@ true which round thirteen had ruled **false**, because the verdict was fourteen 
 away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
 be fed to a model; the error is the argument for it.
 
-**27 true, 11 false, 38 findings.**
+**27 true, 10 false, 37 findings.**
 
 | # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
 |---|---|---|---|---|---|---|---|
@@ -196,20 +196,19 @@ be fed to a model; the error is the argument for it.
 | 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
 | 23 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
 | 24 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
-| 25 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:25:17` | `path/missing` | `+types/` | **false** | placeholder | calibration, round 18, D |
-| 26 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
-| 27 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 28 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 29 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 30 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 31 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 33 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 34 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
-| 35 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
-| 36 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
-| 37 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
-| 38 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
+| 25 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
+| 26 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 27 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 28 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 29 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 30 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 31 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 33 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
+| 34 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
+| 35 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
+| 36 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
+| 37 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
 
 ---
 
@@ -1879,3 +1878,61 @@ no other tool in the ecosystem is widely run — `skills-ref validate` exists an
 found 1 of 23 sampled skills invalid, which is the measure of how little it is used. Reporting
 them was useful. It was not this tool's job, and a tool that does a neighbouring job because
 nobody else will is how a scope stops meaning anything.
+
+## Twenty-sixth round, 2026-09-19: one class closed, one measured away
+
+Ticket `21`, written so that the placeholder class could be weighed **without** condition 6 in
+the frame — closing it is one of the two moves that would restore the bar, and a rule derived
+to move a number is the mistake the criterion exists to prevent.
+
+It turned out to be two questions with two different answers, which is what the ticket
+predicted.
+
+### `+types/` is generated, and that is the whole finding
+
+React Router's typegen writes `+types/` beside every route module. The skill names it in the
+plainest way — *"imports from `./+types/...`"* — and nothing tracks it: not in
+`remix-run/react-router` itself, and not in any of the three discovery repositories that
+mention it.
+
+That is `GENERATED`'s category and the list already carries its neighbours — `.react-router`,
+`.next`, `.nuxt`, `.svelte-kit`, `.astro`. A framework's codegen output, named in context files
+because that is where the types come from.
+
+| | before | after |
+|---|---|---|
+| corpus | 38 findings | **37** |
+| false positives | 11 | **10** |
+| 700 discovery repositories | 1407 findings | **1407** |
+
+One finding, and it was false. Nothing else moved anywhere.
+
+### The anchors are not a class, and the measurement is the answer
+
+`#anchor-a` and `#anchor-b` in `vercel/next.js` sit inside a **specimen of output** the skill
+is instructing an agent to write: *"Choose [Sibling fix A](#anchor-a) or [Sibling fix B](#anchor-b)
+when either is feasible."* They are obviously stand-ins to a reader.
+
+Two rules were considered and the discovery corpus refused both.
+
+**An anchor beginning with `anchor`.** Eight repositories write one, and seven of them mean it:
+`#anchor-versions`, `#anchor-system`, `#anchormanager`, `#anchorbasedwriter`, `#anchor`. Real
+headings in documents about anchoring.
+
+**An anchor of the form `word-<single character>`.** Fifty-seven distinct such links across
+fifteen repositories, and they are ordinary: `#layer-1`, `#layer-2`, `#item-5`, `#state-1`,
+`#quote-s`, `#marketdatarequestreject-y`. Numbered and lettered headings are how documents
+number and letter their headings.
+
+Either rule would suppress dozens of real, checkable anchors to catch two in one repository.
+**The class stays open**, and this is the useful half of the ticket: the rule that looked easy
+is the one the ecosystem says not to write.
+
+### Condition 6 is unmoved, which is the point
+
+`remix-run/react-router` keeps `app/entry.server.tsx` — class E, a path in the reader's project
+— so it is still unquiet. `vercel/next.js` keeps both anchors. **58 of 66 = 87.9%**, exactly as
+round twenty-five recorded it.
+
+The justified change did not move the bar and the change that would move the bar is not
+justified. Ticket `20` is unchanged and stays recorded.
