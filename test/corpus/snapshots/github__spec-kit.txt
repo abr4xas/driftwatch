@@ -1,11 +1,13 @@
 # github/spec-kit
 
-sources: 1
+sources: 3
 errors: 0
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .github/skills/add-community-extension/SKILL.md
+skill  .github/skills/code-review/SKILL.md
 agents-md  AGENTS.md
 
 ## findings

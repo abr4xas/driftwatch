@@ -2,14 +2,14 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 35 findings.**
+Corpus: **66 public repos pinned to a commit, 39 findings.**
 
 Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **33 findings, 22 true and 11 false**.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 67 sources, 12 findings, 8 true and 4 false.**
+Validation group measurement: **32 repos, 71 sources, 16 findings, 12 true and 4 false.**
 
 Round eighteen added two sources to the validation group and **no findings**: all 48 of its new findings landed in calibration. The validation measurement is unchanged, which is why the conditions below can still be read at all.
 
@@ -25,7 +25,7 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **2**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`, and it is true.
+Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. All six are true.
 
 **All nine conditions are met again** after round nineteen repaired condition 2, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
 
@@ -1623,3 +1623,48 @@ of zero is not no cost, only a rule that rarely fires.
 `remix-run/react-router`'s `.github/skills/agentic-workflows/SKILL.md`, audited on its own,
 goes from **80 findings to none**, the fixable one among them. That is ticket `11`'s
 `.github/skills/`, which was held back by this and by nothing else.
+
+## Twenty-fourth round, 2026-09-19: `.github/skills/`, once it could be read
+
+Ticket `11` held this root back and ticket `18` is why. With the gate in place the document
+that blocked it — `remix-run/react-router`'s `agentic-workflows` skill — contributes **one
+source and no findings**, where before it contributed eighty.
+
+| repository | sources | findings |
+|---|---|---|
+| `remix-run/react-router` | +1 | **0** |
+| `github/spec-kit` | +2 | 0 |
+| `securego/gosec` [validation] | +4 | **4**, all fixable |
+
+### The four, adjudicated
+
+`securego/gosec` writes its skill names as titles against kebab-case directories:
+
+| `name` | directory | verdict |
+|---|---|---|
+| `Fix Gosec Bug From Issue` | `gosec-fix-issue` | **true** |
+| `Create New Gosec Rule` | `gosec-new-rule` | **true** |
+| `Update Gosec Action Version` | `gosec-update-action-version` | **true** |
+| `Update Supported Go Versions` | `gosec-update-go-versions` | **true** |
+
+This is the class round eighteen opened and ticket `10` settled by running the tools rather
+than re-reading the specification: `skills-ref validate` rejects every one of them three times
+over — not lowercase, invalid characters, directory does not match name — and accepts the
+rewritten form. The directories are all kebab-case, so rewriting `name` is the **only** repair
+that produces a valid skill; renaming the directory to match leaves it invalid.
+
+`pnpm corpus --fixes` prints all four and each is right.
+
+### Condition 2
+
+| | round 22 | round 24 |
+|---|---|---|
+| sources | 334 | **341** |
+| findings | 35 | **39** |
+| fixable | 2 | **6** |
+| false fixable | 0 | **0** |
+
+`securego/gosec` is a **validation** repo, which is what makes these four worth more than
+their count: they were produced by a rule nobody tuned against them, on a repository nobody
+opened to tune it. Nothing moved groups — no validation finding was used to change a rule
+here; a root was added and this is the measurement.

@@ -59,6 +59,7 @@ export const SKILL_ROOTS: readonly string[] = [
   '.agents',
   '.cursor',
   '.codex',
+  '.github',
   '.opencode',
 ]
 

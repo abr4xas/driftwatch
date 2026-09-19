@@ -62,8 +62,9 @@ stopgap for the roots common enough to be worth hard-coding while that is decide
 
 ## Answer
 
-Resolved 2026-09-19. `.codex/` and `.opencode/` are read; `.flue/` is not and `.github/` is
-held behind ticket `18`. Adjudicated as round twenty-two of `CLASSIFICATION.md`.
+Resolved 2026-09-19. `.codex/`, `.opencode/` and — after ticket `18` landed — `.github/` are
+read; `.flue/` is not. Adjudicated as rounds twenty-two and twenty-four of
+`CLASSIFICATION.md`.
 
 ### The ticket's own ordering was wrong, and that is the useful part
 
@@ -126,7 +127,20 @@ The general shape of the mistake is worth naming: **a root's cost is not a prope
 root.** Three of the four measurements here were about documents that happened to live under
 it.
 
+### `.github/` landed, once `18` did
+
+Ticket `18` built the gate and the document that blocked this root now contributes **one source
+and no findings** where it contributed eighty. `.github/skills/` was added in round twenty-four:
+`github/spec-kit` +2 sources and nothing to rule on, `remix-run/react-router` +1 and nothing,
+and `securego/gosec` +4 sources with **4 findings, all fixable and all true** — title-cased
+`name` fields against kebab-case directories, the class ticket `10` settled.
+
+`gosec` is a **validation** repo, which is what makes those four worth more than their count:
+produced by a rule nobody tuned against them, on a repository nobody opened to tune it.
+
+Corpus: **66 repos · 341 sources · 39 findings**, fixable 2 → 6 and none false.
+
 ### What is still open
 
-`12`, the escape hatch, is unchanged by this and is still the general answer: five hard-coded
-roots is better than three and it is not a design. And `18` has to land before `.github/` can.
+`12`, the escape hatch, is unchanged by this and is still the general answer: six hard-coded
+roots is better than three and it is not a design.

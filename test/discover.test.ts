@@ -41,6 +41,10 @@ describe('classifySource', () => {
     // that eleven files share inside one project is one project's convention.
     expect(classifySource('.codex/skills/deploy/SKILL.md')).toBe('skill')
     expect(classifySource('.opencode/skills/deploy/SKILL.md')).toBe('skill')
+    // `.github/` is GitHub's directory rather than an agent's, which is a real
+    // difference and not the reason it arrived last: it was held by ticket `18`
+    // until a document could say its files were somewhere else and be heard.
+    expect(classifySource('.github/skills/deploy/SKILL.md')).toBe('skill')
   })
 
   it('recognizes a skill nested deeper under a skills root', () => {
@@ -58,16 +62,9 @@ describe('classifySource', () => {
     // certification corpus and in 700 discovery repositories. Eleven files is
     // not a root, it is a project.
     //
-    // `.github/skills/` is used by thirteen discovery repositories and would be
-    // next by that measure. It is held back by ticket `18`: adding it exposes a
-    // document that names forty files and says in the same breath that they are
-    // not available locally, and no gate reads that. Eighty false positives
-    // from one file is not a price this pays to widen a root.
-    //
     // A bare `skills/` is OpenClaw's target and an ordinary English word.
     for (const rel of [
       '.flue/skills/repro/SKILL.md',
-      '.github/skills/code-review/SKILL.md',
       'skills/engineering/grill-me/SKILL.md',
       'answer-reviewers/SKILL.md',
     ]) {

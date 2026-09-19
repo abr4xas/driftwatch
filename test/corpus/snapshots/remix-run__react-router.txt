@@ -1,6 +1,6 @@
 # remix-run/react-router
 
-sources: 8
+sources: 9
 errors: 3
 warnings: 0
 fixable: 0
@@ -12,6 +12,7 @@ skill  .agents/skills/fix-bug/SKILL.md
 skill  .agents/skills/implement-rfc/SKILL.md
 skill  .agents/skills/prepare-release-notes/SKILL.md
 skill  .agents/skills/react-router/SKILL.md
+skill  .github/skills/agentic-workflows/SKILL.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
