@@ -451,7 +451,7 @@ same day.
 | `06` | Blobless + sparse clone seam: does `ls-files` stay complete and `check-ignore` still work? | task | **new**, and the only unblocked one |
 | `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | **new**, highest ceiling |
 | `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration — ToS, rate limits, pinning? | research | **resolved**: GitHub is enough and costs ~10 min; skills.sh is gated on a Vercel OIDC token |
-| `08` | Where do skills actually live — should `classifySource` widen beyond `.claude/skills/`? | research | **resolved**: no. It covers 11.4% of `SKILL.md` files and widening costs ~1 false positive per 11 skills |
+| `08` | Where do skills actually live — should `classifySource` widen beyond `.claude/skills/`? | research | **reopened**: resolved as "no" against an invented convention; the published spec says the opposite |
 | `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | half-answered by `02`; now has to reckon with `08` |
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` already names? | research | **reframed**: a smoke test of job 1, not a calibration of verdicts |
 | `05` | Pre-register the decision rule for condition 6 | task | no longer blocking, see above |

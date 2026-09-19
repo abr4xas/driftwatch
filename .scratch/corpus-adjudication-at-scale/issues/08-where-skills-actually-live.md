@@ -7,7 +7,9 @@
 
 **Blocked by:** nothing
 
-**Status: resolved 2026-09-18 — with a decision not to widen.** See §"Answer".
+**Status: REOPENED 2026-09-18.** It was resolved the same day with a decision not to widen,
+and that decision was wrong. The reasoning is kept in §"Answer" and overturned in
+§"Correction", because the way it failed is worth more than the conclusion was.
 
 ## The measurement
 
@@ -194,3 +196,131 @@ No code changed. Step 4 of this ticket priced a `classifySource` change at "the 
 snapshots move and every diff needs hand review", and the measurement says the change should
 not happen. Paying that cost for a rule that adds a false positive every eleven skills would
 be the treadmill of rounds 13-16 with the direction reversed.
+
+## Correction
+
+The decision above is withdrawn. It rested on a claim I made up.
+
+### The specification exists, and it says the opposite
+
+<https://agentskills.io/specification.md> — linked from `abr4xas/skills`'s own
+`validate-skills.sh`, which quotes it line by line. It was one fetch away and I did not make
+it.
+
+On `name`:
+
+> * Must be 1-64 characters
+> * May only contain unicode lowercase alphanumeric characters (`a-z`, `0-9`) and hyphens
+> * Must not start or end with a hyphen
+> * Must not contain consecutive hyphens
+> * **Must match the parent directory name**
+>
+> ```yaml
+> name: PDF-Processing  # uppercase not allowed
+> ```
+
+And on layout:
+
+> A skill is a directory containing, at minimum, a `SKILL.md` file:
+> ```
+> skill-name/
+> ├── SKILL.md
+> ```
+
+**`.claude/skills/` appears nowhere in the specification.** It is where Claude Code
+*installs* skills, which is a different fact from where skills *are*. driftwatch's
+`classifySource` encodes the installation path as if it were the format.
+
+### The false positives were not false
+
+Re-measured against the spec instead of against my assumption — 114 files with a parseable
+`name`:
+
+| | |
+|---|---|
+| `name` violates the character rule | 8 (7%) |
+| `name` does not match its parent directory | 13 (11%) |
+| **either** | **14 (12%)** |
+
+Every one of the "title case is legitimate" cases breaks the character rule *as well as* the
+directory rule:
+
+```
+CHARS DIR  Sales Pipeline Tracker     dir=sales-pipeline-tracker
+CHARS DIR  Hook Development           dir=hook-development
+CHARS DIR  Bankr Dev - Portfolio      dir=bankr-dev-portfolio
+CHARS DIR  Writing for Developers     dir=writing-for-developer
+CHARS DIR  Agent Browser              dir=sakaen736jih_agent-browser-...
+CHARS DIR  APIExpert                  dir=api
+CHARS DIR  Builder                    dir=builder-knowledgeforge-civil-eng
+CHARS      public.com                 dir=(repo root)
+```
+
+Two of those — `APIExpert`, `Builder` — I had not even found, because I was reading the
+eleven mismatches for whether *I* thought they looked like drift.
+
+So "eight of eleven are not drift" was backwards: **roughly twelve of fourteen are real
+violations of the published format**. The rule does travel. It is the specification's own
+rule, not a heuristic of ours, and `skill/frontmatter` reporting `Bankr Dev - Portfolio`
+is the check working.
+
+The three that remain genuinely doubtful are small and have nothing to do with location:
+a directory that is a generated timestamp (`graph` / `2026-08-24T09-20-09-850Z-0017`), a
+template's placeholder (`skill-name` / `skill`), and `new-skill` / `skills`, which driftwatch
+already declines to report.
+
+### What the shipped tool costs its own author
+
+`abr4xas/skills` has five skills, laid out exactly as the specification prescribes —
+`answer-reviewers/SKILL.md`, `pdf-to-markdown/SKILL.md`, and so on at the repository root.
+driftwatch classifies **none** of them as skills. The repo carries a `driftwatch.config.yaml`
+whose comment is the bug report:
+
+> Discovery finds SKILL.md under `.claude/skills/`, and these skills live at the repo root
+> instead — so without this file driftwatch audits nothing here and reports
+> `0 files · no drift`, **which is the green run this repo least wants**.
+
+The workaround — `sources: ['**/*.md']` — buys back `path/missing`, `link/broken` and
+`frontmatter/invalid`, and **cannot** buy back `skill/frontmatter`, because a `configured`
+source is not classified as a skill. So the repo also carries `validate-skills.sh`, 200 lines
+of bash reimplementing the check against the spec, and a CI workflow running both.
+
+The author of the tool had to write a second validator to check his own skills. That is the
+argument, and no percentage outweighs it.
+
+### Where the reasoning went wrong
+
+Not laziness in the sense of doing too little — the measurement was real and the sample was
+widened as the ticket asked. The failure was upstream of the effort: **I invented the
+convention I was measuring against.** Having decided that a human-readable `name` was
+legitimate, every title-cased entry became evidence for not widening, and the number came out
+backwards with four decimal places of confidence.
+
+It is the same mistake as the anchored-link hole earlier in the same directory — reasoning
+from what a component *could* do instead of checking what the system *does* — made twice in
+one day, in opposite directions. There it invented a defect that did not exist; here it
+invented a licence for one that did.
+
+The tell was available both times: a claim about someone else's format, asserted without
+reading their format.
+
+### What the decision should be
+
+Not settled here — this is a correction, not a redesign — but the shape is now clear, and
+the ticket's original middle option was right:
+
+- **Classify on the file, not its path.** A `SKILL.md` whose frontmatter carries `name` and
+  `description` is a skill wherever it sits. Measured at **91% of sampled `SKILL.md` files,
+  and uniformly across layouts** — the gate does not care where the file is, which is exactly
+  what makes it the right gate. Files like `SkillBank/ConvSkill/.../SKILL.md`, which are not
+  agent skills, fail it.
+- **The `name` rules travel unchanged**, because they are the specification's.
+- **Only one rule needs a location-dependent answer**: a `SKILL.md` at the repository root
+  has no parent directory inside the repo to match against. 22 of 125 sampled files are in
+  that position. That is a real edge case and a small one.
+- **Cost stands**: corpus snapshots move and every diff needs hand review. Ticket `08` priced
+  that honestly and it does not change. What changed is that the benefit was mismeasured.
+
+The open question that is genuinely open: whether `classifySource` should also carry the
+character rules, or whether those belong in `skill/frontmatter` where the directory rule
+already lives.
