@@ -288,10 +288,18 @@ Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in 
 
 **`--init` writes the YAML one**, because driftwatch audits repositories in any language, and unlike JSON it holds the comments the generated file is mostly made of.
 
+**`skillRoots` is additive and that is the point.** The built-in roots — `.claude/skills`, `.agents/skills`, `.cursor/skills`, `.codex/skills`, `.github/skills`, `.opencode/skills` — reach 1103 of the 2793 `SKILL.md` files in a sample of 700 repositories, and 74 of the 106 repositories holding one elsewhere put it in a bare `skills/`, which is not a `<root>/skills` pair and cannot be expressed as one. So the key takes **containers**: a directory whose children are skill directories, at any depth.
+
+A list that *replaced* the built-ins would let one misspelling silence the check across a repository, and silence is what this key exists to fix — an install root nobody has heard of is a repository audited to a green run that means nothing. A typo costs the entry and nothing else.
+
 ```yaml
 # What --init writes, minus the commentary.
 sources:
   - 'docs/agent-notes.md'
+
+# Directories whose children are skill directories, on top of the built-in ones
+skillRoots:
+  - 'skills'
 
 ignore:
   - '**/fixtures/**'

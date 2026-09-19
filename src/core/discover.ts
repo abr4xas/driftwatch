@@ -13,6 +13,8 @@ export type DiscoverOptions = {
    * index. They are added to what discovery found, never replacing it.
    */
   sources?: readonly string[]
+  /** The config's `skillRoots`: containers of skill directories. */
+  skillRoots?: readonly string[]
 }
 
 /** The segments of a relative path, already in posix form. */
@@ -64,6 +66,39 @@ export const SKILL_ROOTS: readonly string[] = [
 ]
 
 /**
+ * The built-in roots as **containers**: a directory whose children are skill
+ * directories.
+ *
+ * Ticket `12` is why the shape is this and not the pair. A repository can
+ * declare its own containers, and the commonest one in the wild is a bare
+ * `skills/` in the repository root — 74 of the 106 discovery repositories with
+ * a skill outside a known root. A pair cannot express that: there is no root
+ * above it. Expressing the built-ins the same way means one rule rather than
+ * two, and `skillRoots` in the config is additive to this list.
+ */
+export const SKILL_CONTAINERS: readonly string[] = SKILL_ROOTS.map((root) => `${root}/skills`)
+
+/**
+ * Whether a path lies under one of these containers.
+ *
+ * The container may sit at any depth — a monorepo with one `.claude/` per
+ * package works like a flat repo — and the skill may be nested below it, which
+ * is how `mattpocock/skills` groups by category.
+ */
+export function underSkillContainer(rel: string, containers: readonly string[]): boolean {
+  const segments = segmentsOf(rel)
+  return containers.some((container) => {
+    const wanted = segmentsOf(container)
+    if (wanted.length === 0) return false
+    // The file itself is not the container, so the last segment cannot start it.
+    for (let i = 0; i + wanted.length < segments.length; i += 1) {
+      if (wanted.every((part, k) => segments[i + k] === part)) return true
+    }
+    return false
+  })
+}
+
+/**
  * Finds the position of a pair of consecutive segments, such as
  * `.claude/skills`. It is accepted at any depth so that a monorepo with one
  * `.claude/` per package works the same as a flat repo.
@@ -79,7 +114,11 @@ function indexOfPair(segments: readonly string[], first: string, second: string)
  * What kind of source a path is, or `undefined` if it is not a source.
  * Rule order matters: the most specific anchors come first.
  */
-export function classifySource(rel: string): SourceKind | undefined {
+export function classifySource(
+  rel: string,
+  /** Containers the repository declared. Additive: see `skillRoots`. */
+  declared: readonly string[] = [],
+): SourceKind | undefined {
   const base = basenameOf(rel)
   const segments = segmentsOf(rel)
 
@@ -90,10 +129,7 @@ export function classifySource(rel: string): SourceKind | undefined {
     return 'cursor-rule'
   }
 
-  if (
-    base === 'SKILL.md' &&
-    SKILL_ROOTS.some((root) => indexOfPair(segments, root, 'skills') !== -1)
-  ) {
+  if (base === 'SKILL.md' && underSkillContainer(rel, [...SKILL_CONTAINERS, ...declared])) {
     return 'skill'
   }
 
@@ -353,7 +389,7 @@ export async function discoverSources(
   const matched: Array<{ path: string; kind: SourceKind }> = []
   for (const rel of allFiles(index)) {
     if (!isInScope(rel, options.paths)) continue
-    const kind = classifySource(rel)
+    const kind = classifySource(rel, options.skillRoots ?? [])
     if (kind !== undefined) matched.push({ path: rel, kind })
   }
 

@@ -1,4 +1,4 @@
-import { SKILL_ROOTS } from '../../core/discover.ts'
+import { SKILL_CONTAINERS } from '../../core/discover.ts'
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
 import { skillFactOf } from '../../extract/skill.ts'
 import type { Claim, SkillFact, Suggestion } from '../../core/types.ts'
@@ -82,11 +82,14 @@ const MAX_NAME = 64
  * `.agents/skills/` had its name compared against `skills`, and was reported
  * for not matching a container it was never named after.
  */
-function skillDirectoryOf(path: string): string | undefined {
-  const segments = path.split('/')
-  const parent = segments.slice(0, -1)
+function skillDirectoryOf(path: string, declared: readonly string[]): string | undefined {
+  const parent = path.split('/').slice(0, -1)
   const parentPath = parent.join('/')
-  if (SKILL_ROOTS.some((root) => parentPath.endsWith(`${root}/skills`))) return undefined
+  const containers = [...SKILL_CONTAINERS, ...declared]
+  // The file sits directly in a container, so there is no directory of its own.
+  // `endsWith` on the whole path and not on the name, so a skill legitimately
+  // called `skills` (`.claude/skills/skills/SKILL.md`) keeps the rule.
+  if (containers.some((c) => parentPath === c || parentPath.endsWith(`/${c}`))) return undefined
   return parent.at(-1)
 }
 
@@ -123,8 +126,8 @@ function usableAsName(value: string): boolean {
   return KEBAB.test(value) && value.length <= MAX_NAME
 }
 
-function checkName(claim: Claim, value: string): CheckReport | null {
-  const directory = skillDirectoryOf(claim.source.path)
+function checkName(claim: Claim, value: string, declared: readonly string[]): CheckReport | null {
+  const directory = skillDirectoryOf(claim.source.path, declared)
 
   if (directory !== undefined && value !== directory) {
     // `SPEC.md` § 8 lists this as the check's one autofix, and it is offered
@@ -154,7 +157,7 @@ export const skillFrontmatter: Check = {
   defaultSeverity: 'error',
   claimKinds: ['frontmatter'],
 
-  run(claim) {
+  run(claim, ctx) {
     const block = skillFactOf(claim)
     if (block !== undefined) return checkBlock(claim, block)
 
@@ -178,6 +181,6 @@ export const skillFrontmatter: Check = {
     if (fact.type === 'empty') return finding(claim, `${fact.key} is empty`)
     if (fact.type !== 'string' || fact.scalar === undefined) return null
 
-    return fact.key === 'name' ? checkName(claim, fact.scalar) : null
+    return fact.key === 'name' ? checkName(claim, fact.scalar, ctx.skillRoots) : null
   },
 }

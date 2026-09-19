@@ -66,6 +66,11 @@ Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or a `driftwa
 sources:
   - 'docs/agent-notes.md'
 
+# Where your skills live, if it is not one of the six roots driftwatch knows.
+# A container is a directory whose children are skill directories.
+skillRoots:
+  - 'skills'
+
 checks:
   'link/broken': 'warning'
   'frontmatter/invalid': 'off'

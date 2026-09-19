@@ -19,6 +19,17 @@ export type CheckSeverity = 'error' | 'warning' | 'off'
 export type Config = {
   /** Extra sources beyond the ones discovery finds. Literal paths or globs. */
   sources?: readonly string[]
+  /**
+   * Directories whose children are skill directories, on top of the built-in
+   * ones. `skills`, `.flue/skills`, `packages/x/skills`.
+   *
+   * Additive on purpose: a typo costs the entry and nothing else. A list that
+   * *replaced* the built-ins would let one misspelling silence the check
+   * across a whole repository, and silence is the failure mode this key exists
+   * to fix — an install root nobody has heard of is a repository audited to a
+   * green run that means nothing. Ticket `12`.
+   */
+  skillRoots?: readonly string[]
   ignore?: readonly string[]
   checks?: Readonly<Record<string, CheckSeverity>>
   knownPaths?: readonly string[]
@@ -46,6 +57,9 @@ export const KNOWN_KEYS: readonly string[] = [
   'checks',
   'knownPaths',
   'staleThreshold',
+  // Last on purpose: the unknown-key message lists these in order and the
+  // older entries are what a reader recognises first.
+  'skillRoots',
 ]
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -109,6 +123,9 @@ export function validateConfig(raw: unknown, where: string): Config {
 
   const config: Config = {}
   if (raw.sources !== undefined) config.sources = stringArray(raw.sources, 'sources', where)
+  if (raw.skillRoots !== undefined) {
+    config.skillRoots = stringArray(raw.skillRoots, 'skillRoots', where)
+  }
   if (raw.ignore !== undefined) config.ignore = stringArray(raw.ignore, 'ignore', where)
   if (raw.knownPaths !== undefined) {
     config.knownPaths = stringArray(raw.knownPaths, 'knownPaths', where)

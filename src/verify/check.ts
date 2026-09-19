@@ -11,6 +11,13 @@ export type CheckContext = {
   anchors: AnchorIndex
   /** The tasks each directory offers, per runner. See `buildTaskIndex`. */
   tasks: TaskIndex
+  /**
+   * Containers of skill directories the repository declared, on top of the
+   * built-in ones. A check needs them for the same reason discovery does: a
+   * `SKILL.md` sitting directly in one has no directory of its own to be
+   * compared against. See `skillRoots`.
+   */
+  skillRoots: readonly string[]
 }
 
 /**

@@ -42,7 +42,13 @@ function indexOf(
 }
 
 function contextOf(index: RepoIndex, ignoredByGit: readonly string[] = []): CheckContext {
-  return { index, ignoredByGit: new Set(ignoredByGit), anchors: new Map(), tasks: new Map() }
+  return {
+    index,
+    ignoredByGit: new Set(ignoredByGit),
+    anchors: new Map(),
+    tasks: new Map(),
+    skillRoots: [],
+  }
 }
 
 function claimOf(text: string, baseDir = ''): Claim {

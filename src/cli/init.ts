@@ -45,6 +45,12 @@ export const INIT_TEMPLATE = `# driftwatch configuration
 # An entry matching nothing is an error: a source that disappeared is drift.
 sources: []
 
+# Directories whose children are skill directories, on top of the built-in
+# ones (.claude/skills, .agents/skills, .cursor/skills, .codex/skills,
+# .github/skills, .opencode/skills). Additive: a typo costs the entry and
+# never the check.
+skillRoots: []
+
 # Severity per check: 'error' | 'warning' | 'off'. The ids are listed by
 # \`driftwatch --help\` and described in the guide.
 #

@@ -193,6 +193,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const { sources, skipped } = await discoverSources(index, {
     paths: options.paths ?? [],
     ...(config.sources === undefined ? {} : { sources: config.sources }),
+    ...(config.skillRoots === undefined ? {} : { skillRoots: config.skillRoots }),
   })
 
   const { claims, ignores } = analyze(sources, await originSlug(root), options.discards)
@@ -209,6 +210,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     // Same reasoning: the Makefiles and Deno configs are real I/O, so nothing
     // is read when no enabled check consumes a script claim.
     tasks: consumes(checks, 'script') ? await buildTaskIndex(root, index, claims) : new Map(),
+    skillRoots: config.skillRoots ?? [],
   }
 
   const findings = sortFindings(applyIgnores(verify(claims, checks, ctx, config.checks), ignores))

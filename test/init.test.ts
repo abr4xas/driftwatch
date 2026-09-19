@@ -79,7 +79,7 @@ describe('--init', () => {
   })
 
   it('the inert keys are commented out, the live ones are not', () => {
-    for (const key of ['sources', 'checks']) {
+    for (const key of ['sources', 'skillRoots', 'checks']) {
       expect(lineFor(key), `${key} should be live`).not.toBe('')
     }
     for (const key of ['ignore', 'knownPaths', 'staleThreshold']) {
@@ -94,7 +94,11 @@ describe('--init', () => {
   // rename that would have broken every generated config invisibly.
   it('parses as YAML and yields only the live keys', async () => {
     const { parse } = await import('yaml')
-    expect(parse(INIT_TEMPLATE)).toEqual({ sources: [], checks: {} })
+    // `skillRoots` is live: the loader reads it and discovery uses it. It is
+    // written empty rather than commented out for that reason — a commented
+    // key promises less than the tool does, which is what the block below the
+    // live keys is for.
+    expect(parse(INIT_TEMPLATE)).toEqual({ sources: [], skillRoots: [], checks: {} })
   })
 
   it('has no emoji', () => {

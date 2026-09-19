@@ -53,6 +53,32 @@ describe('classifySource', () => {
     expect(classifySource('.agents/skills/engineering/grill-me/SKILL.md')).toBe('skill')
   })
 
+  it('takes the containers a repository declares, on top of the built-in ones', () => {
+    // Ticket `12`. `skills/` in the repository root is what 74 of the 106
+    // discovery repositories with a skill outside a known root use, and it is
+    // the one shape the built-in list cannot grow to cover: those are pairs,
+    // `<root>/skills`, and a bare `skills/` has no root above it.
+    //
+    // So what a repository declares is a **container** — a directory whose
+    // children are skill directories — and the built-in roots are expressed as
+    // containers too.
+    expect(classifySource('skills/deploy/SKILL.md', ['skills'])).toBe('skill')
+    expect(classifySource('.flue/skills/repro/SKILL.md', ['.flue/skills'])).toBe('skill')
+  })
+
+  it('keeps the built-in roots when a repository declares its own', () => {
+    // Additive, like `sources`. A typo in the config costs the entry and
+    // nothing else — it must never be able to silence the whole check, which
+    // is the failure a replacing list would have.
+    expect(classifySource('.claude/skills/deploy/SKILL.md', ['skills'])).toBe('skill')
+    expect(classifySource('typo/deploy/SKILL.md', ['skils'])).toBeUndefined()
+  })
+
+  it('accepts a declared container at any depth, like the built-in ones', () => {
+    expect(classifySource('packages/api/skills/build/SKILL.md', ['skills'])).toBe('skill')
+    expect(classifySource('skills/engineering/grill-me/SKILL.md', ['skills'])).toBe('skill')
+  })
+
   it('leaves install roots it does not know alone', () => {
     // Each of these was weighed by ticket `11` and left out for its own reason,
     // which is why they are one case rather than a list.
