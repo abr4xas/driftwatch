@@ -2,9 +2,9 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 36 findings.**
+Corpus: **66 public repos pinned to a commit, 33 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen and twenty then closed three of those classes, removing 20 more. The corpus stands at **36 findings, 22 true and 14 false**.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **33 findings, 22 true and 11 false**.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
@@ -1365,3 +1365,72 @@ A repository that publishes a package named after a directory it has deleted. Th
 ### What is left from round eighteen
 
 One class: **an absolute path that is a documentation-site URL** — `/docs/app/glossary` in `vercel/next.js`, 3 findings. It stays open on purpose. Whether `/docs/app/glossary` is drift depends on whether that site's routes are supposed to track the repository's files, which is a judgement about next.js and not about the string, and no rule here can make it without knowing the answer.
+
+---
+
+## Twenty-first round, 2026-09-19: a leading slash is not a path in this repo
+
+The last class round eighteen left open, and the one that looked like it needed a judgement about `vercel/next.js`. It did not. It needed a count.
+
+### The class
+
+Three findings, all in `vercel/next.js`:
+
+```
+/docs/app/glossary#static-shell   inline-code
+/docs/app/glossary                link
+/docs/app/                        inline-code
+```
+
+Round twenty said this stays open because "whether `/docs/app/glossary` is drift depends on whether that site's routes are supposed to track the repository's files, which is a judgement about next.js". That framing was the mistake. The question is not what next.js means by it — it is what a leading slash means at all, and the corpus can answer that.
+
+### The count
+
+Across the 66 repos, **306 claims are written as an absolute path. Five resolve to anything in the repo.** The other 301 fall into three kinds and none of them is a file here:
+
+| kind | examples | repo |
+|---|---|---|
+| HTTP routes | `/v1/responses`, `/embeddings`, `/batches`, `/model/new` | `BerriAI/litellm` |
+| site URLs | `/docs/app/glossary`, `/docs/app/` | `vercel/next.js` |
+| real absolute paths | `/etc/`, `/tmp/../etc/` | `1amageek/SwiftAgent` |
+
+And of the 36 findings the corpus held before this round, **exactly three came from an absolute path — the three above, all false.** The reading `resolve.ts` had encoded since the beginning, that a leading slash means "from the repo root", has sustained **no true finding in 66 repositories** and produced three false ones.
+
+### The rule
+
+A leading slash is discarded, the way `~/` is, and for the same reason rather than a similar one: it is the extractor being told about a syntax it was misreading. In Markdown `](/x)` is a root-relative **URL** — that is what it means in every renderer — and in prose `/x` is an absolute path on somebody's disk. Neither is checkable against a repo index.
+
+`//host/x` stays rule 1's protocol-relative URL. The reason a text was discarded is what the tests pin and what the report shows.
+
+### What it reverses, and what that costs
+
+`fix-range.test.ts` asserted the opposite and has been rewritten rather than deleted: *"accepts a root-relative path in a nested source, which is unambiguous"* — `/src/util/date.ts` in `packages/api/AGENTS.md`, reported and autofixed to `/src/helpers/date.ts`.
+
+That case is real and is now unreported. It is also **synthetic**: the corpus has never produced it in 66 repositories, while the reading it defends produced three false positives in one. `AGENTS.md` § "The rule that orders every decision" settles which way that trade goes, and the test now documents the cost instead of asserting the benefit.
+
+### The bill
+
+| | round 20 | round 21 |
+|---|---|---|
+| findings | 36 | **33** |
+| false | 14 | **11** |
+| snapshots changed | 1 | 1 |
+
+`vercel/next.js` goes from 6 findings to 3. It is a **calibration** repo, so nothing moved groups and no replacement is owed.
+
+### Round eighteen is closed
+
+Every class it opened has a verdict and a rule or a reason:
+
+| class | n | outcome |
+|---|---|---|
+| B, gitignored paths behind a symlink | 18 | a bug, fixed in round 18 |
+| A, package-name prefix | 16 | rule, round 20 |
+| C, absolute paths | 3 | rule, round 21 |
+| D, placeholders | 4 | `path/to` rule in round 19; `+types/` and the two anchors stay |
+| F1, a file the document tells you to create | 3 | rule, round 19 |
+| E, a path in the reader's project | 1 | open |
+| F2, a runtime log | 1 | open |
+| F3/F4 | 2 | **true**, reported and correct |
+
+What is left open is three findings in three unrelated shapes, which is the tail this document has always had rather than a class anyone can close.

@@ -115,6 +115,34 @@ describe('the metasyntactic path', () => {
   )
 })
 
+/**
+ * A leading slash: an endpoint, a URL on a site, or a path on a machine — and
+ * almost never a file in this repository.
+ *
+ * Measured over the 66-repo corpus: **306 claims are written as an absolute
+ * path and 5 of them resolve to anything in the repo**. The other 301 are
+ * `/v1/responses`, `/embeddings`, `/etc/`, `/docs/app/glossary`.
+ */
+describe('absolute paths', () => {
+  it.each(['/docs/app/glossary', '/docs/app/', '/v1/responses', '/etc/', '/usr/local/bin/tool'])(
+    'discards %s',
+    (text) => {
+      expect(discardReason(text)).toBe('absolute-path')
+    },
+  )
+
+  it('leaves a relative path alone', () => {
+    expect(discardReason('docs/app/glossary.md')).toBeUndefined()
+    expect(discardReason('src/index.ts')).toBeUndefined()
+  })
+
+  it('does not mistake a protocol-relative url for one', () => {
+    // `//cdn.example.com/x.js` is rule 1's, and it must stay rule 1's: the
+    // reason is what the tests pin.
+    expect(discardReason('//cdn.example.com/x.js')).toBe('url')
+  })
+})
+
 describe('rule 5: normalization', () => {
   it('strips the leading ./', () => {
     expect(normalizePathText('./src/index.ts')).toBe('src/index.ts')

@@ -1,7 +1,7 @@
 # vercel/next.js
 
 sources: 25
-errors: 6
+errors: 3
 warnings: 0
 fixable: 0
 
@@ -33,9 +33,6 @@ agents-md  test/AGENTS.md
 agents-md  turbopack/AGENTS.md
 
 ## findings
-.agents/skills/insight-error-page/SKILL.md:146:26  [path/missing] inline-code  /docs/app/glossary#static-shell
-.agents/skills/insight-error-page/SKILL.md:151:18  [path/missing] link  /docs/app/glossary
 .agents/skills/insight-error-page/SKILL.md:165:281  [link/broken] link  #anchor-a
 .agents/skills/insight-error-page/SKILL.md:165:311  [link/broken] link  #anchor-b
 .agents/skills/update-docs/SKILL.md:50:4  [path/missing] inline-code  src/client/components/image.tsx  -> examples/cms-agilitycms/lib/components/image.tsx (0.3)
-.agents/skills/write-api-reference/SKILL.md:114:56  [path/missing] inline-code  /docs/app/
