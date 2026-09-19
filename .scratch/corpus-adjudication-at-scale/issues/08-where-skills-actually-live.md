@@ -288,6 +288,35 @@ of bash reimplementing the check against the spec, and a CI workflow running bot
 The author of the tool had to write a second validator to check his own skills. That is the
 argument, and no percentage outweighs it.
 
+### Two repositories settle it, and they are the two that matter most
+
+**`mattpocock/skills`** — 38 `SKILL.md` files, **none** under `.claude/skills/`. The layout is
+`skills/<category>/<skill>/SKILL.md`, two levels deep. By the skills.sh index it is the
+largest thing in the ecosystem after Vercel's own: **54 skills, 23,346,040 installs**, and
+four of the five most-installed skills in the world.
+
+Running `skill/frontmatter` over all 38, with the real directory names preserved:
+
+```
+✓ 39 files · no drift · 180ms
+```
+
+**Zero findings.** That is the experiment the "do not widen" decision needed and never ran.
+The rule does not fire on a well-kept repository merely because it sits somewhere other than
+`.claude/skills/` — it compares against the *immediate* parent directory, which is what the
+specification asks for and which works at any depth.
+
+Set beside the random GitHub sample, where 12% of skills violate the format, that is the
+profile a check should have: **silent where the work is good, loud where it is not**. The
+current `classifySource` inverts it — silent everywhere, because it never looks.
+
+**`abr4xas/skills`** — five skills at the repository root, the layout the specification
+prescribes, audited by nothing. Covered above.
+
+Between them: the tool cannot audit its author's skills, and it cannot audit the most
+installed skills in existence. Every skill this very session used — `/implement`,
+`/code-review` — is one of Matt's 38.
+
 ### Where the reasoning went wrong
 
 Not laziness in the sense of doing too little — the measurement was real and the sample was
