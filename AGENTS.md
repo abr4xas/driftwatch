@@ -72,6 +72,16 @@ If a snapshot changes, review the diff **by hand, finding by finding**, before a
 
 Report results exactly as they come out. If a check is half-done or the corpus shows noise, say so explicitly instead of closing it as done.
 
+### The discovery corpus is not a corpus in the same sense
+
+`pnpm discovery` (`scripts/discovery.ts`) acquires a second, much larger set of repositories: unpinned, unsnapshotted, disposable, and **carrying no human verdicts**. It exists to produce material to read — classes of finding, classes of discard — not to measure anything.
+
+One rule governs it, and it is the reason the two are kept apart:
+
+> **No number computed over the discovery corpus is a precision.** It does not enter `test/corpus/CLASSIFICATION.md`, it moves no condition of ADR-0006, and it is never cited as a measurement of driftwatch.
+
+A rule you find there is still written by hand, in `src/`, and still measured the only way this project measures anything: against the 66 repositories that have been read by a person.
+
 ## Decisions you can make on your own
 
 File and function names, the internal structure of modules, choosing between `tinyglobby` and `fast-glob`, the exact wording of error messages, how to organize the fixtures.

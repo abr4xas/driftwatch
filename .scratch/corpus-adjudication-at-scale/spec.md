@@ -451,11 +451,12 @@ same day.
 | `06` | Blobless + sparse clone seam | task | **resolved**: 66/66 byte-identical at 2.8 MB per repo |
 | `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration? | research | **resolved**: GitHub is enough and costs ~10 min; skills.sh is gated on a Vercel OIDC token |
 | `08` | Where do skills actually live — should `classifySource` widen? | research | **in progress**: widened to three roots; 48 findings awaiting a verdict |
-| `09` | The acquisition runner — the missing half between `02` and `06` | task | **new**, unblocked, and `07` waits on it |
+| `09` | The acquisition runner — the missing half between `02` and `06` | task | **resolved**: `scripts/discovery.ts`, 2486 repos enumerated, 135 audited |
 | `10` | Is `skill/frontmatter`'s one autofix offered on a non-drift finding? | research | **new**: the only open ticket about a defect that ships today |
 | `11` | The skills roots not yet read — `.flue`, `.codex`, `.github`, `.opencode` | task | **new**, blocked by `08` step 3 |
 | `12` | Let a repository declare where its skills are | research | **new**, deferred by agreement |
-| `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | highest ceiling; needs `09` |
+| `13` | A source git lists but cannot be read is reported as a driftwatch bug | bug | **new**, found by the first discovery run |
+| `07` | What is driftwatch's false negative rate — what do the discard rules throw away? | research | highest ceiling; **unblocked** by `09` |
 | `04` | Where do unpublished-skill repos come from, since the registry cannot supply them? | research | half-answered by `02`; now has to reckon with `08` |
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` names? | research | a smoke test of job 1, gating nothing |
 | `05` | Pre-register the decision rule for condition 6 | task | no longer blocking |
@@ -471,10 +472,20 @@ buildable end to end** and the open question is what to do with it rather than h
 The one thing `02` could not answer is anything behind skills.sh's token.
 
 `07` is the one with the most to find, because it is the only measurement the project has
-never been able to take at all — and it is not startable, because `09` does not exist. `02`
-says how to get the repositories and `06` says how to clone them; nothing joins the two.
-**That gap is now the critical path**, and it is deterministic code with no decision left in
-it.
+never been able to take at all, and **it is now startable**. `09` closed the gap between
+`02`'s search and `06`'s clone on 2026-09-19: `scripts/discovery.ts` enumerated 2486
+repositories from 26 pages of code search, and 135 of them are cloned and audited.
+
+The facets also turned out to be cheaper than `02` measured. Its 784-unique-per-1000 figure
+was one facet exhausted over ten pages, where a repository repeats *within* a facet; across
+facets the `size:` bands are as disjoint at the repository level as at the file level, and
+every page of 100 hits contributed 77 to 100 new repositories.
+
+It has already returned a product defect. One of the 135 repositories crashed the tool with
+a message telling the user to file a bug about their own checkout — a `CLAUDE.md` symlinked
+into an uninitialised submodule, ticket `13`. That is the discovery corpus doing the job it
+was designed for on its first outing, and it is not a number, so nothing about it is
+governed by §"The hard limit".
 
 `08` is the one in progress, and it holds the rest up in a way worth stating: its 48
 unadjudicated findings put ADR-0006's conditions in suspense, so `11` waits on it and

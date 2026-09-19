@@ -51,6 +51,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "corpus": "node --experimental-strip-types scripts/corpus.ts",
+    "discovery": "node --experimental-strip-types scripts/discovery.ts",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "packageManager": "pnpm@11.21.0",
