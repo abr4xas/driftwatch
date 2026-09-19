@@ -1,52 +1,56 @@
-# 03: The sampling design that keeps a 300-repo corpus honest
-
-**What to find out:** what replaces "a person reviewed every finding" when there are ~118
-findings instead of 26, without the certification quietly becoming a claim about a model.
+# 03: ~~The sampling design that keeps a 300-repo corpus honest~~
 
 **Type:** research
 
-**Blocked by:** `01`
+**Status: withdrawn 2026-09-18.** Not answered — dissolved. The file is kept because the
+reasoning it contains is the reason the design changed, and deleting it would leave
+§"Two corpora, not one" in the [spec](../spec.md) looking like a preference rather than a
+correction.
 
-**Status:** open
+## What it asked
 
-## The problem stated precisely
+What replaces "a person reviewed every finding" when there are ~118 findings instead of 26,
+without the certification quietly becoming a claim about a model.
 
-[`test/corpus/README.md`](../../../test/corpus/README.md) says the verdict requires a person,
-and [ADR-0007](../../../docs/adr/0007-the-corpus-does-not-run-in-ci.md) keeps the corpus out
-of CI for that reason. `CLASSIFICATION.md` earns its authority by honouring that 26 times
-over 17 rounds.
+Its answer-shape was: 100% human review of the uncertain band, a fixed random sample within
+every class the model was confident about, the model's own error rate reported next to
+ADR-0006's conditions, and per-class verdicts kept auditable.
 
-At 0.39 findings per repo, 300 repos produce ~118 findings, ~92 of them new. Nobody will
-review 92 findings the way 26 were reviewed. Two dishonest ways out exist and both should be
-named so they are recognisable if anyone reaches for them: review a subset and report as if
-it were the whole, or let a model sign the verdicts and keep quoting the precision figure.
+## Why it no longer has a subject
 
-## The shape of an answer
+Every clause of that depends on a model's output being **load-bearing for the
+certification** — that is what a sampling design is *for*, estimating the error of something
+you have decided to depend on. The two-corpus split removes the dependency rather than
+managing it:
 
-Not designed here, but the constraints it has to satisfy are known:
+- Certification stays on 66 pinned repos with a human verdict per finding. It does not grow
+  to 300, so there are not ~118 findings to adjudicate, so nothing needs sampling.
+- Discovery produces no verdicts and reports no numbers. There is no population to sample
+  from, because nothing it emits is ever quoted.
 
-- **100% human review of the uncertain band**, however that band is defined.
-- **A fixed random sample within every class the model was confident about**, sized so it
-  can actually estimate that class's error rate. This is the part that makes the whole thing
-  a measurement rather than an assertion.
-- **The model's own error rate reported next to the conditions**, not buried. If the
-  certification depends on a classifier being right 97% of the time, the reader is entitled
-  to the 97% and to how it was obtained.
-- **Per-class verdicts stay auditable.** Today any finding can be traced to the round that
-  ruled on it. Whatever replaces that has to preserve the trace, including "adjudicated by
-  class, sample of N reviewed, reviewer, date".
+The honesty this ticket tried to buy with statistics is bought structurally instead, by the
+rule in §"The hard limit": **no number computed over the discovery corpus is a precision,
+and none of it is reported.** A rule that can be checked by reading a script beats an error
+estimate that has to be maintained.
 
-## The prediction worth writing down first
+## What survived, and where it went
 
-The deferred plan predicted the ~92 new findings land in **15-25 classes, with ~5 genuinely
-new**. Write that down before running anything, and check it after. If they land in 60
-classes, class-based adjudication does not work and the honest response is that the corpus
-does not scale past hand review — which is a real finding, not a failure.
+- **The machine-readable findings table.** `CLASSIFICATION.md` is 1120 lines mixing a
+  17-round narrative with its data tables, and this ticket made splitting them
+  non-optional. It still is, for a different reason: `01` cannot feed the 26 findings to
+  anything while they are prose. Moved to `01`, where it is recorded as the larger half of
+  that ticket's cost.
+- **The prediction worth writing down first** — that the new findings land in 15-25 classes
+  with ~5 genuinely new. That is still a real, checkable prediction, and it is now a
+  prediction about **job 1 over the discovery corpus** rather than about adjudicating a
+  grown certification corpus. If they land in 60 classes, class-based grouping does not
+  work, and the honest response is to say so. Check it when job 1 first runs.
+- **Naming the two dishonest ways out**, which is worth keeping in plain sight even though
+  neither is reachable from the current design: review a subset and report as if it were the
+  whole, or let a model sign the verdicts and keep quoting the precision figure.
 
-## Where the bookkeeping goes
+## Comments
 
-`CLASSIFICATION.md` is 1120 lines and mixes a 17-round narrative with its data tables.
-The deferred plan already flagged splitting them. This ticket makes that non-optional: a
-sampling design needs a machine-readable table of findings, and `corpus-bookkeeping.test.ts`
-already asserts that the totals cited in the document match the snapshots. Whatever shape
-the table takes has to keep that test meaningful.
+Withdrawn as part of the 2026-09-18 revision. The tell that this ticket was solving the
+wrong problem is that it was the most elaborate file in the directory and existed entirely
+to make something safe that nobody actually wanted.

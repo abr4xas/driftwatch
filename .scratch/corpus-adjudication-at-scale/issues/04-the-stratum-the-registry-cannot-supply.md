@@ -7,7 +7,8 @@ published to any registry — the only population where `skill/frontmatter` can 
 
 **Blocked by:** nothing
 
-**Status:** open
+**Status:** open — substantively unchanged by the 2026-09-18 revision, but see
+§"Which corpus this feeds, and the trap in the answer"
 
 ## Why this stratum and not the registry's
 
@@ -42,6 +43,38 @@ Markdown and whose last commit to the skill directory is old relative to the rep
 Worth checking whether the rename is even detectable from the outside: if a repo renamed a
 skill directory, `git log --follow` on the clone shows it, and that is a way to find
 instances directly rather than hoping to stumble on them.
+
+## Which corpus this feeds, and the trap in the answer
+
+This ticket sits across the two-corpus split in a way the others do not, and the seam is
+worth naming because it is the one place where material can cross from discovery into
+certification.
+
+Discovery can find these repos; discovery cannot wake the check. A `skill/frontmatter`
+finding only counts once a person has ruled on it against the real repository, and that
+only happens in the certification corpus. So the natural move is: **search at discovery
+scale, then promote the interesting repos into `test/corpus/` and review them by hand.**
+That is a good use of the discovery corpus and is probably the right answer.
+
+The trap is the word "interesting". If repos are promoted **because the tool already fires
+on them**, the certification corpus stops being a sample of repositories and becomes a
+sample of repositories where driftwatch finds something. ADR-0006's conditions 3 through 6
+all count *repos with zero false positives* as a proportion — and that proportion is
+meaningless over a population selected for producing findings.
+
+The distinction that keeps it honest:
+
+- **Selecting on a property of the repo** — it has `.claude/skills/`, the skill directory
+  was renamed at some point, the skill is an accessory rather than the product — is
+  stratification, which the corpus already does openly and which ADR-0006 tolerates.
+- **Selecting on the tool's output** — this repo produces a finding — is not. It is
+  choosing the exam questions after seeing the answers.
+
+`git log --follow` on a skill directory, suggested below, is on the right side of that line:
+a rename is a fact about the repository's history, visible without running driftwatch at
+all. Whatever selection rule this ticket lands on should be checkable against that test, and
+should be written down in the corpus README rather than left implicit — the corpus already
+documents its strata, and this would be a new one with an unusual provenance.
 
 ## The honest outcome to be prepared for
 
