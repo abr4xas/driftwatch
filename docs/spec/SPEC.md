@@ -140,6 +140,7 @@ Options
   --quiet                Show problems only, no summary
   --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
+  --migrate-config       Convert a .ts or .js config to YAML
   --version, -v
   --help, -h
 ```
@@ -243,9 +244,11 @@ Adding an optional field is not a breaking change. `version` stays `1`.
 
 ## 7. Configuration
 
-Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.ts`, `.js`, `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
+Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
 
-**`--init` writes the YAML one**, because driftwatch audits repositories in any language and a `.ts` config assumes the repo speaks TypeScript. YAML also holds the comments the generated file is mostly made of, which JSON cannot.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` were accepted until 2026-09-18 and are not loaded any more: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch executes code it finds in a repository. They keep their place in the lookup order and **fail** with the conversion command in the message, because a withdrawn format that is silently skipped would let the next candidate load while the author believes the module is in effect. `driftwatch --migrate-config` converts one to YAML.
+
+**`--init` writes the YAML one**, because driftwatch audits repositories in any language, and unlike JSON it holds the comments the generated file is mostly made of.
 
 ```yaml
 # What --init writes, minus the commentary.
@@ -268,30 +271,20 @@ knownPaths:
 staleThreshold: 15
 ```
 
-The same config as a `.ts` file, which is what a TypeScript repo may prefer:
+The same config as JSON, for a repository that would rather not add a YAML file:
 
-```ts
-import { defineConfig } from 'driftwatch'
-
-export default defineConfig({
-  // Additional sources beyond the ones discovered by default
-  sources: ['docs/agent-notes.md'],
-
-  // Exclude from discovery
-  ignore: ['**/fixtures/**'],
-
-  // Adjust severity per check: 'error' | 'warning' | 'off'
-  checks: {
-    'dep/missing': 'off',
-    'stale/churn': 'warning',
-    'symbol/missing': 'error',
+```json
+{
+  "sources": ["docs/agent-notes.md"],
+  "ignore": ["**/fixtures/**"],
+  "checks": {
+    "dep/missing": "off",
+    "stale/churn": "warning",
+    "symbol/missing": "error"
   },
-
-  // Aliases for paths that exist but not on disk (e.g. build outputs)
-  knownPaths: ['dist/**', '.next/**'],
-
-  staleThreshold: 15,
-})
+  "knownPaths": ["dist/**", ".next/**"],
+  "staleThreshold": 15
+}
 ```
 
 ### Inline ignores

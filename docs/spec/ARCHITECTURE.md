@@ -24,7 +24,7 @@ This matters for the project itself: most of the future work is *adding checks*,
 ```
 src/
   cli.ts               bin entrypoint  (the only one touching process)
-  index.ts             public API: run(), defineConfig, types
+  index.ts             public API: run(), types
   run.ts               the whole pipeline; returns findings, not output
   cli/
     main.ts            the CLI body; receives the environment, returns the exit code

@@ -1,0 +1,6 @@
+# driftwatch configuration
+# Converted from a module config by `driftwatch --migrate-config`.
+# The original is still there; delete it once this file looks right.
+
+sources:
+  - 'docs/agents/**/*.md'

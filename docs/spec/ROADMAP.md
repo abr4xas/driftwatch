@@ -157,7 +157,9 @@ Not a milestone. `SPEC.md` § 4 has listed it since the beginning, `--help` has 
 
 **The template only presents as working what actually works.** `sources` and `checks` reach `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by the loader and read by nobody, so `--init` writes them commented out, each naming what makes it real. A generated file claiming all five would be a document promising more than the code delivers, produced by the tool whose entire subject is that.
 
-**It imports the `Config` type rather than calling `defineConfig`.** Found by running it, not by reading it: the advertised way to use this tool is `npx`, which installs nothing in the target repo, so a generated config calling `defineConfig` fails to load with "could not be loaded" the first time it is used. A type import is erased by the same type stripping that loads the file, so the config works installed or not. `defineConfig` stays exported for repos that do have the package.
+**It imports the `Config` type rather than calling `defineConfig`.** Found by running it, not by reading it: the advertised way to use this tool is `npx`, which installs nothing in the target repo, so a generated config calling `defineConfig` fails to load with "could not be loaded" the first time it is used. A type import is erased by the same type stripping that loads the file, so the config works installed or not. `defineConfig` stayed exported for repos that do have the package.
+
+Both halves of that paragraph are now historical: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew the module formats on 2026-09-18, and `defineConfig` left the public API with them. `--init` writing YAML is what survived, and the reasoning above is why.
 
 It refuses rather than overwrites, and the refusal covers every shape the loader looks for — including a `driftwatch` key in `package.json`, where there is no config *file* and it still counts. Writing a second config beside an existing one would create exactly the case `loadConfig` deliberately refuses to merge, and the one that loses would be the one it did not write.
 

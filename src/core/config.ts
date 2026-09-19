@@ -11,7 +11,6 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { extname, join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { messageOf, UserError } from './errors.ts'
 
 /** What a check can be set to from the config. */
@@ -26,17 +25,14 @@ export type Config = {
   staleThreshold?: number
 }
 
-/** Identity, for the types. It exists so a `.ts` config gets completion. */
-export function defineConfig(config: Config): Config {
-  return config
-}
-
 /**
  * Lookup order, from `SPEC.md` § 7. The first one found wins and the search
  * stops: two configs in the same repo is a mistake we would rather surface as
  * "the other one is being ignored" than silently merge.
  */
 const CONFIG_FILENAMES: readonly string[] = [
+  // The withdrawn formats keep their place: found, refused, and never loaded.
+  // See `refuseModuleConfig`.
   'driftwatch.config.ts',
   'driftwatch.config.js',
   'driftwatch.config.json',
@@ -138,27 +134,41 @@ async function readJson(path: string, where: string): Promise<unknown> {
 }
 
 /**
- * Imports a `.ts` or `.js` config.
+ * The formats withdrawn by
+ * [ADR-0013](../../docs/adr/0013-a-config-is-data-not-a-program.md), and the
+ * reason they are named here rather than simply absent.
  *
- * No transpiler is involved: Node strips the types itself, unflagged since
- * 22.18 and 23.6, and the floor is 24 (ADR-0002). That is why there is no
- * `jiti` dependency — see the note in `AGENTS.md` § Dependencies.
- *
- * The consequence is that a config using syntax type stripping cannot erase
- * (an `enum`, a `namespace`, a parameter property) fails. The error says so,
- * and no config in the specification needs any of it.
+ * A config in one of these keeps its place in the lookup order and **fails**.
+ * Skipping it silently would load the next candidate and leave the author
+ * believing the `.ts` is in effect, which is the two-configs-in-one-repo case
+ * the order exists to surface — only worse, because nothing would say so.
  */
-async function importConfig(path: string, where: string): Promise<unknown> {
-  let module: unknown
-  try {
-    module = await import(pathToFileURL(path).href)
-  } catch (error) {
-    throw new UserError(`${where} could not be loaded`, messageOf(error))
-  }
-  if (isRecord(module) && 'default' in module) return module.default
-  return module
+const WITHDRAWN_EXTENSIONS: readonly string[] = ['.ts', '.js', '.mjs', '.cjs']
+
+/**
+ * Refuses a module config, without loading it.
+ *
+ * Not loading it is the whole point rather than an implementation detail: a
+ * `.ts` config is a program, and until this function existed driftwatch ran it.
+ * The corpus work in `.scratch/corpus-adjudication-at-scale/` is what made that
+ * visible — a discovery corpus executes the configs of two thousand strangers —
+ * and `PRODUCT.md`'s "deterministic, offline, no network, no API key" wants
+ * "and it runs no code it finds in your repository" next to it.
+ *
+ * The error carries the way out. Withdrawing a format and leaving the user to
+ * work out the conversion buys us a property at their expense.
+ */
+function refuseModuleConfig(path: string, where: string): never {
+  throw new UserError(
+    `${where} is a ${extname(path)} config, which driftwatch no longer loads`,
+    'a config is data, not a program (ADR-0013). Run `driftwatch --migrate-config` ' +
+      'to convert it to YAML, then delete the original',
+  )
 }
 
+/**
+ * Reads a YAML config.
+ *
 /**
  * Reads a YAML config.
  *
@@ -184,12 +194,10 @@ async function loadFrom(path: string, where: string): Promise<Config> {
   if (extension === '.yaml' || extension === '.yml') {
     return validateConfig(await readYaml(path, where), where)
   }
-  if (extension === '.ts' || extension === '.js' || extension === '.mjs') {
-    return validateConfig(await importConfig(path, where), where)
-  }
+  if (WITHDRAWN_EXTENSIONS.includes(extension)) refuseModuleConfig(path, where)
   throw new UserError(
     `unsupported config extension: ${extension}`,
-    'use a .yaml, .json, .ts or .js file, or the driftwatch key in package.json',
+    'use a .yaml, .yml or .json file, or the driftwatch key in package.json',
   )
 }
 
@@ -217,14 +225,32 @@ export type FoundConfig = {
   inManifest: boolean
 }
 
+export type FindConfigOptions = {
+  /**
+   * Filenames to pass over.
+   *
+   * `--migrate-config` needs to ask "what would the loader read **once the
+   * module config is gone**", which is not a question the plain lookup can
+   * answer: the module config is first in the order, so it always wins.
+   */
+  skip?: readonly string[]
+}
+
 /**
  * The first config the lookup order finds, without loading it.
  *
- * `loadConfig` uses it for the automatic lookup, and `--init` uses it to refuse
- * rather than write a second config next to an existing one.
+ * `loadConfig` uses it for the automatic lookup, `--init` uses it to refuse
+ * rather than write a second config next to an existing one, and
+ * `--migrate-config` uses it twice — once for what is there, once with the
+ * withdrawn names skipped, for what would be there afterwards.
  */
-export async function findConfig(root: string): Promise<FoundConfig | undefined> {
+export async function findConfig(
+  root: string,
+  options: FindConfigOptions = {},
+): Promise<FoundConfig | undefined> {
+  const skip = options.skip ?? []
   for (const name of CONFIG_FILENAMES) {
+    if (skip.includes(name)) continue
     const path = join(root, name)
     if (existsSync(path)) return { path, where: name, inManifest: false }
   }

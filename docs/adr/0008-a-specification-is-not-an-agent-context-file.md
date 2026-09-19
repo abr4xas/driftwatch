@@ -9,8 +9,8 @@ The config's `sources` key (`docs/spec/SPEC.md` § 7) landed so that this repo c
 
 So the obvious config was written and run:
 
-```ts
-export default defineConfig({ sources: ['docs/**/*.md', 'README.md'] })
+```yaml
+sources: ['docs/**/*.md', 'README.md']
 ```
 
 **43 findings. Every one of them a false positive.** Zero true positives, and no amount of tuning would change that, because the cause is structural.
@@ -26,9 +26,9 @@ export default defineConfig({ sources: ['docs/**/*.md', 'README.md'] })
 
 ## Decision
 
-**`docs/spec/`, `docs/adr/` and `README.md` are not driftwatch sources**, and the shipped `driftwatch.config.ts` declares only:
+**`docs/spec/`, `docs/adr/` and `README.md` are not driftwatch sources**, and the shipped `driftwatch.config.yaml` declares only:
 
-```ts
+```yaml
 sources: ['docs/agents/**/*.md']
 ```
 
@@ -58,7 +58,7 @@ The route is a **second invocation** with its own config, once `link/broken` lan
 
 ```
 driftwatch                                        # sources: docs/agents/**
-driftwatch --config driftwatch.docs.config.ts --only link/broken
+driftwatch --config driftwatch.docs.config.yaml --only link/broken
 ```
 
 Two runs rather than one, because `sources` and the check filter are both global. That is a limitation worth knowing before someone tries to express it as a single run.

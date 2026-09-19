@@ -22,6 +22,7 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--no-config` | ignore any config found |
 | `--quiet` | problems only, no summary (`pretty` only) |
 | `--init` | write a commented `driftwatch.config.yaml` and exit |
+| `--migrate-config` | convert a `.ts` or `.js` config to YAML and exit |
 | `--version`, `-v` | print the version |
 | `--help`, `-h` | print the options |
 
@@ -70,23 +71,21 @@ checks:
   'frontmatter/invalid': 'off'
 ```
 
-The same thing as a `.ts` config, which is what this repository uses and what gets you completion:
+The same thing as JSON, if you would rather not add a YAML file:
 
-```ts
-import { defineConfig } from 'driftwatch'
-
-export default defineConfig({
-  sources: ['docs/agent-notes.md'],
-  checks: {
-    'link/broken': 'warning',
-    'frontmatter/invalid': 'off',
-  },
-})
+```json
+{
+  "sources": ["docs/agent-notes.md"],
+  "checks": {
+    "link/broken": "warning",
+    "frontmatter/invalid": "off"
+  }
+}
 ```
 
 **Quote the severity.** `off` is one of the three values and also a boolean in YAML 1.1; the parser here implements 1.2, where the unquoted form is a string and works, but a file edited elsewhere may not survive the round trip. If a severity ever arrives as a boolean the error says so rather than blaming your check ids.
 
-A `.ts` config needs no transpiler: Node strips the types itself. What that costs is that syntax type stripping cannot erase — an `enum`, a `namespace`, a parameter property — fails with a clear error.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` configs were accepted until 2026-09-18 and are not loaded any more — [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch runs code it finds in a repository. If you have one, `driftwatch --migrate-config` converts it to YAML and tells you to delete the original.
 
 **An unknown key fails the run** instead of being ignored. A typo in a key that silently disables what it was meant to configure is worse than a red run.
 

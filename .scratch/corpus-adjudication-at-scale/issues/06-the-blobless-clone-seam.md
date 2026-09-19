@@ -200,6 +200,41 @@ What replaced the detector is a test that derives the anchor obligation from `MA
 itself, so that widening it — dropping the deliberate `.mdx` exclusion, say — fails until
 the cone follows.
 
+### The runner must pass `--no-config`
+
+Recorded 2026-09-18, out of the question "is it all right that this fails?".
+
+A repo's own config can declare `sources` as arbitrary globs. Those are resolved against the
+**index**, which a narrowed clone carries in full, so the glob matches — and then
+`discoverSources` reads the file from **disk**, which the cone did not populate, and the run
+dies on `ENOENT`. The chain matters: the match succeeds and the read fails, which is why no
+amount of widening the cone fixes it. There is nothing to widen *towards*; the patterns are
+whatever somebody else wrote.
+
+Dropping the repo, which is what this ticket first proposed, is not a neutral answer. The
+repos that carry a `driftwatch.config.*` with custom `sources` are the ones using driftwatch
+in earnest, so the loss is **directed rather than random** — the same defect §"Which corpus
+this feeds" warns about in ticket `04`. And the frequency is misleading: **0 of 66 corpus
+repos have a config today**, because driftwatch is new. That number grows with adoption, so
+this gets worse precisely if the product succeeds.
+
+**`--no-config`** is the answer, and it already exists (`src/cli/args.ts:45`). No config
+loaded means no declared sources, so nothing can point outside the cone.
+
+The deciding argument is not the `ENOENT` though — it is comparability. A discovery corpus
+wants **one tool applied identically to two thousand repos**. Honouring each repo's config
+means one repo has `link/broken` off, another silences a whole class through `knownPaths`,
+and the classes mined out of the result are no longer comparable across repos. For
+certification, honouring the config is right: it measures what that repo's owner would see.
+For discovery it is noise.
+
+The cost, stated plainly: sources a repo declares by hand and discovery would not find on
+its own are not analysed. They are non-standard files by definition, and discovery is
+looking for general patterns, but it is a real loss.
+
+**Not implemented here**, because the runner that clones at scale does not exist yet and it
+is the runner that would pass the flag. `sparseClone` stays as it is.
+
 ### Not for the certification corpus
 
 `scripts/corpus.ts` is untouched: full shallow clones, pinned shas, ADR-0007. A partial

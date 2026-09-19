@@ -1,5 +1,5 @@
 /**
- * `--init`: write a commented `driftwatch.config.ts` (`SPEC.md` § 4).
+ * `--init`: write a commented `driftwatch.config.yaml` (`SPEC.md` § 4).
  *
  * It is a different command wearing a flag's clothes — it writes a new file
  * and then exits, without running the audit or sharing anything with `--fix`,
@@ -23,6 +23,10 @@ const CONFIG_FILENAME = 'driftwatch.config.yaml'
  * comments this file is mostly made of. The parser costs nothing new: `yaml` is
  * already a runtime dependency of the frontmatter checks. Ticket `02` of
  * `.scratch/init-flag/` weighed five shapes; this is the one that survived.
+ *
+ * ADR-0013 later withdrew the `.ts` format from the loader entirely, which
+ * turned the first half of that paragraph from a recommendation into the only
+ * option. The reasoning is unchanged and is why the ADR left `--init` alone.
  *
  * **Only the keys that do something are live.** `sources` and `checks` reach
  * `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by
