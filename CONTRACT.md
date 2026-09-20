@@ -49,7 +49,7 @@ records what is emitted rather than what was intended.
 - `--only <value>` — advertised, implemented
 - `--quiet` — advertised, implemented
 - `--skip <value>` — advertised, implemented
-- `--strict` — advertised, refused at runtime
+- `--strict` — advertised, implemented
 - `--version, -v` — advertised, implemented
 - `--watch` — advertised, refused at runtime
 

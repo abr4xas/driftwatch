@@ -17,6 +17,7 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--format <fmt>` | `pretty` (default), `json`, `github`, `sarif` — see [output.md](./output.md) |
 | `--only <ids>` | run only these checks; a prefix works: `--only path` |
 | `--skip <ids>` | run everything except these |
+| `--strict` | warnings count as errors for the exit code |
 | `--no-tier2` | turn off every tier 2 check |
 | `--config <path>` | use this config file |
 | `--no-config` | ignore any config found |
@@ -28,13 +29,13 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 
 `--only` and `--skip` take a comma-separated list and accept a prefix, so `--only path,script` and `--only path/missing` both work. **A selection that leaves no check enabled is refused** rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
-Two flags parse and then tell you they are not implemented, naming the milestone they belong to: `--watch` and `--strict`.
+One flag parses and then tells you it is not implemented, naming the milestone it belongs to: `--watch`.
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| `0` | no errors |
+| `0` | no errors — there may be warnings, unless `--strict` |
 | `1` | at least one error was found |
 | `2` | the tool itself failed — bad config, a path that does not exist, a crash |
 

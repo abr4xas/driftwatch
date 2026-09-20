@@ -28,9 +28,6 @@ export type Io = {
  */
 export const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
   ['watch', '--watch'],
-  // --strict only changes something once warnings exist, and warnings are
-  // tier 2, which is M5. Until then, accepting it would promise too much.
-  ['strict', '--strict'],
 ]
 
 function assertNotYetImplemented(args: CliArgs): void {

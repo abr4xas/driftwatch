@@ -29,6 +29,16 @@ function capture() {
   }
 }
 
+/** A repo with one broken path, reported at whatever severity is asked for. */
+function repoReporting(severity: string): string {
+  return makeTempRepo({
+    files: {
+      'AGENTS.md': '# A\n\nThe helper is `src/gone.ts`.\n',
+      'driftwatch.config.yaml': `checks:\n  path/missing: '${severity}'\n`,
+    },
+  })
+}
+
 describe('main', () => {
   it('--help prints the usage on stdout and exits 0', async () => {
     const c = capture()
@@ -90,7 +100,7 @@ describe('main', () => {
     await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
 
-  it.each([['--watch'], ['--strict']])(
+  it.each([['--watch']])(
     '%s is not implemented yet and says so, instead of being ignored',
     async (flag) => {
       const c = capture()
@@ -99,6 +109,45 @@ describe('main', () => {
       expect(c.stderr()).toContain('is not implemented yet')
     },
   )
+
+  /**
+   * `--strict` used to be on the list above, and a caller who read `--help`
+   * and followed it got exit 2 telling them the flag they had just been
+   * advertised does not exist yet.
+   *
+   * No registered check reports a warning on its own: every one of the five
+   * defaults to error. The only way to observe a warning today is a config
+   * that asks for one, which is what these build, and it is enough — the
+   * decision under test is the exit code's, not the check's.
+   */
+  describe('--strict', () => {
+    it('a warning fails the run when it is asked for', async () => {
+      const c = capture()
+      await expect(main(['--strict'], c.io, repoReporting('warning'))).resolves.toBe(EXIT.findings)
+    })
+
+    it('a warning does not fail the run when it is not', async () => {
+      const c = capture()
+      await expect(main([], c.io, repoReporting('warning'))).resolves.toBe(EXIT.ok)
+      // Exit 0 is also what a run that found nothing returns, and the two mean
+      // opposite things. The report is what tells them apart.
+      expect(c.stdout()).toContain('src/gone.ts')
+      expect(c.stdout()).toContain('1 warning')
+    })
+
+    it.each([[[]], [['--strict']]])('an error fails the run with %j', async (flags) => {
+      const c = capture()
+      await expect(main(flags, c.io, repoReporting('error'))).resolves.toBe(EXIT.findings)
+    })
+
+    it('is no longer a tool failure', async () => {
+      const c = capture()
+      await expect(main(['--strict'], c.io, repoReporting('error'))).resolves.not.toBe(
+        EXIT.toolFailure,
+      )
+      expect(c.stderr()).not.toContain('is not implemented yet')
+    })
+  })
 
   it('--only reaches the pipeline: a known id runs, and the audit is clean', async () => {
     const root = makeTempRepo({
