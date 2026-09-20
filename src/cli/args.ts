@@ -33,7 +33,13 @@ export type BooleanFlag = {
   [K in keyof CliArgs]: CliArgs[K] extends boolean ? K : never
 }[keyof CliArgs]
 
-const OPTIONS = {
+/**
+ * What the parser accepts. Exported because `scripts/release/surface.ts` reads
+ * it: the flags are part of the frozen contract, and an artifact that listed
+ * the ones `--help` advertises would miss exactly the flags where the two
+ * disagree.
+ */
+export const OPTIONS = {
   fix: { type: 'boolean' },
   'dry-run': { type: 'boolean' },
   json: { type: 'boolean' },

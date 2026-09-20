@@ -21,8 +21,12 @@ export type Io = {
  * The boolean flags the parser accepts but that do not do anything yet. This
  * list is a to-do list the test suite watches: when a ticket implements a flag,
  * it deletes it from here and the test that demanded exit 2 fails.
+ *
+ * Exported for the same reason as `OPTIONS`: a flag that parses and then exits
+ * 2 is part of the surface as it stands, and the frozen surface records it
+ * that way rather than pretending it works.
  */
-const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
+export const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
   ['watch', '--watch'],
   // --strict only changes something once warnings exist, and warnings are
   // tier 2, which is M5. Until then, accepting it would promise too much.
