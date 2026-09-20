@@ -182,7 +182,7 @@ export async function filterMain(
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskAboutDocument,
 ): Promise<number> {
-  if (!dryRun) requireKey('filter')
+  if (!dryRun && askWith === undefined) requireKey('filter')
   const repos = readList().slice(0, limit)
   const work: Array<{ repo: string; dir: string; path: string; content: string }> = []
   for (const repo of repos) {

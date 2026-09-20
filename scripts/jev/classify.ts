@@ -227,7 +227,7 @@ export async function classifyMain(
 ): Promise<number> {
   // Checked before the document is parsed: this pass used to discover a
   // missing key at the first request, after printing a summary of the work.
-  if (!dryRun) requireKey('corpus-classify')
+  if (!dryRun && askWith === undefined) requireKey('corpus-classify')
   const doc = readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8')
   const rows = rowsIn(doc)
   const classes = classesIn(rows)

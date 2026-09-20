@@ -210,7 +210,7 @@ export async function classesMain(
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskSameCause,
 ): Promise<number> {
-  if (!dryRun) requireKey('corpus-classes')
+  if (!dryRun && askWith === undefined) requireKey('corpus-classes')
   const rows = rowsIn(readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8'))
   if (rows.length === 0) throw new Error('no per-finding rows in CLASSIFICATION.md')
   const pairs = pairsOf(rows)

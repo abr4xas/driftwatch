@@ -475,7 +475,7 @@ export async function familiesMain(
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskSameDocument,
 ): Promise<number> {
-  if (!dryRun) requireKey('families')
+  if (!dryRun && askWith === undefined) requireKey('families')
   const repos = readList().slice(0, limit)
   // Fingerprints are kept; the documents they were made from are not. The
   // corpus holds 192 thousand of these files and 1.3 GB of text, and holding

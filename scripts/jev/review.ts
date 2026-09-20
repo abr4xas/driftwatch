@@ -157,7 +157,8 @@ export async function reviewMain(
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskClaimsAPath,
 ): Promise<number> {
-  requireKey('review')
+  // Only when this pass is about to open the gateway itself.
+  if (askWith === undefined) requireKey('review')
   const cwd = resolve(target)
   if (!existsSync(cwd)) {
     process.stderr.write(`no such directory: ${cwd}\n`)

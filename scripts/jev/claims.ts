@@ -184,7 +184,7 @@ export async function claimsMain(
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskClaimsAPath,
 ): Promise<number> {
-  if (!dryRun) requireKey('claims')
+  if (!dryRun && askWith === undefined) requireKey('claims')
   if (!existsSync(DISCARDS)) {
     process.stderr.write(`${DISCARDS} is missing; run pnpm discovery discards first\n`)
     return 2

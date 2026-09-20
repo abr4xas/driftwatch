@@ -183,7 +183,7 @@ export async function findingsMain(
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskSameCause,
 ): Promise<number> {
-  if (!dryRun) requireKey('findings')
+  if (!dryRun && askWith === undefined) requireKey('findings')
   if (!existsSync(RESULTS)) {
     process.stderr.write(`${RESULTS} is missing; run pnpm discovery run first\n`)
     return 2
