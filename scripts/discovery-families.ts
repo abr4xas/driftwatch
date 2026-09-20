@@ -134,27 +134,32 @@ export function candidatePairs(prints: readonly Fingerprint[], minOverlap = 0.5)
     }
   }
 
-  const seen = new Set<string>()
+  // One document at a time, with its partners in a set that is thrown away
+  // before the next one. A single `seen` across the whole walk holds every
+  // pair that shares any line, and at 2533 repositories that is tens of
+  // millions of entries and a four-gigabyte heap — the pass died there. The
+  // candidates it returns are the same; only what is alive at once changed.
   const candidates: Candidate[] = []
-  for (const [, bucket] of byLine) {
-    if (bucket.length > COMMON_LINE) continue
-    for (const [x, i] of bucket.entries()) {
-      for (const j of bucket.slice(x + 1)) {
-        const key = `${i}:${j}`
-        if (seen.has(key)) continue
-        seen.add(key)
-        const a = prints[i]
-        const b = prints[j]
-        if (a === undefined || b === undefined) continue
-        // Same repository is not a template family: a project repeating its own
-        // document is one project, and `07` counts observations per repository.
-        if (a.repo === b.repo) continue
-        if (a.basename !== b.basename) continue
-        if (a.hash === b.hash) continue
-        const overlap = overlapOf(a, b)
-        if (overlap < minOverlap) continue
-        candidates.push({ a, b, overlap })
-      }
+  const partners = new Set<number>()
+  for (const [i, print] of prints.entries()) {
+    partners.clear()
+    for (const line of print.lines) {
+      const bucket = byLine.get(line)
+      if (bucket === undefined || bucket.length > COMMON_LINE) continue
+      for (const j of bucket) if (j > i) partners.add(j)
+    }
+    for (const j of partners) {
+      const a = prints[i]
+      const b = prints[j]
+      if (a === undefined || b === undefined) continue
+      // Same repository is not a template family: a project repeating its own
+      // document is one project, and `07` counts observations per repository.
+      if (a.repo === b.repo) continue
+      if (a.basename !== b.basename) continue
+      if (a.hash === b.hash) continue
+      const overlap = overlapOf(a, b)
+      if (overlap < minOverlap) continue
+      candidates.push({ a, b, overlap })
     }
   }
   return candidates.toSorted((p, q) => q.overlap - p.overlap)
@@ -297,6 +302,21 @@ export const SAME_DOCUMENT = {
  */
 export const MERGE_AT = 0.8
 
+/**
+ * The overlap above which two documents are one document without asking.
+ *
+ * Not a guess. A stratified sample of 600 of the 193 185 candidate pairs was
+ * put to Jev band by band, and above 0.85 it answered "one document" **180
+ * times out of 180** while the bands below 0.65 fell to two in three. So the
+ * model's judgement carries information in one part of the range and none in
+ * the other, and the part where it carries none is 79% of the pairs.
+ *
+ * This is the shape the whole pass is for: the model is asked once, at
+ * research time, and what survives into the run is arithmetic over a number it
+ * helped choose. Moving this constant means measuring again, not arguing.
+ */
+export const CERTAIN_ABOVE = 0.85
+
 /** One document as Jev reads it. A type alias, so it satisfies `JSONObject`. */
 type Side = { repo: string; path: string; excerpt: string }
 
@@ -326,6 +346,20 @@ function requireKey(): void {
     'the family pass needs a Vercel AI Gateway key: set AI_GATEWAY_API_KEY in .env ' +
       '(pnpm discovery loads it) or in the environment.',
   )
+}
+
+/**
+ * The document a fingerprint was made from, read back off disk.
+ *
+ * Fingerprints are kept for the whole pass and documents are not, so a
+ * judgement reads its two documents when it asks. Absent is not an error: the
+ * sparse checkout may not carry a file `git ls-files` lists, which is ticket
+ * `13` again.
+ */
+function readDoc(print: Fingerprint): Doc | undefined {
+  const absolute = join(REPOS_DIR, slugOf(print.repo), print.path)
+  if (!existsSync(absolute)) return undefined
+  return { repo: print.repo, path: print.path, content: readFileSync(absolute, 'utf8') }
 }
 
 /** Every source document in a clone, as `fingerprint` wants them. */
@@ -360,10 +394,10 @@ type Verdict = { pair: [string, string]; overlap: number; probability: number; s
 async function judge(
   ask: (state: JudgementState) => Promise<number>,
   candidate: Candidate,
-  docs: ReadonlyMap<string, Doc>,
+  read: (print: Fingerprint) => Doc | undefined,
 ): Promise<Verdict | undefined> {
-  const a = docs.get(keyOf(candidate.a))
-  const b = docs.get(keyOf(candidate.b))
+  const a = read(candidate.a)
+  const b = read(candidate.b)
   if (a === undefined || b === undefined) return undefined
   try {
     const probability = await ask(judgementState(a, b))
@@ -397,21 +431,89 @@ async function jevAsk(): Promise<(state: JudgementState) => Promise<number>> {
   }
 }
 
-export async function familiesMain(limit: number | undefined, dryRun: boolean): Promise<number> {
+/**
+ * A stratified sample of the candidate pairs, spread over overlap.
+ *
+ * 193 thousand pairs is not a question anyone asks a model: at eight at a time
+ * it is hours of gateway and a bill nobody sized. And the 137 pairs already
+ * judged say the answer is nearly constant — Jev called 133 of them one
+ * document — so what is worth buying is not every answer but **the place where
+ * the answer stops being yes**. Sampling evenly across overlap bands buys that
+ * and the whole-population pass does not: the interesting band is the thin one.
+ *
+ * Deterministic: the candidates arrive sorted, and within each band the picks
+ * are evenly spaced rather than random, so a rerun asks the same questions.
+ */
+export function stratifiedSample(candidates: readonly Candidate[], want: number): Candidate[] {
+  const bands = new Map<number, Candidate[]>()
+  for (const candidate of candidates) {
+    // 0.5 <= overlap <= 1, in tenths of the range: [0.50,0.55) ... [0.95,1.00]
+    const band = Math.min(9, Math.floor((candidate.overlap - 0.5) / 0.05))
+    const bucket = bands.get(band)
+    if (bucket === undefined) bands.set(band, [candidate])
+    else bucket.push(candidate)
+  }
+  const per = Math.max(1, Math.ceil(want / Math.max(1, bands.size)))
+  const picked: Candidate[] = []
+  for (const band of [...bands.keys()].toSorted((a, b) => a - b)) {
+    const bucket = bands.get(band) ?? []
+    const take = Math.min(per, bucket.length)
+    for (let k = 0; k < take; k += 1) {
+      const at = Math.floor((k * bucket.length) / take)
+      const candidate = bucket[at]
+      if (candidate !== undefined) picked.push(candidate)
+    }
+  }
+  return picked
+}
+
+/** Agreement with the overlap filter, band by band. The table the sample buys. */
+export function bandTable(verdicts: readonly Verdict[]): string {
+  const bands = new Map<number, Verdict[]>()
+  for (const verdict of verdicts) {
+    const band = Math.min(9, Math.floor((verdict.overlap - 0.5) / 0.05))
+    const bucket = bands.get(band)
+    if (bucket === undefined) bands.set(band, [verdict])
+    else bucket.push(verdict)
+  }
+  const lines = ['   overlap   judged   one document   mean p']
+  for (const band of [...bands.keys()].toSorted((a, b) => a - b)) {
+    const bucket = bands.get(band) ?? []
+    const same = bucket.filter((v) => v.same).length
+    const mean = bucket.reduce((sum, v) => sum + v.probability, 0) / bucket.length
+    const lo = (0.5 + band * 0.05).toFixed(2)
+    const hi = (0.55 + band * 0.05).toFixed(2)
+    lines.push(
+      `  ${lo}-${hi} ${String(bucket.length).padStart(8)} ${String(same).padStart(14)} ${mean.toFixed(3).padStart(8)}`,
+    )
+  }
+  return lines.join('\n')
+}
+
+export async function familiesMain(
+  limit: number | undefined,
+  dryRun: boolean,
+  sample?: number,
+  concurrency = 8,
+  certainAbove = CERTAIN_ABOVE,
+): Promise<number> {
   if (!dryRun) requireKey()
   const repos = readList().slice(0, limit)
-  const docs: Doc[] = []
+  // Fingerprints are kept; the documents they were made from are not. The
+  // corpus holds 192 thousand of these files and 1.3 GB of text, and holding
+  // them all was a four-gigabyte heap and a dead pass. A fingerprint is a few
+  // hundred bytes; the two documents a judgement needs are read back off disk
+  // when the judgement is asked, which is a handful of reads per pair.
+  const prints: Fingerprint[] = []
   for (const repo of repos) {
     const dir = join(REPOS_DIR, slugOf(repo))
     if (!existsSync(join(dir, '.git'))) continue
-    docs.push(...docsOf(repo, dir))
+    for (const doc of docsOf(repo, dir)) prints.push(fingerprint(doc))
   }
-  const prints = docs.map((doc) => fingerprint(doc))
-  const byKey = new Map(docs.map((doc) => [`${doc.repo}|${doc.path}`, doc]))
   const candidates = candidatePairs(prints)
 
   process.stderr.write(
-    `${docs.length} documents in ${repos.length} repos, ` +
+    `${prints.length} documents in ${repos.length} repos, ` +
       `${new Set(prints.map((p) => p.hash)).size} distinct contents, ` +
       `${candidates.length} pairs to judge\n`,
   )
@@ -427,19 +529,55 @@ export async function familiesMain(limit: number | undefined, dryRun: boolean): 
     }
   } else {
     const ask = await jevAsk()
-    for (const [i, candidate] of candidates.entries()) {
-      const verdict = await judge(ask, candidate, byKey)
-      if (verdict !== undefined) verdicts.push(verdict)
-      if ((i + 1) % 25 === 0) process.stderr.write(`  ${i + 1}/${candidates.length}\n`)
+    const settled = sample === undefined ? candidates.filter((c) => c.overlap >= certainAbove) : []
+    const open = candidates.filter((c) => c.overlap < certainAbove)
+    const asked = sample === undefined ? open : stratifiedSample(candidates, sample)
+    if (settled.length > 0) {
+      process.stderr.write(
+        `${settled.length} pairs are one document by overlap alone (>= ${certainAbove}), unasked\n`,
+      )
+      for (const candidate of settled) {
+        verdicts.push({
+          pair: [keyOf(candidate.a), keyOf(candidate.b)],
+          overlap: Number(candidate.overlap.toFixed(3)),
+          probability: 1,
+          same: true,
+        })
+      }
     }
+    process.stderr.write(`asking about ${asked.length}, ${concurrency} at a time\n`)
+    let done = 0
+    const { inFlight } = await import('./discovery-filter.ts')
+    const answers = await inFlight(asked, concurrency, async (candidate) => {
+      const verdict = await judge(ask, candidate, readDoc)
+      done += 1
+      if (done % 50 === 0) process.stderr.write(`  ${done}/${asked.length}\n`)
+      return verdict
+    })
+    for (const verdict of answers) if (verdict !== undefined) verdicts.push(verdict)
   }
 
-  const confirmed = verdicts.filter((verdict) => verdict.same).map((verdict) => verdict.pair)
-  const families = familiesOf(prints, confirmed)
-  writeFileSync(FAMILIES, `${JSON.stringify([...families.values()], null, 2)}\n`, 'utf8')
   if (verdicts.length > 0) {
     writeFileSync(VERDICTS, verdicts.map((v) => JSON.stringify(v)).join('\n') + '\n', 'utf8')
   }
+  const confirmed = verdicts.filter((verdict) => verdict.same).map((verdict) => verdict.pair)
+
+  // A sample cannot build the family table. Families come from the transitive
+  // closure of confirmed pairs, so a run that judged one pair in two hundred
+  // would write a file saying the corpus has almost no families — a false
+  // number in the place the real one lives. The sample's product is the band
+  // table; `FAMILIES` is left as whatever the last whole pass wrote.
+  if (sample !== undefined) {
+    process.stderr.write(
+      `\n${confirmed.length} of ${verdicts.length} sampled pairs are one document ` +
+        `(p >= ${MERGE_AT}); ${FAMILIES} left alone\n\n`,
+    )
+    process.stdout.write(`${bandTable(verdicts)}\n`)
+    return 0
+  }
+
+  const families = familiesOf(prints, confirmed)
+  writeFileSync(FAMILIES, `${JSON.stringify([...families.values()], null, 2)}\n`, 'utf8')
   process.stderr.write(
     `\n${confirmed.length} of ${verdicts.length} judged pairs are one document ` +
       `(p >= ${MERGE_AT}); ${candidates.length - verdicts.length} went unjudged\n` +

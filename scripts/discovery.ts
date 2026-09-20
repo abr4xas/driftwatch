@@ -750,7 +750,12 @@ async function main(argv: readonly string[]): Promise<number> {
     }
     case 'families': {
       const { familiesMain } = await import('./discovery-families.ts')
-      return familiesMain(numberFlag(argv, '--limit'), argv.includes('--dry-run'))
+      return familiesMain(
+        numberFlag(argv, '--limit'),
+        argv.includes('--dry-run'),
+        numberFlag(argv, '--sample'),
+        numberFlag(argv, '--concurrency') ?? 8,
+      )
     }
     case 'status':
     case undefined:

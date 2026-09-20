@@ -21,7 +21,7 @@
  * a corpus in the same sense" is the rule, and `formatTable` prints it with the
  * table because the table is the part somebody pastes somewhere.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, openSync, readFileSync, renameSync, writeSync } from 'node:fs'
 import { join } from 'node:path'
 import { messageOf } from '../src/core/errors.ts'
 import type { Discard, DiscardCause } from '../src/extract/context.ts'
@@ -99,22 +99,41 @@ export type DiscardRow = {
  * thousand times over one string in one repository is a different object from
  * one that fires ten thousand times over ten thousand strings.
  */
-export function tabulate(records: readonly DiscardRecord[]): DiscardRow[] {
-  type Tally = { texts: Set<string>; repos: Set<string>; count: number; absent: number }
+type Tally = { texts: Set<string>; repos: Set<string>; count: number; absent: number }
+
+/**
+ * The table, one record at a time.
+ *
+ * Its own thing rather than a loop inside `tabulate` because the runner cannot
+ * afford to hold the records: 2533 repositories carry 192 thousand documents,
+ * and the discards they produce are millions of lines — more than a JavaScript
+ * string can hold, so reading the file back to count it is not available
+ * either. The counting happens as the lines are written.
+ */
+export function tallies(): {
+  add: (record: DiscardRecord) => void
+  rows: () => DiscardRow[]
+} {
   const byCause = new Map<DiscardCause, Tally>()
-  for (const discard of records) {
-    const row = byCause.get(discard.cause) ?? {
-      texts: new Set(),
-      repos: new Set(),
-      count: 0,
-      absent: 0,
-    }
-    row.count += 1
-    if (discard.exists !== true) row.absent += 1
-    row.texts.add(discard.text)
-    row.repos.add(discard.repo)
-    byCause.set(discard.cause, row)
+  return {
+    add(discard) {
+      const row = byCause.get(discard.cause) ?? {
+        texts: new Set(),
+        repos: new Set(),
+        count: 0,
+        absent: 0,
+      }
+      row.count += 1
+      if (discard.exists !== true) row.absent += 1
+      row.texts.add(discard.text)
+      row.repos.add(discard.repo)
+      byCause.set(discard.cause, row)
+    },
+    rows: () => rowsOf(byCause),
   }
+}
+
+function rowsOf(byCause: ReadonlyMap<DiscardCause, Tally>): DiscardRow[] {
   return [...byCause]
     .map(([cause, row]) => ({
       cause,
@@ -124,6 +143,12 @@ export function tabulate(records: readonly DiscardRecord[]): DiscardRow[] {
       absent: row.absent,
     }))
     .toSorted((a, b) => b.count - a.count || a.cause.localeCompare(b.cause))
+}
+
+export function tabulate(records: readonly DiscardRecord[]): DiscardRow[] {
+  const table = tallies()
+  for (const record of records) table.add(record)
+  return table.rows()
 }
 
 /**
@@ -287,7 +312,23 @@ function recordOf(repo: string, index: RepoIndex, discard: Discard): DiscardReco
 export async function discardsMain(limit: number | undefined): Promise<number> {
   const repos = readList().slice(0, limit)
   const { run } = await import('../src/run.ts')
-  const out: string[] = []
+  // Written as it goes, to a partial file that is renamed at the end. The
+  // whole-or-nothing property the file header argues for is kept by the
+  // rename, not by holding every line in memory — which at this size is a
+  // gigabyte of strings and a dead pass.
+  const partial = `${DISCARDS}.partial`
+  const handle = openSync(partial, 'w')
+  const table = tallies()
+  let pending: string[] = []
+  let written = 0
+  const emit = (line: string): void => {
+    pending.push(line)
+    written += 1
+    if (pending.length >= 5000) {
+      writeSync(handle, `${pending.join('\n')}\n`)
+      pending = []
+    }
+  }
   let read = 0
   let failed = 0
   let uncloned = 0
@@ -323,16 +364,20 @@ export async function discardsMain(limit: number | undefined): Promise<number> {
     // parses every document in it.
     const index = await buildRepoIndex(dir)
     for (const discard of collected) {
-      out.push(JSON.stringify(recordOf(repo, index, discard)))
+      const record = recordOf(repo, index, discard)
+      table.add(record)
+      emit(JSON.stringify(record))
     }
   }
 
-  writeFileSync(DISCARDS, out.length === 0 ? '' : `${out.join('\n')}\n`, 'utf8')
+  if (pending.length > 0) writeSync(handle, `${pending.join('\n')}\n`)
+  closeSync(handle)
+  renameSync(partial, DISCARDS)
   process.stderr.write(
     `\n${read} read, ${failed} failed, ${uncloned} not cloned yet\n` +
-      `${out.length} discards in ${DISCARDS}\n\n`,
+      `${written} discards in ${DISCARDS}\n\n`,
   )
-  process.stdout.write(`${formatTable(tabulate(discardsIn(readFileSync(DISCARDS, 'utf8'))))}\n`)
+  process.stdout.write(`${formatTable(table.rows())}\n`)
   return 0
 }
 
