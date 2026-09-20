@@ -175,7 +175,7 @@ CLAUDE.md
 
 Formatting rules:
 - Grouped by file, ordered by line.
-- `file:line` must be clickable in modern terminals (`file:line:column` format on the header path when `--no-group`).
+- `file:line` must be clickable in modern terminals.
 - Colors: red for errors, yellow for warnings, dim for suggestions. Turned off if `NO_COLOR` is set or if stdout is not a TTY.
 - The quoted fragment is truncated to 40 characters with `…`.
 - With no problems: `✓ 14 files · no drift · 210ms`.
@@ -233,16 +233,18 @@ Stable contract. Breaking changes only on a major.
       "file": "CLAUDE.md",
       "line": 12,
       "column": 4,
+      "endLine": 12,
       "endColumn": 19,
       "text": "src/lib/auth.ts",
       "message": "path does not exist",
       "suggestion": { "value": "src/auth/index.ts", "confidence": 0.86, "fixable": true }
     }
-  ]
+  ],
+  "skipped": []
 }
 ```
 
-`file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line.
+`file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line. The example above is key for key what the reporter emits, and `CONTRACT.md` — which is generated from a real run — is what holds it to that.
 
 ### Sources that were found and not read
 

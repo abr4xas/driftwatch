@@ -153,6 +153,44 @@ describe('every format describes the same run', () => {
   })
 })
 
+/** The first fenced block in `SPEC.md` § 6, which is the whole document example. */
+function documentedJsonExample(): Record<string, unknown> {
+  const spec = readFileSync(join(import.meta.dirname, '..', 'docs', 'spec', 'SPEC.md'), 'utf8')
+  const section = spec.split('\n## 6.')[1] ?? ''
+  const block = /```jsonc\n([\s\S]*?)```/u.exec(section)?.[1]
+  if (block === undefined) throw new Error('SPEC.md § 6 has no jsonc example')
+  return JSON.parse(block) as Record<string, unknown>
+}
+
+function keysOfSummary(document: Record<string, unknown>): string[] {
+  return Object.keys(document.summary as Record<string, unknown>).toSorted()
+}
+
+function keysOfFirstFinding(document: Record<string, unknown>): string[] {
+  return Object.keys(first(document.findings as Record<string, unknown>[])).toSorted()
+}
+
+/**
+ * The worked example in `SPEC.md` § 6, held to the emitter.
+ *
+ * It omitted `endLine` and the top-level `skipped` for two releases while the
+ * prose two paragraphs below it described both — the specification is primary
+ * source in this repository, so an example that disagrees with the code is the
+ * more dangerous half of the disagreement, and nothing was checking it.
+ *
+ * Keys only. The values in the example are illustrative and are meant to be:
+ * it shows a repository nobody has.
+ */
+describe("SPEC.md § 6's example", () => {
+  it('carries the keys the reporter emits, and no others', async () => {
+    const emitted = await json<Record<string, unknown>>(['--json'], repo())
+    const example = documentedJsonExample()
+    expect(Object.keys(example).toSorted()).toEqual(Object.keys(emitted).toSorted())
+    expect(keysOfSummary(example)).toEqual(keysOfSummary(emitted))
+    expect(keysOfFirstFinding(example)).toEqual(keysOfFirstFinding(emitted))
+  })
+})
+
 describe('--format json', () => {
   it('carries every field SPEC.md § 6 documents', async () => {
     const root = repo()
