@@ -184,3 +184,77 @@ comes out of reading them is still written by hand in `src/` and measured agains
 certification corpus is untouched by all of this — 66 repos · 341 sources · 39 findings — and
 `src/` has **zero changed lines**: `ai` and `zod` are devDependencies, `tsdown` builds `src/`
 alone, and the tarball is unchanged at 25 files.
+
+## What 2533 repositories said, and it is not what 700 said
+
+Re-run on 2026-09-20 over the whole discovery corpus. Every number in §"It corrects the count
+it was opened for" was measured over 700 repositories and **understated the correction by a
+factor of six**.
+
+| | 700 repos | 2533 repos |
+|---|---|---|
+| documents | 4460 | **191 936** |
+| distinct contents | — | 138 078 |
+| candidate pairs | ~500 | **193 185** |
+| families | — | **123 734** |
+| discards that are a copy | 5055 of 95 314 — **5.3%** | 446 465 of 1 352 382 — **33%** |
+
+One document in three is a copy of another repository's document. The largest family is
+**2685 copies across 118 repositories**, and what it is says why this ticket exists:
+
+    lib/workspace-core/fixtures/risk/gm006-managed-clean/input-repo/CLAUDE.md
+
+A fixture. 7700 families cross more than one repository and hold 52 191 documents between them.
+
+### The pass had to be asked a different question
+
+193 185 pairs is not something anyone puts to a model: at eight at a time it is hours of
+gateway and a bill nobody sized. A **stratified sample of 600**, spread across overlap bands
+rather than taken off the top, bought the thing worth buying — not every answer but the place
+where the answer stops being yes:
+
+| overlap | judged | one document |
+|---|---|---|
+| 0.85–1.00 | 180 | **180** |
+| 0.80–0.85 | 60 | 57 |
+| 0.65–0.80 | 180 | 167 |
+| 0.60–0.65 | 60 | **40** |
+| 0.50–0.60 | 120 | 102 |
+
+So the judgement carries information in one part of the range and none in the other, and the
+part where it carries none is 79% of the pairs. `CERTAIN_ABOVE = 0.85` merges those 152 685 by
+arithmetic, unasked, and the 41 157 below the line are the only ones bought.
+
+The 137 verdicts in §"What it answered" would have said the opposite. 133 of 137 yes, spread
+evenly across the range, and the threshold looked like it could be 0.5. They were too few and
+too badly spread to see the curve — which is the same lesson as
+[ADR-0009](../../../docs/adr/0009-precision-is-counted-in-quiet-repos.md), arriving from the
+other direction: a number read off a sample too small to have a shape.
+
+### The correction is not uniform, and that is the useful part
+
+Per rule, what collapsing costs:
+
+| rule | every discard | one per family | falls |
+|---|---|---|---|
+| `create-instruction` | 5569 | 1777 | **−68%** |
+| `creation-target` | 1930 | 736 | **−62%** |
+| `url` | 15 535 | 7340 | **−53%** |
+| `bare-word` | 875 870 | 569 016 | −35% |
+| `conditional` | 237 | 164 | −31% |
+| `elsewhere` | 35 | 35 | **0%** |
+
+`create-instruction` fires on template sentences — *"create a `SKILL.md`"* — copied verbatim by
+thousands of repositories, so two thirds of its apparent cost is one template counted again.
+`elsewhere` loses nothing: it fires on prose somebody wrote by hand about their own repository.
+
+That distinction is what the per-document table could not make: **which rules measure the
+ecosystem and which measure a template.** It is also a warning about the rest of `07`'s tables,
+which are counted per document.
+
+### Still not adjudication, at this scale either
+
+Jev grouped. Nothing it said became a verdict: what survives into the repository is
+`CERTAIN_ABOVE`, one number, with the measurement that chose it written beside it, and moving
+it means measuring again rather than arguing. The certification corpus is untouched — 66 repos
+· 341 sources · 37 findings.

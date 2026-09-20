@@ -314,3 +314,68 @@ declared a destination is credited to whichever gate ran first, exactly as `disc
 internal order already decides between shape rules — so a row means "what this rule was the
 first to throw away". And for a frontmatter candidate the `window` is the YAML line rather
 than prose any gate read, which is what that column can be there.
+
+## The same instrumentation over 2533 repositories
+
+Re-run on 2026-09-20. 2532 repositories read, 1 failed (`23`), **1 352 382 discards**, 534 MB.
+
+The table above is counted per document, and over this corpus that is the wrong resolution:
+**446 465 of the 1 352 382 — one in three — are the same document counted again.** Ticket `17`
+measured 5.3% over 700 repositories and understated it sixfold.
+
+Both resolutions, which `pnpm discovery table` now prints side by side:
+
+| rule | every discard | one per family per rule | falls |
+|---|---|---|---|
+| `bare-word` | 875 870 | 569 016 | −35% |
+| `has-spaces` | 194 197 | 134 454 | −31% |
+| `glob-or-placeholder` | 74 533 | 49 723 | −33% |
+| `not-path-shaped` | 67 113 | 53 486 | −20% |
+| `module-specifier` | 35 846 | 25 727 | −28% |
+| `bare-directory` | 35 532 | 29 404 | −17% |
+| `absolute-path` | 30 972 | 21 890 | −29% |
+| `url` | 15 535 | 7340 | **−53%** |
+| `hedged` | 7127 | 6348 | −11% |
+| `create-instruction` | 5569 | 1777 | **−68%** |
+| `example` | 2695 | 1929 | −28% |
+| `home-path` | 2536 | 1897 | −25% |
+| `creation-target` | 1930 | 736 | **−62%** |
+| `external-root` | 1501 | 1220 | −19% |
+| `metasyntactic` | 748 | 440 | −41% |
+| `another-repo` | 385 | 311 | −19% |
+| `conditional` | 237 | 164 | −31% |
+| `elsewhere` | 35 | 35 | **0%** |
+| `not-a-file` | 21 | 20 | −5% |
+
+### The spread is the finding, not the totals
+
+A uniform third would have meant the collapse is a rescaling and nothing more. It is not.
+
+`create-instruction` loses two thirds and `creation-target` nearly as much: they fire on
+sentences a template carries — *"create a `SKILL.md` in this directory"* — copied verbatim into
+thousands of repositories. Most of their apparent cost is one template, counted again.
+
+`elsewhere` loses nothing at all, 35 and 35. It fires on a sentence somebody wrote by hand
+about their own repository, which is what ticket `18` argued it was for.
+
+So the two columns separate **rules that measure the ecosystem from rules that measure a
+template**, and no amount of reading the per-document table would have shown which was which.
+
+### And the population underneath is not what the 700-repo table assumed
+
+| | |
+|---|---|
+| documents | 194 846 |
+| **median per repository** | **2** |
+| repositories with ≤10 | 1980 of 2599 |
+| repositories with >100 | 208 |
+| the 12 largest | **35% of all documents** |
+
+`Sandeeprdy1729/skill_galaxy` alone holds 10 293 `SKILL.md`. This is not one population: it is
+roughly two thousand repositories with two or three documents, plus a couple of hundred skill
+farms. §"What this table is not" already says a row is an upper bound on a rule's cost rather
+than its cost; this adds that the bound is computed over a population a dozen repositories
+dominate.
+
+Which is ticket `11`'s lesson — **count repositories, not files** — at a scale where it stops
+being a precaution. The `repos` column was always the honest one.
