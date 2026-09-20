@@ -10,18 +10,17 @@
  */
 import { describe, expect, it } from 'vitest'
 import { CORPUS } from '../scripts/corpus/repos.ts'
+import { BYTES_PER_REPO, refuseForDisk } from '../scripts/discovery/clone.ts'
 import {
-  BYTES_PER_REPO,
   FACETS,
   facetQuery,
   formatList,
   mergeRepos,
   pauseFor,
   queriesOf,
-  recordedIn,
-  refuseForDisk,
   reposIn,
-} from '../scripts/discovery/cli.ts'
+} from '../scripts/discovery/enumerate.ts'
+import { recordedIn } from '../scripts/discovery/journal.ts'
 import { parseList } from '../scripts/discovery/files.ts'
 
 describe('the facets', () => {

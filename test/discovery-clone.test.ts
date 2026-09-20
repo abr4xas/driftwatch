@@ -21,7 +21,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { classifySource } from '../src/core/discover.ts'
 import { RUNNERS } from '../src/verify/manifest.ts'
 import type { SourceKind } from '../src/core/types.ts'
-import { CONE, coneSpec } from '../scripts/discovery/clone.ts'
+import { CONE, coneSpec } from '../scripts/discovery/sparse-clone.ts'
 
 const SRC = new URL('../src/', import.meta.url)
 
