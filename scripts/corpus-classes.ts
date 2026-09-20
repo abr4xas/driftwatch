@@ -116,8 +116,8 @@ export type Judged = { a: number; b: number; probability: number; same: boolean 
  * and B and C do, the three are one class, and counting them as two would be
  * the thing this pass is checking for, halved.
  */
-export function groupsOf(rows: readonly Row[], judged: readonly Judged[]): number[][] {
-  const parent = new Map<number, number>(rows.map((row) => [row.id, row.id]))
+export function groupsOf(ids: readonly number[], judged: readonly Judged[]): number[][] {
+  const parent = new Map<number, number>(ids.map((id) => [id, id]))
   const find = (id: number): number => {
     let at = id
     while (parent.get(at) !== at) at = parent.get(at) ?? at
@@ -129,13 +129,13 @@ export function groupsOf(rows: readonly Row[], judged: readonly Judged[]): numbe
     if (x !== y) parent.set(x, y)
   }
   const byRoot = new Map<number, number[]>()
-  for (const row of rows) {
-    const root = find(row.id)
+  for (const id of ids) {
+    const root = find(id)
     const bucket = byRoot.get(root)
-    if (bucket === undefined) byRoot.set(root, [row.id])
-    else bucket.push(row.id)
+    if (bucket === undefined) byRoot.set(root, [id])
+    else bucket.push(id)
   }
-  return [...byRoot.values()].map((ids) => ids.toSorted((p, q) => p - q))
+  return [...byRoot.values()].map((group) => group.toSorted((p, q) => p - q))
 }
 
 /**
@@ -257,7 +257,10 @@ export async function classesMain(dryRun: boolean, concurrency: number): Promise
   const judged = answers.filter((verdict) => verdict !== undefined)
   writeFileSync(OUT, `${judged.map((v) => JSON.stringify(v)).join('\n')}\n`, 'utf8')
 
-  const groups = groupsOf(rows, judged)
+  const groups = groupsOf(
+    rows.map((row) => row.id),
+    judged,
+  )
   const score = agreement(rows, judged)
   process.stderr.write(
     `\n${judged.length} of ${pairs.length} judged; ${groups.length} groups against ` +

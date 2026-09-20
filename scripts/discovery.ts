@@ -712,6 +712,14 @@ function statusMain(): number {
 
 // --- Entry ------------------------------------------------------------------
 
+function stringFlag(argv: readonly string[], flag: string): string | undefined {
+  const at = argv.indexOf(flag)
+  if (at === -1) return undefined
+  const value = argv[at + 1]
+  if (value === undefined || value.startsWith('--')) throw new Error(`${flag} wants a value`)
+  return value
+}
+
 function numberFlag(argv: readonly string[], flag: string): number | undefined {
   const at = argv.indexOf(flag)
   if (at === -1) return undefined
@@ -735,6 +743,26 @@ async function main(argv: readonly string[]): Promise<number> {
       // time in.
       const { discardsMain } = await import('./discovery-discards.ts')
       return discardsMain(numberFlag(argv, '--limit'))
+    }
+    case 'findings': {
+      const { findingsMain } = await import('./discovery-findings.ts')
+      return findingsMain(
+        numberFlag(argv, '--per-block') ?? 60,
+        numberFlag(argv, '--per-repo') ?? 2,
+        numberFlag(argv, '--concurrency') ?? 10,
+        argv.includes('--dry-run'),
+        numberFlag(argv, '--blocks') ?? 3,
+      )
+    }
+    case 'claims': {
+      const { claimsMain } = await import('./discovery-claims.ts')
+      return claimsMain(
+        stringFlag(argv, '--cause') ?? 'bare-word',
+        numberFlag(argv, '--sample') ?? 800,
+        numberFlag(argv, '--per-repo') ?? 2,
+        numberFlag(argv, '--concurrency') ?? 8,
+        argv.includes('--dry-run'),
+      )
     }
     case 'table': {
       const { tableMain } = await import('./discovery-discards.ts')
@@ -766,7 +794,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|table|sample|families|filter|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|status>\n',
       )
       return 2
   }
