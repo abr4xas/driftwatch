@@ -213,7 +213,7 @@ If it fails, generate a suggestion: look up `basename` in `index.byBasename`. Co
 
 Everything the corpus measures is on one side of the tool: findings are counted and each one is ruled true or false, and nothing counts what never became a finding. Discards appear in no snapshot and inspecting them inside a validation repo is what [ADR-0006](../adr/0006-the-m1-precision-criterion.md) condition 9 forbids, so the cost of this file has never had a number.
 
-`ExtractContext` carries an optional `DiscardSink`, absent on every ordinary run, and the three extractors that consult a discard rule — `paths.ts`, `links.ts`, `scripts.ts` — report to it every candidate they refuse, with the rule's name, the prose window the rule read, and whether the repository turns out to have that path anyway. `scripts/discovery-discards.ts` runs it over the discovery corpus and prints one row per rule; `pnpm discovery sample` prints the windows a person then reads.
+`ExtractContext` carries an optional `DiscardSink`, absent on every ordinary run, and the three extractors that consult a discard rule — `paths.ts`, `links.ts`, `scripts.ts` — report to it every candidate they refuse, with the rule's name, the prose window the rule read, and whether the repository turns out to have that path anyway. `scripts/discovery/discards.ts` runs it over the discovery corpus and prints one row per rule; `pnpm discovery sample` prints the windows a person then reads.
 
 The table is an **upper bound on what a rule costs, not its cost**: a discard is not a finding, and everything `path-claim.ts` declines to answer runs after these rules and catches what they let through. Ticket `16` found that bound loose enough for a gate to look expensive and cost nothing. Deciding whether a rule is mistuned means changing it and diffing the findings before and after, not reading a row.
 
@@ -333,7 +333,7 @@ Minimum scenarios:
 - `no-git` — repo with no `.git`, glob fallback
 
 ### 2. Corpus of real repos
-A `scripts/corpus.ts` script clones a list of public repos with real `CLAUDE.md`/`AGENTS.md` files, runs driftwatch and **stores the output as a snapshot**. It is not claimed to be correct — it is claimed not to change without intent. Every change in the snapshot is reviewed by hand.
+The `scripts/corpus/run.ts` script clones a list of public repos with real `CLAUDE.md`/`AGENTS.md` files, runs driftwatch and **stores the output as a snapshot**. It is not claimed to be correct — it is claimed not to change without intent. Every change in the snapshot is reviewed by hand.
 
 It is the only way to measure false positives in practice.
 

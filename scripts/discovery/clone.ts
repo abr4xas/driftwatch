@@ -31,8 +31,9 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import { RUNNERS } from '../src/verify/manifest.ts'
+import { CORPUS_DIR, DISCOVERY_DIR } from '../lib/paths.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { RUNNERS } from '../../src/verify/manifest.ts'
 
 /**
  * Extensions whose **contents** get read, and why the list is this short.
@@ -278,7 +279,7 @@ export function compareIndex(
  * both clones and diffs the conclusions.
  */
 async function conclusionsOf(dir: string): Promise<string> {
-  const { run } = await import('../src/run.ts')
+  const { run } = await import('../../src/run.ts')
   const result = await run({ cwd: dir, paths: [] })
   return JSON.stringify(
     {
@@ -311,11 +312,11 @@ async function conclusionsOf(dir: string): Promise<string> {
 async function resolveVerifyTargets(
   slug: string,
 ): Promise<{ repo: string; sha: string; fullDir: string; sparseDir: string } | string> {
-  const { CORPUS, slugOf } = await import('./corpus-repos.ts')
+  const { CORPUS, slugOf } = await import('../corpus/repos.ts')
   const entry = CORPUS.find((candidate) => slugOf(candidate.repo) === slug)
   if (entry === undefined) return `no corpus repo with slug ${slug}`
 
-  const fullDir = join(import.meta.dirname, '..', 'test', 'corpus', 'repos', slug)
+  const fullDir = join(CORPUS_DIR, 'repos', slug)
   if (!existsSync(fullDir)) {
     return `${slug} is not cloned; run pnpm corpus --only ${slug} first`
   }
@@ -332,7 +333,7 @@ async function resolveVerifyTargets(
     repo: entry.repo,
     sha: entry.sha,
     fullDir,
-    sparseDir: join(import.meta.dirname, '..', 'test', 'discovery', 'repos', slug),
+    sparseDir: join(DISCOVERY_DIR, 'repos', slug),
   }
 }
 

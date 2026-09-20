@@ -25,13 +25,13 @@
 import type { Experimental_EvaluationQuestion } from 'ai'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import { slugOf } from './corpus-repos.ts'
+import { CORPUS_DIR, DISCOVERY_DIR } from '../lib/paths.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { openJev, requireKey } from './ask.ts'
 
-const HERE = import.meta.dirname
-const CORPUS = join(HERE, '..', 'test', 'corpus')
-const OUT = join(HERE, '..', 'test', 'discovery', 'corpus-classify.jsonl')
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
+const CORPUS = CORPUS_DIR
+const OUT = join(DISCOVERY_DIR, 'corpus-classify.jsonl')
 
 /** One hand-adjudicated finding: what the tool said, and what a person ruled. */
 export type Row = {
@@ -203,30 +203,24 @@ type Answer = { isReal: number; jevClass: string; jevConfidence: number }
 async function jevAsk(): Promise<
   (state: ClassifyState, classes: readonly string[]) => Promise<Answer>
 > {
-  const { experimental_evaluate: evaluate } = await import('ai')
+  const ask = await openJev()
   return async (state, classes) => {
-    const { answers } = await evaluate({
-      model: MODEL,
-      state,
-      // Built from the class list, which is read out of a document at run
-      // time, so the map is typed rather than literal and the answers come
-      // back as the union `EvaluationAnswer` allows. Hence the two checks.
-      questions: questionsFor(classes),
-    })
-    const real = answers['isReal']
-    const chosen = answers['className']
-    if (real?.type !== 'boolean') throw new Error('isReal did not come back as a boolean')
-    if (chosen?.type !== 'choice') throw new Error('className did not come back as a choice')
-    const spread = Object.values(chosen.probabilities ?? { [chosen.choice]: 1 })
+    // The class list is read out of a document at run time, so the question
+    // map is built per request rather than declared.
+    const answered = await ask(state, questionsFor(classes))
+    const chosen = answered.chosen('className')
     return {
-      isReal: real.probability,
+      isReal: answered.probability('isReal'),
       jevClass: chosen.choice,
-      jevConfidence: Math.max(...spread),
+      jevConfidence: chosen.confidence,
     }
   }
 }
 
 export async function classifyMain(dryRun: boolean): Promise<number> {
+  // Checked before the document is parsed: this pass used to discover a
+  // missing key at the first request, after printing a summary of the work.
+  if (!dryRun) requireKey('corpus-classify')
   const doc = readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8')
   const rows = rowsIn(doc)
   const classes = classesIn(rows)

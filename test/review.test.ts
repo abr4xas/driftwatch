@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Discard } from '../src/extract/context.ts'
 import type { Source } from '../src/core/types.ts'
-import { candidatesIn, formatSuggestions } from '../scripts/review.ts'
+import { candidatesIn, formatSuggestions } from '../scripts/jev/review.ts'
 
 const source: Source = {
   path: 'AGENTS.md',

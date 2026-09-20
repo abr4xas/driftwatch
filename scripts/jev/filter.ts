@@ -23,11 +23,12 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Experimental_EvaluationQuestion } from 'ai'
-import { messageOf } from '../src/core/errors.ts'
-import { slugOf } from './corpus-repos.ts'
-import { FILTER, jsonlIn, readList, REPOS_DIR } from './discovery-files.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { inFlight } from '../lib/concurrency.ts'
+import { openJev, requireKey } from './ask.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { FILTER, jsonlIn, readList, REPOS_DIR } from '../discovery/files.ts'
 
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
 const EXCERPT = 1200
 
 /**
@@ -130,40 +131,15 @@ export function stateOf(repo: string, dir: string, path: string, content: string
   }
 }
 
-/** Runs `work` over `items`, `width` at a time, keeping the order of results. */
-export async function inFlight<T, R>(
-  items: readonly T[],
-  width: number,
-  work: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const out: R[] = Array.from({ length: items.length })
-  let next = 0
-  const runners = Array.from({ length: Math.min(width, items.length) }, async () => {
-    for (;;) {
-      const i = next
-      next += 1
-      const item = items[i]
-      if (item === undefined) return
-      out[i] = await work(item)
-    }
-  })
-  await Promise.all(runners)
-  return out
-}
-
 async function jevAsk(): Promise<(state: State) => Promise<Omit<Verdict, 'repo' | 'path'>>> {
-  const { experimental_evaluate: evaluate } = await import('ai')
+  const ask = await openJev()
   return async (state) => {
-    const { answers } = await evaluate({ model: MODEL, state, questions: QUESTIONS })
-    const about = answers['aboutThisRepo']
-    const kind = answers['repoKind']
-    if (about?.type !== 'boolean') throw new Error('aboutThisRepo is not a boolean')
-    if (kind?.type !== 'choice') throw new Error('repoKind is not a choice')
-    const spread = Object.values(kind.probabilities ?? { [kind.choice]: 1 })
+    const answered = await ask(state, QUESTIONS)
+    const kind = answered.chosen('repoKind')
     return {
-      aboutThisRepo: about.probability,
+      aboutThisRepo: answered.probability('aboutThisRepo'),
       repoKind: kind.choice,
-      confidence: Math.max(...spread),
+      confidence: kind.confidence,
     }
   }
 }
@@ -202,9 +178,7 @@ export async function filterMain(
   dryRun: boolean,
   width: number,
 ): Promise<number> {
-  if (!dryRun && (process.env['AI_GATEWAY_API_KEY'] ?? '') === '') {
-    throw new Error('the filter needs AI_GATEWAY_API_KEY; set it in .env or .env.local')
-  }
+  if (!dryRun) requireKey('filter')
   const repos = readList().slice(0, limit)
   const work: Array<{ repo: string; dir: string; path: string; content: string }> = []
   for (const repo of repos) {

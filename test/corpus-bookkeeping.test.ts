@@ -13,7 +13,7 @@
  */
 import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { CORPUS, slugOf } from '../scripts/corpus-repos.ts'
+import { CORPUS, slugOf } from '../scripts/corpus/repos.ts'
 
 const SNAPSHOTS = new URL('./corpus/snapshots/', import.meta.url)
 

@@ -9,7 +9,7 @@
  * wrong by a factor of ten fills a laptop. Each of those is a function here.
  */
 import { describe, expect, it } from 'vitest'
-import { CORPUS } from '../scripts/corpus-repos.ts'
+import { CORPUS } from '../scripts/corpus/repos.ts'
 import {
   BYTES_PER_REPO,
   FACETS,
@@ -21,8 +21,8 @@ import {
   recordedIn,
   refuseForDisk,
   reposIn,
-} from '../scripts/discovery.ts'
-import { parseList } from '../scripts/discovery-files.ts'
+} from '../scripts/discovery/cli.ts'
+import { parseList } from '../scripts/discovery/files.ts'
 
 describe('the facets', () => {
   it('asks with filename:, which is the syntax the API implements', () => {

@@ -23,7 +23,7 @@ Follow the milestones in `docs/spec/ROADMAP.md` in order. **M1 is the gate:** if
 Two things from that criterion that shape the daily work:
 
 - **Zero autofixable false positives**, with no rate modulating it. A doubtful finding someone reads and dismisses is an annoyance; a `--fix` that rewrites the document to point at the wrong file makes the next agent act on a lie with confidence.
-- **Precision is measured out of sample.** Tuning heuristics while looking at a corpus and then measuring against that same corpus does not measure precision, it measures how much you tuned. `scripts/corpus.ts` separates calibration from validation; if you use a validation repo's findings to change a rule, that repo moves to calibration and another one has to be added.
+- **Precision is measured out of sample.** Tuning heuristics while looking at a corpus and then measuring against that same corpus does not measure precision, it measures how much you tuned. `scripts/corpus/run.ts` separates calibration from validation; if you use a validation repo's findings to change a rule, that repo moves to calibration and another one has to be added.
 
 Work tickets live in `.scratch/<feature>/issues/`. See `docs/agents/issue-tracker.md`.
 
@@ -51,7 +51,7 @@ Do not call a milestone closed without running:
 pnpm typecheck && pnpm test && pnpm build && node ./dist/cli.js --help
 ```
 
-Also, **run the tool against itself and against real repos**. This repo has its own `AGENTS.md` and `docs/`, so it is the first test subject. A green fixture proves nothing about false positives; the corpus in `scripts/corpus.ts` does.
+Also, **run the tool against itself and against real repos**. This repo has its own `AGENTS.md` and `docs/`, so it is the first test subject. A green fixture proves nothing about false positives; the corpus in `scripts/corpus/run.ts` does.
 
 ### The corpus is a local gate
 
@@ -74,7 +74,7 @@ Report results exactly as they come out. If a check is half-done or the corpus s
 
 ### The discovery corpus is not a corpus in the same sense
 
-`pnpm discovery` (`scripts/discovery.ts`) acquires a second, much larger set of repositories: unpinned, unsnapshotted, disposable, and **carrying no human verdicts**. It exists to produce material to read — classes of finding, classes of discard — not to measure anything.
+`pnpm discovery` (`scripts/discovery/cli.ts`) acquires a second, much larger set of repositories: unpinned, unsnapshotted, disposable, and **carrying no human verdicts**. It exists to produce material to read — classes of finding, classes of discard — not to measure anything.
 
 One rule governs it, and it is the reason the two are kept apart:
 

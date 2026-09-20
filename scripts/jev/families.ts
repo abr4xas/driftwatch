@@ -26,9 +26,11 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import { slugOf } from './corpus-repos.ts'
-import { FAMILIES, readList, REPOS_DIR, VERDICTS } from './discovery-files.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { inFlight } from '../lib/concurrency.ts'
+import { openJev, requireKey } from './ask.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { FAMILIES, readList, REPOS_DIR, VERDICTS } from '../discovery/files.ts'
 
 /** One source document, as the family pass sees it. */
 export type Doc = {
@@ -332,22 +334,6 @@ export function judgementState(a: Doc, b: Doc): JudgementState {
 
 // --- The runner -----------------------------------------------------------
 
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
-
-/**
- * The gateway key, refused early rather than one request in.
- *
- * `AI_GATEWAY_API_KEY` is what the AI SDK reads by default; the check is here
- * so a run that cannot work says so before it reads 4000 files.
- */
-function requireKey(): void {
-  if ((process.env['AI_GATEWAY_API_KEY'] ?? '') !== '') return
-  throw new Error(
-    'the family pass needs a Vercel AI Gateway key: set AI_GATEWAY_API_KEY in .env ' +
-      '(pnpm discovery loads it) or in the environment.',
-  )
-}
-
 /**
  * The document a fingerprint was made from, read back off disk.
  *
@@ -418,17 +404,9 @@ async function judge(
  * import it — and it is an `evaluation` model, so `generateText` refuses it.
  */
 async function jevAsk(): Promise<(state: JudgementState) => Promise<number>> {
-  const { experimental_evaluate: evaluate } = await import('ai')
-  return async (state) => {
-    const { answers } = await evaluate({
-      model: MODEL,
-      state,
-      questions: { sameDocument: SAME_DOCUMENT },
-    })
-    const answer = answers.sameDocument
-    if (answer.type !== 'boolean') throw new Error(`expected a boolean answer, got ${answer.type}`)
-    return answer.probability
-  }
+  const ask = await openJev()
+  return async (state) =>
+    (await ask(state, { sameDocument: SAME_DOCUMENT })).probability('sameDocument')
 }
 
 /**
@@ -497,7 +475,7 @@ export async function familiesMain(
   concurrency = 8,
   certainAbove = CERTAIN_ABOVE,
 ): Promise<number> {
-  if (!dryRun) requireKey()
+  if (!dryRun) requireKey('families')
   const repos = readList().slice(0, limit)
   // Fingerprints are kept; the documents they were made from are not. The
   // corpus holds 192 thousand of these files and 1.3 GB of text, and holding
@@ -547,7 +525,6 @@ export async function familiesMain(
     }
     process.stderr.write(`asking about ${asked.length}, ${concurrency} at a time\n`)
     let done = 0
-    const { inFlight } = await import('./discovery-filter.ts')
     const answers = await inFlight(asked, concurrency, async (candidate) => {
       const verdict = await judge(ask, candidate, readDoc)
       done += 1

@@ -23,13 +23,13 @@
  */
 import { closeSync, existsSync, openSync, readFileSync, renameSync, writeSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import type { Discard, DiscardCause } from '../src/extract/context.ts'
-import { normalizePathText } from '../src/extract/discard.ts'
-import { buildRepoIndex, hasDir, hasFile, type RepoIndex } from '../src/verify/repo-index.ts'
-import { resolveInRepo } from '../src/verify/resolve.ts'
-import { slugOf } from './corpus-repos.ts'
-import { DISCARDS, FAMILIES, jsonlIn, readList, REPOS_DIR } from './discovery-files.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import type { Discard, DiscardCause } from '../../src/extract/context.ts'
+import { normalizePathText } from '../../src/extract/discard.ts'
+import { buildRepoIndex, hasDir, hasFile, type RepoIndex } from '../../src/verify/repo-index.ts'
+import { resolveInRepo } from '../../src/verify/resolve.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { DISCARDS, FAMILIES, jsonlIn, readList, REPOS_DIR } from './files.ts'
 
 /**
  * One discarded candidate, as one line of JSONL.
@@ -375,7 +375,7 @@ export async function tableMain(): Promise<number> {
 
 export async function discardsMain(limit: number | undefined): Promise<number> {
   const repos = readList().slice(0, limit)
-  const { run } = await import('../src/run.ts')
+  const { run } = await import('../../src/run.ts')
   // Written as it goes, to a partial file that is renamed at the end. The
   // whole-or-nothing property the file header argues for is kept by the
   // rename, not by holding every line in memory — which at this size is a

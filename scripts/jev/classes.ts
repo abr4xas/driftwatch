@@ -22,14 +22,16 @@
 import type { Experimental_EvaluationQuestion } from 'ai'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import { slugOf } from './corpus-repos.ts'
-import { type Row, rowsIn, windowAround } from './corpus-classify.ts'
+import { CORPUS_DIR, DISCOVERY_DIR } from '../lib/paths.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { countFlag } from '../lib/argv.ts'
+import { inFlight } from '../lib/concurrency.ts'
+import { openJev, requireKey } from './ask.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { type Row, rowsIn, windowAround } from './classify.ts'
 
-const HERE = import.meta.dirname
-const CORPUS = join(HERE, '..', 'test', 'corpus')
-const OUT = join(HERE, '..', 'test', 'discovery', 'corpus-classes.jsonl')
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
+const CORPUS = CORPUS_DIR
+const OUT = join(DISCOVERY_DIR, 'corpus-classes.jsonl')
 
 /**
  * Strict, and for the reason ticket `17` gives about merging.
@@ -195,29 +197,12 @@ export function formatGroups(rows: readonly Row[], groups: readonly number[][]):
  * `generateText` refuses it and the other scripts have no use for the import.
  */
 async function jevAsk(): Promise<(state: PairState) => Promise<number>> {
-  const { experimental_evaluate: evaluate } = await import('ai')
-  return async (state) => {
-    const { answers } = await evaluate({
-      model: MODEL,
-      state,
-      questions: { sameCause: SAME_CAUSE },
-    })
-    const answer = answers.sameCause
-    if (answer.type !== 'boolean') throw new Error(`expected a boolean answer, got ${answer.type}`)
-    return answer.probability
-  }
-}
-
-function requireKey(): void {
-  if ((process.env['AI_GATEWAY_API_KEY'] ?? '') !== '') return
-  throw new Error(
-    'this pass needs a Vercel AI Gateway key: set AI_GATEWAY_API_KEY in .env.local ' +
-      '(pnpm corpus-classes loads it) or in the environment.',
-  )
+  const ask = await openJev()
+  return async (state) => (await ask(state, { sameCause: SAME_CAUSE })).probability('sameCause')
 }
 
 export async function classesMain(dryRun: boolean, concurrency: number): Promise<number> {
-  if (!dryRun) requireKey()
+  if (!dryRun) requireKey('corpus-classes')
   const rows = rowsIn(readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8'))
   if (rows.length === 0) throw new Error('no per-finding rows in CLASSIFICATION.md')
   const pairs = pairsOf(rows)
@@ -238,7 +223,6 @@ export async function classesMain(dryRun: boolean, concurrency: number): Promise
   }
 
   const ask = await jevAsk()
-  const { inFlight } = await import('./discovery-filter.ts')
   let done = 0
   const answers = await inFlight(pairs, concurrency, async (pair) => {
     try {
@@ -278,19 +262,11 @@ export async function classesMain(dryRun: boolean, concurrency: number): Promise
   return 0
 }
 
-function numberFlag(argv: readonly string[], flag: string): number | undefined {
-  const at = argv.indexOf(flag)
-  if (at === -1) return undefined
-  const value = Number(argv[at + 1])
-  if (!Number.isInteger(value) || value <= 0) throw new Error(`${flag} wants a positive integer`)
-  return value
-}
-
 if (process.argv[1] === import.meta.filename) {
   try {
     process.exitCode = await classesMain(
       process.argv.includes('--dry-run'),
-      numberFlag(process.argv, '--concurrency') ?? 8,
+      countFlag(process.argv, '--concurrency') ?? 8,
     )
   } catch (cause) {
     process.stderr.write(`${messageOf(cause)}\n`)

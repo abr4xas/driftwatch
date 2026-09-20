@@ -20,15 +20,16 @@
  * a person to read, and whatever rule that reading suggests is written by hand
  * in `src/` and measured against the 66.
  */
-import type { Experimental_EvaluationQuestion } from 'ai'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import { familyIndex } from './discovery-discards.ts'
-import { DISCARDS, FAMILIES, ROOT } from './discovery-files.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { inFlight } from '../lib/concurrency.ts'
+import { openJev, requireKey } from './ask.ts'
+import { CLAIMS_A_PATH } from './questions.ts'
+import { familyIndex } from '../discovery/discards.ts'
+import { DISCARDS, FAMILIES, ROOT } from '../discovery/files.ts'
 
 const OUT = join(ROOT, 'claims.jsonl')
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
 
 /** One discarded candidate, as much of it as a judgement needs. */
 export type Candidate = {
@@ -54,40 +55,6 @@ export function stateOf(candidate: Candidate): ClaimState {
     candidate: candidate.text,
     sentence: candidate.window,
   }
-}
-
-/**
- * The question, and the `false` criterion carries it.
- *
- * `bare-word` throws away a word with no slash and no extension, which is most
- * of every document: a command, a subcommand, a package, a variable, a label.
- * Asked whether the word "could be a file", nearly all of them could. What the
- * rule is actually for is whether the **sentence** puts it forward as one, so
- * the criteria are about the sentence and the alternatives are named.
- *
- * Phrased as a statement, per the Noul guidance, and deliberately silent about
- * whether the file is there: that is a fact the record already carries, and
- * mixing it in would let the model answer from the filesystem rather than the
- * prose.
- */
-export const CLAIMS_A_PATH: Experimental_EvaluationQuestion = {
-  type: 'boolean',
-  instructions:
-    'The sentence puts `candidate` forward as a file or directory belonging to this ' +
-    'repository — it names a place a reader of this document would expect to find, and go ' +
-    'and look at.',
-  criteria: {
-    true:
-      'The sentence is telling the reader about a path in this repository: pointing at it, ' +
-      'saying what is in it, saying where to put something, or listing it among others. A ' +
-      'reader following the document would look for it here and be surprised if it were ' +
-      'missing.',
-    false:
-      'It is something else wearing the same clothes: a command or a subcommand, a package, ' +
-      'module or dependency name, a variable, a flag value, a heading, a product or tool ' +
-      'name, a word of ordinary prose, a placeholder, or a path in somebody else’s ' +
-      'project. Nobody reading this expects a file of that name in this repository.',
-  },
 }
 
 /**
@@ -182,25 +149,9 @@ export function bandTable(probabilities: readonly number[]): string {
 type Answer = Candidate & { probability: number }
 
 async function jevAsk(): Promise<(state: ClaimState) => Promise<number>> {
-  const { experimental_evaluate: evaluate } = await import('ai')
-  return async (state) => {
-    const { answers } = await evaluate({
-      model: MODEL,
-      state,
-      questions: { claimsAPath: CLAIMS_A_PATH },
-    })
-    const answer = answers.claimsAPath
-    if (answer.type !== 'boolean') throw new Error(`expected a boolean answer, got ${answer.type}`)
-    return answer.probability
-  }
-}
-
-function requireKey(): void {
-  if ((process.env['AI_GATEWAY_API_KEY'] ?? '') !== '') return
-  throw new Error(
-    'the claims pass needs a Vercel AI Gateway key: set AI_GATEWAY_API_KEY in .env.local ' +
-      '(pnpm discovery loads it) or in the environment.',
-  )
+  const ask = await openJev()
+  return async (state) =>
+    (await ask(state, { claimsAPath: CLAIMS_A_PATH })).probability('claimsAPath')
 }
 
 async function* recordsIn(): AsyncGenerator<Candidate & { exists?: boolean }> {
@@ -229,7 +180,7 @@ export async function claimsMain(
   concurrency: number,
   dryRun: boolean,
 ): Promise<number> {
-  if (!dryRun) requireKey()
+  if (!dryRun) requireKey('claims')
   if (!existsSync(DISCARDS)) {
     process.stderr.write(`${DISCARDS} is missing; run pnpm discovery discards first\n`)
     return 2
@@ -252,7 +203,6 @@ export async function claimsMain(
   }
 
   const ask = await jevAsk()
-  const { inFlight } = await import('./discovery-filter.ts')
   let done = 0
   const answers = await inFlight(asked, concurrency, async (candidate) => {
     try {

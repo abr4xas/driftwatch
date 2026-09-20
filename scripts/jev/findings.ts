@@ -17,16 +17,17 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import { slugOf } from './corpus-repos.ts'
-import { windowAround } from './corpus-classify.ts'
-import { groupsOf, type Judged, MERGE_AT, SAME_CAUSE } from './corpus-classes.ts'
-import { spread } from './discovery-claims.ts'
-import { familyIndex } from './discovery-discards.ts'
-import { FAMILIES, jsonlIn, REPOS_DIR, RESULTS, ROOT } from './discovery-files.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { inFlight } from '../lib/concurrency.ts'
+import { openJev, requireKey } from './ask.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { windowAround } from './classify.ts'
+import { groupsOf, type Judged, MERGE_AT, SAME_CAUSE } from './classes.ts'
+import { spread } from './claims.ts'
+import { familyIndex } from '../discovery/discards.ts'
+import { FAMILIES, jsonlIn, REPOS_DIR, RESULTS, ROOT } from '../discovery/files.ts'
 
 const OUT = join(ROOT, 'finding-groups.jsonl')
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
 
 /** One finding the tool made, with an id this pass gives it. */
 export type Wild = {
@@ -167,25 +168,8 @@ export function formatGroups(findings: readonly Wild[], groups: readonly number[
 }
 
 async function jevAsk(): Promise<(state: PairState) => Promise<number>> {
-  const { experimental_evaluate: evaluate } = await import('ai')
-  return async (state) => {
-    const { answers } = await evaluate({
-      model: MODEL,
-      state,
-      questions: { sameCause: SAME_CAUSE },
-    })
-    const answer = answers.sameCause
-    if (answer.type !== 'boolean') throw new Error(`expected a boolean answer, got ${answer.type}`)
-    return answer.probability
-  }
-}
-
-function requireKey(): void {
-  if ((process.env['AI_GATEWAY_API_KEY'] ?? '') !== '') return
-  throw new Error(
-    'the findings pass needs a Vercel AI Gateway key: set AI_GATEWAY_API_KEY in .env.local ' +
-      '(pnpm discovery loads it) or in the environment.',
-  )
+  const ask = await openJev()
+  return async (state) => (await ask(state, { sameCause: SAME_CAUSE })).probability('sameCause')
 }
 
 export async function findingsMain(
@@ -195,7 +179,7 @@ export async function findingsMain(
   dryRun: boolean,
   blocks = 3,
 ): Promise<number> {
-  if (!dryRun) requireKey()
+  if (!dryRun) requireKey('findings')
   if (!existsSync(RESULTS)) {
     process.stderr.write(`${RESULTS} is missing; run pnpm discovery run first\n`)
     return 2
@@ -224,7 +208,6 @@ export async function findingsMain(
   }
 
   const ask = await jevAsk()
-  const { inFlight } = await import('./discovery-filter.ts')
   let done = 0
   const answers = await inFlight(pairs, concurrency, async (pair) => {
     try {

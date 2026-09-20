@@ -40,17 +40,18 @@
  * `13` in a new place, and the guard against it is knowing where you pointed
  * it.
  */
-import type { Experimental_EvaluationQuestion } from 'ai'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import type { Discard } from '../src/extract/context.ts'
-import { normalizePathText } from '../src/extract/discard.ts'
-import { buildRepoIndex, findRepoRoot, hasDir, hasFile } from '../src/verify/repo-index.ts'
-import type { RepoIndex } from '../src/verify/repo-index.ts'
-import { resolveInRepo } from '../src/verify/resolve.ts'
-
-const MODEL = process.env['DISCOVERY_MODEL'] ?? 'typesafe-ai/jev'
+import { messageOf } from '../../src/core/errors.ts'
+import { countFlag, numberFlag } from '../lib/argv.ts'
+import { inFlight } from '../lib/concurrency.ts'
+import { openJev, requireKey } from './ask.ts'
+import { CLAIMS_A_PATH } from './questions.ts'
+import type { Discard } from '../../src/extract/context.ts'
+import { normalizePathText } from '../../src/extract/discard.ts'
+import { buildRepoIndex, findRepoRoot, hasDir, hasFile } from '../../src/verify/repo-index.ts'
+import type { RepoIndex } from '../../src/verify/repo-index.ts'
+import { resolveInRepo } from '../../src/verify/resolve.ts'
 
 /** One candidate, with the sentence it sat in. */
 export type Candidate = {
@@ -62,36 +63,6 @@ export type Candidate = {
 }
 
 export type Suggestion = Candidate & { probability: number }
-
-/**
- * The question, word for word as `discovery claims` asked it of 800
- * candidates.
- *
- * Unchanged on purpose: the 92% above is the number this exact wording
- * produced, and a version reworded for a nicer command line would be a
- * different measurement quoted under the old one. The `false` criterion
- * carries it — asked whether a word "could be a file", nearly every word
- * could, so the alternatives are named.
- */
-export const CLAIMS_A_PATH: Experimental_EvaluationQuestion = {
-  type: 'boolean',
-  instructions:
-    'The sentence puts `candidate` forward as a file or directory belonging to this ' +
-    'repository — it names a place a reader of this document would expect to find, and go ' +
-    'and look at.',
-  criteria: {
-    true:
-      'The sentence is telling the reader about a path in this repository: pointing at it, ' +
-      'saying what is in it, saying where to put something, or listing it among others. A ' +
-      'reader following the document would look for it here and be surprised if it were ' +
-      'missing.',
-    false:
-      'It is something else wearing the same clothes: a command or a subcommand, a package, ' +
-      'module or dependency name, a variable, a flag value, a heading, a product or tool ' +
-      'name, a word of ordinary prose, a placeholder, or a path in somebody else’s ' +
-      'project. Nobody reading this expects a file of that name in this repository.',
-  },
-}
 
 /**
  * Both resolutions a claim gets: against the document's directory and against
@@ -170,17 +141,9 @@ export type ReviewState = {
 }
 
 async function jevAsk(): Promise<(state: ReviewState) => Promise<number>> {
-  const { experimental_evaluate: evaluate } = await import('ai')
-  return async (state) => {
-    const { answers } = await evaluate({
-      model: MODEL,
-      state,
-      questions: { claimsAPath: CLAIMS_A_PATH },
-    })
-    const answer = answers['claimsAPath']
-    if (answer?.type !== 'boolean') throw new Error('the model did not answer with a probability')
-    return answer.probability
-  }
+  const ask = await openJev()
+  return async (state) =>
+    (await ask(state, { claimsAPath: CLAIMS_A_PATH })).probability('claimsAPath')
 }
 
 export async function reviewMain(
@@ -189,19 +152,14 @@ export async function reviewMain(
   cap: number,
   concurrency: number,
 ): Promise<number> {
-  if ((process.env['AI_GATEWAY_API_KEY'] ?? '') === '') {
-    process.stderr.write(
-      'review needs a Vercel AI Gateway key: set AI_GATEWAY_API_KEY in .env.local\n',
-    )
-    return 2
-  }
+  requireKey('review')
   const cwd = resolve(target)
   if (!existsSync(cwd)) {
     process.stderr.write(`no such directory: ${cwd}\n`)
     return 2
   }
 
-  const { run } = await import('../src/run.ts')
+  const { run } = await import('../../src/run.ts')
   const discards: Discard[] = []
   await run({ cwd, paths: [], config: false, discards: (discard) => discards.push(discard) })
 
@@ -216,7 +174,6 @@ export async function reviewMain(
   if (asked.length === 0) return 0
 
   const ask = await jevAsk()
-  const { inFlight } = await import('./discovery-filter.ts')
   const answers = await inFlight(asked, concurrency, async (candidate) => {
     try {
       const probability = await ask({
@@ -244,14 +201,6 @@ export async function reviewMain(
   return 0
 }
 
-function numberFlag(argv: readonly string[], flag: string, fallback: number): number {
-  const at = argv.indexOf(flag)
-  if (at === -1) return fallback
-  const value = Number(argv[at + 1])
-  if (!Number.isFinite(value) || value <= 0) throw new Error(`${flag} wants a positive number`)
-  return value
-}
-
 if (process.argv[1] === import.meta.filename) {
   const argv = process.argv.slice(2)
   const [target] = argv.filter((argument) => !argument.startsWith('--'))
@@ -259,9 +208,9 @@ if (process.argv[1] === import.meta.filename) {
     if (target === undefined) throw new Error('usage: pnpm review <path-to-a-repo>')
     process.exitCode = await reviewMain(
       target,
-      numberFlag(argv, '--show-at', 0.7),
-      numberFlag(argv, '--cap', 200),
-      numberFlag(argv, '--concurrency', 8),
+      numberFlag(argv, '--show-at') ?? 0.7,
+      countFlag(argv, '--cap') ?? 200,
+      countFlag(argv, '--concurrency') ?? 8,
     )
   } catch (cause) {
     process.stderr.write(`${messageOf(cause)}\n`)

@@ -19,7 +19,7 @@ import {
   overlapOf,
   representatives,
   type Doc,
-} from '../scripts/discovery-families.ts'
+} from '../scripts/jev/families.ts'
 
 const LONG = (n: number): string => `this is a line of prose long enough to count, number ${n}`
 const doc = (repo: string, path: string, content: string): Doc => ({ repo, path, content })

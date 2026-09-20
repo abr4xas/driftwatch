@@ -25,12 +25,12 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { planFixes } from '../src/fix/apply.ts'
-import { run } from '../src/run.ts'
-import { CORPUS, slugOf, type CorpusRepo } from './corpus-repos.ts'
+import { CORPUS_DIR } from '../lib/paths.ts'
+import { planFixes } from '../../src/fix/apply.ts'
+import { run } from '../../src/run.ts'
+import { stringFlag } from '../lib/argv.ts'
+import { CORPUS, slugOf, type CorpusRepo } from './repos.ts'
 
-const HERE = import.meta.dirname
-const CORPUS_DIR = join(HERE, '..', 'test', 'corpus')
 const REPOS_DIR = join(CORPUS_DIR, 'repos')
 const SNAPSHOTS_DIR = join(CORPUS_DIR, 'snapshots')
 
@@ -156,12 +156,6 @@ async function reportFixes(
   return { placed, refused: refusals.length }
 }
 
-/** `--only <pattern>`: run only the repos whose name contains the pattern. */
-function onlyPattern(argv: readonly string[]): string | undefined {
-  const at = argv.indexOf('--only')
-  return at === -1 ? undefined : argv[at + 1]
-}
-
 async function fixesMain(only: string | undefined): Promise<number> {
   let placed = 0
   let refused = 0
@@ -186,7 +180,7 @@ async function fixesMain(only: string | undefined): Promise<number> {
 
 async function main(): Promise<number> {
   const check = process.argv.includes('--check')
-  const only = onlyPattern(process.argv)
+  const only = stringFlag(process.argv, '--only')
   if (process.argv.includes('--fixes')) return fixesMain(only)
   mkdirSync(SNAPSHOTS_DIR, { recursive: true })
 

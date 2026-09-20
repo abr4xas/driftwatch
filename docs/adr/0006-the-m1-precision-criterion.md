@@ -104,5 +104,5 @@ What is a priori is the **shape** of the criterion: per repo instead of global, 
 
 - The criterion stops being unreachable without becoming lax: the autofix hard floor is **stricter** than anything the original said.
 - Certifying M1 requires an out-of-sample measurement with ≥8 repos. At the time of writing this, none exists: of the three validation rounds, two were contaminated by deriving rules from them and the third has 3 repos. **M1 still does not close**, now for lack of measurement rather than lack of precision.
-- The contamination rule is encoded in `scripts/corpus.ts`, in the `holdout` field and its comment, so it does not depend on anyone remembering it.
+- The contamination rule is encoded in `scripts/corpus/run.ts`, in the `holdout` field and its comment, so it does not depend on anyone remembering it.
 - If a future measurement fails condition 6 or 7, the answer is not to loosen the threshold: it is going back to the heuristics, or accepting that `path/missing` does not get there and saying so.

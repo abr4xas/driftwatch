@@ -55,11 +55,12 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { appendFile, statfs } from 'node:fs/promises'
 import { join } from 'node:path'
-import { messageOf } from '../src/core/errors.ts'
-import type { RunOptions, RunResult } from '../src/run.ts'
-import { CORPUS, slugOf } from './corpus-repos.ts'
-import { sparseClone } from './discovery-clone.ts'
-import { CURSOR, jsonlIn, LIST, readList, REPOS_DIR, RESULTS, ROOT } from './discovery-files.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { countFlag, stringFlag } from '../lib/argv.ts'
+import type { RunOptions, RunResult } from '../../src/run.ts'
+import { CORPUS, slugOf } from '../corpus/repos.ts'
+import { sparseClone } from './clone.ts'
+import { CURSOR, jsonlIn, LIST, readList, REPOS_DIR, RESULTS, ROOT } from './files.ts'
 
 // --- Enumeration ------------------------------------------------------------
 
@@ -648,7 +649,7 @@ async function runMain(limit: number | undefined): Promise<number> {
   let audited = 0
   let failed = 0
   let uncloned = 0
-  const { run } = await import('../src/run.ts')
+  const { run } = await import('../../src/run.ts')
 
   for (const repo of repos) {
     if (done.has(repo)) continue
@@ -712,81 +713,65 @@ function statusMain(): number {
 
 // --- Entry ------------------------------------------------------------------
 
-function stringFlag(argv: readonly string[], flag: string): string | undefined {
-  const at = argv.indexOf(flag)
-  if (at === -1) return undefined
-  const value = argv[at + 1]
-  if (value === undefined || value.startsWith('--')) throw new Error(`${flag} wants a value`)
-  return value
-}
-
-function numberFlag(argv: readonly string[], flag: string): number | undefined {
-  const at = argv.indexOf(flag)
-  if (at === -1) return undefined
-  const value = Number(argv[at + 1])
-  if (!Number.isInteger(value) || value <= 0) throw new Error(`${flag} wants a positive integer`)
-  return value
-}
-
 async function main(argv: readonly string[]): Promise<number> {
   const [command] = argv
   switch (command) {
     case 'enumerate':
-      return enumerateMain(numberFlag(argv, '--target') ?? 2000)
+      return enumerateMain(countFlag(argv, '--target') ?? 2000)
     case 'clone':
-      return cloneMain(numberFlag(argv, '--limit'))
+      return cloneMain(countFlag(argv, '--limit'))
     case 'run':
-      return runMain(numberFlag(argv, '--limit'))
+      return runMain(countFlag(argv, '--limit'))
     case 'discards': {
       // Imported on demand, like `run.ts` below: `enumerate` and `clone` have
       // no use for the analyser and they are what a long session spends its
       // time in.
-      const { discardsMain } = await import('./discovery-discards.ts')
-      return discardsMain(numberFlag(argv, '--limit'))
+      const { discardsMain } = await import('./discards.ts')
+      return discardsMain(countFlag(argv, '--limit'))
     }
     case 'findings': {
-      const { findingsMain } = await import('./discovery-findings.ts')
+      const { findingsMain } = await import('../jev/findings.ts')
       return findingsMain(
-        numberFlag(argv, '--per-block') ?? 60,
-        numberFlag(argv, '--per-repo') ?? 2,
-        numberFlag(argv, '--concurrency') ?? 10,
+        countFlag(argv, '--per-block') ?? 60,
+        countFlag(argv, '--per-repo') ?? 2,
+        countFlag(argv, '--concurrency') ?? 10,
         argv.includes('--dry-run'),
-        numberFlag(argv, '--blocks') ?? 3,
+        countFlag(argv, '--blocks') ?? 3,
       )
     }
     case 'claims': {
-      const { claimsMain } = await import('./discovery-claims.ts')
+      const { claimsMain } = await import('../jev/claims.ts')
       return claimsMain(
         stringFlag(argv, '--cause') ?? 'bare-word',
-        numberFlag(argv, '--sample') ?? 800,
-        numberFlag(argv, '--per-repo') ?? 2,
-        numberFlag(argv, '--concurrency') ?? 8,
+        countFlag(argv, '--sample') ?? 800,
+        countFlag(argv, '--per-repo') ?? 2,
+        countFlag(argv, '--concurrency') ?? 8,
         argv.includes('--dry-run'),
       )
     }
     case 'table': {
-      const { tableMain } = await import('./discovery-discards.ts')
+      const { tableMain } = await import('./discards.ts')
       return tableMain()
     }
     case 'sample': {
-      const { sampleMain } = await import('./discovery-discards.ts')
-      return sampleMain(numberFlag(argv, '--sample') ?? 20)
+      const { sampleMain } = await import('./discards.ts')
+      return sampleMain(countFlag(argv, '--sample') ?? 20)
     }
     case 'filter': {
-      const { filterMain } = await import('./discovery-filter.ts')
+      const { filterMain } = await import('../jev/filter.ts')
       return filterMain(
-        numberFlag(argv, '--limit'),
+        countFlag(argv, '--limit'),
         argv.includes('--dry-run'),
-        numberFlag(argv, '--concurrency') ?? 8,
+        countFlag(argv, '--concurrency') ?? 8,
       )
     }
     case 'families': {
-      const { familiesMain } = await import('./discovery-families.ts')
+      const { familiesMain } = await import('../jev/families.ts')
       return familiesMain(
-        numberFlag(argv, '--limit'),
+        countFlag(argv, '--limit'),
         argv.includes('--dry-run'),
-        numberFlag(argv, '--sample'),
-        numberFlag(argv, '--concurrency') ?? 8,
+        countFlag(argv, '--sample'),
+        countFlag(argv, '--concurrency') ?? 8,
       )
     }
     case 'status':

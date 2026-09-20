@@ -15,7 +15,7 @@ import {
   familyIndex,
   sampleOf,
   tabulate,
-} from '../scripts/discovery-discards.ts'
+} from '../scripts/discovery/discards.ts'
 
 const record = (cause: string, repo: string, text: string, exists = false): string =>
   JSON.stringify({

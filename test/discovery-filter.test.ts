@@ -7,13 +7,7 @@
  * describes that repository rather than the ecosystem.
  */
 import { describe, expect, it } from 'vitest'
-import {
-  inFlight,
-  QUESTIONS,
-  tabulate,
-  verdictsIn,
-  type Verdict,
-} from '../scripts/discovery-filter.ts'
+import { QUESTIONS, tabulate, verdictsIn, type Verdict } from '../scripts/jev/filter.ts'
 
 const row = (repo: string, path: string, kind: string, about = 0.9): Verdict => ({
   repo,
@@ -90,27 +84,5 @@ describe('reading a previous run back', () => {
   it('skips a torn line and anything not shaped like a verdict', () => {
     const text = `${JSON.stringify(row('a/one', 'A.md', 'dotfiles'))}\n{"repo":"b/tw\n{"repo":"c"}\n`
     expect(verdictsIn(text)).toHaveLength(1)
-  })
-})
-
-describe('running several at a time', () => {
-  it('keeps the order of the answers, whatever order they finish in', async () => {
-    const out = await inFlight([30, 1, 20, 2], 3, async (ms) => {
-      await new Promise((resolve) => setTimeout(resolve, ms))
-      return ms
-    })
-    expect(out).toEqual([30, 1, 20, 2])
-  })
-
-  it('never runs more than the width at once', async () => {
-    let live = 0
-    let peak = 0
-    await inFlight([...Array.from({ length: 20 }).keys()], 4, async () => {
-      live += 1
-      peak = Math.max(peak, live)
-      await new Promise((resolve) => setTimeout(resolve, 2))
-      live -= 1
-    })
-    expect(peak).toBeLessThanOrEqual(4)
   })
 })

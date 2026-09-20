@@ -13,9 +13,9 @@
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { DISCOVERY_DIR } from '../lib/paths.ts'
 
-const HERE = import.meta.dirname
-export const ROOT = join(HERE, '..', 'test', 'discovery')
+export const ROOT = DISCOVERY_DIR
 export const LIST = join(ROOT, 'repos.txt')
 export const REPOS_DIR = join(ROOT, 'repos')
 /** Which (facet, page) pairs have been spent. Disposable, like the clones. */

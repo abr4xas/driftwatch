@@ -23,7 +23,7 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **58 of 66 = 87.9%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — see below |
 | 7 | ≥ 1 true positive in validation | 8 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus/repos.ts`; no debt outstanding | **met** |
 
 Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. All six are true.
 
@@ -58,7 +58,7 @@ That sequence is the treadmill this document named in round three, running in pu
 
 That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **18**, and the two conditions that decide precision rest on **49 and 18 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
-~~**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`.~~ **Paid in round thirteen** and left standing here for six rounds — `scripts/corpus-repos.ts` records that the thirteen repos added then "also settle the two replacements owed for `course-video-manager` and `emdash`", and the header of this document has said "No replacement is outstanding" since. Two statements in one file disagreeing about a debt is drift in the document that records drift, and it was repeated as fact in rounds eighteen and nineteen before anyone checked. Corrected 2026-09-19.
+~~**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`.~~ **Paid in round thirteen** and left standing here for six rounds — `scripts/corpus/repos.ts` records that the thirteen repos added then "also settle the two replacements owed for `course-video-manager` and `emdash`", and the header of this document has said "No replacement is outstanding" since. Two statements in one file disagreeing about a debt is drift in the document that records drift, and it was repeated as fact in rounds eighteen and nineteen before anyone checked. Corrected 2026-09-19.
 
 What the sentence was about, for whoever reads this next: ADR-0006 condition 9 prices a rule derived from a validation repo's finding — that repo moves to calibration, and a new one has to join validation to keep the group's size honest. Both of these moved that way, both left clean, and both were replaced.
 
@@ -118,7 +118,7 @@ is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-p
 gives. The numbers the project holds itself to are in the condition table above.
 
 Every row below is derived from the committed snapshots in `snapshots/` and the `holdout` field in
-`scripts/corpus-repos.ts`, and the per-finding record is the table after it.
+`scripts/corpus/repos.ts`, and the per-finding record is the table after it.
 
 | Repo | Findings | True | False | Group |
 |---|---|---|---|---|
@@ -576,7 +576,7 @@ Worth fixing, because it made this round's accounting ambiguous.
 
 `docs/adr/0006` § Decision, condition 9: "if the **findings** or the discards of a validation repo are **inspected**, that repo moves to calibration".
 
-The comment on the `holdout` field in `scripts/corpus-repos.ts` says the opposite about half of it: "Classifying its findings **is** the measurement and does not contaminate; opening the repo to see what the tool discarded does."
+The comment on the `holdout` field in `scripts/corpus/repos.ts` says the opposite about half of it: "Classifying its findings **is** the measurement and does not contaminate; opening the repo to see what the tool discarded does."
 
 Taken literally the ADR moves a repo out the moment anyone reads its findings, which would make the group unmeasurable — classifying is the measurement. The code comment is the correct reading, and the line the rounds above actually applied is a third one, narrower than either: **classifying a finding is free; deriving a rule from it is not.** That is ordinary train/test leakage and it is what condition 9 exists to prevent. The ADR's wording should be brought in line with it.
 
@@ -914,7 +914,7 @@ The corpus caught a `fixable` false positive class **on its first run of a new c
 
 ### A counting error in the record, corrected here
 
-Rounds nine, ten and eleven cite the validation group as **19 of 19**, and the criterion table above said the same. The group has held **18** repos — `holdout: true` appears 18 times in `scripts/corpus-repos.ts`, and the header of this document has said 18 throughout, which is the figure `corpus-bookkeeping.test.ts` pins.
+Rounds nine, ten and eleven cite the validation group as **19 of 19**, and the criterion table above said the same. The group has held **18** repos — `holdout: true` appears 18 times in `scripts/corpus/repos.ts`, and the header of this document has said 18 throughout, which is the figure `corpus-bookkeeping.test.ts` pins.
 
 So it was a miscount, not a membership change, and it is corrected above rather than left standing. It changes no verdict: every validation repo produces zero false positives, so the percentage is 100% at either denominator. The historical rounds are left as written, because rewriting a measurement after the fact is worse than recording that its denominator was off by one.
 
