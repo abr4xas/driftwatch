@@ -736,6 +736,10 @@ async function main(argv: readonly string[]): Promise<number> {
       const { discardsMain } = await import('./discovery-discards.ts')
       return discardsMain(numberFlag(argv, '--limit'))
     }
+    case 'table': {
+      const { tableMain } = await import('./discovery-discards.ts')
+      return tableMain()
+    }
     case 'sample': {
       const { sampleMain } = await import('./discovery-discards.ts')
       return sampleMain(numberFlag(argv, '--sample') ?? 20)
@@ -762,7 +766,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|sample|families|filter|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|sample|families|filter|status>\n',
       )
       return 2
   }

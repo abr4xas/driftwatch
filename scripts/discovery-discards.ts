@@ -309,6 +309,70 @@ function recordOf(repo: string, index: RepoIndex, discard: Discard): DiscardReco
   }
 }
 
+/**
+ * Both tables over a `discards.jsonl` too large to read at once.
+ *
+ * Its own subcommand rather than part of the pass that writes the file for one
+ * reason: the collapse depends on `families.json`, and the family pass and the
+ * discard pass are hours apart. Recomputing the table is a minute; recomputing
+ * the discards is an hour.
+ *
+ * The file is streamed a line at a time because at 2533 repositories it is
+ * over a gigabyte, and `readFileSync` on it throws before it returns — a
+ * JavaScript string cannot hold it.
+ */
+export async function tableMain(): Promise<number> {
+  if (!existsSync(DISCARDS)) {
+    process.stderr.write(`${DISCARDS} is missing; run pnpm discovery discards first\n`)
+    return 2
+  }
+  const families = existsSync(FAMILIES) ? familyIndex(readFileSync(FAMILIES, 'utf8')) : new Map()
+  const raw = tallies()
+  const collapsed = tallies()
+  // One document per family per rule per text, exactly as `collapseToFamilies`
+  // decides it, kept as a set of keys rather than a list of records.
+  const seen = new Set<string>()
+  let lines = 0
+  let kept = 0
+
+  const { createReadStream } = await import('node:fs')
+  const { createInterface } = await import('node:readline')
+  const reader = createInterface({
+    input: createReadStream(DISCARDS, 'utf8'),
+    crlfDelay: Number.POSITIVE_INFINITY,
+  })
+  for await (const line of reader) {
+    if (line.trim() === '') continue
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(line)
+    } catch {
+      continue
+    }
+    const candidate = parsed as Partial<DiscardRecord>
+    if (typeof candidate.cause !== 'string' || typeof candidate.repo !== 'string') continue
+    const record = candidate as DiscardRecord
+    lines += 1
+    raw.add(record)
+    const family = families.get(`${record.repo}|${record.path}`)
+    if (family !== undefined) {
+      const key = `${family}|${record.cause}|${record.text}`
+      if (seen.has(key)) continue
+      seen.add(key)
+    }
+    kept += 1
+    collapsed.add(record)
+  }
+
+  process.stderr.write(
+    `\n${lines} discards, ${lines - kept} of them copies of another document ` +
+      `(${families.size} documents in families, ${FAMILIES})\n\n`,
+  )
+  process.stdout.write(`every discard\n\n${formatTable(raw.rows())}\n\n`)
+  process.stdout.write(`one document per family per rule\n\n${formatTable(collapsed.rows())}\n`)
+  return 0
+}
+
 export async function discardsMain(limit: number | undefined): Promise<number> {
   const repos = readList().slice(0, limit)
   const { run } = await import('../src/run.ts')
@@ -333,7 +397,13 @@ export async function discardsMain(limit: number | undefined): Promise<number> {
   let failed = 0
   let uncloned = 0
 
-  for (const repo of repos) {
+  for (const [at, repo] of repos.entries()) {
+    // Said out loud every fifty repositories. The pass takes the better part
+    // of an hour over 2533 clones and a silent hour is indistinguishable from
+    // a hung one.
+    if (at > 0 && at % 50 === 0) {
+      process.stderr.write(`  ${at}/${repos.length} repos, ${written} discards\n`)
+    }
     const dir = join(REPOS_DIR, slugOf(repo))
     if (!existsSync(join(dir, '.git'))) {
       uncloned += 1
