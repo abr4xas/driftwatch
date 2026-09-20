@@ -1,0 +1,277 @@
+/**
+ * Does grouping **draw** the classes, rather than pick from them?
+ *
+ * Ticket `01` asked Jev to choose a finding's class from the nine a person had
+ * already named, and it reproduced ten of eleven. That is a different question
+ * from this one, and the difference is the whole point: a model that can label
+ * against a taxonomy still cannot tell you the taxonomy is missing an entry.
+ *
+ * Here nothing names a class. Every pair of adjudicated findings is asked
+ * whether the two share a **root cause**, and the answers are unioned into
+ * groups. Then the groups are compared with the partition a person drew. If
+ * the emergent grouping recovers that partition, the same procedure can be
+ * pointed at the wild findings, where nobody has named anything and a large
+ * homogeneous group is a class worth a rule. If it lumps everything together,
+ * that is worth knowing at 666 pairs rather than at a hundred thousand.
+ *
+ *   pnpm jev:classes [--dry-run] [--concurrency N]
+ *
+ * **Nothing here writes a ruling or a class.** The output is a comparison in
+ * `test/discovery/corpus-classes.jsonl`; `CLASSIFICATION.md` is written by a person and stays
+ * that way.
+ */
+import type { Experimental_EvaluationQuestion } from 'ai'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { CORPUS_DIR, DISCOVERY_DIR } from '../lib/paths.ts'
+import { messageOf } from '../../src/core/errors.ts'
+import { countFlag } from '../lib/argv.ts'
+import { runPass } from '../lib/pass.ts'
+import { openJev, requireKey } from './ask.ts'
+import { slugOf } from '../corpus/repos.ts'
+import { type Row, rowsIn, windowAround } from './classify.ts'
+
+const CORPUS = CORPUS_DIR
+const OUT = join(DISCOVERY_DIR, 'corpus-classes.jsonl')
+
+/**
+ * Strict, and for the reason ticket `17` gives about merging.
+ *
+ * Joining two findings takes a distinction out of every count that follows,
+ * which is the same shape as a false positive in the tool. Splitting one that
+ * belongs together only leaves the taxonomy where it already was.
+ */
+export const MERGE_AT = 0.8
+
+/** What a judgement sees: two findings, each with the prose around it. */
+export type PairState = {
+  first: { repo: string; file: string; check: string; claim: string; prose: string }
+  second: { repo: string; file: string; check: string; claim: string; prose: string }
+}
+
+function sideOf(row: Row, prose: string): PairState['first'] {
+  const [path = ''] = row.location.split(':')
+  return { repo: row.repo, file: path, check: row.check, claim: row.claim, prose }
+}
+
+export function pairStateOf(a: Row, aProse: string, b: Row, bProse: string): PairState {
+  return { first: sideOf(a, aProse), second: sideOf(b, bProse) }
+}
+
+/**
+ * The question, and the `false` criterion is the one doing the work.
+ *
+ * Two findings from this corpus are alike in every superficial way — both are
+ * a path that a checker could not resolve, usually in a Markdown file, often
+ * `path/missing`. Asked whether they are "similar", everything is. What the
+ * taxonomy is actually made of is **why the tool was wrong**, so the criteria
+ * say that and give the contrast explicitly.
+ *
+ * Phrased as a statement, per the Noul guidance, and with no hint that a list
+ * of classes exists: naming even one would be handing over the answer the pass
+ * exists to see whether it can find.
+ */
+export const SAME_CAUSE: Experimental_EvaluationQuestion = {
+  type: 'boolean',
+  instructions:
+    'These two findings have the same underlying cause: whatever is true of one — why the ' +
+    'document reads the way it does, and why a checker did or did not resolve it — is true ' +
+    'of the other for the same reason. A maintainer fixing one would fix the other by the ' +
+    'same move, and a rule written for one would cover the other without being widened.',
+  criteria: {
+    true:
+      'One explanation covers both. The kind of string, the kind of document and the reason ' +
+      'it does or does not name a real file are the same; only the repository and the words ' +
+      'differ.',
+    false:
+      'Two explanations are needed. They may both be unresolved paths in Markdown, both ' +
+      'reported by the same check, and still be two different situations — a stand-in that ' +
+      'was never meant to exist is not a file produced by a build, and neither is a path ' +
+      'belonging to somebody else’s project. Superficial likeness is not a shared cause.',
+  },
+}
+
+/** The prose a person had when they ruled on the finding. */
+function proseOf(row: Row): string {
+  const [path = '', line = '1'] = row.location.split(':')
+  const absolute = join(CORPUS, 'repos', slugOf(row.repo), path)
+  if (!existsSync(absolute)) return ''
+  return windowAround(readFileSync(absolute, 'utf8'), Number(line))
+}
+
+export type Pair = { a: Row; b: Row }
+
+/** Every unordered pair, once. */
+export function pairsOf(rows: readonly Row[]): Pair[] {
+  const pairs: Pair[] = []
+  for (const [i, a] of rows.entries()) {
+    for (const b of rows.slice(i + 1)) pairs.push({ a, b })
+  }
+  return pairs
+}
+
+export type Judged = { a: number; b: number; probability: number; same: boolean }
+
+/**
+ * Groups, by union-find over the confirmed pairs.
+ *
+ * Transitive on purpose and for ticket `17`'s reason: if A and B share a cause
+ * and B and C do, the three are one class, and counting them as two would be
+ * the thing this pass is checking for, halved.
+ */
+export function groupsOf(ids: readonly number[], judged: readonly Judged[]): number[][] {
+  const parent = new Map<number, number>(ids.map((id) => [id, id]))
+  const find = (id: number): number => {
+    let at = id
+    while (parent.get(at) !== at) at = parent.get(at) ?? at
+    return at
+  }
+  for (const answer of judged) {
+    if (!answer.same) continue
+    const [x, y] = [find(answer.a), find(answer.b)]
+    if (x !== y) parent.set(x, y)
+  }
+  const byRoot = new Map<number, number[]>()
+  for (const id of ids) {
+    const root = find(id)
+    const bucket = byRoot.get(root)
+    if (bucket === undefined) byRoot.set(root, [id])
+    else bucket.push(id)
+  }
+  return [...byRoot.values()].map((group) => group.toSorted((p, q) => p - q))
+}
+
+/**
+ * The label a person gave a finding, for scoring.
+ *
+ * A true positive has no class — the column holds `—` — and two true positives
+ * are not "the same class" merely by both being real. They are scored by
+ * `check` plus the claim's shape instead, which is what `securego/gosec`'s four
+ * `name` mismatches have in common and what makes them the one multi-member
+ * group among the true findings.
+ */
+export function labelOf(row: Row): string {
+  if (row.ruling === 'false') return row.className
+  return `true:${row.check}:${row.repo}`
+}
+
+/** Pairs the person joined, pairs the model joined, and where they differ. */
+export function agreement(
+  rows: readonly Row[],
+  judged: readonly Judged[],
+): { together: number; joined: number; both: number; split: number; overJoined: number } {
+  const labels = new Map(rows.map((row) => [row.id, labelOf(row)]))
+  let together = 0
+  let joined = 0
+  let both = 0
+  let split = 0
+  let overJoined = 0
+  for (const answer of judged) {
+    const same = labels.get(answer.a) === labels.get(answer.b)
+    if (same) together += 1
+    if (answer.same) joined += 1
+    if (same && answer.same) both += 1
+    if (same && !answer.same) split += 1
+    if (!same && answer.same) overJoined += 1
+  }
+  return { together, joined, both, split, overJoined }
+}
+
+export function formatGroups(rows: readonly Row[], groups: readonly number[][]): string {
+  const byId = new Map(rows.map((row) => [row.id, row]))
+  const lines: string[] = []
+  for (const group of groups.toSorted((p, q) => q.length - p.length || (p[0] ?? 0) - (q[0] ?? 0))) {
+    const members = group.map((id) => byId.get(id)).filter((row) => row !== undefined)
+    const drawn = [...new Set(members.map((row) => labelOf(row)))]
+    lines.push(`group of ${group.length}  [person: ${drawn.join(', ')}]`)
+    for (const row of members) {
+      lines.push(
+        `    ${String(row.id).padStart(2)}  ${row.ruling.padEnd(5)} ${row.repo} — ${row.claim}`,
+      )
+    }
+  }
+  return lines.join('\n')
+}
+
+/**
+ * Jev through the AI Gateway, loaded on demand: it is an `evaluation` model, so
+ * `generateText` refuses it and the other scripts have no use for the import.
+ */
+async function jevAsk(): Promise<(state: PairState) => Promise<number>> {
+  const ask = await openJev()
+  return async (state) => (await ask(state, { sameCause: SAME_CAUSE })).probability('sameCause')
+}
+
+/** What the pass asks: two findings in, a probability out. */
+export type AskSameCause = (state: PairState) => Promise<number>
+
+export async function classesMain(
+  dryRun: boolean,
+  concurrency: number,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskSameCause,
+): Promise<number> {
+  if (!dryRun && askWith === undefined) requireKey('corpus-classes')
+  const rows = rowsIn(readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8'))
+  if (rows.length === 0) throw new Error('no per-finding rows in CLASSIFICATION.md')
+  const pairs = pairsOf(rows)
+  const drawn = new Set(rows.map((row) => labelOf(row)))
+  process.stderr.write(
+    `${rows.length} findings (${rows.filter((r) => r.ruling === 'false').length} false), ` +
+      `${drawn.size} groups a person drew, ${pairs.length} pairs\n`,
+  )
+
+  if (dryRun) {
+    const [first] = pairs
+    if (first !== undefined) {
+      process.stderr.write(
+        `${JSON.stringify(pairStateOf(first.a, proseOf(first.a), first.b, proseOf(first.b)), null, 2)}\n`,
+      )
+    }
+    return 0
+  }
+
+  const ask = askWith ?? (await jevAsk())
+  const { answered: judged } = await runPass({
+    items: pairs,
+    width: concurrency,
+    nameOf: (pair) => `${pair.a.id}~${pair.b.id}`,
+    answer: async (pair) => {
+      const probability = await ask(pairStateOf(pair.a, proseOf(pair.a), pair.b, proseOf(pair.b)))
+      return { a: pair.a.id, b: pair.b.id, probability, same: probability >= MERGE_AT }
+    },
+  })
+  writeFileSync(OUT, `${judged.map((v) => JSON.stringify(v)).join('\n')}\n`, 'utf8')
+
+  const groups = groupsOf(
+    rows.map((row) => row.id),
+    judged,
+  )
+  const score = agreement(rows, judged)
+  process.stderr.write(
+    `\n${judged.length} of ${pairs.length} judged; ${groups.length} groups against ` +
+      `${drawn.size} a person drew; ${OUT}\n\n`,
+  )
+  process.stdout.write(`${formatGroups(rows, groups)}\n\n`)
+  process.stdout.write(
+    `pairs a person put together: ${score.together}\n` +
+      `pairs Jev put together:     ${score.joined}\n` +
+      `  both agreed:              ${score.both}\n` +
+      `  person joined, Jev split: ${score.split}\n` +
+      `  Jev joined, person split: ${score.overJoined}\n\n` +
+      'Not a measurement of driftwatch. Nothing here writes a ruling or a class.\n',
+  )
+  return 0
+}
+
+if (process.argv[1] === import.meta.filename) {
+  try {
+    process.exitCode = await classesMain(
+      process.argv.includes('--dry-run'),
+      countFlag(process.argv, '--concurrency') ?? 8,
+    )
+  } catch (cause) {
+    process.stderr.write(`${messageOf(cause)}\n`)
+    process.exitCode = 2
+  }
+}

@@ -1,6 +1,6 @@
 import type { Claim } from '../core/types.ts'
 import type { CheckContext } from './check.ts'
-import { belongsToAbsentTool } from './foreign-tools.ts'
+import { belongsToAbsentTool, isPackageSpecifier } from './foreign-tools.ts'
 import { passesThroughGenerated } from './generated.ts'
 import { ignoredByGit } from './ignored.ts'
 import { hasDir, hasFile, someEntryEndsWith } from './repo-index.ts'
@@ -24,6 +24,7 @@ export type UnanswerableRule =
   | 'escapes-root'
   | 'outside-repo'
   | 'absent-tool'
+  | 'package-specifier'
   | 'generated'
   | 'ignored-by-git'
   | 'exists-as-suffix'
@@ -86,6 +87,12 @@ export function verifyPathClaim(claim: Claim, ctx: CheckContext): PathVerdict {
   // assistant. See `belongsToAbsentTool`.
   if (asWritten !== undefined && belongsToAbsentTool(ctx.index, asWritten)) {
     return { kind: 'unanswerable', rule: 'absent-tool' }
+  }
+
+  // A path whose first segment names a package this repo publishes. See
+  // `isPackageSpecifier`.
+  if (asWritten !== undefined && isPackageSpecifier(ctx.index, asWritten)) {
+    return { kind: 'unanswerable', rule: 'package-specifier' }
   }
 
   // A generated artifact is not tracked, so from the index it is

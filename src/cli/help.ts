@@ -17,6 +17,7 @@ Options
   --quiet                Show problems only, no summary
   --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
+  --migrate-config       Convert a .ts or .js config to YAML
   --version, -v          Print the version
   --help, -h             Print this help
 

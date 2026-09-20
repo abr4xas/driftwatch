@@ -89,6 +89,36 @@ const HEDGED = [
 ]
 
 /**
+ * The document says the path is **somewhere else** — another repository,
+ * another machine, a snapshot this one is not.
+ *
+ * Not a hedge. `HEDGED` is a document being uncertain; this is a document being
+ * certain in the other direction, which is why it reports under its own name.
+ *
+ * Real case (remix-run/react-router), the one ticket `18` was opened for:
+ * "Load these files from `github/gh-aw` (**they are not available locally**)",
+ * introducing a list of forty paths under `.github/aw/`, of which the
+ * repository has none.
+ *
+ * The phrasings are the ones the ecosystem actually writes, counted across a
+ * wide sample rather than invented: "not in this repo" leads by a distance,
+ * and `includes` matching means it covers "not in this repository" too. The
+ * negation is part of every entry on purpose — "available locally" on its own
+ * is a great many documents saying a thing *is* there. The counts are in
+ * `CLASSIFICATION.md` round twenty-three.
+ */
+const ELSEWHERE = [
+  'not in this repo',
+  'not part of this repo',
+  'not included in this repo',
+  'not available locally',
+  'no está en este repo',
+  'no esta en este repo',
+  'no está disponible localmente',
+  'no esta disponible localmente',
+]
+
+/**
  * The line is an **instruction to create** something, so the path is a
  * destination and not a claim of existence.
  *
@@ -110,6 +140,12 @@ const CREATE_IMPERATIVES = [
   // exist because nobody has written a skill yet, which is what the sentence
   // is for.
   'write',
+  // Real case (remix-run/react-router): "Save the resolved decisions to a
+  // scratch file at `tasks/rfc-decisions.md`." A scratch file is written by the
+  // agent following the instruction, so the path is a destination.
+  'save',
+  'guardar',
+  'guarda',
   'escribir',
   'escribe',
   'escribí',
@@ -227,7 +263,68 @@ function isConditional(segment: string): boolean {
   return CONDITIONAL.some((modal) => new RegExp(`\\b${modal}\\b`, 'u').test(lower))
 }
 
-const MARKERS = [...EXAMPLE, ...HEDGED]
+/**
+ * Which prose gate closed on a claim.
+ *
+ * `disclaims` used to answer yes or no, which is all the extractors need: a
+ * claim the prose disclaims is not emitted either way. Ticket `07` needs the
+ * name, because the table it asks for is **per rule** — "`conditional`
+ * suppressed forty candidates and thirty of them looked like real claims" is
+ * an answer, and "the prose suppressed forty" is not.
+ *
+ * `EXAMPLE` and `HEDGED` are reported apart even though `proseDisclaims`
+ * tests them together: they are two different arguments, and the file
+ * documents them as two.
+ */
+export type ProseReason =
+  | 'example'
+  | 'hedged'
+  | 'elsewhere'
+  | 'another-repo'
+  | 'create-instruction'
+  | 'conditional'
+  | 'external-root'
+  | 'creation-target'
+
+/**
+ * The hedge whose two halves a path can stand between.
+ *
+ * `HEDGED` is a list of literal strings, and a document writes ``If
+ * `.github/aw/instructions.md` exists`` — the marker split by the very thing
+ * it is hedging about. It was the one path of forty in
+ * `remix-run/react-router` whose author had guarded it explicitly, and it was
+ * reported like the rest. Three more turned up across the discovery corpus.
+ *
+ * A pattern rather than a transform of the line, and it reads the line with
+ * each span **masked to one character** rather than removed. Both halves of
+ * that came from getting it wrong:
+ *
+ * - Removing the spans manufactures markers nobody wrote. "Pick a name such
+ *   `foo` as the slug in `src/slug.ts`" becomes "such as" and silences a real
+ *   claim. A mask cannot join two phrases, because it is not whitespace.
+ * - Leaving the spans lets a marker inside one fire as prose. Real case
+ *   (edmundmiller/dotfiles): "Preserve `CREATE TABLE IF NOT EXISTS`" is SQL,
+ *   and it read as a hedge about `src/schema.sql` on the same line.
+ *
+ * What stands between the two words is anything short of a sentence ending, so
+ * a hedge a line wrap has split reads too. The `if` itself has to be a word in
+ * the prose rather than a segment of a path: without that, `src/if.ts` in one
+ * clause and "exists" in the next is a hedge nobody wrote.
+ */
+const HEDGED_SPLIT = [/(?<![\w/.-])if\b(?:(?![.!?;]\s)[\s\S]){0,80}?\bexists\b/u]
+
+/** One character per inline code span: not whitespace, not part of a word. */
+function withMaskedCode(text: string): string {
+  return text.replaceAll(/`[^`]*`/gu, '\u0001').toLowerCase()
+}
+
+function markerReason(lower: string, masked: string): ProseReason | undefined {
+  if (EXAMPLE.some((marker) => lower.includes(marker))) return 'example'
+  if (HEDGED.some((marker) => lower.includes(marker))) return 'hedged'
+  if (HEDGED_SPLIT.some((pattern) => pattern.test(masked))) return 'hedged'
+  if (ELSEWHERE.some((marker) => lower.includes(marker))) return 'elsewhere'
+  return undefined
+}
 
 /**
  * Whether a line **opens** an item of its own instead of continuing the
@@ -266,6 +363,106 @@ type ProseWindow = {
   text: string
   /** Where the claim starts inside `text`. Locates the sentence to test. */
   claimAt: number
+  /**
+   * Where the **sentence-scoped** rules may start reading, which is not always
+   * 0.
+   *
+   * A wrapped line is one sentence across two lines, so the window is both and
+   * the sentence may span them — that is what `segmentAround` is written for.
+   * A **lead-in** is not: it is a different sentence about a different thing,
+   * and it is in the window only so the markers can see it.
+   *
+   * Without this the lead-in rule silently re-scoped `CONDITIONAL` and
+   * `CREATE_IMPERATIVES` to the window, which the comment on `CONDITIONAL`
+   * states it must never be. A lead-in usually ends in a colon and
+   * `segmentAround` splits on `.!?`, so "You could restructure like this:"
+   * became part of every bullet's sentence and silenced all of them. The gate
+   * hung on the lead-in's punctuation.
+   */
+  sentenceFrom: number
+}
+
+/**
+ * The prose a discarded candidate sat in, for ticket `07`'s instrumentation.
+ *
+ * It is the **same** window `disclaimedBy` judges, deliberately: a table that
+ * says "`conditional` threw this away" beside a wider or narrower excerpt than
+ * the rule read would be evidence about a different rule. Exported here rather
+ * than recomputed in the extractor for the same reason.
+ */
+export function proseWindowAround(content: string, offset: number): string {
+  return lineAround(content, offset).text
+}
+
+/** A heading opens a new subject; a lead-in must not be looked for past one. */
+function isHeading(line: string): boolean {
+  return /^[\s>]*#{1,6}\s/u.test(line)
+}
+
+function indentOf(line: string): number {
+  return (/^\s*/u.exec(line)?.[0] ?? '').length
+}
+
+/**
+ * The line that **introduces the list** a bullet belongs to, if there is one.
+ *
+ * Real case (remix-run/react-router), a skill naming forty paths:
+ *
+ *     Load these files from `github/gh-aw` (they are not available locally).
+ *
+ *     - `.github/aw/agentic-chat.md`
+ *     - … thirty-nine more …
+ *
+ * Every bullet opens its own item, so `lineAround` stopped at the bullet and
+ * the sentence was never read. All forty were reported by a tool whose one
+ * relevant gate could not see the sentence that answers them. Ticket `18`.
+ *
+ * The walk is deliberately short, because this is the widest scope in the file
+ * after `externalRootSections` and width is what makes a gate swallow a
+ * document:
+ *
+ * - **Only from a bullet or a numbered step.** A table row is a sibling of the
+ *   row above it, not an item under a lead-in — that is the cyanheads/
+ *   git-mcp-server case `opensItsOwnItem` was written for, where an `e.g.` in
+ *   one row was silencing the next.
+ * - **At most one blank line**, which is how a list is written under its
+ *   lead-in. Two is a different paragraph.
+ * - **Never past a heading.** Section scope is `externalRootSections`, which
+ *   has its own argument for the width it takes.
+ */
+function leadInStart(content: string, listStart: number, indent: number): number | undefined {
+  let blanks = 0
+  let start = listStart
+  while (start > 0) {
+    const previousStart = content.lastIndexOf('\n', start - 2) + 1
+    const previous = content.slice(previousStart, start - 1)
+    if (previous.trim() === '') {
+      // One blank in the **whole walk**, not one per gap: a loose list, blank
+      // line between every item, loses its lead-in from the second item on.
+      // Arbitrary, and it errs towards reporting, which is the safe direction —
+      // so it is written down rather than widened without a measurement.
+      blanks += 1
+      if (blanks > 1) return undefined
+    } else if (isHeading(previous) || /^[\s>]*\|/u.test(previous)) {
+      // A heading starts a new subject; a table row's neighbours are siblings
+      // rather than a list under a lead-in.
+      return undefined
+    } else if (opensItsOwnItem(previous)) {
+      // Only a sibling is walked past. An item at another indent is another
+      // list, and its lead-in is not this one's.
+      if (indentOf(previous) !== indent) return undefined
+    } else {
+      // A line that is not an item is the lead-in, but only if it is at or
+      // outside the list's own indent. Indented further it is the **wrapped
+      // continuation of the item above**, which speaks for that item and not
+      // for this one. Caught by `saubakirov/KZ-IT-telegram-list`, where a
+      // sibling bullet's second line carries an "e.g." about its own paths.
+      return indentOf(previous) <= indent ? previousStart : undefined
+    }
+    start = previousStart
+    if (previousStart === 0) break
+  }
+  return undefined
 }
 
 function lineAround(content: string, offset: number): ProseWindow {
@@ -274,19 +471,42 @@ function lineAround(content: string, offset: number): ProseWindow {
   const lineEnd = end === -1 ? content.length : end
   const line = content.slice(lineStart, lineEnd)
 
-  if (lineStart === 0 || opensItsOwnItem(line)) {
-    return { text: line, claimAt: offset - lineStart }
+  if (opensItsOwnItem(line)) {
+    // A bullet or a step may be one of a list somebody introduced. A table row
+    // or a heading is not, and `leadInStart` refuses both.
+    const lead = /^[\s>]*(?:[-*+]|\d+[.)])\s/u.test(line)
+      ? leadInStart(content, lineStart, indentOf(line))
+      : undefined
+    if (lead === undefined) {
+      return { text: line, claimAt: offset - lineStart, sentenceFrom: 0 }
+    }
+    // The lead-in and this item, and **nothing in between**. Taking the whole
+    // slice would sweep in the sibling bullets, and one of them saying "for
+    // example" about its own path would silence this one — which is the
+    // cyanheads/git-mcp-server failure this module already knows about,
+    // arriving through a different door. Caught by `openai/codex`, where a
+    // bullet four lines up writes "(for example, `thread/read`)".
+    const leadLine = content.slice(lead, content.indexOf('\n', lead))
+    const text = `${leadLine}\n${line}`
+    return {
+      text,
+      claimAt: leadLine.length + 1 + (offset - lineStart),
+      // The sentence rules read this item and not the lead-in.
+      sentenceFrom: leadLine.length + 1,
+    }
   }
 
+  if (lineStart === 0) return { text: line, claimAt: offset - lineStart, sentenceFrom: 0 }
+
+  // A wrapped sentence: the window is both lines and so is the sentence.
   const previousStart = content.lastIndexOf('\n', lineStart - 2) + 1
-  return { text: content.slice(previousStart, lineEnd), claimAt: offset - previousStart }
+  return {
+    text: content.slice(previousStart, lineEnd),
+    claimAt: offset - previousStart,
+    sentenceFrom: 0,
+  }
 }
 
-/**
- * Whether the line surrounding the claim marks it as an example or leaves it
- * uncertain. The whole line is inspected, not just what comes before it: an
- * "(if exists)" arrives after the path.
- */
 /**
  * A section that **roots its paths somewhere else**, so the paths under it are
  * not claims about this repo.
@@ -339,6 +559,49 @@ function sectionBoundaries(content: string): number[] {
  * hundred claims would otherwise rescan itself two hundred times, and the
  * end-to-end budget is 500 ms.
  */
+/**
+ * The sections that say their paths are **somewhere else**.
+ *
+ * The same scope as `externalRootSections` and for the same reason: one
+ * sentence establishes where a run of paths lives, and the line-level rules see
+ * independent claims and report every one of them. There the root is a
+ * machine's home directory; here it is another repository.
+ *
+ * Real case (remix-run/react-router), the document ticket `18` was opened for:
+ * "Load these files from `github/gh-aw` (they are not available locally)",
+ * then forty paths under `.github/aw/` in two lists under one heading. The
+ * lead-in rule reaches the first list. The second list has a lead-in of its
+ * own that repeats none of it, and only the section reaches those.
+ *
+ * This is the widest gate in the file, so what bounds it is worth stating:
+ * **every `ELSEWHERE` marker carries its own negation.** "not in this repo",
+ * "not available locally" — none of them fires on a document merely mentioning
+ * another repository, which is the difference between this and a list of
+ * project names.
+ *
+ * Priced before it was kept, the way ticket `16` established; the audit is in
+ * `CLASSIFICATION.md` round twenty-three, where a count over driftwatch's own
+ * output belongs. What it found is that the section rule removes nothing the
+ * line-level rules had not already removed — a measured cost of zero, which is
+ * not the same as no cost, because the markers are rare and the rule rarely
+ * fires.
+ *
+ * Its real risk is a long section with one aside in it, and a document with no
+ * `#` heading is one section. That is not new: `externalRootSections` shares
+ * `sectionBoundaries` and has had the same property since it shipped.
+ */
+function elsewhereSections(content: string): Array<[number, number]> {
+  const bounds = sectionBoundaries(content)
+  const ranges: Array<[number, number]> = []
+  for (let i = 0; i + 1 < bounds.length; i += 1) {
+    const start = bounds[i] ?? 0
+    const end = bounds[i + 1] ?? content.length
+    const text = content.slice(start, end).toLowerCase()
+    if (ELSEWHERE.some((marker) => text.includes(marker))) ranges.push([start, end])
+  }
+  return ranges
+}
+
 function externalRootSections(content: string): Array<[number, number]> {
   if (!content.includes('`~/')) return []
   const bounds = sectionBoundaries(content)
@@ -351,10 +614,7 @@ function externalRootSections(content: string): Array<[number, number]> {
   return ranges
 }
 
-function inExternalRootSection(
-  ranges: ReadonlyArray<readonly [number, number]>,
-  offset: number,
-): boolean {
+function inSection(ranges: ReadonlyArray<readonly [number, number]>, offset: number): boolean {
   return ranges.some(([start, end]) => offset >= start && offset < end)
 }
 
@@ -383,16 +643,23 @@ function namesAnotherRepo(line: string, origin: string | undefined): boolean {
   return false
 }
 
-function proseDisclaims(window: ProseWindow, ctx: ProseContext = { origin: undefined }): boolean {
-  const lower = window.text.toLowerCase()
-  if (MARKERS.some((marker) => lower.includes(marker))) return true
-  if (namesAnotherRepo(window.text, ctx.origin)) return true
+function proseDisclaims(
+  window: ProseWindow,
+  ctx: ProseContext = { origin: undefined },
+): ProseReason | undefined {
+  // Markers read the prose; `namesAnotherRepo` reads the raw line, because the
+  // url it looks for is written as a link and not as prose.
+  const marker = markerReason(window.text.toLowerCase(), withMaskedCode(window.text))
+  if (marker !== undefined) return marker
+  if (namesAnotherRepo(window.text, ctx.origin)) return 'another-repo'
   // These two are tested against the sentence holding the claim, not the whole
   // window: see `segmentAround`. The imperative because what matters is how
   // *that* sentence opens; the conditional because it is the broadest rule
   // here and the window would carry it into a neighbouring claim.
-  const sentence = segmentAround(window.text, window.claimAt)
-  return isCreateInstruction(sentence) || isConditional(sentence)
+  const from = window.sentenceFrom
+  const sentence = segmentAround(window.text.slice(from), window.claimAt - from)
+  if (isCreateInstruction(sentence)) return 'create-instruction'
+  return isConditional(sentence) ? 'conditional' : undefined
 }
 
 /**
@@ -409,18 +676,86 @@ function proseDisclaims(window: ProseWindow, ctx: ProseContext = { origin: undef
  * scanned for `~/` roots once, and the end-to-end budget in `SPEC.md` § 9 is
  * 500 ms.
  */
+/**
+ * Every path the document **instructs the reader to create**, anywhere in it.
+ *
+ * `isCreateInstruction` asks whether the sentence holding the claim opens with
+ * an imperative. That is the common shape and it is not the only one: a
+ * document can say "Add `x`" in one bullet and refer to `x` two lines above and
+ * fifty lines below, and those other mentions are about the same destination.
+ *
+ * Real case (remix-run/react-router), which broke ADR-0006 condition 2:
+ *
+ *     4. Review whether `scripts/changes/whats-changed.md` is needed:
+ *        - Read `CHANGELOG.md` examples or `references/whats-changed.md` …
+ *        - **Add** `scripts/changes/whats-changed.md` only for features, …
+ *        - Do not add it for ordinary bug fixes …
+ *
+ * The two findings were on the "Review whether" line and on a "Use `…`" line
+ * further down. The document spends four bullets on when to create the file, so
+ * it plainly does not claim the file is there — and driftwatch offered to
+ * **autofix** it into `references/whats-changed.md`, a different file the
+ * document mentions one line above.
+ *
+ * Only backticked spans count. A path in prose without code formatting is not
+ * something this project extracts as a claim either, so widening here would
+ * collect strings no gate is ever asked about.
+ *
+ * What it costs is a document that says "Create `x`" in one place and asserts
+ * `x` exists in another. That document contradicts itself, and this project
+ * takes the quiet reading of a contradiction every time.
+ */
+function creationTargets(content: string): ReadonlySet<string> {
+  const targets = new Set<string>()
+  for (const line of content.split('\n')) {
+    // Sentence by sentence, because one line carries several: the laravel/vet
+    // case `segmentAround` was written for.
+    for (const sentence of line.split(/(?<=[.!?])\s+/u)) {
+      if (!isCreateInstruction(sentence)) continue
+      for (const match of sentence.matchAll(/`([^`\n]+)`/gu)) {
+        const value = (match[1] ?? '').trim()
+        if (value !== '') targets.add(value)
+      }
+    }
+  }
+  return targets
+}
+
 export type ProseGates = {
-  /** Whether the prose around `offset` says there is no claim here. */
-  disclaims(offset: number): boolean
+  /**
+   * The gate that says there is no claim around `offset`, or `undefined` when
+   * none of them does.
+   *
+   * It answers with a name rather than a boolean for one reason, and it is not
+   * the extractors': they only ever ask whether to emit the claim. See
+   * `ProseReason`.
+   */
+  disclaimedBy(offset: number): ProseReason | undefined
+  /**
+   * Whether the document instructs the reader to create this exact path, in
+   * any sentence. See `creationTargets`.
+   */
+  declaresDestination(text: string): boolean
 }
 
 export function proseGatesFor(content: string, origin: string | undefined): ProseGates {
   const externalRoots = externalRootSections(content)
+  const elsewhere = elsewhereSections(content)
+  // Both scans are done once per source rather than once per claim: a document
+  // with two hundred claims would otherwise read itself two hundred times, and
+  // `SPEC.md` § 9 budgets 500 ms end to end.
+  const destinations = creationTargets(content)
   return {
-    disclaims(offset) {
+    declaresDestination(text) {
+      return destinations.has(text)
+    },
+    disclaimedBy(offset) {
       // Section first, then line: the section scope is the broader answer, and
       // it is a lookup against a list computed once.
-      if (inExternalRootSection(externalRoots, offset)) return true
+      if (inSection(externalRoots, offset)) return 'external-root'
+      // Section scope before the line rules, like the one above it: it is the
+      // broader answer and it is a lookup against a list computed once.
+      if (inSection(elsewhere, offset)) return 'elsewhere'
       return proseDisclaims(lineAround(content, offset), { origin })
     },
   }

@@ -24,18 +24,20 @@ They share a shape: **the document is not asserting that the path exists.** It a
 
 Measured over **66 public repositories** pinned to a commit — `next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable` and others, in nine languages — running over the context files their authors wrote without knowing driftwatch exists.
 
-**26 findings: 20 true, 6 false.** The ratio is the least useful number here, so these are the numbers the project holds itself to:
+**37 findings: 27 true, 10 false.** The ratio is the least useful number here, so these are the numbers the project holds itself to:
 
-- **61 of the 66 repos produce no false positive at all** — 92.4%. Over the validation group alone, 90.6%.
-- **No repo sees more than 2**, and **the one autofixable finding is correct.**
+- **58 of the 66 repos produce no false positive at all** — 87.9%, **below the 90% bar**. Over the validation group alone, 29 of 32 = 90.6%, above it.
+- **No repo sees more than 2**, and **all six autofixable findings are correct.**
+
+The first bar is not met and that is said here rather than in a file nobody reads. It has not been met since the corpus widened to the other skills roots: three classes of false positive were left open on purpose and three previously quiet repositories joined the count, while nothing regressed in the code. The out-of-sample half — the only number measured on repositories never used to derive a rule — still holds.
 
 That last number is the one to read sceptically, and the project reads it that way: across all 66 repositories `--fix` would apply **one** edit. It was checked by hand at the level of the edit and not only of the finding — the document is one directory out of date and the rewrite is the one a maintainer would have made — but a floor met on a sample of one is proven once and unproven at scale. More repositories is the only thing that moves it.
 
-Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one. It carries 12 of the 26 findings.
+Thirty-two of those repos are a **validation group**: added after the heuristics were frozen and never used to derive one. It carries 16 of the 37 findings.
 
 ## The bar, and why it is two numbers
 
-The bar is **90% of repos producing zero false positives**, over the whole corpus and over the validation group alone, with **no single repo above 2** and **no autofixable false positive at all**. All three hold — two of them were broken four rounds ago and the repair is written up finding by finding in [`test/corpus/CLASSIFICATION.md`](../../test/corpus/CLASSIFICATION.md), along with the five false positives still open and what closing each would cost.
+The bar is **90% of repos producing zero false positives**, over the whole corpus and over the validation group alone, with **no single repo above 2** and **no autofixable false positive at all**. Two of the three hold; the whole-corpus half of the first does not, and what to do about it is being decided in the open rather than by adjusting the bar. The repairs of the other two are written up finding by finding in [`test/corpus/CLASSIFICATION.md`](../../test/corpus/CLASSIFICATION.md), along with the five false positives still open and what closing each would cost.
 
 Two bars rather than one aggregate, because they measure different things: how many users would see noise at all, and how bad it gets for the unlucky one. A single ratio hides both — and the aggregate ratio *was* the criterion until growing the validation group took it from 100% to 37.5% with nothing regressing in the code, because fixing a validation false positive deletes the observation that lowered it. A criterion that cannot be met by improving the tool is measuring the wrong thing, so [ADR-0009](../adr/0009-precision-is-counted-in-quiet-repos.md) replaced it.
 

@@ -1,7 +1,7 @@
 # block/goose
 
-sources: 5
-errors: 0
+sources: 6
+errors: 1
 warnings: 0
 fixable: 0
 
@@ -11,6 +11,7 @@ agents-md  AGENTS.md
 claude-md  CLAUDE.md
 agents-md  documentation/AGENTS.md
 claude-md  documentation/CLAUDE.md
+skill  evals/harbor/.agents/skills/compare-tasks/SKILL.md
 
 ## findings
-(none)
+evals/harbor/.agents/skills/compare-tasks/SKILL.md:94:60  [path/missing] inline-code  agent/goose.txt

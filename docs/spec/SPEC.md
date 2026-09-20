@@ -26,11 +26,17 @@ By default, from the repo root (the directory holding `.git`, or the cwd if ther
 |---|---|
 | `CLAUDE.md`, `CLAUDE.local.md` (in any directory) | `claude-md` |
 | `AGENTS.md` (in any directory) | `agents-md` |
-| `.claude/skills/**/SKILL.md` | `skill` |
+| `.claude/`, `.agents/`, `.cursor/`, `.codex/`, `.github/`, `.opencode/` + `skills/**/SKILL.md` | `skill` |
 | `.claude/agents/*.md` | `subagent` |
 | `.claude/commands/**/*.md` | `command` |
 | `.cursor/rules/**/*.mdc`, `.cursorrules` | `cursor-rule` |
 | `.github/copilot-instructions.md` | `copilot` |
+
+**On the skills roots.** There is no single install location and `.claude/skills/` is not the busiest one. `npx skills add` writes to `.agents/skills/` by default — the "universal" target covering Amp, Cline, Codex, Cursor, GitHub Copilot, Gemini CLI, Kilo, Kimi, OpenCode, Warp and Zed among others — and offers fifty-odd more behind a picker, including `.aider-desk/skills`, `.augment/skills`, `.bob/skills`, `data/skills`, and a bare `skills/` for OpenClaw. The corpus agrees: 83 `SKILL.md` files under `.agents/skills/` against 32 under `.claude/skills/`.
+
+Six roots are read today. The rest are a deliberate omission rather than an oversight: each root added audits more files in every repository that has one, which moves corpus snapshots and has to be priced against that diff (ADR-0007). They are taken one at a time, with the measurement in hand.
+
+What that measurement should count is **repositories, not files**. `.flue/skills/` holds eleven `SKILL.md` files — more than any other candidate root — and all eleven are in one project, which is the same project in the certification corpus and the only one of 700 repositories sampled from the wider ecosystem. A file count cannot tell a convention from a project. `.github/skills/` arrived last for the same reason inverted: it is the most widely used of the candidates, and what held it was a defect it exposed rather than a cost of its own.
 
 Rules:
 - `.gitignore` is respected. `node_modules`, `dist`, `build`, `.next`, `vendor`, `target` are never walked into.
@@ -80,12 +86,11 @@ Nor is a command claimed at all when:
 If the script does not exist but there is one with a similar name (edit distance ≤ 2), it is suggested and autofixable.
 
 #### `skill/frontmatter`
-Structural problems in a `SKILL.md` frontmatter:
-- Missing `name` or `description`.
-- `name` does not match the containing directory's name.
-- `name` is not kebab-case.
-- `description` empty or shorter than 20 characters (a poor description means the skill never gets invoked).
-- Unknown keys in the frontmatter.
+A `SKILL.md` whose `name` is not the directory it lives in — the directory was renamed and the frontmatter did not follow.
+
+Reported with the two shapes that make the question unanswerable: frontmatter missing outright, and frontmatter with no `name` or `description` (or an empty one). Those say "could not look", not "is malformed".
+
+**The format itself is not checked**, and that is § Non-goals in `BRIEF.md` rather than an omission: a `name` in snake_case, a short `description` and a key the format does not list are all wrong the day they are written, and this tool reports what a repository has since made false. `skills-ref validate` is what answers the other question.
 
 #### `link/broken`
 A relative Markdown link to a file that does not exist, or to an anchor (`#section`) that does not exist in the target file.
@@ -140,6 +145,7 @@ Options
   --quiet                Show problems only, no summary
   --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
+  --migrate-config       Convert a .ts or .js config to YAML
   --version, -v
   --help, -h
 ```
@@ -175,8 +181,17 @@ Formatting rules:
 - Colors: red for errors, yellow for warnings, dim for suggestions. Turned off if `NO_COLOR` is set or if stdout is not a TTY.
 - The quoted fragment is truncated to 40 characters with `…`.
 - With no problems: `✓ 14 files · no drift · 210ms`.
+- A document git lists and the working tree does not have gets a dim line **above** the summary, because it qualifies everything the summary says:
+
+  ```
+  skipped CLAUDE.md: a symlink whose target is not in the working tree
+  ```
+
+  Dim, and with no symbol: `✗ ⚠ ✓` are the three this format allows, and none of them fits something that is not a finding.
 - No emojis. Only the `✗ ⚠ ✓` symbols.
 - When autofixes are available, close with: `3 fixable with --fix`.
+
+`--quiet` drops the summary and keeps the skipped-source lines: a document that was found and not opened is nearer a problem than it is to the summary, and it is the one line that changes how the list above should be read.
 
 `--quiet` and colour are `pretty` concepts. The other three formats ignore both: a JSON document without its summary is not quieter, it is invalid against its own contract.
 
@@ -187,11 +202,14 @@ Emits one native GitHub Actions annotation per finding, and **nothing else** —
 ::error file=CLAUDE.md,line=12,col=4,endColumn=19,title=path/missing::path does not exist → src/auth/index.ts?
 ```
 
+Skipped sources are **not** emitted here, and that is the one format where they are not: the job log is the transport, so anything that is not an annotation about a finding is noise in the output. They reach CI through `sarif` instead.
+
 `::warning` for a warning-severity finding. `title` carries the check id, which is the only stable label to group and search by. Property values escape `%`, `\r`, `\n`, `:` and `,`; the message escapes the first three. A run with no findings emits nothing at all.
 
 ### `sarif` format
 SARIF 2.1.0, for upload to GitHub Code Scanning. One `run`, with:
 
+- `invocations[0].toolExecutionNotifications` — one `note` per skipped source, present only when there is one. SARIF's own notion of "something the run could not do", and this is the format that feeds Code Scanning, which is where an incomplete checkout would otherwise be an entirely silent green.
 - `tool.driver` carrying `name`, `informationUri`, `semanticVersion` and **`rules[]`** — one rule per check that *ran*, with its title, its description and a `helpUri` into `docs/guide/checks.md`. The rules are what make an alert readable a month after it was raised.
 - `results[]` with `ruleId`, `level`, `message.text` and a physical location resolved against `%SRCROOT%`.
 - `fixes[]`, SARIF's own, under `--fix --dry-run`. See § 6 for why only then.
@@ -209,7 +227,7 @@ Stable contract. Breaking changes only on a major.
   "version": 1,
   "root": "/abs/path/to/repo",
   "durationMs": 340,
-  "summary": { "sources": 14, "claims": 212, "errors": 4, "warnings": 1, "fixable": 3 },
+  "summary": { "sources": 14, "claims": 212, "skipped": 0, "errors": 4, "warnings": 1, "fixable": 3 },
   "findings": [
     {
       "check": "path/missing",
@@ -228,6 +246,27 @@ Stable contract. Breaking changes only on a major.
 
 `file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line.
 
+### Sources that were found and not read
+
+`summary.skipped` counts the documents git lists that the working tree does not have, and a top-level `skipped[]` names them:
+
+```jsonc
+"skipped": [{ "path": "CLAUDE.md", "reason": "absent-from-worktree" }]
+```
+
+`summary.skipped` is **always present**, at zero when there is nothing to report. A consumer that has to tell "nothing was skipped" from "this version does not report skips" is a consumer that will get it wrong.
+
+Two `reason` values, split by what was **observed** rather than by what is suspected:
+
+| `reason` | What was checked |
+|---|---|
+| `dangling-symlink` | `lstat` succeeds: the entry is there and its target is not |
+| `absent-from-worktree` | the path itself is gone — an uninitialised submodule, a `git rm --cached`, or a file deleted while the run was in flight, and nothing can tell those apart |
+
+Only a read that fails with `ENOENT` becomes a skip. A permission error, a directory where a file was expected, an I/O fault: none of those is a fact about a checkout anybody can act on, and admitting them would turn every future read bug into silence.
+
+They are not findings and they do not move the exit code. Nothing in the document went stale, so it is not drift; the tool did not fail, so it is not a tool failure. What they are is the difference between "no drift" and "no drift in the files I could open".
+
 ### The fix plan
 
 Two additions, and they are not symmetric:
@@ -243,14 +282,24 @@ Adding an optional field is not a breaking change. `version` stays `1`.
 
 ## 7. Configuration
 
-Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.ts`, `.js`, `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
+Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
 
-**`--init` writes the YAML one**, because driftwatch audits repositories in any language and a `.ts` config assumes the repo speaks TypeScript. YAML also holds the comments the generated file is mostly made of, which JSON cannot.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` were accepted until 2026-09-18 and are not loaded any more: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch executes code it finds in a repository. They keep their place in the lookup order and **fail** with the conversion command in the message, because a withdrawn format that is silently skipped would let the next candidate load while the author believes the module is in effect. `driftwatch --migrate-config` converts one to YAML.
+
+**`--init` writes the YAML one**, because driftwatch audits repositories in any language, and unlike JSON it holds the comments the generated file is mostly made of.
+
+**`skillRoots` is additive and that is the point.** The built-in roots — `.claude/skills`, `.agents/skills`, `.cursor/skills`, `.codex/skills`, `.github/skills`, `.opencode/skills` — reach 1103 of the 2793 `SKILL.md` files in a sample of 700 repositories, and 74 of the 106 repositories holding one elsewhere put it in a bare `skills/`, which is not a `<root>/skills` pair and cannot be expressed as one. So the key takes **containers**: a directory whose children are skill directories, at any depth.
+
+A list that *replaced* the built-ins would let one misspelling silence the check across a repository, and silence is what this key exists to fix — an install root nobody has heard of is a repository audited to a green run that means nothing. A typo costs the entry and nothing else.
 
 ```yaml
 # What --init writes, minus the commentary.
 sources:
   - 'docs/agent-notes.md'
+
+# Directories whose children are skill directories, on top of the built-in ones
+skillRoots:
+  - 'skills'
 
 ignore:
   - '**/fixtures/**'
@@ -268,30 +317,20 @@ knownPaths:
 staleThreshold: 15
 ```
 
-The same config as a `.ts` file, which is what a TypeScript repo may prefer:
+The same config as JSON, for a repository that would rather not add a YAML file:
 
-```ts
-import { defineConfig } from 'driftwatch'
-
-export default defineConfig({
-  // Additional sources beyond the ones discovered by default
-  sources: ['docs/agent-notes.md'],
-
-  // Exclude from discovery
-  ignore: ['**/fixtures/**'],
-
-  // Adjust severity per check: 'error' | 'warning' | 'off'
-  checks: {
-    'dep/missing': 'off',
-    'stale/churn': 'warning',
-    'symbol/missing': 'error',
+```json
+{
+  "sources": ["docs/agent-notes.md"],
+  "ignore": ["**/fixtures/**"],
+  "checks": {
+    "dep/missing": "off",
+    "stale/churn": "warning",
+    "symbol/missing": "error"
   },
-
-  // Aliases for paths that exist but not on disk (e.g. build outputs)
-  knownPaths: ['dist/**', '.next/**'],
-
-  staleThreshold: 15,
-})
+  "knownPaths": ["dist/**", ".next/**"],
+  "staleThreshold": 15
+}
 ```
 
 ### Inline ignores
@@ -318,6 +357,10 @@ Autofixable:
 - `path/missing` with a single candidate by basename.
 - `script/missing` with a single script at edit distance ≤ 2.
 - `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's). Withheld when the directory name is not itself kebab-case: applying it would trade the finding for the kebab-case one, and a fix whose output is a finding is not a fix.
+
+  Withheld, equally, when the directory is longer than 64 characters, which is the [specification](https://agentskills.io/specification.md)'s limit and what `skills-ref validate` enforces. That limit is a **gate and not a rule**: an over-long `name` is reported nowhere, because it is as wrong the day it is written as a year later and this tool is about documents that no longer match their repository. It still has to be known here, or the fix hands somebody an edit that makes their skill invalid.
+
+  Verified against the ecosystem rather than against the specification alone, because ADR-0006 condition 2 admits no false positive here at any rate (ticket `10`). `skills-ref validate` — the reference implementation the specification names — rejects the unfixed skill on exactly this rule and calls the fixed one **valid**; the alternative resolution, renaming the directory to match the name, leaves it invalid. `npx skills` was observed to install by the source **directory** and leave the frontmatter untouched, and Claude Code's command name is the directory per its documentation, so rewriting `name` changes no identity anything invokes by.
 - `link/broken` with a single candidate target.
 
 Never autofixable: any tier 2 check, and any case with more than one candidate.
@@ -342,3 +385,5 @@ Budget, measured on a repo of 5,000 files with 20 sources:
 | **Total end-to-end** | **< 500 ms** |
 
 CLI cold start (require + arg parsing) has to stay under 80 ms. That rules out heavy dependencies on the main path: no `typescript`, `ts-morph` or `esbuild` loaded eagerly.
+
+**How these are measured.** The budgets are asserted in the test suite, which runs one worker per test file — so a single wall-clock sample measures the scheduler alongside the code. Each budget is therefore the **fastest of several runs** (`test/helpers/budget.ts`): contention only ever adds time, so the minimum converges on what the code costs with the machine to itself, and work that genuinely exceeds a budget has no run under it. Raising a budget because it failed is not an option; that is how a budget stops being one.

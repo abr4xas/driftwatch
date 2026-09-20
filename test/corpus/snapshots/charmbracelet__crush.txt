@@ -1,11 +1,13 @@
 # charmbracelet/crush
 
-sources: 4
+sources: 6
 errors: 0
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .agents/skills/builtin-skills/SKILL.md
+skill  .agents/skills/shell-builtins/SKILL.md
 agents-md  AGENTS.md
 agents-md  internal/cmd/stats/AGENTS.md
 agents-md  internal/oauth/callback/AGENTS.md

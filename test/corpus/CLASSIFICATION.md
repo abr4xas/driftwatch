@@ -2,28 +2,50 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 26 findings.**
+Corpus: **66 public repos pinned to a commit, 37 findings.**
+
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **37 findings, 27 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, and round twenty-six closed one class and measured another away.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 65 sources, 12 findings, 8 true and 4 false.**
+Validation group measurement: **32 repos, 71 sources, 16 findings, 12 true and 4 false.**
+
+Round eighteen added two sources to the validation group and **no findings**: all 48 of its new findings landed in calibration. The validation measurement is unchanged, which is why the conditions below can still be read at all.
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 14 |
+| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 19 |
 | 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
 | 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
 | 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | 61 of 66 = **92.4%**; validation **29 of 32 = 90.6%** | **met**, repaired in round 16 |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **58 of 66 = 87.9%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — see below |
 | 7 | ≥ 1 true positive in validation | 8 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
-| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus-repos.ts`; no debt outstanding | **met** |
+| 9 | Contamination rule encoded | `holdout` field in `scripts/corpus/repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **1**, of which **0 are false**.
+Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. All six are true.
 
-**All nine conditions are met**, on 66 repos with 32 in validation and 12 validation findings — four times the mass the M1 certification rested on.
+**Condition 6 is not met, and was not noticed.** Eight of the 66 repositories carry a false
+positive, not five: round eighteen opened three classes that were deliberately left open — the
+`+types/` placeholder and two anchors in `vercel/next.js`, `app/entry.server.tsx` in
+`remix-run/react-router`, a runtime log in `block/goose` — and those three repositories joined
+the count without anyone dividing again. Round twenty-one closed with "33 findings, 11 false"
+and the eleven were already spread across eight repositories.
+
+Nothing regressed in the code. The numerator grew while the denominator stood still, which is
+the same mechanism [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
+records, arriving from the other direction. **The validation half still holds at 90.6%**, so
+the out-of-sample measurement — the only one ADR-0009 says means anything — is unaffected.
+
+What to do about it is ticket `20`, and it is deliberately not decided here: `ROADMAP.md` says
+tune the heuristics or accept that the check does not get there and say so, and the one thing
+forbidden is discovering a reason why 87.9% was always acceptable. The other eight conditions
+are met.
+
+The table above is now derived from the per-finding rows rather than carried forward by hand,
+and `corpus-bookkeeping.test.ts` holds it to them.
 
 Four rounds happened on 2026-09-10 after M2's checks landed, and they are worth reading together, because two of them broke conditions and two repaired them:
 
@@ -36,7 +58,9 @@ That sequence is the treadmill this document named in round three, running in pu
 
 That sentence was also true on 2026-09-09 and did not survive contact with fifteen more repositories, so it is worth saying what is different now. The corpus has grown from 34 repos to **49**, the validation group from 8 to **18**, and the two conditions that decide precision rest on **49 and 18 repos** rather than on three findings from a single root cause. Seven rounds of measurement have added twenty-one findings' worth of evidence and closed seven false-positive classes.
 
-**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`. Round five's warning does not apply to either: that round's 100% was flattered by the failing repo leaving the group, and both of these leave **clean**, fixed rather than removed. Validation reads 100% with them or without them.
+~~**Two replacement validation repos are owed**, for `mattpocock/course-video-manager` and `emdash-cms/emdash`.~~ **Paid in round thirteen** and left standing here for six rounds — `scripts/corpus/repos.ts` records that the thirteen repos added then "also settle the two replacements owed for `course-video-manager` and `emdash`", and the header of this document has said "No replacement is outstanding" since. Two statements in one file disagreeing about a debt is drift in the document that records drift, and it was repeated as fact in rounds eighteen and nineteen before anyone checked. Corrected 2026-09-19.
+
+What the sentence was about, for whoever reads this next: ADR-0006 condition 9 prices a rule derived from a validation repo's finding — that repo moves to calibration, and a new one has to join validation to keep the group's size honest. Both of these moved that way, both left clean, and both were replaced.
 
 What remains unfixed is two false positives: a third-party convention kept by design, and one **not reachable by any prose rule**.
 
@@ -58,43 +82,133 @@ And there is an irony worth recording: [ADR-0006](../../docs/adr/0006-the-m1-pre
 
 **What to do about it:** loosen nothing and invent no new threshold. What is needed is more finding mass, and the natural route is M2: every new check (`script/missing`, `link/broken`, `skill/frontmatter`, `frontmatter/invalid`) produces its own findings over the same corpus. Once the validation group reaches ~10 findings, condition 6 becomes a measurement again rather than a formality. Until then, the honest number to cite is not "100% precision" but "3 of 3, with 7 of 8 repos silent".
 
+## When a condition fails
+
+Written on 2026-09-19, after condition 6 was found below its bar and **not** before — which is
+the point of writing it down now, so that the next one is decided before the number is in view.
+Ticket `05` asked for this and was overtaken; this is what it asked for, a round late.
+
+`ROADMAP.md` already states the rule: *tune the heuristics, or accept that the check does not
+get there and say so.* What it does not say is the order, and the order is where the mistake
+lives.
+
+1. **Divide again before anything else.** A condition is a fraction. Both halves move, and the
+   one that moved is not always the one being discussed. `corpus-bookkeeping.test.ts` now
+   derives conditions 6 from the per-finding rows so this step cannot be skipped.
+2. **Say the number, in public, before deciding what to do about it.** `PRODUCT.md` and
+   `docs/guide/precision.md` carry the figure a user reads. They are updated in the same commit
+   that finds the failure, not in the one that fixes it.
+3. **A rule may only be derived from evidence that is independent of the condition.** Closing a
+   false-positive class is the intended remedy — ADR-0009 chose this shape precisely because
+   improving the tool improves the number. But the justification has to stand without the
+   condition: measured over the discovery corpus before and after, with the findings diffed,
+   the way ticket `16` established. If the only argument for a rule is that it restores a bar,
+   it is not an argument.
+4. **The threshold does not move.** Not down, not re-scoped to the half that still passes, not
+   redefined as "the one that was always meaningful". ADR-0009 § "The threshold is not a priori"
+   admits 90% was chosen with 93.2% and 88.89% in view. That admission is survivable once.
+5. **If no rule earns its place, the criterion is unmet and stays unmet**, recorded here and in
+   `ROADMAP.md`, until one does. An unmet condition carried honestly is worth more than a met
+   one nobody believes.
+
 ## The full corpus
 
-The corpus produces **26 findings, 20 true and 6 false**, so 76.9% aggregate — and the aggregate is
-the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
+The corpus produces **37 findings, 27 true and 10 false**, so 73.0% aggregate — and the aggregate
+is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
 Every row below is derived from the committed snapshots in `snapshots/` and the `holdout` field in
-`scripts/corpus-repos.ts`. The verdicts are the ones recorded in the rounds named in the last column;
-no finding appears here without one.
+`scripts/corpus/repos.ts`, and the per-finding record is the table after it.
 
-| Repo | Findings | True | False | Group | Verdict recorded in |
-|---|---|---|---|---|---|
-| `tursodatabase/turso` | 4 | 4 | 0 | calibration | rounds 8, 12 |
-| `openai/codex` | 3 | 3 | 0 | calibration | round 1 |
-| `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | **validation** | round 8 |
-| `1amageek/SwiftAgent` | 2 | 2 | 0 | **validation** | round 13 |
-| `raphaelmansuy/edgecrab` | 2 | 0 | 2 | **validation** | round 13 |
-| `fancy1108/Clutch` | 2 | 1 | 1 | **validation** | round 16 |
-| `Endle/fireSeqSearch` | 1 | 1 | 0 | **validation** | rounds 13, 17 |
-| `CrossPaste/crosspaste-desktop` | 1 | 1 | 0 | **validation** | round 13 |
-| `northword/zotero-format-metadata` | 1 | 0 | 1 | **validation** | round 13 |
-| `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration | round 1 |
-| `calcom/cal.com` | 1 | 1 | 0 | calibration | round 1 |
-| `colinhacks/zod` | 1 | 1 | 0 | calibration | round 10 |
-| `emdash-cms/emdash` | 1 | 1 | 0 | calibration | rounds 6, 8 |
-| `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration | rounds 6, 7 |
-| `saubakirov/KZ-IT-telegram-list` | 1 | 0 | 1 | calibration | round 13 |
-| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration | round 3 |
-| the other 50 | 0 | — | — | — | — |
+| Repo | Findings | True | False | Group |
+|---|---|---|---|---|
+| `openai/codex` | 5 | 5 | 0 | calibration |
+| `securego/gosec` | 4 | 4 | 0 | validation |
+| `tursodatabase/turso` | 4 | 4 | 0 | calibration |
+| `modelcontextprotocol/typescript-sdk` | 3 | 3 | 0 | validation |
+| `remix-run/react-router` | 3 | 1 | 2 | calibration |
+| `vercel/next.js` | 3 | 1 | 2 | calibration |
+| `1amageek/SwiftAgent` | 2 | 2 | 0 | validation |
+| `fancy1108/Clutch` | 2 | 1 | 1 | validation |
+| `raphaelmansuy/edgecrab` | 2 | 0 | 2 | validation |
+| `block/goose` | 1 | 0 | 1 | calibration |
+| `calcom/cal.com` | 1 | 1 | 0 | calibration |
+| `cloudflare/workers-sdk` | 1 | 1 | 0 | calibration |
+| `colinhacks/zod` | 1 | 1 | 0 | calibration |
+| `CrossPaste/crosspaste-desktop` | 1 | 1 | 0 | validation |
+| `emdash-cms/emdash` | 1 | 1 | 0 | calibration |
+| `Endle/fireSeqSearch` | 1 | 1 | 0 | validation |
+| `mattpocock/course-video-manager` | 1 | 1 | 0 | calibration |
+| `northword/zotero-format-metadata` | 1 | 0 | 1 | validation |
+| `saubakirov/KZ-IT-telegram-list` | 1 | 0 | 1 | calibration |
+| `vercel-labs/marketing-team-eve-template` | 1 | 0 | 1 | calibration |
 
 **`github/spec-kit` is no longer in this table.** It carried the corpus's first false positive, open
 from round one — `.goose/recipes/`, another tool's convention — and round fourteen closed the class
 that produced it. The repo is still in the corpus and is now silent. The finding and the argument it
 generated stay in the history below, where they happened.
 
-Split by group: **validation 12 findings, 8 true and 4 false**, in 7 of its 32 repos; **calibration
-14 findings, 12 true and 2 false**, in 9 of its 34 repos. Only the first half measures anything.
+Split by group: **validation 16 findings, 12 true and 4 false**; **calibration 21 findings, 15
+true and 6 false**, over 20 repositories in all. Only the first half measures anything.
+
+The two sections that follow walk the findings adjudicated up to round seventeen. They are kept as
+written — the reasoning is the point — and the **complete** record, rounds one to twenty-four, is
+the per-finding table above.
+
+### Every finding, one row
+
+The table above is a summary; **this is the record**. One row per finding in `snapshots/`, with
+the verdict and the round that adjudicated it. `corpus-bookkeeping.test.ts` asserts that every
+snapshot finding appears here exactly once and that the counts agree, so it cannot go stale the
+way the per-repo table did — that one said 26 findings while the snapshots held 39, and thirteen
+adjudications from rounds 18 to 24 lived only in prose.
+
+That is not a tidiness problem. Round twenty-three justified a bound with a finding it called
+true which round thirteen had ruled **false**, because the verdict was fourteen hundred lines
+away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
+be fed to a model; the error is the argument for it.
+
+**27 true, 10 false, 37 findings.**
+
+| # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
+|---|---|---|---|---|---|---|---|
+| 1 | `1amageek/SwiftAgent` | `AGENTS.md:701:34` | `path/missing` | `docs/SECURITY.md` | **true** | — | validation, round 4 |
+| 2 | `1amageek/SwiftAgent` | `CLAUDE.md:701:34` | `path/missing` | `docs/SECURITY.md` | **true** | — | validation, round 4 |
+| 3 | `block/goose` | `evals/harbor/.agents/skills/compare-tasks/SKILL.md:94:60` | `path/missing` | `agent/goose.txt` | **false** | runtime-log | calibration, round 18, F2 |
+| 4 | `calcom/cal.com` | `AGENTS.md:130:24` | `path/missing` | `packages/features/ee/workflows/lib/constants.ts` | **true** | — | calibration, round 10 |
+| 5 | `cloudflare/workers-sdk` | `AGENTS.md:140:8` | `path/missing` | `.github/PULL_REQUEST_TEMPLATE.md` | **true** | — | calibration, round 10 |
+| 6 | `colinhacks/zod` | `.claude/skills/security-advisory/SKILL.md:3:1` | `frontmatter/invalid` | `description: Triage a draft security advisory in colinh…` | **true** | — | calibration, round 17 |
+| 7 | `CrossPaste/crosspaste-desktop` | `CLAUDE.md:41:4` | `path/missing` | `app/src/commonMain/sqldelight/` | **true** | — | validation, round 14 |
+| 8 | `emdash-cms/emdash` | `AGENTS.md:398:56` | `path/missing` | `tests/e2e/` | **true** | — | calibration, rounds 6, 8 |
+| 9 | `Endle/fireSeqSearch` | `CLAUDE.md:145:16` | `path/missing` | `fire_seq_search_server/src/query_engine/semantic_query.rs` | **true** | — | validation, round 17 |
+| 10 | `fancy1108/Clutch` | `.cursor/rules/cli-whitelist-docs.mdc:3:8` | `path/missing` | `services/orchestrator/src/tools_status.py,apps/desktop/…` | **false** | comma-separated-globs | validation, round 16 |
+| 11 | `fancy1108/Clutch` | `CLAUDE.md:190:42` | `path/missing` | `docs/adr/` | **true** | — | validation, round 16 |
+| 12 | `mattpocock/course-video-manager` | `CLAUDE.md:27:252` | `path/missing` | `.github/workflows/test.yml` | **true** | — | calibration, rounds 6, 7 |
+| 13 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:87:13` | `path/missing` | `packages/server/src/server/sse.ts` | **true** | — | validation, round 14 |
+| 14 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:93:60` | `path/missing` | `packages/server/src/server/auth/` | **true** | — | validation, round 14 |
+| 15 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:98:79` | `path/missing` | `packages/client/src/client/auth-extensions.ts` | **true** | — | validation, round 14 |
+| 16 | `northword/zotero-format-metadata` | `AGENTS.md:44:89` | `path/missing` | `content/scripts/linter.js` | **false** | generated-bundle | validation, round 14 |
+| 17 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | calibration, round 22 |
+| 18 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
+| 19 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 20 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 21 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
+| 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
+| 23 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
+| 24 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
+| 25 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
+| 26 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 27 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 28 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 29 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
+| 30 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 31 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 33 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
+| 34 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
+| 35 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
+| 36 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
+| 37 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
 
 ---
 
@@ -125,6 +239,14 @@ A Markdown link to `docs/SECURITY.md`. The directory is `Docs/`, capitalised, so
 `fire_seq_search_server/src/query_engine/semantic_query.rs`. There is no `query_engine/` directory; `semantic_query.rs` sits directly in `src/`. The document is one directory out of date.
 
 This is the corpus's **only fixable finding**, and round seventeen checked it at the level of the edit rather than the finding: the rewrite replaces the path and nothing around it. It is what condition 2 rests on, on a sample of one.
+
+**The second autofix the tool can produce is not in this corpus, and it was audited anyway.** `skill/frontmatter` offers to rewrite a `name` that disagrees with its directory, and the rule has never fired on these 66 repositories — so condition 2 has never had anything to say about it. Ticket `10` settled it outside the corpus, and the verdict is recorded here because condition 2 is what it bears on:
+
+- **`skills-ref validate`**, the reference implementation <https://agentskills.io/specification.md> names, rejects the unfixed skill on exactly this rule — *"Directory name 'bankr-dev-portfolio' must match skill name 'Bankr Dev - Portfolio'"* — and calls the fixed one **valid**.
+- **The other resolution does not work.** Renaming the directory to match the name leaves the skill invalid, because the name is not lowercase. When the directory is already kebab-case, rewriting the name is the *only* repair — which is the gate the code has had since it shipped.
+- **Nothing invokes a skill by that field.** Claude Code's command name is the directory; `npx skills` installs to the source directory and matches its lockfile on either form. Across 141 skills installed on this machine, **0** have a `name` that disagrees with their directory.
+
+Not a corpus measurement and not counted as one: no repository here produces the finding, and the numbers above are properties of the tools rather than of a sample. The autofix stays.
 
 **7. `CrossPaste/crosspaste-desktop` `CLAUDE.md:41`**
 
@@ -454,7 +576,7 @@ Worth fixing, because it made this round's accounting ambiguous.
 
 `docs/adr/0006` § Decision, condition 9: "if the **findings** or the discards of a validation repo are **inspected**, that repo moves to calibration".
 
-The comment on the `holdout` field in `scripts/corpus-repos.ts` says the opposite about half of it: "Classifying its findings **is** the measurement and does not contaminate; opening the repo to see what the tool discarded does."
+The comment on the `holdout` field in `scripts/corpus/repos.ts` says the opposite about half of it: "Classifying its findings **is** the measurement and does not contaminate; opening the repo to see what the tool discarded does."
 
 Taken literally the ADR moves a repo out the moment anyone reads its findings, which would make the group unmeasurable — classifying is the measurement. The code comment is the correct reading, and the line the rounds above actually applied is a third one, narrower than either: **classifying a finding is free; deriving a rule from it is not.** That is ordinary train/test leakage and it is what condition 9 exists to prevent. The ADR's wording should be brought in line with it.
 
@@ -792,7 +914,7 @@ The corpus caught a `fixable` false positive class **on its first run of a new c
 
 ### A counting error in the record, corrected here
 
-Rounds nine, ten and eleven cite the validation group as **19 of 19**, and the criterion table above said the same. The group has held **18** repos — `holdout: true` appears 18 times in `scripts/corpus-repos.ts`, and the header of this document has said 18 throughout, which is the figure `corpus-bookkeeping.test.ts` pins.
+Rounds nine, ten and eleven cite the validation group as **19 of 19**, and the criterion table above said the same. The group has held **18** repos — `holdout: true` appears 18 times in `scripts/corpus/repos.ts`, and the header of this document has said 18 throughout, which is the figure `corpus-bookkeeping.test.ts` pins.
 
 So it was a miscount, not a membership change, and it is corrected above rather than left standing. It changes no verdict: every validation repo produces zero false positives, so the percentage is 100% at either denominator. The historical rounds are left as written, because rewriting a measurement after the fact is worse than recording that its denominator was off by one.
 
@@ -1118,3 +1240,702 @@ Unmoved. Nothing in M3 touched a heuristic, the snapshots are byte-identical, an
 
 The five open false-positive classes in the round-sixteen ledger are all still open and none of them is fixable, so none of them can become a bad autofix. The two replacement validation repos owed since M2's close are still owed; this round did not pay them, because it changed no rule and burned no repo.
 
+
+---
+
+## Eighteenth round, 2026-09-19: the other skills roots, and 48 findings nobody has ruled on
+
+**This round is not a measurement.** It is the ledger of a corpus diff, opened here rather than left in a patch file, because this document is where findings live and a diff sitting in `.scratch/` is a finding nobody will ever read.
+
+### What changed in the tool
+
+`classifySource` read `.claude/skills/**/SKILL.md` and nothing else. It now reads `.agents/skills/` and `.cursor/skills/` as well. The reason is that `.claude/skills/` was never the location: `npx skills add` writes to **`.agents/skills/` by default** — the universal target covering Amp, Cline, Codex, Cursor, GitHub Copilot, Gemini CLI, Kilo, Kimi, OpenCode, Warp and Zed — and offers fifty-odd others behind a picker. This corpus had been saying so since it was assembled and it was read as noise:
+
+| root | `SKILL.md` | repos |
+|---|---|---|
+| **`.agents/skills/`** | **83** | 9 |
+| `.claude/skills/` | 32 | 8 |
+| `.flue/skills/` | 11 | |
+| `.codex/skills/` | 11 | |
+| `.github/skills/` | 7 | |
+| `.opencode/skills/` | 3 | |
+| `.cursor/skills/` | 1 | 1 |
+
+Three roots were taken, not seven and not fifty-six. Each one audits more files in every repository that has it, which is exactly the cost this document exists to price.
+
+### The arithmetic
+
+| | round 17 | round 18 |
+|---|---|---|
+| sources | 236 | **320** |
+| findings | 26 | **74** |
+| calibration / validation | 14 / 12 | **62 / 12** |
+| fixable | 1 | **3** |
+| snapshots changed | — | 10 of 66 |
+
+**Validation did not move.** All 48 new findings are in calibration, so conditions 3 through 7 read exactly as they did after round seventeen. That is luck rather than design, and it is the only reason this round can be left open without invalidating the certification.
+
+Two results nobody predicted:
+
+- **Widening did not wake `skill/frontmatter`.** Zero of the 48 are its findings. The corpus's skills are well formed wherever they live, which is round eleven's result again across three roots and 83 more files.
+- **`link/broken` produced the first two findings of its existence.** It had read zero since it landed in round nine.
+
+### The verdicts
+
+48 findings arrived. **18 were a bug in driftwatch and no longer exist**; the other 30 are ruled on here: **2 true, 28 false**.
+
+| # | Class | n | Verdict |
+|---|---|---|---|
+| B | `.emdash/types.ts` and `.emdash/schema.json`, in nine template copies | 18 | **false — and a bug**, see below |
+| A | A path prefixed with a package name — `react-router/docs/start/modes.md` | 16 | false |
+| C | An absolute path that is a documentation-site URL — `/docs/app/glossary` | 3 | false |
+| D | A literal placeholder — `path/to/file.ts`, `#anchor-a`, `+types/` | 4 | false |
+| F1 | A file the document tells you to create — `scripts/changes/whats-changed.md`, `tasks/rfc-decisions.md` | 3 | false, **2 of them fixable** |
+| E | A path in the **reader's** project, not this repo — `app/entry.server.tsx` | 1 | false |
+| F2 | A runtime log — `agent/goose.txt` | 1 | false |
+| F3 | `docs/upgrading/future-flags.md` | 1 | **true** |
+| F4 | `src/client/components/image.tsx` | 1 | **true** |
+
+### Class B was not a class. It was a bug, and it had been there all along.
+
+The eighteen `emdash` findings are paths its own `.gitignore` covers — `.emdash/` is line 35 of it — and `gitIgnoredPaths` exists precisely so that a path git ignores is never reported missing. It did not fire, and the reason is worth the space:
+
+```
+$ git check-ignore -n -v -- <380 paths including '.agents/skills/__driftwatch_probe__'>
+fatal: pathspec '.agents/skills/__driftwatch_probe__' is beyond a symbolic link
+```
+
+`.agents/skills` in `emdash` is a **symlink**. `check-ignore` refuses a pathspec that crosses one by aborting the **whole invocation** with exit 128 and no output — and `git.ts` treated an empty stdout as "none of these is ignored", which is what exit 1 means. So one refused path silently cancelled the gitignore suppression for **up to 400 others**.
+
+Fixed by distinguishing exit 1 from a real failure, and by halving a refused batch until the offending paths are alone. The 18 findings disappeared with it and the corpus went from 74 to 56.
+
+**This is the round's most valuable result and it is not about skills.** The bug was reachable from any repository with a symlink on a claimed path; widening discovery only supplied one. It had been live since `gitIgnoredPaths` landed.
+
+### Condition 2 is broken, by two findings of one claim
+
+```
+.agents/skills/prepare-release-notes/SKILL.md:30  scripts/changes/whats-changed.md
+  -> .agents/skills/prepare-release-notes/references/whats-changed.md  (confidence 1, fixable)
+```
+
+The document's own next four bullets settle it:
+
+> 4. Review whether `scripts/changes/whats-changed.md` is needed:
+>    - Read `CHANGELOG.md` examples or `references/whats-changed.md` when uncertain
+>    - **Add** `scripts/changes/whats-changed.md` only for features, …
+>    - **Do not add it** for ordinary bug fixes, …
+
+The file is written during a release when the change warrants it. The document does not claim it exists; it spends four bullets on when to create it. Both findings are false.
+
+The autofix is worse than the finding. It would rewrite `scripts/changes/whats-changed.md` — the release artifact — into `references/whats-changed.md`, the skill's own reference document, which the line directly above mentions as a **different** file. The suggestion earns confidence 1 because the basenames match exactly, and the directories have nothing to do with each other.
+
+ADR-0006 condition 2 admits no false positive among the fixable findings at any rate. It is broken until this closes, and there are two shapes of fix: the finding (a path the document elsewhere says to create) or the autofix (a candidate sharing a basename but no ancestry).
+
+### The two true positives, which are why the widening was worth it
+
+```
+remix-run/react-router  .agents/skills/implement-rfc/SKILL.md:143
+  `docs/upgrading/future-flags.md`
+```
+
+`docs/upgrading/` exists and holds `component-routes.md`, `future.md`, `index.md`. The document was renamed to `future.md` and the skill's table still points at the old name. **That is the drift this tool exists to find**, and before round eighteen nobody was looking: the file is under `.agents/skills/`, which discovery did not read.
+
+```
+vercel/next.js  .agents/skills/update-docs/SKILL.md:50
+  `src/client/components/image.tsx` → `docs/01-app/.../image.mdx`
+```
+
+A code-to-docs mapping table. The real file is `packages/next/src/client/image-component.tsx` — different directory, different name. Recorded as true with less confidence than the first: the table may be describing a path shape rather than a file.
+
+### The classes that stay open
+
+Four, none of them new in kind, all of them semantic:
+
+- **A, a package-name prefix.** The skill says so in prose: *"When this skill references `react-router/docs/...`, read the matching file under `node_modules/react-router/docs/`"* — and that sentence is itself one of the sixteen findings. A rule shape does exist here and is worth pricing: the repo contains `packages/react-router/package.json` with `"name": "react-router"`, so a first segment that matches a package name in the repo is a package specifier, not a path.
+- **C, an absolute path that is a site URL.** `/docs/app/glossary` in a repository that publishes a documentation site. Whether it is drift depends on whether the site's routes track the repo's files, which is a judgement about next.js.
+- **D, placeholders.** `path/to/file.ts` is the universal metasyntactic path and `discard.ts` keeps a `METASYNTACTIC` set that does not include it. The cheapest correction in this round.
+- **F1, a file the document tells you to create.** `CREATE_IMPERATIVES` already covers `add` and `write` at the start of a sentence; it does not cover *"**Save** the resolved decisions to a scratch file at `tasks/rfc-decisions.md`"*, nor an instruction that appears two lines below the claim rather than in it.
+
+### What this round cost
+
+Nothing in validation: all 48 landed in calibration, so no repo moved groups and no replacement is owed. `emdash` contributed 18 findings that were never real, and its snapshot is now clean.
+
+### What is owed
+
+1. **Repair condition 2.** Two false fixable findings, one class, two possible shapes of fix.
+2. Price class A's rule — a first segment matching a package name in the repo.
+3. Add `path/to` to `METASYNTACTIC`, which closes class D's largest member for one line.
+4. ~~The two replacement validation repos owed since M2 are still owed.~~ Wrong when written: they were paid in round thirteen. This round burned nothing either — every finding it produced landed in calibration.
+
+---
+
+## Nineteenth round, 2026-09-19: two classes closed, and condition 2 repaired
+
+Round eighteen left four things owed. Two of them are done here, and they are the two that cost a rule each.
+
+### The metasyntactic path
+
+`path/to/file.ts`, in `withastro/astro`'s review-output template:
+
+    `[medium][requirements]` `path/to/file.ts:87` - Short title. Explain the unmet
+    requirement, impact, and minimal remediation direction.
+
+Round eighteen called this "the cheapest correction in this round — add `path/to` to `METASYNTACTIC`, one line". **That was wrong about where it goes.** `METASYNTACTIC` is tested one segment at a time, and `path` and `to` are both ordinary directory names: `src/path/resolve.ts`, `lib/to/index.ts`. Adding either would have been one of the widest false-negative rules in the file.
+
+`path/to` is a **sequence**, so it gets its own test: two adjacent segments, at any position, case-insensitive. `some/path/to/thing` is as much a placeholder as `path/to/thing`, and a repository with a real `path/to/` directory is not a thing.
+
+One finding closed, in a calibration repo. Free.
+
+### A path the document tells you to create, somewhere else in the document
+
+This is the one that broke condition 2, and the class is worth stating precisely because the existing rule was so close to catching it.
+
+`CREATE_IMPERATIVES` asks whether **the sentence holding the claim** opens with an imperative. In `remix-run/react-router` the instruction and the claims are in different sentences:
+
+> 4. Review whether `scripts/changes/whats-changed.md` is needed:
+>    - Read `CHANGELOG.md` examples or `references/whats-changed.md` when uncertain
+>    - **Add** `scripts/changes/whats-changed.md` only for features, …
+>    - Do not add it for ordinary bug fixes …
+
+The two findings sat on the "Review whether" line and on a "Use `…`" line fifty lines below. Both refer to a file the document spends four bullets explaining when to create.
+
+So the gate now also collects **every backticked path in any sentence that opens with a create imperative**, once per document, and a claim naming one of them is not a claim. Only backticked spans count, because a path without code formatting is not extracted as a claim in the first place.
+
+`save` joins the imperatives, for the third finding of the same class: *"Save the resolved decisions to a scratch file at `tasks/rfc-decisions.md`."*
+
+**What it costs** is a document that says "Create `x`" in one place and asserts `x` exists in another. Such a document contradicts itself, and this project takes the quiet reading of a contradiction every time.
+
+### The bill
+
+Three findings closed in `react-router`, one in `astro`. Both are **calibration** repos, so nothing moved groups and no replacement is owed — the first round in a while where closing a class cost nothing, and only because round eighteen's findings all landed in calibration.
+
+| | round 18 | round 19 |
+|---|---|---|
+| findings | 56 | **52** |
+| fixable | 3 | **1** |
+| false fixable | 2 | **0** |
+
+**Condition 2 is repaired.** The one remaining fixable finding is `fireSeqSearch`, true since round 14.
+
+### Still owed from round eighteen
+
+1. Class A, the package-name prefix — 16 findings, and a rule shape that exists: a first segment matching a package name in the repo. Not taken here because it is the only one of the four that needs the manifests, and it deserves its own round.
+2. Class C, an absolute path that is a documentation-site URL — 3 findings, and a judgement about next.js rather than about a string.
+3. ~~The two replacement validation repos owed since M2.~~ Not owed: paid in round thirteen. See the correction in §"What happened, and why the caveat was right".
+
+---
+
+## Twentieth round, 2026-09-19: the package-name prefix, and what knowing the manifests buys
+
+The largest class round eighteen left open, and the only one that could not be answered from the string alone.
+
+### The class
+
+Sixteen findings, all in one skill in `remix-run/react-router`:
+
+```
+react-router/docs/start/modes.md
+react-router/docs/how-to/spa.md
+react-router/docs/upgrading/future.md
+…
+```
+
+`docs/start/modes.md` exists. `react-router/docs/start/modes.md` does not, and there is no `react-router/` directory in the repository. The skill explains why, in a sentence that is itself one of the sixteen:
+
+> When this skill references `react-router/docs/...`, read the matching file under `node_modules/react-router/docs/`. If the installed version does not include local docs, use the repo `docs/` directory
+
+The prefix is a **package specifier** — the published package's copy of a file the repo keeps at the root. It is the same kind of thing as `link:../..` or `#lib/`, which `discard.ts` already discards, with one difference that decides the rule's shape: **those are recognisable from syntax and this one is not.** `react-router/docs/start/modes.md` is an ordinary-looking relative path. The only thing that says otherwise is knowing the name of the package.
+
+### Which this tool knows
+
+`buildRepoIndex` parses every `package.json` it walks past, so the set of names the repo publishes is already in hand before any check runs. The rule reads it:
+
+> A path whose first segment names a package in this repo, **and is not a directory in this repo**, is a package specifier.
+
+**Gated on absence**, exactly like `belongsToAbsentTool`, and the gate is what keeps it narrow. A monorepo publishing a package called `docs` while also keeping a real `docs/` directory is talking about the directory, and a file missing from it is drift like any other — the rule does not fire. It only fires when the first segment resolves to nothing in the tree, which is when a package is the remaining explanation.
+
+### The bill
+
+| | round 19 | round 20 |
+|---|---|---|
+| findings | 52 | **36** |
+| calibration / validation | 40 / 12 | **24 / 12** |
+| snapshots changed | — | 1 |
+
+Sixteen findings, one repository, one snapshot. Nothing else in the corpus moved — no other repo publishes a package whose name is not also a directory and is written as a path prefix.
+
+`react-router` goes from 19 findings to 3, and the three are from three different classes, which is the shape you want left over:
+
+```
+docs/upgrading/future-flags.md   ← true: renamed to future.md
+app/entry.server.tsx             ← class E, a path in the reader's project
++types/                          ← class D, generated by typegen
+```
+
+**It is a calibration repo**, so nothing moved groups and no replacement is owed.
+
+### What it costs
+
+A repository that publishes a package named after a directory it has deleted. The claim would then be about the deleted directory and would go unreported. That is narrow, and it fails as a false negative rather than a false positive, which is the trade `AGENTS.md` § "The rule that orders every decision" makes every time.
+
+### What is left from round eighteen
+
+One class: **an absolute path that is a documentation-site URL** — `/docs/app/glossary` in `vercel/next.js`, 3 findings. It stays open on purpose. Whether `/docs/app/glossary` is drift depends on whether that site's routes are supposed to track the repository's files, which is a judgement about next.js and not about the string, and no rule here can make it without knowing the answer.
+
+---
+
+## Twenty-first round, 2026-09-19: a leading slash is not a path in this repo
+
+The last class round eighteen left open, and the one that looked like it needed a judgement about `vercel/next.js`. It did not. It needed a count.
+
+### The class
+
+Three findings, all in `vercel/next.js`:
+
+```
+/docs/app/glossary#static-shell   inline-code
+/docs/app/glossary                link
+/docs/app/                        inline-code
+```
+
+Round twenty said this stays open because "whether `/docs/app/glossary` is drift depends on whether that site's routes are supposed to track the repository's files, which is a judgement about next.js". That framing was the mistake. The question is not what next.js means by it — it is what a leading slash means at all, and the corpus can answer that.
+
+### The count
+
+Across the 66 repos, **306 claims are written as an absolute path. Five resolve to anything in the repo.** The other 301 fall into three kinds and none of them is a file here:
+
+| kind | examples | repo |
+|---|---|---|
+| HTTP routes | `/v1/responses`, `/embeddings`, `/batches`, `/model/new` | `BerriAI/litellm` |
+| site URLs | `/docs/app/glossary`, `/docs/app/` | `vercel/next.js` |
+| real absolute paths | `/etc/`, `/tmp/../etc/` | `1amageek/SwiftAgent` |
+
+And of the 36 findings the corpus held before this round, **exactly three came from an absolute path — the three above, all false.** The reading `resolve.ts` had encoded since the beginning, that a leading slash means "from the repo root", has sustained **no true finding in 66 repositories** and produced three false ones.
+
+### The rule
+
+A leading slash is discarded, the way `~/` is, and for the same reason rather than a similar one: it is the extractor being told about a syntax it was misreading. In Markdown `](/x)` is a root-relative **URL** — that is what it means in every renderer — and in prose `/x` is an absolute path on somebody's disk. Neither is checkable against a repo index.
+
+`//host/x` stays rule 1's protocol-relative URL. The reason a text was discarded is what the tests pin and what the report shows.
+
+### What it reverses, and what that costs
+
+`fix-range.test.ts` asserted the opposite and has been rewritten rather than deleted: *"accepts a root-relative path in a nested source, which is unambiguous"* — `/src/util/date.ts` in `packages/api/AGENTS.md`, reported and autofixed to `/src/helpers/date.ts`.
+
+That case is real and is now unreported. It is also **synthetic**: the corpus has never produced it in 66 repositories, while the reading it defends produced three false positives in one. `AGENTS.md` § "The rule that orders every decision" settles which way that trade goes, and the test now documents the cost instead of asserting the benefit.
+
+### The bill
+
+| | round 20 | round 21 |
+|---|---|---|
+| findings | 36 | **33** |
+| false | 14 | **11** |
+| snapshots changed | 1 | 1 |
+
+`vercel/next.js` goes from 6 findings to 3. It is a **calibration** repo, so nothing moved groups and no replacement is owed.
+
+### Round eighteen is closed
+
+Every class it opened has a verdict and a rule or a reason:
+
+| class | n | outcome |
+|---|---|---|
+| B, gitignored paths behind a symlink | 18 | a bug, fixed in round 18 |
+| A, package-name prefix | 16 | rule, round 20 |
+| C, absolute paths | 3 | rule, round 21 |
+| D, placeholders | 4 | `path/to` rule in round 19; `+types/` and the two anchors stay |
+| F1, a file the document tells you to create | 3 | rule, round 19 |
+| E, a path in the reader's project | 1 | open |
+| F2, a runtime log | 1 | open |
+| F3/F4 | 2 | **true**, reported and correct |
+
+What is left open is three findings in three unrelated shapes, which is the tail this document has always had rather than a class anyone can close.
+
+## Twenty-second round, 2026-09-19: two more skills roots, and the one that counts repositories
+
+Ticket `11` took the four skills roots round eighteen left on the table. Two were added, two
+were not, and the useful part is not which — it is what the numbers turned out to mean.
+
+### Order by repositories, not by files
+
+The ticket says to take them "in corpus-volume order", counting `SKILL.md` files. Counted that
+way the order is `.flue` (11), `.codex` (11), `.github` (7), `.opencode` (3). Counted by
+**repositories** it inverts almost exactly:
+
+| root | files | repos in the corpus | repos, discovery † |
+|---|---|---|---|
+| `.github` | 7 | 3 | **13** |
+| `.codex` | 11 | 1 | 6 |
+| `.opencode` | 3 | 2 | 5 |
+| `.flue` | 11 | **1** | **1** |
+
+† A reading of the ecosystem over the discovery corpus, which is disposable and unsnapshotted.
+It is not a measurement of driftwatch and moves no condition of ADR-0006; it is here because
+telling a convention from a project is a question about the population, not about this tool.
+
+`.flue`'s eleven files are one project, `emdash-cms/emdash` — the same repository in the
+certification corpus and the only one of 700 discovery repositories that uses it. A root one
+project uses is that project's convention, and a file count cannot tell the two apart.
+
+**That is where the line fell**, which is what step 3 of the ticket asked to record.
+
+### What was added, and what it cost
+
+| root | sources | findings | verdict |
+|---|---|---|---|
+| `.codex` | +11, all in `openai/codex` | 2 | both true |
+| `.opencode` | +3, in `sst/opencode` and `cloudflare/workers-sdk` | **0** | — |
+
+`.opencode` is a free widening: three sources more, nothing to rule on.
+
+The two `.codex` findings are in one file, `.codex/skills/code-review-breaking-changes/SKILL.md`:
+
+| finding | verdict |
+|---|---|
+| `name: code-breaking-changes` in `code-review-breaking-changes/` | **true**, and fixable |
+| `description: Breaking changes`, 16 characters | **true** by the rule as it ships |
+
+The first is the class round eighteen opened and ticket `10` settled: the directory is
+kebab-case, so rewriting `name` to match it is the only repair `skills-ref` accepts. The name
+has simply lost a word. `pnpm corpus --fixes` prints the edit and it is right:
+
+```
+- name: code-breaking-changes
++ name: code-review-breaking-changes
+```
+
+The second is a `description` under the 20-character minimum — true by the shipped rule, and
+one more instance of the question ticket `14` is about, since nothing in the repository changed
+underneath it.
+
+### Condition 2 holds
+
+The corpus goes from one fixable finding to two, and both are true. `openai/codex` is a
+**calibration** repo, so nothing moves groups and no replacement is owed.
+
+| | round 21 | round 22 |
+|---|---|---|
+| sources | 320 | **334** |
+| findings | 33 | **35** |
+| fixable | 1 | **2** |
+| false | 11 | 11 |
+
+### `.github/skills/` is held out, and not because of the root
+
+It is the most widely used of the four — 13 of 700 discovery repositories, more than `.cursor`,
+which already ships. Adding it produces **84 findings**, and 80 of them come from a single file:
+`remix-run/react-router`'s `.github/skills/agentic-workflows/SKILL.md`, which lists forty paths
+under `.github/aw/` and says, one line above the list:
+
+> Load these files from `github/gh-aw` (**they are not available locally**).
+
+The document could not be clearer and no gate reads it. The sentence is a heading for a bullet
+list, so the two-line window never reaches it — each bullet opens its own item — and
+`namesAnotherRepo` wants a `github.com` URL where this writes a bare slug. The first path is
+hedged too, as ``If `.github/aw/instructions.md` exists``, which `HEDGED`'s `if exists` misses
+because the path sits between the two words.
+
+**None of that is a fact about `.github/`.** The same file under `.agents/skills/` produces the
+same 80 findings; the root only made it visible. So the root is held behind ticket `18`, which
+is about the gate, and the other four findings it would add — `securego/gosec`, four
+title-cased `name` fields against kebab-case directories, all true and all fixable — are held
+with it.
+
+That is the honest version of "stop when a root's diff is more review than its findings are
+worth": the diff was not more review, it was a defect.
+
+## Twenty-third round, 2026-09-19: the section that says its files are elsewhere
+
+Ticket `18`. A document can name forty paths and say, in the sentence above them, that none is
+in this repository — and until now no gate could read that sentence. Three near-misses, each
+of which taught something:
+
+| gate | why it missed |
+|---|---|
+| `HEDGED` | window-scoped, and every bullet `opensItsOwnItem`, so the window never reached the lead-in |
+| `namesAnotherRepo` | wants a `github.com` URL; the document writes the bare slug `` `github/gh-aw` `` |
+| `if exists` | a literal string, and the document writes ``If `x` exists`` with the path between the words |
+
+Three changes, each priced separately.
+
+### The hedge whose two halves a path stands between
+
+`HEDGED` holds literal strings and a document writes ``If `x` exists``: the marker split by the
+very thing it is hedging about. It is now one **pattern**, `if … exists`, read against the line
+with each code span masked to a single character.
+
+Both halves of that came from getting it wrong, and a reviewer found the first while a
+measurement found the second:
+
+| attempt | what broke |
+|---|---|
+| strip every span before matching | "Pick a name such `foo` as the slug" becomes the marker "such as" |
+| leave the spans in place | `` `CREATE TABLE IF NOT EXISTS` `` reads as a hedge about `src/schema.sql` on the same line (edmundmiller/dotfiles) |
+
+A mask is not whitespace, so it cannot join two phrases; and it hides what is inside a span,
+which is something being named rather than something being said.
+
+### A line that introduces a list speaks for the list
+
+`lineAround` opened the previous line only for a continuation. A bullet is not a continuation,
+so a list under a disclaiming lead-in was forty independent claims. The walk is bounded, and
+**every bound came from a repository that broke an earlier version of it**:
+
+| bound | what it prevents | found by |
+|---|---|---|
+| lead-in + item, nothing in between | a sibling bullet's `e.g.` silencing this one | `openai/codex` |
+| lead-in indent ≤ the item's | a sibling's wrapped second line read as a lead-in | `saubakirov/KZ-IT-telegram-list` |
+| only siblings at the same indent | an outer list's lead-in reaching a nested item | — |
+| one blank line, never past a heading | a different paragraph, a different subject | — |
+
+Both repositories lost a finding to an early version and both got it back, and **that is only
+good news for one of them.** `openai/codex`'s `app-server-protocol/src/protocol/v2.rs` is
+**true**, adjudicated in round one — there is no `v2.rs` — so restoring it is the bound working.
+`saubakirov/KZ-IT-telegram-list`'s `.tfw/adapters/antigravity/rules/` is a **known false
+positive**, round thirteen, and round eighteen's class B left it open deliberately. The early
+version silenced it by accident and the bound reports it again.
+
+So the bound's ledger is one true finding recovered and one known false positive restored, and
+it is kept for the first. An earlier version of this round said both were true, which was wrong:
+the verdict was fourteen hundred lines away in a document with no per-finding index. Ticket `01`
+is about exactly that.
+
+### `ELSEWHERE`, and why it is its own class
+
+`HEDGED` is a document being uncertain. "not in this repo" is a document being certain in the
+other direction, so it reports under its own name rather than blurring the table `07` produces.
+
+The phrasings were counted over 700 repositories rather than invented: `not in this repo` in
+**15 repositories**, `not available locally` in 4, `not part of this repo` in 2. (Those were
+first written here as 19, 5 and 3, which were **files**. Round twenty-two is the round that
+says to count repositories and not files; the mistake it is about was made again two rounds
+later, in the sentence justifying a suppression rule.) Every entry carries its own
+**negation** on purpose — `available locally` alone is 28 repositories saying a thing *is*
+there.
+
+It is section-scoped, like `externalRootSections` and for the same reason: the document
+disclaims once and writes two lists under one heading.
+
+### The bill, measured twice
+
+The certification corpus **does not move**: 66 repos · 334 sources · 35 findings, calibration
+23 · validation 12, fixable 2.
+
+That is uninformative on its own — the shape is not in the 66 — so the 700 discovery
+repositories were audited before and after and the findings diffed, the way ticket `16`
+established:
+
+```
+before 1442 · after 1430
+ADDED 0 · REMOVED 12
+```
+
+**Nothing was added**, which is structural: these changes only widen suppression. Ten of the
+twelve are correct, and every one is the ``if … exists`` shape a document wrote explicitly —
+`cenconq25/claude-code-app-studio` (three), `christopher-buss/bedrock` (three),
+`vmDeshpande/ai-agent-automation` (two), `crafts69guy/.dotfiles`, `meain/dotfiles`,
+`avatune/avatune`, `caltechads/deployfish`. Two are over-suppression and are the cost:
+
+| repository | what was lost | why |
+|---|---|---|
+| `DocRoms/Kronn` | `docs/linked-repos.md` | the row says to read it when the *task* references something not in this repo; the marker read that as being about the file |
+| `TheAndrewStaker/mcp-midi-control` | `src/protocol/locations.ts` | the lead-in links to another repository about a different file, and the rule carried it to the bullet below |
+
+**Two false negatives in 700 repositories against a class of eighty false positives in one
+file**, and ten real hedges heard that were not being heard before. `AGENTS.md` § "The rule that orders every decision" settles that direction, and it is
+worth noting the direction is the *only* reason it settles: two real claims went quiet.
+
+Adding the section rule on top removed **nothing further** in 700 repositories. It is kept for
+the document it was written for, where it takes the count from 13 to 0 — and a measured cost
+of zero is not no cost, only a rule that rarely fires.
+
+### What it unblocks
+
+`remix-run/react-router`'s `.github/skills/agentic-workflows/SKILL.md`, audited on its own,
+goes from **80 findings to none**, the fixable one among them. That is ticket `11`'s
+`.github/skills/`, which was held back by this and by nothing else.
+
+## Twenty-fourth round, 2026-09-19: `.github/skills/`, once it could be read
+
+Ticket `11` held this root back and ticket `18` is why. With the gate in place the document
+that blocked it — `remix-run/react-router`'s `agentic-workflows` skill — contributes **one
+source and no findings**, where before it contributed eighty.
+
+| repository | sources | findings |
+|---|---|---|
+| `remix-run/react-router` | +1 | **0** |
+| `github/spec-kit` | +2 | 0 |
+| `securego/gosec` [validation] | +4 | **4**, all fixable |
+
+It also adds two findings in `iTwin/itwinjs-core`, which are not in the certification corpus
+and so move nothing here. One of them, `docs/changehistory/X.X.0.md`, is a version template
+`PLACEHOLDER_TEMPLATE` does not match — it looks for `X.Y.Z`. Recorded because it was found,
+not because this round acts on it.
+
+### The four, adjudicated
+
+`securego/gosec` writes its skill names as titles against kebab-case directories:
+
+| `name` | directory | verdict |
+|---|---|---|
+| `Fix Gosec Bug From Issue` | `gosec-fix-issue` | **true** |
+| `Create New Gosec Rule` | `gosec-new-rule` | **true** |
+| `Update Gosec Action Version` | `gosec-update-action-version` | **true** |
+| `Update Supported Go Versions` | `gosec-update-go-versions` | **true** |
+
+This is the class round eighteen opened and ticket `10` settled by running the tools rather
+than re-reading the specification: `skills-ref validate` rejects every one of them three times
+over — not lowercase, invalid characters, directory does not match name — and accepts the
+rewritten form. The directories are all kebab-case, so rewriting `name` is the **only** repair
+that produces a valid skill; renaming the directory to match leaves it invalid.
+
+`pnpm corpus --fixes` prints all four and each is right.
+
+### Condition 2
+
+| | round 22 | round 24 |
+|---|---|---|
+| sources | 334 | **341** |
+| findings | 35 | **39** |
+| fixable | 2 | **6** |
+| false fixable | 0 | **0** |
+
+`securego/gosec` is a **validation** repo, which is what makes these four worth more than
+their count: they were produced by a rule nobody tuned against them, on a repository nobody
+opened to tune it. Nothing moved groups — no validation finding was used to change a rule
+here; a root was added and this is the measurement.
+
+## Twenty-fifth round, 2026-09-19: `skill/frontmatter` stops linting
+
+Ticket `14`, raised by Angel while reviewing ticket `10` and settled by him here. The check
+shipped in M2 with five rules and only one of them was ever drift.
+
+### The argument is in `BRIEF.md`, not anywhere new
+
+> **Non-goals.** It is not a Markdown linter (it does not check style, formatting or spelling).
+> It does not judge whether the content is *good*, only whether it is *true*.
+
+A `description` under twenty characters is not false. `allowed_tools` where the format says
+`allowed-tools` is not false. A `name` in snake_case is not false. They are format and they are
+quality, and that line names both as things this tool does not do.
+
+The argument the other way, as ticket `14` recorded it, was `BRIEF.md` § "Why it actually
+hurts": *"unlike code, these files have no compiler, no tests, no linter."* Read in place that
+is the **reason drift hurts** — lying about the repository has no mechanical consequence — and
+not a mandate to validate a format. The ticket cited it as the latter, which was a misreading
+by the person who wrote the ticket.
+
+### What the rules were worth, measured before removing them
+
+Over 700 discovery repositories, `skill/frontmatter` with all five rules:
+
+| rule | findings | repos | kind |
+|---|---|---|---|
+| `name` does not match the directory | 23, all fixable | 5 | **drift** |
+| frontmatter missing / no required field | 19 | 7 | precondition |
+| unknown key | 18 | **2** | lint |
+| `description` shorter than 20 | 4 | 2 | lint |
+| `name` not kebab-case | 1 | 1 | lint |
+
+The drift rule fires most, and the lint rules yield far less than their count suggests. The
+eighteen unknown keys are **two mistakes**: `meain/dotfiles` writes `user_invocable` in
+fourteen skills and `aegntic/cldcde` writes `allowed_tools` in four, each the same snake_case
+slip copied across a repository. Three of the four short descriptions are inside
+`LF-Decentralized-Trust-labs/gitmesh`'s **test fixtures**, which are deliberately malformed
+skills used as input data.
+
+So: 23 lint findings from five distinct mistakes, against 23 drift findings from 23.
+
+### What stays, and why it is not a fifth rule
+
+`frontmatter is missing`, `frontmatter has no name or description`, and an empty required
+value. Those are not judgements about a format — they are the **precondition** for the rule
+that remains. With no frontmatter, or no `name` in it, there is nothing to compare a directory
+against. They say "could not look", which is the same thing `13`'s skipped sources say.
+
+`KEBAB` and `MAX_NAME` survive as the **autofix gate**, which is where ticket `10` had already
+put `MAX_NAME`: the fix rewrites a `name` into its directory, so the directory has to be usable
+as one. The gate is now strictly stricter than anything the check reports, which is the right
+way round.
+
+### The bill
+
+| | round 24 | round 25 |
+|---|---|---|
+| findings | 39 | **38** |
+| true | 28 | **27** |
+| false | 11 | 11 |
+| fixable | 6 | 6 |
+
+**One finding**, `openai/codex`'s 16-character description, and it was **true** — a real
+instance of a rule this project has decided not to have. Calibration goes 23 → 22; validation
+is untouched, so nothing condition 5 or 6 rests on moved.
+
+### What is knowingly given up
+
+`allowed_tools` and `user_invocable` are real mistakes that stop a key from doing anything, and
+no other tool in the ecosystem is widely run — `skills-ref validate` exists and ticket `08`
+found 1 of 23 sampled skills invalid, which is the measure of how little it is used. Reporting
+them was useful. It was not this tool's job, and a tool that does a neighbouring job because
+nobody else will is how a scope stops meaning anything.
+
+## Twenty-sixth round, 2026-09-19: one class closed, one measured away
+
+Ticket `21`, written so that the placeholder class could be weighed **without** condition 6 in
+the frame — closing it is one of the two moves that would restore the bar, and a rule derived
+to move a number is the mistake the criterion exists to prevent.
+
+It turned out to be two questions with two different answers, which is what the ticket
+predicted.
+
+### `+types/` is generated, and that is the whole finding
+
+React Router's typegen writes `+types/` beside every route module. The skill names it in the
+plainest way — *"imports from `./+types/...`"* — and nothing tracks it: not in
+`remix-run/react-router` itself, and not in any of the three discovery repositories that
+mention it.
+
+That is `GENERATED`'s category and the list already carries its neighbours — `.react-router`,
+`.next`, `.nuxt`, `.svelte-kit`, `.astro`. A framework's codegen output, named in context files
+because that is where the types come from.
+
+| | before | after |
+|---|---|---|
+| corpus | 38 findings | **37** |
+| false positives | 11 | **10** |
+| 700 discovery repositories | 1407 findings | **1407** |
+
+One finding, and it was false. Nothing else moved anywhere.
+
+### The anchors are not a class, and the measurement is the answer
+
+`#anchor-a` and `#anchor-b` in `vercel/next.js` sit inside a **specimen of output** the skill
+is instructing an agent to write: `Choose [Sibling fix A](#anchor-a) or [Sibling fix B](#anchor-b)
+when either is feasible.` They are obviously stand-ins to a reader — and quoted as code here
+rather than as prose, because a specimen of a link is not a link. That is the same distinction
+`test/docs-links.test.ts` makes about `SPEC.md`, and until this line was written that way the
+tool reported its own document twice.
+
+Two rules were considered and the discovery corpus refused both.
+
+**An anchor beginning with `anchor`.** Eight repositories write one, and seven of them mean it:
+`#anchor-versions`, `#anchor-system`, `#anchormanager`, `#anchorbasedwriter`, `#anchor`. Real
+headings in documents about anchoring.
+
+**An anchor of the form `word-<single character>`.** Fifty-seven distinct such links across
+fifteen repositories, and they are ordinary: `#layer-1`, `#layer-2`, `#item-5`, `#state-1`,
+`#quote-s`, `#marketdatarequestreject-y`. Numbered and lettered headings are how documents
+number and letter their headings.
+
+Either rule would suppress dozens of real, checkable anchors to catch two in one repository.
+**The class stays open**, and this is the useful half of the ticket: the rule that looked easy
+is the one the ecosystem says not to write.
+
+### Condition 6 is unmoved, which is the point
+
+`remix-run/react-router` keeps `app/entry.server.tsx` — class E, a path in the reader's project
+— so it is still unquiet. `vercel/next.js` keeps both anchors. **58 of 66 = 87.9%**, exactly as
+round twenty-five recorded it.
+
+The justified change did not move the bar and the change that would move the bar is not
+justified. Ticket `20` is unchanged and stays recorded.

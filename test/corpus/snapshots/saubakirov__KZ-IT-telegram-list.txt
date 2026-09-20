@@ -1,11 +1,25 @@
 # saubakirov/KZ-IT-telegram-list
 
-sources: 20
+sources: 37
 errors: 1
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .agents/skills/kz-add/SKILL.md
+skill  .agents/skills/kz-release/SKILL.md
+skill  .agents/skills/kz-stats/SKILL.md
+skill  .agents/skills/tfw-config/SKILL.md
+skill  .agents/skills/tfw-docs/SKILL.md
+skill  .agents/skills/tfw-handoff/SKILL.md
+skill  .agents/skills/tfw-init/SKILL.md
+skill  .agents/skills/tfw-knowledge/SKILL.md
+skill  .agents/skills/tfw-plan/SKILL.md
+skill  .agents/skills/tfw-release/SKILL.md
+skill  .agents/skills/tfw-research/SKILL.md
+skill  .agents/skills/tfw-resume/SKILL.md
+skill  .agents/skills/tfw-review/SKILL.md
+skill  .agents/skills/tfw-update/SKILL.md
 command  .claude/commands/kz-add.md
 command  .claude/commands/kz-release.md
 command  .claude/commands/kz-stats.md
@@ -23,6 +37,9 @@ command  .claude/commands/tfw-task.md
 command  .claude/commands/tfw-update.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
+skill  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.agents/skills/kz-add/SKILL.md
+skill  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.agents/skills/kz-release/SKILL.md
+skill  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.agents/skills/kz-stats/SKILL.md
 command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.claude/commands/kz-add.md
 command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.claude/commands/kz-release.md
 command  tasks/2026/20260828-201343__catalog_intake_commands/phase-b/evidence/successor-1/apply-stage/.claude/commands/kz-stats.md

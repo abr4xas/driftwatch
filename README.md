@@ -43,7 +43,7 @@ Linters check your code. Nothing checks the document you wrote *about* your code
 - `script/missing` — the package manager commands a document tells you to run, against the nearest `package.json`, `Makefile` or `deno.json`.
 - `link/broken` — a Markdown link to an anchor no heading in the target document produces.
 - `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes.
-- `skill/frontmatter` — the structural rules a `SKILL.md` has to meet to be invocable.
+- `skill/frontmatter` — a `SKILL.md` whose `name` is not the directory it lives in.
 
 `path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of **66 real repositories** before anything else was allowed to land, and **61 of them produce no false positive at all**.
 
@@ -62,7 +62,7 @@ It applies a correction only when there is exactly one candidate above 0.8 confi
 
 ```yaml
 - uses: actions/checkout@v7
-- uses: abr4xas/driftwatch@v0.3.0
+- uses: abr4xas/driftwatch@v0.5.0
 ```
 
 Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
@@ -87,7 +87,7 @@ Early means the checks and the fixes are what is finished. `--watch` and `--stri
 
 **The package is scoped, the Marketplace listing is suffixed, and the command is neither.** npm refuses `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read; the GitHub Marketplace refuses it too, because a user account called Driftwatch already exists and a listing name has to be unique across every action, user and organisation. So the package is `@abr4xas/driftwatch` and the listing is `driftwatch-action`.
 
-Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v0.3.0`, which comes from the repository rather than from the listing.
+Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v0.5.0`, which comes from the repository rather than from the listing.
 
 ## License
 

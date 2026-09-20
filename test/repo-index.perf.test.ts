@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildRepoIndex } from '../src/verify/repo-index.ts'
+import { fastestOf } from './helpers/budget.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
 /**
@@ -15,9 +16,10 @@ describe('index budget', () => {
     }
     const root = makeTempRepo({ files })
 
-    const started = performance.now()
+    // Same instrument as the acceptance budget, and for the same reason: a
+    // single wall-clock sample inside a forty-worker run measures contention.
+    const elapsed = await fastestOf(3, () => buildRepoIndex(root))
     const index = await buildRepoIndex(root)
-    const elapsed = performance.now() - started
 
     expect(index.files.size).toBe(5000)
     expect(index.listing).toBe('git')

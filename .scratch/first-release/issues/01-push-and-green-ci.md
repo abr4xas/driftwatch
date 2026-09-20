@@ -20,7 +20,7 @@ All three pass locally. None has ever run on `ubuntu-latest`, on Node 24 **and**
 
 - **The lockfile.** `--frozen-lockfile` fails if `pnpm-lock.yaml` disagrees with `package.json`, and `package.json` changed (version, author, keywords, scripts). Nothing was added to the dependency graph, so it should hold; if it does not, that is the failure to fix before anything else.
 - **Node 26 vs 24.** The corpus does not run in CI (ADR-0007), so what runs on both is the suite and the two self-audits.
-- **`import.meta.dirname`** in `scripts/corpus.ts` is new since the last CI run. It is Node 20.11+, well under the floor, but it has never been executed by CI — `scripts/` is linted there, not run.
+- **`import.meta.dirname`** in `scripts/corpus/run.ts` is new since the last CI run. It is Node 20.11+, well under the floor, but it has never been executed by CI — `scripts/` is linted there, not run.
 
 Nothing here is publishable until this is green.
 

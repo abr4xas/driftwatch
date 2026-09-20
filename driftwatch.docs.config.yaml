@@ -1,0 +1,33 @@
+# The second invocation, for `link/broken` only.
+#
+# `sources` and the check filter are both global, so auditing the
+# specification needs its own config rather than a bigger one. ADR-0008
+# established that `path/missing` cannot run over `docs/spec/`: a
+# specification quotes paths from other repositories and from hypothetical
+# ones, and reporting them is nothing but noise.
+#
+# Anchors are the opposite case. An anchor is a claim about the document it
+# points at, and these documents cross-reference each other constantly, so
+# this is exactly where a stale section title shows up first.
+#
+#   driftwatch --config driftwatch.docs.config.yaml --only link/broken
+#
+# It was vacuous when it was added — the repo's documents cross-reference each
+# other with `§` in prose and none of them wrote a `](...#...)` link — and it
+# stopped being vacuous in the round that ruled on `vercel/next.js`'s anchors.
+# `CLASSIFICATION.md` quotes `[Sibling fix A](#anchor-a)` as a **specimen of
+# another repository's output**, and this run read it as a link of its own and
+# reported it twice. The fix was in the document, not here: a specimen of a
+# link is quoted as code now, which is the distinction `docs-links.test.ts`
+# already makes about `SPEC.md`. Nothing is suppressed in this file, and
+# nothing should be — a config that hid those two would hide the next real one.
+
+sources:
+  - 'docs/**/*.md'
+  - 'README.md'
+  - 'AGENTS.md'
+  - 'CONTEXT.md'
+  - 'test/corpus/*.md'
+
+checks:
+  'path/missing': 'off'

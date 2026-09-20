@@ -17,6 +17,7 @@ export type DiscardReason =
   | 'not-a-file'
   | 'bare-directory'
   | 'metasyntactic'
+  | 'absolute-path'
   | 'not-path-shaped'
   | 'module-specifier'
   | 'home-path'
@@ -86,6 +87,36 @@ function isSpecifier(text: string): boolean {
  */
 function isHomePath(text: string): boolean {
   return text === '~' || text.startsWith('~/')
+}
+
+/**
+ * A text opening with `/` is an **endpoint, a URL, or a machine's filesystem**
+ * — and almost never a file in this repository.
+ *
+ * `resolve.ts` used to read a leading slash as "from the repo root", which is a
+ * reading nobody writing the document had in mind. Measured over the 66-repo
+ * corpus: **306 claims are written as an absolute path, and 5 of them resolve
+ * to anything in the repo.** The other 301 are of three kinds and none is ours:
+ *
+ * - HTTP routes (BerriAI/litellm): `/v1/responses`, `/embeddings`, `/batches`
+ * - site URLs (vercel/next.js): `/docs/app/glossary`, `/docs/app/`
+ * - real absolute paths (1amageek/SwiftAgent): `/etc/`, `/tmp/../etc/`
+ *
+ * Same category as `isHomePath` and the same argument: this is the extractor
+ * being told about a syntax it was misreading, not a guess about likelihood. In
+ * Markdown a leading slash is a root-relative **URL**, which is what `](/x)`
+ * means everywhere it is rendered; in prose it is an absolute path on somebody's
+ * disk. Neither can be checked against a repo index.
+ *
+ * What it costs is those 5 — a document that writes `/src/index.ts` meaning the
+ * repo root and is right. They stop being verified rather than start being
+ * reported, so the cost is a false negative, 1.6% of the absolute paths the
+ * corpus contains.
+ */
+function isAbsolutePath(text: string): boolean {
+  // `//host/x` is rule 1's protocol-relative URL, and it stays rule 1's: the
+  // reason a text was discarded is what the tests and the report pin.
+  return text.startsWith('/') && !text.startsWith('//')
 }
 
 /**
@@ -222,8 +253,31 @@ export function isPlaceholderName(word: string): boolean {
   )
 }
 
+/**
+ * `path/to/…`, the metasyntactic path.
+ *
+ * It is a **sequence**, not a word, which is why it cannot join
+ * `METASYNTACTIC`: that set is tested one segment at a time, and `path` and
+ * `to` are both ordinary directory names on their own — `src/path/resolve.ts`,
+ * `lib/to/index.ts`. Only adjacent do they stop naming anything.
+ *
+ * Real case (`withastro/astro`), in a template for the review output a skill
+ * should produce:
+ *
+ *     `[medium][requirements]` `path/to/file.ts:87` - Short title. Explain the
+ *     unmet requirement, impact, and minimal remediation direction.
+ *
+ * Matched at any position rather than only at the front, because a document
+ * writes `some/path/to/thing` as readily as `path/to/thing`, and case-
+ * insensitively because prose capitalises it.
+ */
+function hasMetasyntacticPath(text: string): boolean {
+  const segments = text.toLowerCase().split('/')
+  return segments.some((segment, i) => segment === 'path' && segments[i + 1] === 'to')
+}
+
 function hasMetasyntacticSegment(text: string): boolean {
-  return text.split('/').some(isPlaceholderName)
+  return hasMetasyntacticPath(text) || text.split('/').some(isPlaceholderName)
 }
 
 function isNotAFile(text: string): boolean {
@@ -292,6 +346,7 @@ export function discardReason(
   if (isUrl(text)) return 'url'
   if (isSpecifier(text)) return 'module-specifier'
   if (isHomePath(text)) return 'home-path'
+  if (isAbsolutePath(text)) return 'absolute-path'
   if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
   if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'
   if (isBareWord(text)) return 'bare-word'

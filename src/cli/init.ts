@@ -1,5 +1,5 @@
 /**
- * `--init`: write a commented `driftwatch.config.ts` (`SPEC.md` § 4).
+ * `--init`: write a commented `driftwatch.config.yaml` (`SPEC.md` § 4).
  *
  * It is a different command wearing a flag's clothes — it writes a new file
  * and then exits, without running the audit or sharing anything with `--fix`,
@@ -24,6 +24,10 @@ const CONFIG_FILENAME = 'driftwatch.config.yaml'
  * already a runtime dependency of the frontmatter checks. Ticket `02` of
  * `.scratch/init-flag/` weighed five shapes; this is the one that survived.
  *
+ * ADR-0013 later withdrew the `.ts` format from the loader entirely, which
+ * turned the first half of that paragraph from a recommendation into the only
+ * option. The reasoning is unchanged and is why the ADR left `--init` alone.
+ *
  * **Only the keys that do something are live.** `sources` and `checks` reach
  * `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by
  * the loader and read by nobody, so they are commented out with the reason. A
@@ -40,6 +44,12 @@ export const INIT_TEMPLATE = `# driftwatch configuration
 # globs, matched against the files git lists, relative to the repo root.
 # An entry matching nothing is an error: a source that disappeared is drift.
 sources: []
+
+# Directories whose children are skill directories, on top of the built-in
+# ones (.claude/skills, .agents/skills, .cursor/skills, .codex/skills,
+# .github/skills, .opencode/skills). Additive: a typo costs the entry and
+# never the check.
+skillRoots: []
 
 # Severity per check: 'error' | 'warning' | 'off'. The ids are listed by
 # \`driftwatch --help\` and described in the guide.

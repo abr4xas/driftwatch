@@ -42,7 +42,12 @@ function markdownFiles(dir: string, found: string[] = []): string[] {
 
 /** The documents this repo maintains. The corpus clones are somebody else's. */
 function documented(): string[] {
-  return [join(ROOT, 'README.md'), join(ROOT, 'AGENTS.md'), ...markdownFiles(join(ROOT, 'docs'))]
+  return [
+    join(ROOT, 'README.md'),
+    join(ROOT, 'AGENTS.md'),
+    join(ROOT, 'CONTEXT.md'),
+    ...markdownFiles(join(ROOT, 'docs')),
+  ]
 }
 
 function brokenLinksIn(file: string): string[] {
@@ -98,8 +103,29 @@ describe('the documented action ref', () => {
   const VERSION = (
     JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version: string }
   ).version
+  // `[\w.-]+` and not `\d+\.\d+\.\d+`: a floating `@v1` has to be **caught**
+  // by this test, not skipped by its pattern.
   const REF = /abr4xas\/driftwatch@v(?<version>[\w.-]+)/gu
-  const FILES = ['README.md', 'action.yml', 'docs/guide/ci.md', 'docs/spec/ROADMAP.md']
+  /**
+   * Every file that shows somebody a `uses:` line, and it has to be every one.
+   * `docs/guide/output.md` was missing and carried `@v1` — a floating major tag
+   * that does not exist and will not, since the project is 0.x. A reader
+   * pasting it got a workflow that could not resolve the action.
+   *
+   * A guard that checks four files and leaves out the fifth is how the fifth
+   * is the one that is wrong.
+   */
+  const FILES = [
+    'README.md',
+    'action.yml',
+    'docs/guide/ci.md',
+    'docs/guide/output.md',
+    'docs/spec/ROADMAP.md',
+    // The sixth, and it was the one that was wrong — the page shipped `@v0.3.0`
+    // through two releases. The comment above predicted the shape and the list
+    // it was written on still left this out.
+    'site/index.html',
+  ]
 
   it.each(FILES)('matches package.json in %s', (file) => {
     const text = readFileSync(join(ROOT, file), 'utf8')

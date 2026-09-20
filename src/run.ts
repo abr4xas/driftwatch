@@ -2,9 +2,9 @@ import { loadConfig, type CheckSeverity, type Config } from './core/config.ts'
 import { discoverSources } from './core/discover.ts'
 import { type Counts } from './core/exit-codes.ts'
 import { isIgnored, parseIgnores, type IgnoreIndex } from './core/ignores.ts'
-import type { Claim, ClaimKind, Finding, Source } from './core/types.ts'
+import type { Claim, ClaimKind, Finding, SkippedSource, Source } from './core/types.ts'
 import { proseGatesFor } from './extract/context-prose.ts'
-import type { ExtractContext } from './extract/context.ts'
+import type { DiscardSink, ExtractContext } from './extract/context.ts'
 import { extractClaims } from './extract/index.ts'
 import { parseFrontmatter } from './parse/frontmatter.ts'
 import { parseMarkdown } from './parse/markdown.ts'
@@ -30,6 +30,11 @@ export type RunOptions = {
   skip?: readonly string[]
   /** `false` when `--no-tier2` was passed. Absent means tier 2 runs. */
   tier2?: boolean
+  /**
+   * Where to report candidates the extractor threw away. Absent on every
+   * ordinary run; see `DiscardSink`. No CLI flag sets it.
+   */
+  discards?: DiscardSink
 }
 
 export type RunResult = {
@@ -38,6 +43,8 @@ export type RunResult = {
   config: Config
   configPath: string | undefined
   sources: readonly Source[]
+  /** Documents that were found and could not be read. See `SkipReason`. */
+  skipped: readonly SkippedSource[]
   /**
    * The ids of the checks that ran. Not the registry: it is the only thing
    * that distinguishes a clean audit from a vacuous one.
@@ -67,7 +74,11 @@ type Analysis = {
  * They come from the same mdast tree, so parsing twice would be the only cost
  * of keeping them apart.
  */
-function analyze(sources: readonly Source[], origin: string | undefined): Analysis {
+function analyze(
+  sources: readonly Source[],
+  origin: string | undefined,
+  discards: DiscardSink | undefined,
+): Analysis {
   const claims: Claim[] = []
   const ignores = new Map<Source, IgnoreIndex>()
   for (const source of sources) {
@@ -82,6 +93,7 @@ function analyze(sources: readonly Source[], origin: string | undefined): Analys
       frontmatter,
       table,
       prose: proseGatesFor(source.content, origin),
+      ...(discards === undefined ? {} : { discards }),
     }
     claims.push(...extractClaims(context))
     ignores.set(source, parseIgnores(doc, table))
@@ -178,12 +190,13 @@ export async function run(options: RunOptions): Promise<RunResult> {
   })
 
   const index = await buildRepoIndex(root)
-  const sources = await discoverSources(index, {
+  const { sources, skipped } = await discoverSources(index, {
     paths: options.paths ?? [],
     ...(config.sources === undefined ? {} : { sources: config.sources }),
+    ...(config.skillRoots === undefined ? {} : { skillRoots: config.skillRoots }),
   })
 
-  const { claims, ignores } = analyze(sources, await originSlug(root))
+  const { claims, ignores } = analyze(sources, await originSlug(root), options.discards)
 
   // git is asked about every candidate path in one go, before running the
   // checks: a path git ignores cannot be claimed to be missing.
@@ -197,6 +210,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     // Same reasoning: the Makefiles and Deno configs are real I/O, so nothing
     // is read when no enabled check consumes a script claim.
     tasks: consumes(checks, 'script') ? await buildTaskIndex(root, index, claims) : new Map(),
+    skillRoots: config.skillRoots ?? [],
   }
 
   const findings = sortFindings(applyIgnores(verify(claims, checks, ctx, config.checks), ignores))
@@ -206,6 +220,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     config,
     configPath,
     sources,
+    skipped,
     checks: checks.map((check) => check.id),
     claims: claims.length,
     findings,

@@ -72,7 +72,7 @@ jobs:
       # with their own config, and it is blocking for the same reason the first
       # one is: this repo's documentation is the tool's first test subject.
       - name: driftwatch on its own documentation
-        run: node ./dist/cli.js --config driftwatch.docs.config.ts
+        run: node ./dist/cli.js --config driftwatch.docs.config.yaml
 
       # The published tarball must hold the build and nothing else. Checked
       # here as well as in the release workflow, so a `files` mistake fails on

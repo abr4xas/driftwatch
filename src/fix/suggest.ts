@@ -54,8 +54,28 @@ const SIMILAR = 0.5
  * comparison only runs among the candidates that already share the file name.
  * Over 100k files that is the difference between a lookup and a scan.
  */
-export function suggestPath(index: RepoIndex, rel: string): Suggestion | undefined {
-  const candidates = candidatesFor(index, basenameOf(rel))
+export function suggestPath(
+  index: RepoIndex,
+  rel: string,
+  /** The document making the claim, which is never the answer to it. */
+  source: string,
+): Suggestion | undefined {
+  const candidates = candidatesFor(index, basenameOf(rel)).filter(
+    // A document cannot be telling you to read itself under another name.
+    //
+    // Ticket `22`: `parentSimilarity` divides by the **shorter** directory, so
+    // a target sitting above the claim agrees on every segment it has and
+    // scores 1.00 — the same as one exactly where the claim said. A claim
+    // written relative to a nested source resolves under that source's own
+    // directory, which makes the source's own siblings prefixed by it for
+    // free, and in a repository holding a single `SKILL.md` a skill referring
+    // to another skill was offered itself, fixable, at confidence 1.
+    //
+    // The guard is deliberately not about the score. Changing the divisor
+    // fixes nothing — every real instance still clears `SIMILAR` — and the
+    // thing that is wrong here is not the arithmetic.
+    (candidate) => candidate !== source,
+  )
   if (candidates.length === 0) return undefined
 
   const wanted = parentOf(rel)

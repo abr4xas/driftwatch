@@ -91,10 +91,11 @@ export const skills: Fixture = {
     ].join('\n'),
 
     /**
-     * A name that is not kebab-case **and agrees with its directory**. This is
-     * the only shape in which the kebab rule fires on its own: when the name
-     * disagrees with the directory, the directory finding carries the fix and
-     * this one would be noise about a name that is being replaced anyway.
+     * A name that is not kebab-case and **agrees with its directory**. Silent
+     * since ticket `14`: `Ship_It` is not a false statement about this
+     * repository, it is a naming convention, and `BRIEF.md` § Non-goals puts
+     * both style and quality outside this tool. `skills-ref validate` is the
+     * thing that answers it.
      */
     '.claude/skills/Ship_It/SKILL.md': [
       '---',
@@ -147,6 +148,30 @@ export const skills: Fixture = {
       '',
     ].join('\n'),
 
+    /**
+     * The same two shapes under `.agents/skills/`, which is where `npx skills
+     * add` installs by default and where the corpus keeps most of its skills.
+     *
+     * The rootless one is the regression guard: `skillDirectoryOf` used to
+     * recognise the skills root by the literal string `.claude/skills`, so a
+     * `SKILL.md` sitting in any other root had its name compared against
+     * `skills` and was reported for not matching a container.
+     */
+    '.agents/skills/SKILL.md': [
+      '---',
+      'name: rootless-elsewhere',
+      "description: Sits in a skills root that is not Claude Code's, and is fine",
+      '---',
+      '',
+    ].join('\n'),
+    '.agents/skills/renamed/SKILL.md': [
+      '---',
+      'name: was-called-this',
+      'description: The directory was renamed and the frontmatter was not, which is drift',
+      '---',
+      '',
+    ].join('\n'),
+
     // The block does not parse: one finding, and it is `frontmatter/invalid`'s.
     // There is no structure to read, so this check stays silent.
     '.claude/skills/unparseable/SKILL.md': ['---', 'name: [unclosed', '---', ''].join('\n'),
@@ -160,9 +185,49 @@ export const skills: Fixture = {
       '---',
       '',
     ].join('\n'),
+    /**
+     * 68 characters, which the specification's 64-character limit forbids —
+     * and **nothing is reported**. Length is a gate on the autofix, not a
+     * finding: a name too long is as wrong the day it is written as a year
+     * later, so it is not drift and not driftwatch's to say. The fixture below
+     * is the other half of that asymmetry.
+     */
+    /**
+     * The half that matters: a directory that is kebab-case and **over the
+     * limit**, with a name that disagrees with it. The mismatch is reported —
+     * that one is drift — and the fix is **withheld**, because rewriting the
+     * name to this directory would produce a skill `skills-ref validate`
+     * rejects. `SPEC.md` § 8: a fix whose output is a finding is not a fix.
+     */
+    '.claude/skills/pppppppppp-qqqqqqqqqq-rrrrrrrrrr-ssssssssss-tttttttttt-uuuuuuuuuu-vv/SKILL.md':
+      [
+        '---',
+        'name: mismatched',
+        'description: Its directory is valid kebab-case and four characters too long',
+        '---',
+        '',
+      ].join('\n'),
+    '.claude/skills/aaaaaaaaaa-bbbbbbbbbb-cccccccccc-dddddddddd-eeeeeeeeee-ffffffffff-gg/SKILL.md':
+      [
+        '---',
+        'name: aaaaaaaaaa-bbbbbbbbbb-cccccccccc-dddddddddd-eeeeeeeeee-ffffffffff-gg',
+        'description: Its name is four characters over the documented limit of sixty-four',
+        '---',
+        '',
+      ].join('\n'),
     '.claude/commands/ship.md': ['---', 'description: Go', '---', ''].join('\n'),
   },
   expected: [
+    {
+      check: 'skill/frontmatter',
+      severity: 'error',
+      file: '.agents/skills/renamed/SKILL.md',
+      line: 2,
+      column: 1,
+      text: 'name',
+      message: 'name does not match the directory',
+      suggestion: { value: 'renamed', confidence: 1, fixable: true },
+    },
     {
       check: 'skill/frontmatter',
       severity: 'error',
@@ -193,31 +258,20 @@ export const skills: Fixture = {
     {
       check: 'skill/frontmatter',
       severity: 'error',
-      file: '.claude/skills/mistyped/SKILL.md',
-      line: 4,
-      column: 1,
-      text: 'allowed_tools',
-      message: 'unknown key',
-      suggestion: { value: 'allowed-tools', confidence: 0.6, fixable: false },
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
-      file: '.claude/skills/mistyped/SKILL.md',
-      line: 5,
-      column: 1,
-      text: 'licence',
-      message: 'unknown key',
-      suggestion: { value: 'license', confidence: 0.6, fixable: false },
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
       file: '.claude/skills/nameless/SKILL.md',
       line: 2,
       column: 1,
       text: 'name',
       message: 'name is empty',
+    },
+    {
+      check: 'skill/frontmatter',
+      severity: 'error',
+      file: '.claude/skills/pppppppppp-qqqqqqqqqq-rrrrrrrrrr-ssssssssss-tttttttttt-uuuuuuuuuu-vv/SKILL.md',
+      line: 2,
+      column: 1,
+      text: 'name',
+      message: 'name does not match the directory',
     },
     {
       check: 'skill/frontmatter',
@@ -232,30 +286,12 @@ export const skills: Fixture = {
     {
       check: 'skill/frontmatter',
       severity: 'error',
-      file: '.claude/skills/Ship_It/SKILL.md',
-      line: 2,
-      column: 1,
-      text: 'name',
-      message: 'name is not kebab-case',
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
       file: '.claude/skills/skills/SKILL.md',
       line: 2,
       column: 1,
       text: 'name',
       message: 'name does not match the directory',
       suggestion: { value: 'skills', confidence: 1, fixable: true },
-    },
-    {
-      check: 'skill/frontmatter',
-      severity: 'error',
-      file: '.claude/skills/terse/SKILL.md',
-      line: 3,
-      column: 1,
-      text: 'description',
-      message: 'description is shorter than 20 characters',
     },
     {
       check: 'skill/frontmatter',

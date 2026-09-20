@@ -34,6 +34,12 @@ const GENERATED = new Set([
   '.gradle',
   '.terraform',
   '.react-router',
+  // React Router's typegen writes `+types/` beside every route module, and a
+  // context file names it because that is where a route's types come from —
+  // "imports from `./+types/...`". Nothing tracks it: not in
+  // `remix-run/react-router` itself, nor in any of the three repositories that
+  // mention it across the discovery corpus. Ticket `21`.
+  '+types',
 ])
 
 /** Whether any of the path's segments is a generated directory. */

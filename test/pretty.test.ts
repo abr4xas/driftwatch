@@ -54,6 +54,7 @@ function result(over: Partial<RunResult> = {}): RunResult {
     config: {},
     configPath: undefined,
     sources: [source('CLAUDE.md')],
+    skipped: [],
     checks: ['path/missing'],
     claims: 0,
     findings: [],

@@ -8,7 +8,10 @@ import type { Claim } from '../core/types.ts'
  * the document, and it is not ours to verify.
  */
 export function resolveInRepo(baseDir: string, text: string): string | undefined {
-  // A leading slash reads as "from the repo root", not from the filesystem.
+  // A leading slash reads as "from the repo root" here, which is what an
+  // anchor target needs. Path **claims** never arrive with one: `discard.ts`
+  // stops them, because over the corpus that reading held for 5 of 306 and
+  // produced three false positives and no true ones.
   const fromRoot = text.startsWith('/')
   const joined = fromRoot ? text.slice(1) : baseDir === '' ? text : `${baseDir}/${text}`
 

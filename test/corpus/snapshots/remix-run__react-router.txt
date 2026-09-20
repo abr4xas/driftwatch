@@ -1,13 +1,21 @@
 # remix-run/react-router
 
-sources: 2
-errors: 0
+sources: 9
+errors: 2
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .agents/skills/create-pr/SKILL.md
+skill  .agents/skills/finish-line/SKILL.md
+skill  .agents/skills/fix-bug/SKILL.md
+skill  .agents/skills/implement-rfc/SKILL.md
+skill  .agents/skills/prepare-release-notes/SKILL.md
+skill  .agents/skills/react-router/SKILL.md
+skill  .github/skills/agentic-workflows/SKILL.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md
 
 ## findings
-(none)
+.agents/skills/implement-rfc/SKILL.md:143:28  [path/missing] inline-code  docs/upgrading/future-flags.md
+.agents/skills/react-router/SKILL.md:22:4  [path/missing] inline-code  app/entry.server.tsx

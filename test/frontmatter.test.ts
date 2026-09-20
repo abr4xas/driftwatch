@@ -125,6 +125,56 @@ function block(...lines: readonly string[]): string {
   return ['---', ...lines, '---', '', '# Title', ''].join('\n')
 }
 
+describe('a block that parses and still means nothing', () => {
+  /**
+   * `globs: *.go` is what Cursor's own rule files are written with, and in YAML
+   * `*` opens an **alias** to an anchor that is not there. `parseDocument`
+   * accepts it — `doc.errors` is empty — and `toJS()` throws a bare
+   * `ReferenceError` one line later, outside the guard the module was built
+   * around. The discovery corpus found it, where it did not report anything:
+   * it ended the whole run with "this is a driftwatch bug". How often it occurs
+   * there is in ticket `15`, not here. Ticket `15`.
+   */
+  const ALIAS = '---\ndescription: Go rules\nglobs: *.go\n---\n\nbody\n'
+
+  it('is an error rather than a thrown ReferenceError', () => {
+    const fm = parseFrontmatter(ALIAS)
+    expect(fm?.error?.reason).toContain('Unresolved alias')
+    expect(fm?.data).toBeUndefined()
+  })
+
+  it('points at the alias, which is the only token that is wrong', () => {
+    const fm = parseFrontmatter(ALIAS)
+    const [from, to] = fm?.error?.offset ?? [0, 0]
+    expect(ALIAS.slice(from, to)).toBe('*.go')
+  })
+
+  it('reports no keys and no values, because there is no structure', () => {
+    const fm = parseFrontmatter(ALIAS)
+    expect(fm?.keys).toEqual([])
+    expect(fm?.values).toEqual([])
+  })
+
+  it('survives the other way toJS throws, and still points somewhere real', () => {
+    // The alias-count guard: `toJS()` refuses a block whose aliases expand
+    // exponentially. Same bare `ReferenceError`, same empty `doc.errors`, and
+    // no single offending token — so the first alias is where it points.
+    const bomb =
+      '---\na: &a ["x","x"]\nb: &b [*a,*a]\nc: &c [*b,*b]\nd: &d [*c,*c]\n' +
+      'e: &e [*d,*d]\nf: &f [*e,*e]\ng: &g [*f,*f]\nh: [*g,*g]\n---\n'
+    const fm = parseFrontmatter(bomb)
+    expect(fm?.error?.reason).toContain('alias')
+    const [from, to] = fm?.error?.offset ?? [0, 0]
+    expect(bomb.slice(from, to)).toBe('*a')
+  })
+
+  it('leaves a block that does resolve alone', () => {
+    const fm = parseFrontmatter('---\nbase: &b ./src\nalso: *b\n---\n')
+    expect(fm?.error).toBeUndefined()
+    expect(fm?.data).toEqual({ base: './src', also: './src' })
+  })
+})
+
 describe('extractFrontmatterClaims', () => {
   it('a source with no frontmatter claims nothing', () => {
     expect(claimsOf('# Title\n')).toEqual([])

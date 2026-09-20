@@ -21,7 +21,7 @@ export const pathMissing: Check = {
     const verdict = verifyPathClaim(claim, ctx)
     if (verdict.kind !== 'missing') return null
 
-    const suggestion = suggestPath(ctx.index, verdict.local)
+    const suggestion = suggestPath(ctx.index, verdict.local, claim.source.path)
     return {
       claim,
       message: 'path does not exist',

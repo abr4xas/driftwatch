@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { main, type Io } from '../src/cli/main.ts'
 import { EXIT } from '../src/core/exit-codes.ts'
+import { fastestOf } from './helpers/budget.ts'
 import { makeTempRepo } from './helpers/temp-repo.ts'
 
 function capture(): { io: Io; printed: () => string } {
@@ -28,15 +29,10 @@ function capture(): { io: Io; printed: () => string } {
  */
 describe('M0 acceptance, revised in M1', () => {
   it('auditing this repo takes under 300 ms', async () => {
-    // The first invocation in a fresh worker pays for JIT warm-up, which is not
-    // the tool's work. Process cold start is measured separately, by invoking
-    // the compiled binary.
-    await main([], capture().io, process.cwd())
-
-    const c = capture()
-    const started = performance.now()
-    await main([], c.io, process.cwd())
-    const elapsed = performance.now() - started
+    // Timed with `fastestOf` rather than a single sample: this file is one of
+    // forty-odd workers and a lone reading measures the scheduler too. Process
+    // cold start is measured separately, by invoking the compiled binary.
+    const elapsed = await fastestOf(3, () => main([], capture().io, process.cwd()))
 
     expect(elapsed, `took ${elapsed.toFixed(0)} ms`).toBeLessThan(300)
   })

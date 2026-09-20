@@ -2,8 +2,8 @@ import { lstatSync, realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { allFiles, hasFile, type RepoIndex } from '../verify/repo-index.ts'
-import { UserError } from './errors.ts'
-import type { Source, SourceKind } from './types.ts'
+import { codeOf, UserError } from './errors.ts'
+import type { SkipReason, SkippedSource, Source, SourceKind } from './types.ts'
 
 export type DiscoverOptions = {
   /** Positional arguments that narrow the scope. Empty audits the whole repo. */
@@ -13,6 +13,8 @@ export type DiscoverOptions = {
    * index. They are added to what discovery found, never replacing it.
    */
   sources?: readonly string[]
+  /** The config's `skillRoots`: containers of skill directories. */
+  skillRoots?: readonly string[]
 }
 
 /** The segments of a relative path, already in posix form. */
@@ -23,6 +25,77 @@ function segmentsOf(rel: string): string[] {
 function basenameOf(rel: string): string {
   const slash = rel.lastIndexOf('/')
   return slash === -1 ? rel : rel.slice(slash + 1)
+}
+
+/**
+ * The roots an agent installs skills into, of the ones this tool reads.
+ *
+ * **There is no single one, and `.claude/skills/` is not the busiest.**
+ * `npx skills add` writes to `.agents/skills/` by default — the "universal"
+ * target, which covers Amp, Cline, Codex, Cursor, GitHub Copilot, Gemini CLI,
+ * Kilo, Kimi, OpenCode, Warp, Zed and more — and offers fifty-odd others behind
+ * a picker, including `.aider-desk/skills`, `.augment/skills`, `.bob/skills`,
+ * `data/skills` and a bare `skills` for OpenClaw. Every agent picks its own.
+ *
+ * The corpus agrees, and by a wide margin: 83 `SKILL.md` files live under
+ * `.agents/skills/` against 32 under `.claude/skills/`.
+ *
+ * These are **not** a list pasted from the installer, and the ones missing are
+ * not an oversight: each root added is more sources audited in every repo that
+ * has one, which moves corpus snapshots and has to be priced against the diff
+ * (ADR-0007). Widening happens one root at a time, with the measurement in
+ * hand.
+ *
+ * What that measurement should count is **repositories, not files**: the root
+ * with the most `SKILL.md` files of the ones not read here has all of them in
+ * one project, and a file count cannot tell a convention from a project. The
+ * roots that are missing and why is `CLASSIFICATION.md`'s round twenty-two;
+ * repeating it here would be two records of one decision.
+ *
+ * The general answer is not a longer list. It is a repository saying where its
+ * skills are, which is still undecided. This is the stopgap for the roots
+ * common enough to be worth hard-coding meanwhile.
+ */
+export const SKILL_ROOTS: readonly string[] = [
+  '.claude',
+  '.agents',
+  '.cursor',
+  '.codex',
+  '.github',
+  '.opencode',
+]
+
+/**
+ * The built-in roots as **containers**: a directory whose children are skill
+ * directories.
+ *
+ * Ticket `12` is why the shape is this and not the pair. A repository can
+ * declare its own containers, and the commonest one in the wild is a bare
+ * `skills/` in the repository root — 74 of the 106 discovery repositories with
+ * a skill outside a known root. A pair cannot express that: there is no root
+ * above it. Expressing the built-ins the same way means one rule rather than
+ * two, and `skillRoots` in the config is additive to this list.
+ */
+export const SKILL_CONTAINERS: readonly string[] = SKILL_ROOTS.map((root) => `${root}/skills`)
+
+/**
+ * Whether a path lies under one of these containers.
+ *
+ * The container may sit at any depth — a monorepo with one `.claude/` per
+ * package works like a flat repo — and the skill may be nested below it, which
+ * is how `mattpocock/skills` groups by category.
+ */
+export function underSkillContainer(rel: string, containers: readonly string[]): boolean {
+  const segments = segmentsOf(rel)
+  return containers.some((container) => {
+    const wanted = segmentsOf(container)
+    if (wanted.length === 0) return false
+    // The file itself is not the container, so the last segment cannot start it.
+    for (let i = 0; i + wanted.length < segments.length; i += 1) {
+      if (wanted.every((part, k) => segments[i + k] === part)) return true
+    }
+    return false
+  })
 }
 
 /**
@@ -41,7 +114,11 @@ function indexOfPair(segments: readonly string[], first: string, second: string)
  * What kind of source a path is, or `undefined` if it is not a source.
  * Rule order matters: the most specific anchors come first.
  */
-export function classifySource(rel: string): SourceKind | undefined {
+export function classifySource(
+  rel: string,
+  /** Containers the repository declared. Additive: see `skillRoots`. */
+  declared: readonly string[] = [],
+): SourceKind | undefined {
   const base = basenameOf(rel)
   const segments = segmentsOf(rel)
 
@@ -52,8 +129,9 @@ export function classifySource(rel: string): SourceKind | undefined {
     return 'cursor-rule'
   }
 
-  const skills = indexOfPair(segments, '.claude', 'skills')
-  if (skills !== -1 && base === 'SKILL.md') return 'skill'
+  if (base === 'SKILL.md' && underSkillContainer(rel, [...SKILL_CONTAINERS, ...declared])) {
+    return 'skill'
+  }
 
   const agents = indexOfPair(segments, '.claude', 'agents')
   // `.claude/agents/*.md` is flat: a .md one level deeper is not a subagent.
@@ -239,14 +317,79 @@ function collapseSymlinks(
   return out
 }
 
+/** What discovery found: the documents it read, and the ones it could not. */
+export type Discovered = {
+  sources: Source[]
+  skipped: SkippedSource[]
+}
+
+/** A document found in the index, before anything has been read off disk. */
+type Candidate = {
+  path: string
+  kind: SourceKind
+  absPath: string
+  aliases: string[]
+}
+
+type ReadResult = { ok: true; source: Source } | { ok: false; skipped: SkippedSource }
+
+/**
+ * Which of `SkipReason`'s two the path is, asked of the filesystem.
+ *
+ * `lstat` does not follow the link, so it succeeds exactly when the entry is
+ * there and its target is not. That is the only part of the cause this can
+ * observe, and the rest stays unnamed rather than guessed.
+ */
+function whyAbsent(absPath: string): SkipReason {
+  try {
+    lstatSync(absPath)
+    return 'dangling-symlink'
+  } catch {
+    return 'absent-from-worktree'
+  }
+}
+
+/**
+ * Reads one document, or reports that the working tree does not have it.
+ *
+ * `SkipReason` carries the policy and the reasoning. The case that produced it:
+ * `Rspoon3/Shotbot`'s `CLAUDE.md` is a symlink into a git submodule that was
+ * never initialised, so both entries are in the index and neither file is on
+ * disk. Before ticket `13` this threw, and the run answered with "internal
+ * failure … this is a driftwatch bug; report it" — sending the reader to the
+ * one place the answer was not, and auditing none of the repository's other
+ * documents.
+ */
+async function readSource(entry: Candidate): Promise<ReadResult> {
+  let content: string
+  try {
+    content = await readFile(entry.absPath, 'utf8')
+  } catch (cause) {
+    if (codeOf(cause) !== 'ENOENT') throw cause
+    return { ok: false, skipped: { path: entry.path, reason: whyAbsent(entry.absPath) } }
+  }
+  const slash = entry.path.lastIndexOf('/')
+  return {
+    ok: true,
+    source: {
+      path: entry.path,
+      absPath: entry.absPath,
+      kind: entry.kind,
+      content,
+      baseDir: slash === -1 ? '' : entry.path.slice(0, slash),
+      aliases: entry.aliases,
+    },
+  }
+}
+
 export async function discoverSources(
   index: RepoIndex,
   options: DiscoverOptions,
-): Promise<Source[]> {
+): Promise<Discovered> {
   const matched: Array<{ path: string; kind: SourceKind }> = []
   for (const rel of allFiles(index)) {
     if (!isInScope(rel, options.paths)) continue
-    const kind = classifySource(rel)
+    const kind = classifySource(rel, options.skillRoots ?? [])
     if (kind !== undefined) matched.push({ path: rel, kind })
   }
 
@@ -271,21 +414,14 @@ export async function discoverSources(
     matched.map((entry) => ({ ...entry, absPath: join(index.root, entry.path) })),
   )
 
-  const read = await Promise.all(
-    unique.map(async ({ path, kind, absPath, aliases }) => {
-      const slash = path.lastIndexOf('/')
-      return {
-        path,
-        absPath,
-        kind,
-        content: await readFile(absPath, 'utf8'),
-        baseDir: slash === -1 ? '' : path.slice(0, slash),
-        aliases,
-      }
-    }),
-  )
+  const sources: Source[] = []
+  const skipped: SkippedSource[] = []
+  for (const entry of await Promise.all(unique.map(readSource))) {
+    if (entry.ok) sources.push(entry.source)
+    else skipped.push(entry.skipped)
+  }
 
-  return collapseDuplicates(read)
+  return { sources: collapseDuplicates(sources), skipped }
 }
 
 /**

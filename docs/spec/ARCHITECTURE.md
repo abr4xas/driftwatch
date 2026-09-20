@@ -24,7 +24,7 @@ This matters for the project itself: most of the future work is *adding checks*,
 ```
 src/
   cli.ts               bin entrypoint  (the only one touching process)
-  index.ts             public API: run(), defineConfig, types
+  index.ts             public API: run(), types
   run.ts               the whole pipeline; returns findings, not output
   cli/
     main.ts            the CLI body; receives the environment, returns the exit code
@@ -171,7 +171,9 @@ Four node types matter from the tree:
 
 Raw prose (`text`) is **not** scanned by default, with one exception: `dep/missing` looks at it hunting for usage verbs. Scanning prose in general is the number one source of noise.
 
-What *is* read from the prose is whether it disclaims a claim standing next to it — an example, a hedge, another repository's root. Every extractor asks that question, so `context-prose.ts` exports the question and not its steps: `proseGatesFor(content, origin)` returns a `disclaims(offset)` closed over one source, and `ExtractContext` carries it. The `~/` section scan it starts with is over the whole document, and it happens once per source rather than once per extractor.
+What *is* read from the prose is whether it disclaims a claim standing next to it — an example, a hedge, another repository's root. Every extractor asks that question, so `context-prose.ts` exports the question and not its steps: `proseGatesFor(content, origin)` returns a `disclaimedBy(offset)` closed over one source, and `ExtractContext` carries it. The `~/` section scan it starts with is over the whole document, and it happens once per source rather than once per extractor.
+
+It answers with the **name** of the gate that closed rather than with a boolean, which no extractor needs: they all stop either way. The name is for the instrumentation below.
 
 ---
 
@@ -206,6 +208,16 @@ it, and folding them in would trade readable documents for one nobody opens.
 If it fails, generate a suggestion: look up `basename` in `index.byBasename`. Confidence = 1.0 if there is a single candidate and the parent directory is similar; 0.6 if there is a single candidate in a different directory; 0.3 if there are several.
 
 **Every discard rule must have a case in `test/fixtures/`.** That is the contract against false positive regression.
+
+### What the discards cost, measured
+
+Everything the corpus measures is on one side of the tool: findings are counted and each one is ruled true or false, and nothing counts what never became a finding. Discards appear in no snapshot and inspecting them inside a validation repo is what [ADR-0006](../adr/0006-the-m1-precision-criterion.md) condition 9 forbids, so the cost of this file has never had a number.
+
+`ExtractContext` carries an optional `DiscardSink`, absent on every ordinary run, and the three extractors that consult a discard rule — `paths.ts`, `links.ts`, `scripts.ts` — report to it every candidate they refuse, with the rule's name, the prose window the rule read, and whether the repository turns out to have that path anyway. `scripts/discovery/discards.ts` runs it over the discovery corpus and prints one row per rule; `pnpm discovery sample` prints the windows a person then reads.
+
+The table is an **upper bound on what a rule costs, not its cost**: a discard is not a finding, and everything `path-claim.ts` declines to answer runs after these rules and catches what they let through. Ticket `16` found that bound loose enough for a gate to look expensive and cost nothing. Deciding whether a rule is mistuned means changing it and diffing the findings before and after, not reading a row.
+
+Three things keep the table honest. A prose gate is only credited with a candidate the other rules would have let through, since the gates run first and inline code is mostly not paths at all. All three extractors report, because the gates are shared and a table that counted one of them would report a rule's cost as smaller than it is. And nothing computed there is a precision: see `AGENTS.md` § "The discovery corpus is not a corpus in the same sense", which `formatTable` prints alongside the table because the table is the part that gets pasted somewhere.
 
 ---
 
@@ -321,7 +333,7 @@ Minimum scenarios:
 - `no-git` — repo with no `.git`, glob fallback
 
 ### 2. Corpus of real repos
-A `scripts/corpus.ts` script clones a list of public repos with real `CLAUDE.md`/`AGENTS.md` files, runs driftwatch and **stores the output as a snapshot**. It is not claimed to be correct — it is claimed not to change without intent. Every change in the snapshot is reviewed by hand.
+The `scripts/corpus/run.ts` script clones a list of public repos with real `CLAUDE.md`/`AGENTS.md` files, runs driftwatch and **stores the output as a snapshot**. It is not claimed to be correct — it is claimed not to change without intent. Every change in the snapshot is reviewed by hand.
 
 It is the only way to measure false positives in practice.
 

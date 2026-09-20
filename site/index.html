@@ -6,13 +6,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Is your CLAUDE.md or AGENTS.md still true? — driftwatch</title>
 		<meta name="description"
-			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 61 of 66 real repositories.">
+			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 58 of 66 real repositories.">
 		<link rel="icon" href="favicon.svg" type="image/svg+xml">
 		<meta name="theme-color" content="#313031">
 		<meta name="color-scheme" content="dark">
 		<meta property="og:title" content="driftwatch — dead context, found">
 		<meta property="og:description"
-			content="knip finds dead code. driftwatch finds dead context. 61 of 66 real repositories produce no false positive at all.">
+			content="knip finds dead code. driftwatch finds dead context. 58 of 66 real repositories produce no false positive at all.">
 		<meta property="og:type" content="website">
 		<link rel="canonical" href="https://driftwatch-cli.vercel.app/">
 		<meta property="og:url" content="https://driftwatch-cli.vercel.app/">
@@ -71,7 +71,7 @@
       "@id": "https://driftwatch-cli.vercel.app/#website",
       "name": "driftwatch",
       "url": "https://driftwatch-cli.vercel.app/",
-      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 61 of 66 real repositories.",
+      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 58 of 66 real repositories.",
       "inLanguage": "en",
       "author": {
         "@id": "https://driftwatch-cli.vercel.app/#author"
@@ -116,7 +116,7 @@
 				<p class="marg">
 					<span>Sheet 1 of 1</span>
 					<span aria-hidden="true">·</span>
-					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">0.3.0</a></span>
+					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">0.5.0</a></span>
 					<span aria-hidden="true">·</span>
 					<span>Node 24+</span>
 					<span aria-hidden="true">·</span>
@@ -153,7 +153,7 @@
 						<section class="fieldbook" id="demo" aria-label="Live terminal demonstration">
 							<div class="fb-bar">
 								<span class="fb-path">~/your-repo</span>
-								<span class="fb-ver">driftwatch 0.3.0</span>
+								<span class="fb-ver">driftwatch 0.5.0</span>
 							</div>
 							<pre class="fb-screen" id="screen" aria-live="polite" aria-atomic="false"></pre>
 							<div class="fb-keys" role="group" aria-label="Run a command">
@@ -173,7 +173,7 @@
 			<hr class="rule">
 
 			<div class="proof">
-				<p class="proof-claim"><strong>61 of 66</strong> real repositories produce <strong>zero</strong> false
+				<p class="proof-claim"><strong>58 of 66</strong> real repositories produce <strong>zero</strong> false
 					positives.</p>
 				<a class="btn" href="#reliability">See the survey</a>
 			</div>
@@ -264,9 +264,10 @@
 					<li>
 						<span class="sym err" aria-hidden="true">✗</span>
 						<span class="lg-id">skill/frontmatter</span>
-						<span class="lg-what">The structural rules a <code>SKILL.md</code> has to meet to be invocable:
-							required fields, a <code>name</code> matching its directory, kebab-case. <span
-								class="fine">Structure, and only structure.</span></span>
+						<span class="lg-what">A <code>SKILL.md</code> names itself something other than its directory —
+							the folder was renamed and the frontmatter did not follow. <span class="fine">Not a format
+								validator: a <code>name</code> in snake_case or a four-word description are real
+								problems and none of them are drift, so this does not report them.</span></span>
 						<span class="lg-fix yes">fixable</span>
 					</li>
 				</ul>
@@ -311,10 +312,10 @@
 
 				<div class="survey">
 					<div class="survey-map">
-						<p class="marg"><span>236 context files</span><span aria-hidden="true">·</span><span>66
+						<p class="marg"><span>341 context files</span><span aria-hidden="true">·</span><span>66
 								repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine
 								languages</span></p>
-						<div class="cells" id="cells" aria-label="236 context files, grouped into 66 repositories">
+						<div class="cells" id="cells" aria-label="341 context files, grouped into 66 repositories">
 						</div>
 						<div class="readout" id="readout" aria-live="polite"></div>
 						<p class="cell-key">
@@ -324,7 +325,7 @@
 								in and use the arrow keys.</span>
 						</p>
 						<p class="fine cell-caveat">A lit mark is a context file driftwatch reported <em>anything at
-								all</em> about: 19 of the 236, carrying 26 findings between them, and 20 of those are
+								all</em> about: 29 of the 341, carrying 37 findings between them, and 27 of those are
 							true drift the maintainers had not noticed. The four figures below count only the
 							<strong>false</strong> ones.</p>
 					</div>
@@ -332,8 +333,9 @@
 					<dl class="figures">
 						<div>
 							<dt>Repositories with zero false positives</dt>
-							<dd><b>61</b><span>/ 66</span></dd>
-							<dd class="pct">92.4%</dd>
+							<dd><b>58</b><span>/ 66</span></dd>
+							<dd class="pct">87.9%, and the project's own bar is 90%. Said here rather than quietly:
+								the bar is not met on the whole corpus</dd>
 						</div>
 						<div>
 							<dt>Same, over the validation group alone</dt>
@@ -348,9 +350,9 @@
 						</div>
 						<div class="hero-fig">
 							<dt>Edits <code>--fix</code> would apply across all 66</dt>
-							<dd><b>1</b></dd>
-							<dd class="pct">and it is correct, checked by hand at the level of the edit and not only of
-								the finding</dd>
+							<dd><b>6</b></dd>
+							<dd class="pct">and every one is correct, checked by hand at the level of the edit and not
+								only of the finding</dd>
 						</div>
 					</dl>
 				</div>
@@ -374,7 +376,7 @@
 					</div>
 					<div>
 						<h3>How it was measured</h3>
-						<p>Seventeen rounds, every finding classified by hand, including the four rounds where a
+						<p>Twenty-six rounds, every finding classified by hand, including the four rounds where a
 							condition broke and the two where the corpus caught a regression that reading the diff would
 							not have.</p>
 						<p>Eleven false-positive classes have been found and closed, each with a fixture and a test
@@ -437,7 +439,12 @@
 								</div>
 								<div>
 									<dt>skill</dt>
-									<dd><code>.claude/skills/**/SKILL.md</code></dd>
+									<dd><code>&lt;root&gt;/skills/**/SKILL.md</code>, where <code>&lt;root&gt;</code> is
+										<code>.claude</code>, <code>.agents</code>, <code>.cursor</code>,
+										<code>.codex</code>, <code>.github</code> or <code>.opencode</code>. <span
+											class="fine">There is no single one, and <code>.claude/</code> is not the
+											busiest: <code>npx skills add</code> writes to <code>.agents/</code> by
+											default.</span></dd>
 								</div>
 								<div>
 									<dt>subagent</dt>
@@ -546,7 +553,7 @@
 					<div class="codeblock">
 						<p class="marg"><span>.github/workflows/ci.yml</span></p>
 						<pre><code><span class="c-dim">- uses:</span> actions/checkout@v7
-<span class="c-dim">- uses:</span> abr4xas/driftwatch@v0.3.0</code></pre>
+<span class="c-dim">- uses:</span> abr4xas/driftwatch@v0.5.0</code></pre>
 						<p class="fine"><code>fail-on-drift: false</code> makes it advisory. <code>sarif: true</code>
 							writes a file for Code Scanning.</p>
 
@@ -616,7 +623,7 @@
 					<p class="fine">The package is <code>@abr4xas/driftwatch</code> because npm refuses
 						<code>driftwatch</code> for being too similar to an unrelated tool. Neither reaches you:
 						<code>bin</code> fixes the command at <code>driftwatch</code>, and the action is used as
-						<code>abr4xas/driftwatch@v0.3.0</code>.</p>
+						<code>abr4xas/driftwatch@v0.5.0</code>.</p>
 				</div>
 
 				<nav class="foot-links" aria-label="Project links">

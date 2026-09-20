@@ -90,14 +90,27 @@ describe('a path fix is refused when the correction would change a convention', 
     expect(await editsIn(files)).toEqual([])
   })
 
-  it('accepts a root-relative path in a nested source, which is unambiguous', async () => {
+  it('says nothing about a path written from the filesystem root', async () => {
+    /**
+     * This used to assert the opposite: that `/src/util/date.ts` in a nested
+     * source is unambiguously root-relative, is reported, and is autofixed to
+     * `/src/helpers/date.ts`.
+     *
+     * The corpus disagreed. Of **306 absolute-path claims across 66 repos, 5
+     * resolve to anything in the repo**, and the only three that ever produced
+     * findings were `/docs/app/glossary` and its siblings in `vercel/next.js`
+     * — documentation-site URLs, all false. The reading sustained no true
+     * finding anywhere and cost three false ones, so `discard.ts` now treats a
+     * leading slash the way it treats `~/`.
+     *
+     * The case below is what that costs, stated as a test rather than left
+     * implicit: a document that does mean the repo root stops being checked.
+     */
     const edits = await editsIn({
       'packages/api/AGENTS.md': 'The entry point is `/src/util/date.ts`.\n',
       'src/helpers/date.ts': '',
     })
-    expect(edits).toHaveLength(1)
-    expect(edits[0]?.covers).toBe('/src/util/date.ts')
-    expect(edits[0]?.replacement).toBe('/src/helpers/date.ts')
+    expect(edits).toEqual([])
   })
 })
 

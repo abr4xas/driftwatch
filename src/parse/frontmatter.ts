@@ -1,4 +1,5 @@
-import { isMap, isPair, isScalar, isSeq, parseDocument } from 'yaml'
+import { isMap, isPair, isScalar, isSeq, parseDocument, visit, type Document } from 'yaml'
+import { messageOf } from '../core/errors.ts'
 import type { FrontmatterType } from '../core/types.ts'
 
 /** A string value from the frontmatter, with its position in the file. */
@@ -155,6 +156,60 @@ function collectValues(data: unknown, raw: string, start: number): FrontmatterVa
   return values
 }
 
+/**
+ * Where the first alias in the block is, or the block itself.
+ *
+ * Both ways `toJS` throws are about aliases and neither carries a position:
+ * what comes out is a bare `ReferenceError`. The **node** has a range, though,
+ * so the dangling case can be pointed at exactly — and in the alias-count case,
+ * where no single token is at fault, the first alias is where the expansion
+ * starts. The block is the fallback for a throw that is neither, so that the
+ * finding always lands on something a reader can see.
+ */
+function firstAliasSpan(doc: Document, block: [number, number]): [number, number] {
+  let span: [number, number] | undefined
+  visit(doc, {
+    Alias(_key, node) {
+      if (span !== undefined) return visit.SKIP
+      const range = node.range ?? undefined
+      if (range !== undefined) span = [block[0] + range[0], block[0] + range[1]]
+      return visit.SKIP
+    },
+  })
+  return span ?? block
+}
+
+/**
+ * What the block means, or why it means nothing.
+ *
+ * `parseDocument` is used instead of `parse` so that errors are collected
+ * rather than thrown — and `toJS()` throws anyway, past that guard, because it
+ * resolves things the parser only recorded. `globs: *.go`, which is how Cursor
+ * writes a rule file, is an alias to an anchor nobody declared: the document
+ * parses, `doc.errors` is empty, and the conversion raises. So does a block
+ * whose aliases expand exponentially, which the library refuses by design.
+ *
+ * Both are the same statement as a parse error — this block has no meaning —
+ * and they are reported as one. Ticket `15`: before this, either of them ended
+ * the run with "this is a driftwatch bug", and every other document in the
+ * repository went unaudited.
+ */
+function interpret(
+  doc: Document,
+  block: [number, number],
+): { data: unknown; error: undefined } | { data: undefined; error: FrontmatterError } {
+  try {
+    return { data: doc.toJS(), error: undefined }
+  } catch (cause) {
+    // The library's own wording, like the parse errors above it: it says more
+    // than any rephrasing of ours, and it names the alias.
+    return {
+      data: undefined,
+      error: { reason: messageOf(cause), offset: firstAliasSpan(doc, block) },
+    }
+  }
+}
+
 export function parseFrontmatter(content: string): Frontmatter | undefined {
   const match = BLOCK.exec(content)
   if (match === null) return undefined
@@ -174,12 +229,12 @@ export function parseFrontmatter(content: string): Frontmatter | undefined {
    */
   const doc = parseDocument(raw, { prettyErrors: false, logLevel: 'silent' })
   const failure = doc.errors[0]
-  const error: FrontmatterError | undefined =
+  const failed: FrontmatterError | undefined =
     failure === undefined
       ? undefined
       : { reason: failure.message, offset: [start + failure.pos[0], start + failure.pos[1]] }
-
-  const data: unknown = error === undefined ? doc.toJS() : undefined
+  const { data, error } =
+    failed === undefined ? interpret(doc, offset) : { data: undefined, error: failed }
 
   return {
     raw,

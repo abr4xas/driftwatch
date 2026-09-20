@@ -12,7 +12,7 @@ Static HTML/CSS/JS, no framework of any kind (user constraint, stated explicitly
 
 ## Users
 
-Developers and teams who keep agent context files in their repo — `CLAUDE.md`, `AGENTS.md`, `.claude/skills/*/SKILL.md`, Cursor rules. They are already running linters and CI, and they already use `npx`. The evaluating visitor is a developer deciding in under a minute whether to run one command, arriving from a README badge, an npm page, a GitHub Action listing, or a link from another developer.
+Developers and teams who keep agent context files in their repo — `CLAUDE.md`, `AGENTS.md`, `.agents/skills/*/SKILL.md` and its `.claude/` and `.cursor/` equivalents, Cursor rules. They are already running linters and CI, and they already use `npx`. The evaluating visitor is a developer deciding in under a minute whether to run one command, arriving from a README badge, an npm page, a GitHub Action listing, or a link from another developer.
 
 ## Product Purpose
 
@@ -34,9 +34,9 @@ Five checks ship today, all tier 1:
 - `script/missing` — `npm/pnpm/yarn/bun run S`, `deno task S`, `make S`, against the nearest `package.json`, `Makefile` or `deno.json`. Suggests and is fixable.
 - `link/broken` — a Markdown link to an anchor no heading in the target produces. Suggests, never fixable.
 - `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes. Never fixable.
-- `skill/frontmatter` — the structural rules a `SKILL.md` must meet to be invocable. Suggests and is fixable.
+- `skill/frontmatter` — a `SKILL.md` whose `name` is not the directory it lives in. Suggests and is fixable. It does not validate the format; see `BRIEF.md` § Non-goals.
 
-Requires Node 24 or newer. Published as `@abr4xas/driftwatch`; the command is `driftwatch`; the action is `abr4xas/driftwatch@v0.3.0`. Current published version is 0.3.0 — the README carries it via badge so no prose goes stale, and the site must do the same rather than hardcode a version in copy.
+Requires Node 24 or newer. Published as `@abr4xas/driftwatch`; the command is `driftwatch`; the action is `abr4xas/driftwatch@v0.4.0`. Current published version is 0.4.0 — the README carries it via badge so no prose goes stale, and the site must do the same rather than hardcode a version in copy.
 
 Not decided / not true yet: `--watch` and `--strict` parse but belong to a later milestone. Tier 2 checks land in M5. There is no service, no account, no web app, no hosted dashboard — and the site must never imply one.
 
@@ -48,8 +48,8 @@ Name is lowercase `driftwatch`. Voice in the existing docs is declarative, unhed
 
 Real and citable:
 
-- 66 public repositories pinned to a commit, nine languages (`next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable`, others). 26 findings: 20 true, 6 false.
-- **61 of 66 repos produce zero false positives (92.4%)**; over the 32-repo validation group alone, 90.6%. No single repo sees more than 2. Across all 66, `--fix` would apply exactly one edit, and it is correct.
+- 66 public repositories pinned to a commit, nine languages (`next.js`, `langchain`, `zod`, `svelte`, `codex`, `prisma`, `gosec`, `huxtable`, others). 37 findings: 27 true, 10 false.
+- **58 of 66 repos produce zero false positives (87.9%)** — below the project's own 90% bar, and said so here rather than quietly. Over the 32-repo validation group alone, 90.6%, above it. No single repo sees more than 2. Across all 66, `--fix` would apply six edits and every one is correct.
 - 17 rounds of measurement, every finding classified by hand, in `test/corpus/CLASSIFICATION.md`. Eleven false-positive classes found and closed, each with a fixture and a test naming the repo and line it came from.
 - Real CLI output for every format, in `docs/guide/output.md`. A real clean run on this repo: `✓ 4 files · no drift · 192ms`.
 - ADRs 0001–0012 record the decisions, including the ones that cost precision.

@@ -1,11 +1,13 @@
 # sst/opencode
 
-sources: 18
+sources: 20
 errors: 0
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .opencode/skills/effect/SKILL.md
+skill  .opencode/skills/rtl-aware-development/SKILL.md
 agents-md  AGENTS.md
 agents-md  packages/app/AGENTS.md
 agents-md  packages/app/e2e/AGENTS.md

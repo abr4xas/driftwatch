@@ -64,8 +64,18 @@ An unknown key is only ever reported as a near miss of a known one ([ADR-0011](.
 
 ## skill/frontmatter
 
-**A `SKILL.md` frontmatter is not invocable.**
+**A `SKILL.md` names itself something other than its directory.**
 
-Structure, and only structure: a missing required field (`name`, `description`), a `name` that is not the directory the skill lives in, a `name` that is not kebab-case, a description too short to make the skill discoverable. A field whose *type* is wrong is `frontmatter/invalid`'s finding, and a block that does not parse produces one finding rather than six.
+One thing: the directory was renamed and the frontmatter did not follow, so the folder and the `name` disagree. It is reported alongside frontmatter that is missing, or missing a `name` or `description`, because without one there is nothing to compare a directory against — those are the precondition, not a second rule.
+
+**driftwatch does not validate the format.** A `name` in snake_case, a `description` of four words, a key the specification does not list: all real problems, none of them *drift*. They are as wrong the day the file is written as a year later, and `BRIEF.md` § Non-goals puts style, formatting and quality outside this tool. [`skills-ref validate`](https://agentskills.io/specification.md) is what answers them.
+
+A field whose *type* is wrong is `frontmatter/invalid`'s finding, and a block that does not parse produces one finding rather than six.
 
 **Suggests** the directory name for a wrong `name`. **Fixable**, and withheld when the directory name is not itself kebab-case — correcting a name to something equally invalid is not a fix.
+
+**Fixable** only when the directory is usable as a name — kebab-case, and within the 64-character limit the format sets. driftwatch does not report an over-long name (it is not drift), but it will not offer you one either.
+
+The fix is safe to apply, checked rather than assumed. `skills-ref validate` — the reference implementation the [specification](https://agentskills.io/specification.md) names — rejects the skill before the fix and calls it valid after; renaming the directory instead leaves it invalid whenever the `name` is not lowercase, which is the usual reason the two disagree.
+
+The identity an agent invokes does not change either. `npx skills` was observed installing a deliberately mismatched skill: it writes to the **source directory** and leaves the frontmatter alone. Claude Code's command name is likewise the directory rather than the field — that one is from its documentation rather than from running it.

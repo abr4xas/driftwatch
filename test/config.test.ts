@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { validateConfig } from '../src/core/config.ts'
 import { run, type RunOptions, type RunResult } from '../src/run.ts'
@@ -56,21 +58,48 @@ describe('a YAML config', () => {
   })
 })
 
+/** Message and hint together: the two lines a user actually sees. */
+async function refusal(root: string): Promise<string> {
+  try {
+    await audit(root)
+  } catch (error) {
+    const user = error as { message: string; hint?: string }
+    return `${user.message} ${user.hint ?? ''}`
+  }
+  throw new Error('expected the audit to fail')
+}
+
 describe('config lookup', () => {
-  it('finds driftwatch.config.ts and loads it with no transpiler', async () => {
+  it('refuses a .ts config and names the way off it', async () => {
+    // ADR-0013: a config is data, not a program. The refusal has to carry the
+    // migration command, because a format withdrawn without a route off it
+    // just moves work onto the user.
     const root = repo({
-      'driftwatch.config.ts': [
-        "import type { Config } from 'driftwatch'",
-        '',
-        'const config = { sources: ["docs/notes.md"] }',
-        'export default config',
-        '',
-      ].join('\n'),
+      'driftwatch.config.ts': 'export default { sources: ["docs/notes.md"] }\n',
       'docs/notes.md': NOTES,
     })
-    const result = await audit(root)
-    expect(result.configPath?.endsWith('driftwatch.config.ts')).toBe(true)
-    expect(result.config.sources).toEqual(['docs/notes.md'])
+    expect(await refusal(root)).toMatch(/--migrate-config/u)
+  })
+
+  it('refuses a .js config the same way', async () => {
+    const root = repo({ 'driftwatch.config.js': 'export default {}\n' })
+    expect(await refusal(root)).toMatch(/--migrate-config/u)
+  })
+
+  it('does not execute the module it refuses', async () => {
+    // The point of the ADR. A config that writes a file when imported must not
+    // write it: refusing has to happen before anything is loaded.
+    const root = repo({
+      'driftwatch.config.ts': [
+        "import { writeFileSync } from 'node:fs'",
+        "import { join } from 'node:path'",
+        "writeFileSync(join(import.meta.dirname, 'EXECUTED'), 'yes')",
+        'export default {}',
+        '',
+      ].join('\n'),
+    })
+    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(existsSync(join(root, 'EXECUTED'))).toBe(false)
   })
 
   it('finds a .json config', async () => {
@@ -101,14 +130,24 @@ describe('config lookup', () => {
 
   // The order matters and the search stops: two configs in one repo is a
   // mistake, and merging them would hide it.
-  it('prefers .ts over .js over .json over package.json', async () => {
+  it('prefers .json over .yaml over package.json', async () => {
     const root = repo({
-      'driftwatch.config.ts': 'export default { staleThreshold: 1 }\n',
-      'driftwatch.config.js': 'export default { staleThreshold: 2 }\n',
       'driftwatch.config.json': JSON.stringify({ staleThreshold: 3 }),
+      'driftwatch.config.yaml': 'staleThreshold: 5\n',
       'package.json': JSON.stringify({ name: 'x', driftwatch: { staleThreshold: 4 } }),
     })
-    expect((await audit(root)).config.staleThreshold).toBe(1)
+    expect((await audit(root)).config.staleThreshold).toBe(3)
+  })
+
+  it('a withdrawn format still shadows a valid one, and says so', async () => {
+    // It has to keep its place in the lookup order. Skipping it silently would
+    // load the .json and leave the author believing the .ts is in effect --
+    // the two-configs-in-one-repo case the order exists to surface.
+    const root = repo({
+      'driftwatch.config.ts': 'export default { staleThreshold: 1 }\n',
+      'driftwatch.config.json': JSON.stringify({ staleThreshold: 3 }),
+    })
+    expect(await refusal(root)).toMatch(/--migrate-config/u)
   })
 
   it('runs with no config at all', async () => {

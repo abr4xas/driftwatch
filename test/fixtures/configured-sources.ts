@@ -1,11 +1,10 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * A repo that declares extra sources in a `driftwatch.config.ts`.
+ * A repo that declares extra sources in a `driftwatch.config.yaml`.
  *
- * Three things at once: the config is loaded with no transpiler (Node strips
- * the types), a glob is matched against the repo index, and a file discovery
- * would never classify as a source gets audited anyway.
+ * Two things at once: a glob is matched against the repo index, and a file
+ * discovery would never classify as a source gets audited anyway.
  *
  * `docs/notes.txt` is there to prove the glob is a real pattern and not a
  * prefix match, and `AGENTS.md` is listed in the config on purpose: discovery
@@ -14,13 +13,7 @@ import type { Fixture } from '../helpers/fixture.ts'
 export const configuredSources: Fixture = {
   name: 'configured-sources',
   files: {
-    'driftwatch.config.ts': [
-      'const config = {',
-      "  sources: ['docs/**/*.md', 'AGENTS.md'],",
-      '}',
-      'export default config',
-      '',
-    ].join('\n'),
+    'driftwatch.config.yaml': ["sources: ['docs/**/*.md', 'AGENTS.md']", ''].join('\n'),
     'AGENTS.md': [
       '# Agents',
       '',

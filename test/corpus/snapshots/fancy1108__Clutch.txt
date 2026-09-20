@@ -1,6 +1,6 @@
 # fancy1108/Clutch
 
-sources: 5
+sources: 6
 errors: 2
 warnings: 0
 fixable: 0
@@ -8,6 +8,7 @@ fixable: 0
 ## sources
 cursor-rule  .cursor/rules/base.mdc
 cursor-rule  .cursor/rules/cli-whitelist-docs.mdc
+skill  .cursor/skills/impeccable/SKILL.md
 copilot  .github/copilot-instructions.md
 agents-md  AGENTS.md
 claude-md  CLAUDE.md

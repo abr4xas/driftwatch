@@ -1,11 +1,19 @@
 # withastro/astro
 
-sources: 1
+sources: 9
 errors: 0
 warnings: 0
 fixable: 0
 
 ## sources
+skill  .agents/skills/analyze-github-action-logs/SKILL.md
+skill  .agents/skills/astro-code-review/SKILL.md
+skill  .agents/skills/astro-developer/SKILL.md
+skill  .agents/skills/astro-pr-writer/SKILL.md
+skill  .agents/skills/changeset/SKILL.md
+skill  .agents/skills/merge/SKILL.md
+skill  .agents/skills/triage/SKILL.md
+skill  .agents/skills/writing-comments/SKILL.md
 agents-md  AGENTS.md
 
 ## findings

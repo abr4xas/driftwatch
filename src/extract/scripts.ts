@@ -12,6 +12,7 @@
 import type { Claim, ScriptFact, ScriptRunner } from '../core/types.ts'
 import type { FenceSpan } from '../parse/markdown.ts'
 import { rangeFor } from '../parse/positions.ts'
+import { proseWindowAround } from './context-prose.ts'
 import { isPlaceholderName } from './discard.ts'
 import type { ExtractContext } from './context.ts'
 
@@ -58,14 +59,27 @@ type ManagerGrammar = {
   bare: boolean
 }
 
-const MANAGERS: Readonly<Record<string, ManagerGrammar>> = {
-  npm: { runner: 'package', keywords: ['run', 'run-script'], bare: false },
-  pnpm: { runner: 'package', keywords: ['run'], bare: false },
-  yarn: { runner: 'package', keywords: ['run'], bare: false },
-  bun: { runner: 'package', keywords: ['run'], bare: false },
-  deno: { runner: 'deno', keywords: ['task'], bare: false },
-  make: { runner: 'make', keywords: [], bare: true },
-}
+/**
+ * A `Map` rather than an object literal, and the reason is a crash.
+ *
+ * The first word of a command was looked up with `MANAGERS[word]`, and every
+ * object answers to `constructor`, `toString` and `valueOf` — so a line
+ * beginning with one of them found a truthy "grammar" with no keyword list and
+ * threw on the next line. One repository in 2532 had
+ * `constructor(private readonly repository: UserRepository) {}` in a
+ * TypeScript example and took the whole audit down with it.
+ *
+ * A `Map` has no inherited keys, so the class of bug is gone rather than
+ * guarded against.
+ */
+const MANAGERS: ReadonlyMap<string, ManagerGrammar> = new Map([
+  ['npm', { runner: 'package', keywords: ['run', 'run-script'], bare: false }],
+  ['pnpm', { runner: 'package', keywords: ['run'], bare: false }],
+  ['yarn', { runner: 'package', keywords: ['run'], bare: false }],
+  ['bun', { runner: 'package', keywords: ['run'], bare: false }],
+  ['deno', { runner: 'deno', keywords: ['task'], bare: false }],
+  ['make', { runner: 'make', keywords: [], bare: true }],
+])
 
 /**
  * A flag before the name says the script lives somewhere we cannot identify:
@@ -218,7 +232,7 @@ export function parseCommand(segment: string): ParsedCommand | undefined {
   if (first === undefined) return undefined
 
   const manager = first.value
-  const grammar = MANAGERS[manager]
+  const grammar = MANAGERS.get(manager)
   if (grammar === undefined) return undefined
   if (pointsElsewhere(tokens)) return undefined
 
@@ -312,13 +326,33 @@ function isShellFence(fence: FenceSpan): boolean {
  * path inside an example is part of the example, but a command block *is* how a
  * context file tells an agent how to build the project.
  */
-export function extractScriptClaims({ source, doc, table, prose }: ExtractContext): Claim[] {
+export function extractScriptClaims({
+  source,
+  doc,
+  table,
+  prose,
+  discards,
+}: ExtractContext): Claim[] {
   const claims: Claim[] = []
 
   const push = (text: string, offset: [number, number], context: Claim['context']): void => {
+    // Parsed first, so the gate is only credited with something that was going
+    // to be a script claim. See `gatedOut` in `paths.ts` for the argument.
     const command = parseCommand(text)
     if (command === undefined) return
-    if (prose.disclaims(offset[0])) return
+    const disclaimed = prose.disclaimedBy(offset[0])
+    if (disclaimed !== undefined) {
+      discards?.({
+        source,
+        kind: 'script',
+        cause: disclaimed,
+        text,
+        offset,
+        line: rangeFor(table, offset[0], offset[1]).line,
+        window: proseWindowAround(source.content, offset[0]),
+      })
+      return
+    }
     claims.push({
       kind: 'script',
       source,

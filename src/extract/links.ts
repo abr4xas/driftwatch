@@ -8,6 +8,7 @@
  */
 import type { Claim } from '../core/types.ts'
 import { rangeFor } from '../parse/positions.ts'
+import { proseWindowAround } from './context-prose.ts'
 import type { ExtractContext } from './context.ts'
 
 /** A link target whose anchor is worth verifying. */
@@ -101,12 +102,32 @@ export function splitAnchor(url: string): AnchorLink | undefined {
  * The same prose gates the path claims pass: a link inside a section
  * documenting another repository's layout is not a claim about ours.
  */
-export function extractLinkClaims({ source, doc, table, prose }: ExtractContext): Claim[] {
+export function extractLinkClaims({
+  source,
+  doc,
+  table,
+  prose,
+  discards,
+}: ExtractContext): Claim[] {
   const claims: Claim[] = []
 
   for (const link of doc.links) {
+    // Asked first, so the gate is only credited with an anchor that had
+    // somewhere to go. See `gatedOut` in `paths.ts` for the argument.
     if (splitAnchor(link.value) === undefined) continue
-    if (prose.disclaims(link.offset[0])) continue
+    const disclaimed = prose.disclaimedBy(link.offset[0])
+    if (disclaimed !== undefined) {
+      discards?.({
+        source,
+        kind: 'link',
+        cause: disclaimed,
+        text: link.value,
+        offset: link.offset,
+        line: rangeFor(table, link.offset[0], link.offset[1]).line,
+        window: proseWindowAround(source.content, link.offset[0]),
+      })
+      continue
+    }
 
     claims.push({
       kind: 'link',

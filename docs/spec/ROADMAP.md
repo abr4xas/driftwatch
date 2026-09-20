@@ -59,6 +59,14 @@ Condition 5 then failed on one repo, `mattpocock/course-video-manager`, with fiv
 
 **Both classes behind it were closed and the corpus re-run.** One snapshot changed, from 6 findings to 1: the five false positives gone, the true one kept, nothing moved across the other 48 repos.
 
+**Condition 6 is unmet again, and this time nobody noticed for six rounds.** The corpus is 66 repos with 32 in validation, 37 findings, 27 true and 10 false. Against condition 6: **58 of 66 = 87.9%** over the whole corpus, below the bar, and **29 of 32 = 90.6%** over validation, above it. **Eight of nine conditions.**
+
+Nothing regressed in the code, which is exactly why nothing caught it. Round eighteen widened discovery to the other skills roots and deliberately left three classes of false positive open — two synthesised anchors and a generated directory in `vercel/next.js` and `remix-run/react-router`, a path in the reader's own project, a runtime log in `block/goose`. Three previously quiet repositories joined the count. The criterion table carried the old figure forward by hand, and the number was never divided again.
+
+The numerator grew while the denominator stood still. [ADR-0009](../adr/0009-precision-is-counted-in-quiet-repos.md) records the same failure arriving from the other direction and its conclusion covers both.
+
+**What was decided, on 2026-09-19:** record it and do not chase it. Restoring the bar needs two classes closed rather than one, and a rule derived in order to move a number is the mistake this criterion exists to prevent — ADR-0009 already admitted 90% was chosen with the numbers in view, and that admission survives once. The placeholder class is worth closing on its own evidence and is being weighed that way in its own ticket; if it earns its place the number recovers by itself, and nobody will have tuned to the test. `test/corpus/CLASSIFICATION.md` § "When a condition fails" is the rule for next time, written now so it is not written after the next number.
+
 **All nine conditions are met, on the fourth measurement.** Rounds thirteen to sixteen (2026-09-10) added fifteen validation repos to give condition 6 the finding mass M2 had promised it, broke conditions 2, 5 and 6 in the process, and closed four false-positive classes to repair them: another agent tool's configuration root, an index placeholder, a dependency protocol specifier, and a version-or-date template.
 
 The corpus is **66 repos with 32 in validation, 26 findings, 20 true and 6 false**. Condition 6 reads 61 of 66 = **92.4%** over the corpus and 29 of 32 = **90.6%** over validation, on **12 validation findings** rather than the three-from-one-cause the original certification rested on. No repo carries more than 2 false positives, and the single autofixable finding is correct. `test/corpus/CLASSIFICATION.md` has every finding classified by hand and a ledger of the five still open. That sentence was also true on 2026-09-09 and did not survive fifteen more repositories, so what matters is what changed: the corpus went from 34 repos to 49 and the validation group from 8 to 19, and the conditions now rest on those rather than on three findings from a single root cause.
@@ -137,7 +145,7 @@ What turns a tool that works into a project someone adopts.
 
 The corpus was re-run and is green at 66 repos with no snapshot moved — 26 findings, 20 true. A batch about output formats that moved a detection would have been a batch with a bug in it.
 
-**Second batch closed 2026-09-11: the GitHub Action.** It lives in this repository as `action.yml` at the root, so it is used as `abr4xas/driftwatch@v0.3.0` rather than from the `driftwatch/action` organisation this line names — that organisation does not exist, and a separate repository would need its own tags plus a hand-maintained answer to "which version of the package does `@v1` run". Here the tag that selects the action selects the `package.json` beside it, and pinning the action pins the tool.
+**Second batch closed 2026-09-11: the GitHub Action.** It lives in this repository as `action.yml` at the root, so it is used as `abr4xas/driftwatch@v0.5.0` rather than from the `driftwatch/action` organisation this line names — that organisation does not exist, and a separate repository would need its own tags plus a hand-maintained answer to "which version of the package does `@v1` run". Here the tag that selects the action selects the `package.json` beside it, and pinning the action pins the tool.
 
 **The documented ref is an exact release tag, and there is no floating `v0` or `v1`.** A major-version tag is the Marketplace convention, and it is convention rather than requirement: it buys a caller upgrades without an edit, and costs a force-pushed tag on every release — the one operation in this repo that rewrites something already published. The tags here have been exact since `v0.1.0`, and the documentation now matches that instead of promising a ref nobody created. What a reader loses is automatic upgrades; what they gain is a workflow file that says which version it runs.
 
@@ -157,7 +165,9 @@ Not a milestone. `SPEC.md` § 4 has listed it since the beginning, `--help` has 
 
 **The template only presents as working what actually works.** `sources` and `checks` reach `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by the loader and read by nobody, so `--init` writes them commented out, each naming what makes it real. A generated file claiming all five would be a document promising more than the code delivers, produced by the tool whose entire subject is that.
 
-**It imports the `Config` type rather than calling `defineConfig`.** Found by running it, not by reading it: the advertised way to use this tool is `npx`, which installs nothing in the target repo, so a generated config calling `defineConfig` fails to load with "could not be loaded" the first time it is used. A type import is erased by the same type stripping that loads the file, so the config works installed or not. `defineConfig` stays exported for repos that do have the package.
+**It imports the `Config` type rather than calling `defineConfig`.** Found by running it, not by reading it: the advertised way to use this tool is `npx`, which installs nothing in the target repo, so a generated config calling `defineConfig` fails to load with "could not be loaded" the first time it is used. A type import is erased by the same type stripping that loads the file, so the config works installed or not. `defineConfig` stayed exported for repos that do have the package.
+
+Both halves of that paragraph are now historical: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew the module formats on 2026-09-18, and `defineConfig` left the public API with them. `--init` writing YAML is what survived, and the reasoning above is why.
 
 It refuses rather than overwrites, and the refusal covers every shape the loader looks for — including a `driftwatch` key in `package.json`, where there is no config *file* and it still counts. Writing a second config beside an existing one would create exactly the case `loadConfig` deliberately refuses to merge, and the one that loses would be the one it did not write.
 
@@ -206,13 +216,14 @@ Do not wait for M6 to show the project. Visible cadence is part of what makes so
 1. Publish to npm when **M2** closes — it is already useful. **Prepared 2026-09-10, not published.** The package is out of `private` at `0.1.0`, the tarball is 14 files and 54 kB (`pnpm pack:check` fails the build if anything outside `dist/` ever enters it), and `.github/workflows/release.yml` runs the whole gate on a `v*` tag, publishes with `--provenance`, and generates the release notes from the commits since the previous tag. What is left is not code, and it is sequenced in [`.scratch/first-release/`](../../.scratch/first-release/spec.md): push so CI runs, tag and publish **by hand once**, then configure the publisher and switch the workflow on. The first publish is manual because npm's per-package settings — a trusted publisher, a granular token — do not exist until the package does, and because `--provenance` needs a CI with OIDC and fails from a laptop. **Both publishes happened: `0.1.0` by hand, `0.1.1` staged by the workflow with signed provenance and approved by hand.** `NPM_PUBLISH` has been `true` since 2026-09-10, so a `v*` tag now publishes — this sentence used to say the opposite and was itself drift.
 2. **`0.2.0` — published 2026-09-12.** Everything since `0.1.1` was additive — `--fix` and `--dry-run`, the three output formats, the Action, `--init` — and the public API of `src/index.ts` did not lose a line, so the minor covered the whole of it. It mattered more than a version bump usually does: `0.1.1` had no `--format github`, so the Action was unusable until it landed.
 3. **`0.3.0` — the YAML config.** `--init` writes `driftwatch.config.yaml` instead of a `.ts`, and the loader reads `.yaml` and `.yml`. Additive again: every existing config keeps working, and what changes is which format gets written into a repo that had none.
-4. Launch post with the GIF when **M4** closes.
-5. Sustain commits over months, not a one-week sprint.
+4. **`0.4.0` — a config is data.** The minor half of the sentence above stops being true: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew `.ts`, `.js` and `.mjs` from the loader, and `defineConfig` left `src/index.ts`. **The first release that takes something away**, which is why it is a minor and not a patch, and why `--migrate-config` shipped in the same commit — a withdrawn format with no route off it is a cost moved onto users. The measured basis for doing it now: zero of the 66 corpus repositories carry a driftwatch config of any kind, so the population that has to migrate is the one that reads this file.
+5. Launch post with the GIF when **M4** closes.
+6. Sustain commits over months, not a one-week sprint.
 
 ### What a release is, by hand
 
-`npm pkg set version=<x.y.z>`, commit, tag `v<x.y.z>`, push the tag. The workflow refuses a tag that disagrees with `package.json` before it sends anything. Then **move the floating action tag**, which nothing automates:
+`npm pkg set version=<x.y.z>`, commit, tag `v<x.y.z>`, push the tag. The workflow refuses a tag that disagrees with `package.json` before it sends anything. Then update the `uses:` lines in the documentation, which `docs-links.test.ts` § "the documented action ref" holds to `package.json`.
 
-```
-git tag -f v0 v<x.y.z> && git push -f origin v0
-```
+**There is no floating tag to move.** This procedure used to end by forcing `v0` to the new release. It was never done — `v0` has never existed — and it contradicted the decision the rest of the project is built on: every documented `uses:` names an exact release, `action.yml` explains why, and a test enforces it. A step nothing verified was a step nobody took, which is the shape this tool exists to find.
+
+If a floating tag is ever wanted, it needs the test extended to cover it in the same change. Otherwise it decays the same way.

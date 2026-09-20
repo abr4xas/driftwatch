@@ -35,7 +35,7 @@
     // removing it does not compile.
     "unicorn/no-useless-undefined": "off"
   },
-  "ignorePatterns": ["dist", "test/corpus", "test/fixtures"],
+  "ignorePatterns": ["dist", "test/corpus", "test/discovery", "test/fixtures"],
   "overrides": [
     {
       "files": ["test/**/*.ts"],

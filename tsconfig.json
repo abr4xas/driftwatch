@@ -21,6 +21,10 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src", "test", "scripts", "*.config.ts"],
-  // The corpus clones are other projects' code, not ours.
-  "exclude": ["test/corpus", "dist", "node_modules"]
+  // Both corpora are other people's code, not ours. `test/discovery` was
+  // missing and typecheck walked into it the first time a clone happened to
+  // carry a `.ts` file — somebody else's `route.ts` importing a module we do
+  // not have. Whether this repository typechecks must not depend on what a
+  // stranger committed.
+  "exclude": ["test/corpus", "test/discovery", "dist", "node_modules"]
 }
