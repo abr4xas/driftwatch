@@ -23,8 +23,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Experimental_EvaluationQuestion } from 'ai'
-import { messageOf } from '../../src/core/errors.ts'
-import { inFlight } from '../lib/concurrency.ts'
+import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { slugOf } from '../corpus/repos.ts'
 import { FILTER, jsonlIn, readList, REPOS_DIR } from '../discovery/files.ts'
@@ -173,10 +172,15 @@ export function tabulate(rows: readonly Verdict[]): string {
   ].join('\n')
 }
 
+/** What the pass asks: one document in, the two judgements out. */
+export type AskAboutDocument = (state: State) => Promise<Omit<Verdict, 'repo' | 'path'>>
+
 export async function filterMain(
   limit: number | undefined,
   dryRun: boolean,
   width: number,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskAboutDocument,
 ): Promise<number> {
   if (!dryRun) requireKey('filter')
   const repos = readList().slice(0, limit)
@@ -197,26 +201,18 @@ export async function filterMain(
     return 0
   }
 
-  const ask = await jevAsk()
-  let done = 0
-  let failed = 0
-  const answered = await inFlight(work, width, async (item) => {
-    let row: Verdict | undefined
-    try {
-      const answer = await ask(stateOf(item.repo, item.dir, item.path, item.content))
-      row = { repo: item.repo, path: item.path, ...answer }
-    } catch (cause) {
-      // Recorded and skipped. A request that failed is not a judgement, and
-      // scoring it as one would let the network classify a repository.
-      failed += 1
-      if (failed <= 5) process.stderr.write(`  ${item.repo}: ${messageOf(cause)}\n`)
-    }
-    done += 1
-    if (done % 250 === 0) process.stderr.write(`  ${done}/${work.length}\n`)
-    return row
+  const ask = askWith ?? (await jevAsk())
+  const { answered: rows, failed } = await runPass({
+    items: work,
+    width,
+    every: 250,
+    nameOf: (item) => item.repo,
+    answer: async (item) => ({
+      repo: item.repo,
+      path: item.path,
+      ...(await ask(stateOf(item.repo, item.dir, item.path, item.content))),
+    }),
   })
-
-  const rows = answered.filter((row): row is Verdict => row !== undefined)
   writeFileSync(FILTER, rows.map((row) => JSON.stringify(row)).join('\n') + '\n', 'utf8')
   process.stderr.write(`\n${rows.length} judged, ${failed} failed; ${FILTER}\n\n`)
   process.stdout.write(`${tabulate(rows)}\n`)

@@ -22,8 +22,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../../src/core/errors.ts'
-import { inFlight } from '../lib/concurrency.ts'
+import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { CLAIMS_A_PATH } from './questions.ts'
 import { familyIndex } from '../discovery/discards.ts'
@@ -173,12 +172,17 @@ async function* recordsIn(): AsyncGenerator<Candidate & { exists?: boolean }> {
   }
 }
 
+/** What the pass asks: one sentence in, a probability out. */
+export type AskClaimsAPath = (state: ClaimState) => Promise<number>
+
 export async function claimsMain(
   cause: string,
   want: number,
   perRepo: number,
   concurrency: number,
   dryRun: boolean,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskClaimsAPath,
 ): Promise<number> {
   if (!dryRun) requireKey('claims')
   if (!existsSync(DISCARDS)) {
@@ -202,20 +206,17 @@ export async function claimsMain(
     return 0
   }
 
-  const ask = await jevAsk()
-  let done = 0
-  const answers = await inFlight(asked, concurrency, async (candidate) => {
-    try {
-      const probability = await ask(stateOf(candidate))
-      done += 1
-      if (done % 50 === 0) process.stderr.write(`  ${done}/${asked.length}\n`)
-      return { ...candidate, probability }
-    } catch (cause_) {
-      process.stderr.write(`  ${candidate.repo} ${candidate.text}: ${messageOf(cause_)}\n`)
-      return undefined
-    }
+  const ask = askWith ?? (await jevAsk())
+  const { answered } = await runPass({
+    items: asked,
+    width: concurrency,
+    nameOf: (candidate) => `${candidate.repo} ${candidate.text}`,
+    answer: async (candidate): Promise<Answer> => ({
+      ...candidate,
+      probability: await ask(stateOf(candidate)),
+    }),
   })
-  const judged = answers.filter((answer): answer is Answer => answer !== undefined)
+  const judged = answered
   writeFileSync(OUT, `${judged.map((a) => JSON.stringify(a)).join('\n')}\n`, 'utf8')
 
   const probabilities = judged.map((answer) => answer.probability)

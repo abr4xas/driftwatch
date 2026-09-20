@@ -217,7 +217,14 @@ async function jevAsk(): Promise<
   }
 }
 
-export async function classifyMain(dryRun: boolean): Promise<number> {
+/** What the pass asks: one finding and the class list in, two answers out. */
+export type AskToClassify = (state: ClassifyState, classes: readonly string[]) => Promise<Answer>
+
+export async function classifyMain(
+  dryRun: boolean,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskToClassify,
+): Promise<number> {
   // Checked before the document is parsed: this pass used to discover a
   // missing key at the first request, after printing a summary of the work.
   if (!dryRun) requireKey('corpus-classify')
@@ -236,7 +243,7 @@ export async function classifyMain(dryRun: boolean): Promise<number> {
     return 0
   }
 
-  const ask = await jevAsk()
+  const ask = askWith ?? (await jevAsk())
   const out: string[] = []
   for (const [i, row] of rows.entries()) {
     try {

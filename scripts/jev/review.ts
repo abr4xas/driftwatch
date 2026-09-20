@@ -44,7 +44,7 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { messageOf } from '../../src/core/errors.ts'
 import { countFlag, numberFlag } from '../lib/argv.ts'
-import { inFlight } from '../lib/concurrency.ts'
+import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { CLAIMS_A_PATH } from './questions.ts'
 import type { Discard } from '../../src/extract/context.ts'
@@ -146,11 +146,16 @@ async function jevAsk(): Promise<(state: ReviewState) => Promise<number>> {
     (await ask(state, { claimsAPath: CLAIMS_A_PATH })).probability('claimsAPath')
 }
 
+/** What the pass asks: one discarded sentence in, a probability out. */
+export type AskClaimsAPath = (state: ReviewState) => Promise<number>
+
 export async function reviewMain(
   target: string,
   showAt: number,
   cap: number,
   concurrency: number,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskClaimsAPath,
 ): Promise<number> {
   requireKey('review')
   const cwd = resolve(target)
@@ -173,25 +178,22 @@ export async function reviewMain(
   )
   if (asked.length === 0) return 0
 
-  const ask = await jevAsk()
-  const answers = await inFlight(asked, concurrency, async (candidate) => {
-    try {
-      const probability = await ask({
+  const ask = askWith ?? (await jevAsk())
+  const { answered } = await runPass({
+    items: asked,
+    width: concurrency,
+    nameOf: (candidate) => `${candidate.file} ${candidate.text}`,
+    answer: async (candidate) => ({
+      ...candidate,
+      probability: await ask({
         repo: root,
         file: candidate.file,
         candidate: candidate.text,
         sentence: candidate.sentence,
-      })
-      return { ...candidate, probability }
-    } catch (cause) {
-      // A request that failed is not a judgement. Dropped rather than counted
-      // as a no, which would quietly shorten the list and read as a clean
-      // result — the same distinction ticket `17` makes.
-      process.stderr.write(`  ${candidate.file} ${candidate.text}: ${messageOf(cause)}\n`)
-      return undefined
-    }
+      }),
+    }),
   })
-  const judged = answers.filter((answer): answer is Suggestion => answer !== undefined)
+  const judged = answered
   process.stdout.write(
     formatSuggestions(
       judged.filter((answer) => answer.probability >= showAt),

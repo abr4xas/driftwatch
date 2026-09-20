@@ -17,8 +17,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../../src/core/errors.ts'
-import { inFlight } from '../lib/concurrency.ts'
+import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { slugOf } from '../corpus/repos.ts'
 import { windowAround } from './classify.ts'
@@ -172,12 +171,17 @@ async function jevAsk(): Promise<(state: PairState) => Promise<number>> {
   return async (state) => (await ask(state, { sameCause: SAME_CAUSE })).probability('sameCause')
 }
 
+/** What the pass asks: two wild findings in, a probability out. */
+export type AskSameCause = (state: PairState) => Promise<number>
+
 export async function findingsMain(
   perBlock: number,
   perRepo: number,
   concurrency: number,
   dryRun: boolean,
   blocks = 3,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskSameCause,
 ): Promise<number> {
   if (!dryRun) requireKey('findings')
   if (!existsSync(RESULTS)) {
@@ -207,22 +211,18 @@ export async function findingsMain(
     return 0
   }
 
-  const ask = await jevAsk()
-  let done = 0
-  const answers = await inFlight(pairs, concurrency, async (pair) => {
-    try {
+  const ask = askWith ?? (await jevAsk())
+  const { answered } = await runPass({
+    items: pairs,
+    width: concurrency,
+    every: 200,
+    nameOf: (pair) => `${pair.a.id}~${pair.b.id}`,
+    answer: async (pair): Promise<Judged> => {
       const probability = await ask(pairStateOf(pair.a, pair.b))
-      done += 1
-      if (done % 200 === 0) process.stderr.write(`  ${done}/${pairs.length}\n`)
       return { a: pair.a.id, b: pair.b.id, probability, same: probability >= MERGE_AT }
-    } catch (cause) {
-      // Unanswered rather than a `no`, as everywhere else here: a request that
-      // failed is not a judgement.
-      process.stderr.write(`  ${pair.a.id}~${pair.b.id}: ${messageOf(cause)}\n`)
-      return undefined
-    }
+    },
   })
-  const judged = answers.filter((verdict): verdict is Judged => verdict !== undefined)
+  const judged = answered
   writeFileSync(OUT, `${judged.map((v) => JSON.stringify(v)).join('\n')}\n`, 'utf8')
 
   const groups = groupsOf(

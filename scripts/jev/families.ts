@@ -26,8 +26,7 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { messageOf } from '../../src/core/errors.ts'
-import { inFlight } from '../lib/concurrency.ts'
+import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { slugOf } from '../corpus/repos.ts'
 import { FAMILIES, readList, REPOS_DIR, VERDICTS } from '../discovery/files.ts'
@@ -384,18 +383,14 @@ async function judge(
 ): Promise<Verdict | undefined> {
   const a = read(candidate.a)
   const b = read(candidate.b)
+  // Not a failure: a fingerprint whose document is gone was never asked about.
   if (a === undefined || b === undefined) return undefined
-  try {
-    const probability = await ask(judgementState(a, b))
-    return {
-      pair: [keyOf(candidate.a), keyOf(candidate.b)],
-      overlap: Number(candidate.overlap.toFixed(3)),
-      probability,
-      same: probability >= MERGE_AT,
-    }
-  } catch (cause) {
-    process.stderr.write(`  ${keyOf(candidate.a)} ~ ${keyOf(candidate.b)}: ${messageOf(cause)}\n`)
-    return undefined
+  const probability = await ask(judgementState(a, b))
+  return {
+    pair: [keyOf(candidate.a), keyOf(candidate.b)],
+    overlap: Number(candidate.overlap.toFixed(3)),
+    probability,
+    same: probability >= MERGE_AT,
   }
 }
 
@@ -468,12 +463,17 @@ export function bandTable(verdicts: readonly Verdict[]): string {
   return lines.join('\n')
 }
 
+/** What the pass asks: two documents in, a probability out. */
+export type AskSameDocument = (state: JudgementState) => Promise<number>
+
 export async function familiesMain(
   limit: number | undefined,
   dryRun: boolean,
   sample?: number,
   concurrency = 8,
   certainAbove = CERTAIN_ABOVE,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskSameDocument,
 ): Promise<number> {
   if (!dryRun) requireKey('families')
   const repos = readList().slice(0, limit)
@@ -506,7 +506,7 @@ export async function familiesMain(
       )
     }
   } else {
-    const ask = await jevAsk()
+    const ask = askWith ?? (await jevAsk())
     const settled = sample === undefined ? candidates.filter((c) => c.overlap >= certainAbove) : []
     const open = candidates.filter((c) => c.overlap < certainAbove)
     const asked = sample === undefined ? open : stratifiedSample(candidates, sample)
@@ -524,14 +524,13 @@ export async function familiesMain(
       }
     }
     process.stderr.write(`asking about ${asked.length}, ${concurrency} at a time\n`)
-    let done = 0
-    const answers = await inFlight(asked, concurrency, async (candidate) => {
-      const verdict = await judge(ask, candidate, readDoc)
-      done += 1
-      if (done % 50 === 0) process.stderr.write(`  ${done}/${asked.length}\n`)
-      return verdict
+    const { answered } = await runPass({
+      items: asked,
+      width: concurrency,
+      nameOf: (candidate) => `${keyOf(candidate.a)} ~ ${keyOf(candidate.b)}`,
+      answer: async (candidate) => judge(ask, candidate, readDoc),
     })
-    for (const verdict of answers) if (verdict !== undefined) verdicts.push(verdict)
+    verdicts.push(...answered)
   }
 
   if (verdicts.length > 0) {

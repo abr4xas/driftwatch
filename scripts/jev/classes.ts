@@ -25,7 +25,7 @@ import { join } from 'node:path'
 import { CORPUS_DIR, DISCOVERY_DIR } from '../lib/paths.ts'
 import { messageOf } from '../../src/core/errors.ts'
 import { countFlag } from '../lib/argv.ts'
-import { inFlight } from '../lib/concurrency.ts'
+import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { slugOf } from '../corpus/repos.ts'
 import { type Row, rowsIn, windowAround } from './classify.ts'
@@ -201,7 +201,15 @@ async function jevAsk(): Promise<(state: PairState) => Promise<number>> {
   return async (state) => (await ask(state, { sameCause: SAME_CAUSE })).probability('sameCause')
 }
 
-export async function classesMain(dryRun: boolean, concurrency: number): Promise<number> {
+/** What the pass asks: two findings in, a probability out. */
+export type AskSameCause = (state: PairState) => Promise<number>
+
+export async function classesMain(
+  dryRun: boolean,
+  concurrency: number,
+  /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
+  askWith?: AskSameCause,
+): Promise<number> {
   if (!dryRun) requireKey('corpus-classes')
   const rows = rowsIn(readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8'))
   if (rows.length === 0) throw new Error('no per-finding rows in CLASSIFICATION.md')
@@ -222,23 +230,16 @@ export async function classesMain(dryRun: boolean, concurrency: number): Promise
     return 0
   }
 
-  const ask = await jevAsk()
-  let done = 0
-  const answers = await inFlight(pairs, concurrency, async (pair) => {
-    try {
+  const ask = askWith ?? (await jevAsk())
+  const { answered: judged } = await runPass({
+    items: pairs,
+    width: concurrency,
+    nameOf: (pair) => `${pair.a.id}~${pair.b.id}`,
+    answer: async (pair) => {
       const probability = await ask(pairStateOf(pair.a, proseOf(pair.a), pair.b, proseOf(pair.b)))
-      done += 1
-      if (done % 50 === 0) process.stderr.write(`  ${done}/${pairs.length}\n`)
       return { a: pair.a.id, b: pair.b.id, probability, same: probability >= MERGE_AT }
-    } catch (cause) {
-      // Unanswered rather than a `no`: a request that failed is not a
-      // judgement, and scoring it as one would flatter or damn the model for
-      // the network. Ticket `17` makes the same distinction.
-      process.stderr.write(`  ${pair.a.id}~${pair.b.id}: ${messageOf(cause)}\n`)
-      return undefined
-    }
+    },
   })
-  const judged = answers.filter((verdict) => verdict !== undefined)
   writeFileSync(OUT, `${judged.map((v) => JSON.stringify(v)).join('\n')}\n`, 'utf8')
 
   const groups = groupsOf(
