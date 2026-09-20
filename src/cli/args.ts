@@ -18,7 +18,6 @@ export type CliArgs = {
   quiet: boolean
   watch: boolean
   init: boolean
-  migrateConfig: boolean
   help: boolean
   version: boolean
   tier2: boolean
@@ -53,7 +52,6 @@ export const OPTIONS = {
   quiet: { type: 'boolean' },
   watch: { type: 'boolean' },
   init: { type: 'boolean' },
-  'migrate-config': { type: 'boolean' },
   version: { type: 'boolean', short: 'v' },
   help: { type: 'boolean', short: 'h' },
 } as const
@@ -137,7 +135,6 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
     quiet: values.quiet === true,
     watch: values.watch === true,
     init: values.init === true,
-    migrateConfig: values['migrate-config'] === true,
     help: values.help === true,
     version: values.version === true,
     tier2: values['no-tier2'] !== true,

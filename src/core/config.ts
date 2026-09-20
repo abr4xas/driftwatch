@@ -172,14 +172,19 @@ const WITHDRAWN_EXTENSIONS: readonly string[] = ['.ts', '.js', '.mjs', '.cjs']
  * and `PRODUCT.md`'s "deterministic, offline, no network, no API key" wants
  * "and it runs no code it finds in your repository" next to it.
  *
- * The error carries the way out. Withdrawing a format and leaving the user to
- * work out the conversion buys us a property at their expense.
+ * **The error carries the way out, and the way out is now a version.**
+ * ADR-0013 shipped `--migrate-config` in the same commit that withdrew these
+ * formats, on the argument that a withdrawn format with no route off it moves
+ * a cost onto the user. `1.0.0` withdrew the flag as well, so the route is to
+ * run the last release that still had it — which needs no install, because the
+ * advertised way to run this tool is `npx`. The version is safe to name here:
+ * `0.5.0` is the last `0.x` there will ever be.
  */
 function refuseModuleConfig(path: string, where: string): never {
   throw new UserError(
     `${where} is a ${extname(path)} config, which driftwatch no longer loads`,
-    'a config is data, not a program (ADR-0013). Run `driftwatch --migrate-config` ' +
-      'to convert it to YAML, then delete the original',
+    'a config is data, not a program (ADR-0013). To convert it: ' +
+      '`npx @abr4xas/driftwatch@0.5.0 --migrate-config`, then delete the original',
   )
 }
 
@@ -242,32 +247,14 @@ export type FoundConfig = {
   inManifest: boolean
 }
 
-export type FindConfigOptions = {
-  /**
-   * Filenames to pass over.
-   *
-   * `--migrate-config` needs to ask "what would the loader read **once the
-   * module config is gone**", which is not a question the plain lookup can
-   * answer: the module config is first in the order, so it always wins.
-   */
-  skip?: readonly string[]
-}
-
 /**
  * The first config the lookup order finds, without loading it.
  *
- * `loadConfig` uses it for the automatic lookup, `--init` uses it to refuse
- * rather than write a second config next to an existing one, and
- * `--migrate-config` uses it twice — once for what is there, once with the
- * withdrawn names skipped, for what would be there afterwards.
+ * `loadConfig` uses it for the automatic lookup, and `--init` uses it to
+ * refuse rather than write a second config next to an existing one.
  */
-export async function findConfig(
-  root: string,
-  options: FindConfigOptions = {},
-): Promise<FoundConfig | undefined> {
-  const skip = options.skip ?? []
+export async function findConfig(root: string): Promise<FoundConfig | undefined> {
   for (const name of CONFIG_FILENAMES) {
-    if (skip.includes(name)) continue
     const path = join(root, name)
     if (existsSync(path)) return { path, where: name, inManifest: false }
   }

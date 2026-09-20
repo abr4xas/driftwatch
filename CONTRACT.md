@@ -43,7 +43,6 @@ records what is emitted rather than what was intended.
 - `--help, -h` — advertised, implemented
 - `--init` — advertised, implemented
 - `--json` — advertised, implemented
-- `--migrate-config` — advertised, implemented
 - `--no-config` — advertised, implemented
 - `--no-tier2` — advertised, implemented
 - `--only <value>` — advertised, implemented

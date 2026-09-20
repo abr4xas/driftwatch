@@ -58,6 +58,16 @@ describe('a YAML config', () => {
   })
 })
 
+/**
+ * The way off a module config, now that the flag that did it is gone.
+ *
+ * ADR-0013 withdrew the formats and shipped `--migrate-config` in the same
+ * commit, because a withdrawn format with no route off it moves a cost onto
+ * the user. `1.0.0` withdrew the flag too, so the refusal has to name the
+ * release that still has it.
+ */
+const ROUTE_OFF = 'npx @abr4xas/driftwatch@0.5.0 --migrate-config'
+
 /** Message and hint together: the two lines a user actually sees. */
 async function refusal(root: string): Promise<string> {
   try {
@@ -78,12 +88,12 @@ describe('config lookup', () => {
       'driftwatch.config.ts': 'export default { sources: ["docs/notes.md"] }\n',
       'docs/notes.md': NOTES,
     })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
   })
 
   it('refuses a .js config the same way', async () => {
     const root = repo({ 'driftwatch.config.js': 'export default {}\n' })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
   })
 
   it('does not execute the module it refuses', async () => {
@@ -98,7 +108,7 @@ describe('config lookup', () => {
         '',
       ].join('\n'),
     })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
     expect(existsSync(join(root, 'EXECUTED'))).toBe(false)
   })
 
@@ -147,7 +157,7 @@ describe('config lookup', () => {
       'driftwatch.config.ts': 'export default { staleThreshold: 1 }\n',
       'driftwatch.config.json': JSON.stringify({ staleThreshold: 3 }),
     })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
   })
 
   it('runs with no config at all', async () => {

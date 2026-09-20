@@ -145,7 +145,6 @@ Options
   --quiet                Show problems only, no summary
   --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
-  --migrate-config       Convert a .ts or .js config to YAML
   --version, -v
   --help, -h
 ```
@@ -284,7 +283,7 @@ Adding an optional field is not a breaking change. `version` stays `1`.
 
 Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
 
-**A config is data, not a program.** `.ts`, `.js` and `.mjs` were accepted until 2026-09-18 and are not loaded any more: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch executes code it finds in a repository. They keep their place in the lookup order and **fail** with the conversion command in the message, because a withdrawn format that is silently skipped would let the next candidate load while the author believes the module is in effect. `driftwatch --migrate-config` converts one to YAML.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` were accepted until 2026-09-18 and are not loaded any more: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch executes code it finds in a repository. They keep their place in the lookup order and **fail** with the route off them in the message, because a withdrawn format that is silently skipped would let the next candidate load while the author believes the module is in effect. `--migrate-config` did that conversion until `1.0.0` withdrew it too; the route it leaves behind is `npx @abr4xas/driftwatch@0.5.0 --migrate-config`, the last release that carries it.
 
 **`--init` writes the YAML one**, because driftwatch audits repositories in any language, and unlike JSON it holds the comments the generated file is mostly made of.
 

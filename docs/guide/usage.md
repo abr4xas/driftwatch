@@ -23,7 +23,6 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--no-config` | ignore any config found |
 | `--quiet` | problems only, no summary (`pretty` only) |
 | `--init` | write a commented `driftwatch.config.yaml` and exit |
-| `--migrate-config` | convert a `.ts` or `.js` config to YAML and exit |
 | `--version`, `-v` | print the version |
 | `--help`, `-h` | print the options |
 
@@ -91,7 +90,7 @@ The same thing as JSON, if you would rather not add a YAML file:
 
 **Quote the severity.** `off` is one of the three values and also a boolean in YAML 1.1; the parser here implements 1.2, where the unquoted form is a string and works, but a file edited elsewhere may not survive the round trip. If a severity ever arrives as a boolean the error says so rather than blaming your check ids.
 
-**A config is data, not a program.** `.ts`, `.js` and `.mjs` configs were accepted until 2026-09-18 and are not loaded any more — [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch runs code it finds in a repository. If you have one, `driftwatch --migrate-config` converts it to YAML and tells you to delete the original.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` configs were accepted until 2026-09-18 and are not loaded any more — [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch runs code it finds in a repository. If you have one, `npx @abr4xas/driftwatch@0.5.0 --migrate-config` converts it to YAML and tells you to delete the original: the converter was withdrawn in `1.0.0`, and `0.5.0` is the last release that carries it.
 
 **An unknown key fails the run** instead of being ignored. A typo in a key that silently disables what it was meant to configure is worse than a red run.
 

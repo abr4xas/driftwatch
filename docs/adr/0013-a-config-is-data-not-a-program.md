@@ -1,6 +1,6 @@
 # ADR-0013 — A config is data, not a program
 
-- **Status:** accepted
+- **Status:** accepted, amended 2026-09-20 by ADR-0014 (see "The flag is gone, the route is not")
 - **Date:** 2026-09-18
 
 ## Context
@@ -25,6 +25,23 @@ A config in a withdrawn format is **an error with a fix in it**, not a silent sk
 `driftwatch --migrate-config` performs that conversion. It imports the existing `.ts`/`.js` config **once**, validates the result, writes `driftwatch.config.yaml` beside it, and leaves the original in place for the user to delete.
 
 `--init` is unchanged: YAML, commented, as before.
+
+### The flag is gone, the route is not
+
+Amended 2026-09-20, by the release that froze the surface. **`--migrate-config` was withdrawn in
+`1.0.0`**, after existing in exactly one published release. It was a flag that ran a user's code
+on request, and `1.0.0` is where the surface stopped carrying anything it would not want to
+carry for the life of a major version.
+
+What does not change is the obligation below: a withdrawn format with no route off it moves a
+cost onto the user. The route is now a version rather than a flag — `npx
+@abr4xas/driftwatch@0.5.0 --migrate-config`, the last release that carries the converter, which
+needs no install because `npx` is the advertised way to run this tool anyway. The loader's
+refusal says exactly that, so a reader meets the route at the moment they need it rather than
+here.
+
+A reader who finds the paragraphs below promising a command and then finds no command has not
+found a lost feature. They have found this note.
 
 ## Why
 
