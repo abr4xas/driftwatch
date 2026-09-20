@@ -55,7 +55,8 @@
     "jev:classes": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/classes.ts",
     "jev:review": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/review.ts",
     "discovery": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/discovery/cli.ts",
-    "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "site-data": "node --experimental-strip-types scripts/corpus/site-data.ts"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {

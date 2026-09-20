@@ -121,6 +121,10 @@ describe('the documented action ref', () => {
     'docs/guide/ci.md',
     'docs/guide/output.md',
     'docs/spec/ROADMAP.md',
+    // The sixth, and it was the one that was wrong — the page shipped `@v0.3.0`
+    // through two releases. The comment above predicted the shape and the list
+    // it was written on still left this out.
+    'site/index.html',
   ]
 
   it.each(FILES)('matches package.json in %s', (file) => {
