@@ -7,7 +7,7 @@ instead of whole repositories.
 
 **Blocked by:** nothing
 
-**Status: resolved 2026-09-18.** Built as `scripts/discovery-clone.ts`, verified over 36
+**Status: resolved 2026-09-18.** Built as `scripts/discovery/sparse-clone.ts`, verified over 36
 corpus repos. See §"Answer".
 
 ## Why this is first
@@ -70,7 +70,7 @@ Three things, all cheap to check against a single repo before writing anything:
 
 ## Scope, and what stays out
 
-This is for the **discovery corpus only**. `scripts/corpus.ts` clones the certification
+This is for the **discovery corpus only**. `scripts/corpus/run.ts` clones the certification
 corpus and is covered by [ADR-0007](../../../docs/adr/0007-the-corpus-does-not-run-in-ci.md);
 it keeps its full shallow clones and its pinned shas, and nothing about it changes. The
 certification corpus is 66 repos and 3.4 GB, which is not a problem anyone has.
@@ -89,7 +89,7 @@ measuring a slightly different tool. Worth writing down which route was taken an
 
 ## Answer
 
-Built as [`scripts/discovery-clone.ts`](../../../scripts/discovery-clone.ts), with
+Built as [`scripts/discovery/sparse-clone.ts`](../../../scripts/discovery/sparse-clone.ts), with
 [`test/discovery-clone.test.ts`](../../../test/discovery-clone.test.ts) covering the cone
 without a network.
 
@@ -237,6 +237,6 @@ is the runner that would pass the flag. `sparseClone` stays as it is.
 
 ### Not for the certification corpus
 
-`scripts/corpus.ts` is untouched: full shallow clones, pinned shas, ADR-0007. A partial
+`scripts/corpus/run.ts` is untouched: full shallow clones, pinned shas, ADR-0007. A partial
 clone can in principle reach the network later, and that property has no business near a
 measurement. The two share `corpus-repos.ts` and nothing else.

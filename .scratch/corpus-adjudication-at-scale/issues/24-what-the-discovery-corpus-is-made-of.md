@@ -30,7 +30,7 @@ Two questions per document, asked together so they evaluate in one request:
 - **`repoKind`**, a Choice over `skills-repo`, `product-with-skills`, `template-clone`,
   `fork-or-vendored`, `dotfiles`.
 
-At most four documents per repository, shallowest first. `scripts/discovery-filter.ts`.
+At most four documents per repository, shallowest first. `scripts/jev/filter.ts`.
 
 ## Answer
 

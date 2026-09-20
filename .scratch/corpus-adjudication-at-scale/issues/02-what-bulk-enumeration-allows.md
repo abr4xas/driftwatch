@@ -139,7 +139,7 @@ API is the instrument.
 
 **7. One operational detail the ticket did not anticipate.** The corpus's own repositories
 come back in these results — `1amageek/SwiftAgent` appeared in the first 1000 — so the
-acquisition has to subtract `scripts/corpus-repos.ts` from whatever it collects. A discovery
+acquisition has to subtract `scripts/corpus/repos.ts` from whatever it collects. A discovery
 corpus that quietly contains validation repos is the contamination the two-corpus split
 exists to prevent.
 

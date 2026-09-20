@@ -7,7 +7,7 @@ corpus on disk.
 
 **Blocked by:** nothing — `02` and `06` are both resolved
 
-**Status: resolved 2026-09-19.** Built as `scripts/discovery.ts`, run end to end. See
+**Status: resolved 2026-09-19.** Built as `scripts/discovery/`, run end to end. See
 §"Answer".
 
 ## Why this exists
@@ -28,7 +28,7 @@ directory — cannot start.
    syntax and the API answers it with a plausible wrong number.
 2. **Subtract the certification corpus.** `1amageek/SwiftAgent` came back in the first
    thousand results. A discovery corpus that quietly contains validation repos is the
-   contamination the two-corpus split exists to prevent, so `scripts/corpus-repos.ts` is
+   contamination the two-corpus split exists to prevent, so `scripts/corpus/repos.ts` is
    subtracted from whatever is collected.
 3. **Clone**, through `sparseClone` from `discovery-clone.ts`.
 4. **Run driftwatch with `--no-config`**, for the reason ticket `06` records: a repo's own
@@ -45,7 +45,7 @@ directory. The rule from §"The hard limit" of the [spec](../spec.md) applies to
 its output: no figure computed over the discovery corpus is a precision, and none of it is
 reported.
 
-It also does not touch `scripts/corpus.ts`. The certification corpus keeps its full shallow
+It also does not touch `scripts/corpus/run.ts`. The certification corpus keeps its full shallow
 clones and its pinned shas.
 
 ## Open questions inside the task
@@ -61,7 +61,7 @@ clones and its pinned shas.
 
 ## Answer
 
-Resolved 2026-09-19. `scripts/discovery.ts`, four subcommands — `enumerate`, `clone`, `run`,
+Resolved 2026-09-19. `scripts/discovery/`, four subcommands — `enumerate`, `clone`, `run`,
 `status` — each resumable on its own, because they fail for unrelated reasons. `pnpm
 discovery`. The decidable parts are in `test/discovery.test.ts`, which touches neither the
 network nor a disk.
@@ -149,7 +149,7 @@ nine things. Six were defects and all six are fixed; the three worth recording h
 ones that were wrong about *the design* rather than about the code.
 
 **The module docstring was a measurement leaving the directory.** The first version pinned
-"238 sources, 975 claims, 39 findings" into `scripts/discovery.ts` — a permanent source file
+"238 sources, 975 claims, 39 findings" into `scripts/discovery/cli.ts` — a permanent source file
 that states §"What it must not do" four lines earlier. A count of findings over the discovery
 corpus, sitting in `src`-adjacent code, is the first step towards being quoted as one. The
 numbers now live in this ticket, and what stays in the file is what the **runner** costs,

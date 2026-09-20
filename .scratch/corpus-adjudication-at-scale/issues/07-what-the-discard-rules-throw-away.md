@@ -19,7 +19,7 @@ detail and nine conditions. Nothing counts what never became a finding.
 
 That is not an oversight, it is structural. Discards appear in no snapshot. There is no
 artifact listing them. And inspecting them in a validation repo is precisely what ADR-0006
-condition 9 forbids — [`corpus-repos.ts`](../../../scripts/corpus-repos.ts) draws the line in
+condition 9 forbids — [`corpus-repos.ts`](../../../scripts/corpus/repos.ts) draws the line in
 those words: "Classifying its findings is the measurement and does not contaminate; opening
 the repo to see what the tool discarded does."
 
@@ -93,7 +93,7 @@ and the outcome is the one this ticket § "The honest outcome to be prepared for
 `ExtractContext` carries an optional `DiscardSink`, **absent on every ordinary run**, and the
 three extractors that consult a discard rule report to it every candidate they refuse — the
 rule's name, the text as written, the offset and line, and the prose window the rule read.
-`scripts/discovery-discards.ts` reads it over the clones: `discards` writes one JSONL line per
+`scripts/discovery/discards.ts` reads it over the clones: `discards` writes one JSONL line per
 candidate and prints the table, `sample` prints the windows a person then reads.
 
 Four decisions shape whether the table means anything.

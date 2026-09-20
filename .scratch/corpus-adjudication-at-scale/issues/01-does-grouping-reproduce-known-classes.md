@@ -94,7 +94,7 @@ result costs this directory much less than it would have under the old framing.
 Resolved 2026-09-19. **It reproduces 10 of the 11 classes a person drew, and it cannot tell a
 true finding from a false one.** Both halves are the result; the second is not a failure.
 
-`pnpm corpus-classify`. Two questions per finding over one shared state, evaluated in
+`pnpm jev:classify`. Two questions per finding over one shared state, evaluated in
 parallel in one request — a `Noul` for "is this real" and a `Choice` over the nine named
 classes plus `new`. The class answer is the speculative one: it is asked for every finding and
 consumed only when the verdict says false.

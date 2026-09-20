@@ -42,7 +42,12 @@ function markdownFiles(dir: string, found: string[] = []): string[] {
 
 /** The documents this repo maintains. The corpus clones are somebody else's. */
 function documented(): string[] {
-  return [join(ROOT, 'README.md'), join(ROOT, 'AGENTS.md'), ...markdownFiles(join(ROOT, 'docs'))]
+  return [
+    join(ROOT, 'README.md'),
+    join(ROOT, 'AGENTS.md'),
+    join(ROOT, 'CONTEXT.md'),
+    ...markdownFiles(join(ROOT, 'docs')),
+  ]
 }
 
 function brokenLinksIn(file: string): string[] {

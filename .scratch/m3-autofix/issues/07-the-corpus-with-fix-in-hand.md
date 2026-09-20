@@ -47,7 +47,7 @@ Closed 2026-09-11. The measurement is round 17 of `test/corpus/CLASSIFICATION.md
 
 ### The tooling
 
-`pnpm corpus --fixes` is a new mode of `scripts/corpus.ts`. It plans every fix across the 66 repos and prints, per edit, the line before and the line after — the whole line, because a replacement is judged in the sentence it sits in and the fragments are what the snapshots already carry. **It writes nothing to a clone**, which is ADR-0007's rule, and `AGENTS.md` § Verification now names a fifth trigger: after touching `src/fix/` or a suggestion's `fixable` flag, read every edit it prints.
+`pnpm corpus --fixes` is a new mode of `scripts/corpus/run.ts`. It plans every fix across the 66 repos and prints, per edit, the line before and the line after — the whole line, because a replacement is judged in the sentence it sits in and the fragments are what the snapshots already carry. **It writes nothing to a clone**, which is ADR-0007's rule, and `AGENTS.md` § Verification now names a fifth trigger: after touching `src/fix/` or a suggestion's `fixable` flag, read every edit it prints.
 
 ### The result, and what it is worth
 

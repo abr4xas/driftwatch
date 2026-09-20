@@ -110,4 +110,11 @@ The five canonical labels, unrenamed, recorded as a `Status:` line in each issue
 
 ### Domain docs
 
-Single-context: a `CONTEXT.md` at the root (created lazily) and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: [`CONTEXT.md`](CONTEXT.md) at the root and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+
+`CONTEXT.md` is the glossary, and it is audited: it is listed in `driftwatch.config.yaml`, so a
+path it names that stops existing is a finding like any other. Use its words. `finding`,
+`discard`, `ruling`, `class`, `pass`, `family` and the two corpora all mean one thing each, and
+the file says which — including one word the code still gets wrong, `verdict`, which the
+specification uses for the result of verifying a claim and the corpus code uses for a person's
+ruling.

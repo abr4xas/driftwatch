@@ -12,16 +12,21 @@
 #
 #   driftwatch --config driftwatch.docs.config.yaml --only link/broken
 #
-# As of the commit that added it this run is vacuous: the repo's documents
-# cross-reference each other with `§` in prose and not one of them writes a
-# `](...#...)` link, so there is nothing for the check to resolve. It is kept
-# because it costs twenty lines and it fires on the first anchor link somebody
-# writes, which is the moment the drift becomes possible.
+# It was vacuous when it was added — the repo's documents cross-reference each
+# other with `§` in prose and none of them wrote a `](...#...)` link — and it
+# stopped being vacuous in the round that ruled on `vercel/next.js`'s anchors.
+# `CLASSIFICATION.md` now quotes `[Sibling fix A](#anchor-a)` as a **specimen of
+# another repository's output**, and this run reads it as a link of its own and
+# reports it. Two findings, both false, and the same class the round they come
+# from decided not to write a rule for. Left standing rather than silenced:
+# the document says plainly what those anchors are, and a config that hid them
+# would hide the next real one too.
 
 sources:
   - 'docs/**/*.md'
   - 'README.md'
   - 'AGENTS.md'
+  - 'CONTEXT.md'
   - 'test/corpus/*.md'
 
 checks:

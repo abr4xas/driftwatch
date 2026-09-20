@@ -4,3 +4,6 @@
 
 sources:
   - 'docs/agents/**/*.md'
+  # The glossary is a document about this repository, and every path it names is
+  # meant to be here. That is what `path/missing` is for.
+  - 'CONTEXT.md'

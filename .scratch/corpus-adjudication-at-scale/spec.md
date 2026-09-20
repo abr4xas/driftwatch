@@ -387,7 +387,7 @@ and `.gitignore` for `git check-ignore`. A `--filter=blob:none` clone with a spa
 of `*.md`, `package.json`, `.gitignore` and `.claude/**` carries what is needed and nothing
 else.
 
-**Built and measured 2026-09-18** (`scripts/discovery-clone.ts`), over **all 66** corpus
+**Built and measured 2026-09-18** (`scripts/discovery/sparse-clone.ts`), over **all 66** corpus
 repos at their pinned commits:
 
 | | Full clone | Blobless + sparse |
@@ -451,7 +451,7 @@ same day.
 | `06` | Blobless + sparse clone seam | task | **resolved**: 66/66 byte-identical at 2.8 MB per repo |
 | `02` | What do the skills.sh index and GitHub's API allow for bulk enumeration? | research | **resolved**: GitHub is enough and costs ~10 min; skills.sh is gated on a Vercel OIDC token |
 | `08` | Where do skills actually live — should `classifySource` widen? | research | **in progress**: widened to three roots; 48 findings awaiting a verdict |
-| `09` | The acquisition runner — the missing half between `02` and `06` | task | **resolved**: `scripts/discovery.ts`, 2486 repos enumerated, 135 audited |
+| `09` | The acquisition runner — the missing half between `02` and `06` | task | **resolved**: `scripts/discovery/`, 2486 repos enumerated, 135 audited |
 | `10` | Is `skill/frontmatter`'s one autofix offered on a non-drift finding? | research | **resolved**: no — `skills-ref` rejects before and accepts after |
 | `11` | The skills roots not yet read — `.flue`, `.codex`, `.github`, `.opencode` | task | **new**, blocked by `08` step 3 |
 | `12` | Let a repository declare where its skills are | research | **new**, deferred by agreement |
@@ -474,7 +474,7 @@ The one thing `02` could not answer is anything behind skills.sh's token.
 
 `07` is the one with the most to find, because it is the only measurement the project has
 never been able to take at all, and **it is now startable**. `09` closed the gap between
-`02`'s search and `06`'s clone on 2026-09-19: `scripts/discovery.ts` enumerated 2486
+`02`'s search and `06`'s clone on 2026-09-19: `scripts/discovery/enumerate.ts` enumerated 2486
 repositories from 26 pages of code search, and 135 of them are cloned and audited.
 
 The facets also turned out to be cheaper than `02` measured. Its 784-unique-per-1000 figure
