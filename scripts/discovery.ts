@@ -409,6 +409,36 @@ export const BYTES_PER_REPO = 2.8 * 1024 * 1024
  */
 const HEADROOM = 2
 
+/**
+ * How big a clone may be before it is dropped and written down.
+ *
+ * Measured over 1915 clones: mean 8 MB, thirty above 50, **seven above 200**,
+ * and three of those seven are 1.7, 2.4 and 3.7 GB between them. Those three
+ * are 7.7 GB — half the corpus's disk — for three repositories out of 2584.
+ *
+ * It is checked **after** the clone, which looks wrong and is not. Neither
+ * cheaper signal predicts it:
+ *
+ * - **The name.** Ten repositories whose names say mirror, awesome, vault or
+ *   archive were cloned: 4099 MB, of which 4063 is two of them. The other
+ *   eight are 1 to 20 MB, and the largest repository of all —
+ *   `meta-skill-evloving` at 3.7 GB — matches nothing.
+ * - **The size GitHub reports.** `openai/codex` is 620 MB to the API and
+ *   **3 MB** as a clone, because blobless plus sparse is doing its job. The
+ *   API measures history; this measures the cone.
+ *
+ * What makes a repository big here is that its content *is* thousands of
+ * markdown files, all inside the cone. That is only knowable once it is on
+ * disk, so the download is paid once and the disk is not paid at all.
+ */
+const MAX_CLONE_BYTES = 100 * 1024 * 1024
+
+/** What a clone weighs, for the cap above. `du` is the cheap way to ask. */
+function weighOf(dir: string): number {
+  const out = execFileSync('du', ['-sk', dir], { encoding: 'utf8', timeout: 120_000 })
+  return Number(out.split('\t')[0] ?? '0') * 1024
+}
+
 /** Bytes in the unit a person would have used. `0.0 GB` is not an answer. */
 function inUnits(bytes: number): string {
   return bytes >= 1024 ** 3
@@ -485,11 +515,23 @@ async function cloneMain(limit: number | undefined): Promise<number> {
 
   let cloned = 0
   let failed = 0
+  let oversized = 0
   for (const [i, repo] of missing.entries()) {
     const dir = join(REPOS_DIR, slugOf(repo))
     process.stderr.write(`[${i + 1}/${missing.length}] ${repo} ... `)
     try {
       sparseClone(repo, headOf(repo), dir)
+      const weight = weighOf(dir)
+      if (weight > MAX_CLONE_BYTES) {
+        // Dropped and recorded, so a later run neither keeps it nor fetches it
+        // again. It is not a failure: the repository is fine and it is simply
+        // not worth its disk in a corpus that measures nothing.
+        rmSync(dir, { recursive: true, force: true })
+        await record({ repo, ok: false, stage: 'clone', error: `too large: ${inUnits(weight)}` })
+        oversized += 1
+        process.stderr.write(`dropped, ${inUnits(weight)}\n`)
+        continue
+      }
       cloned += 1
       process.stderr.write('ok\n')
     } catch (cause) {
@@ -507,7 +549,8 @@ async function cloneMain(limit: number | undefined): Promise<number> {
   }
 
   process.stderr.write(
-    `\n${cloned} cloned, ${failed} failed, ${repos.length - missing.length} already handled\n`,
+    `\n${cloned} cloned, ${failed} failed, ${oversized} dropped for size, ` +
+      `${repos.length - missing.length} already handled\n`,
   )
   return failed > 0 && cloned === 0 ? 1 : 0
 }
