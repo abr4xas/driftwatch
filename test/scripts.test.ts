@@ -35,7 +35,12 @@ describe('parseCommand', () => {
     // with no keyword list and threw. Found by running over the wild corpus:
     // one repository in 2532 carries `constructor(private readonly repo: R) {}`
     // in a TypeScript example, and it took the whole audit down.
-    for (const segment of ['constructor(private readonly repo: R) {}', 'toString build', 'valueOf x', 'hasOwnProperty run build']) {
+    for (const segment of [
+      'constructor(private readonly repo: R) {}',
+      'toString build',
+      'valueOf x',
+      'hasOwnProperty run build',
+    ]) {
       expect(parseCommand(segment)).toBeUndefined()
     }
   })

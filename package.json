@@ -53,6 +53,7 @@
     "corpus": "node --experimental-strip-types scripts/corpus.ts",
     "corpus-classify": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/corpus-classify.ts",
     "corpus-classes": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/corpus-classes.ts",
+    "review": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/review.ts",
     "discovery": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/discovery.ts",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
