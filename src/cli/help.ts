@@ -15,7 +15,6 @@ Options
   --config <path>        Explicit path to the config
   --no-config            Ignore any config found
   --quiet                Show problems only, no summary
-  --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
   --version, -v          Print the version
   --help, -h             Print this help

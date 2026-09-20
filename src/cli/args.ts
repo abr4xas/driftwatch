@@ -16,7 +16,6 @@ export type CliArgs = {
   dryRun: boolean
   strict: boolean
   quiet: boolean
-  watch: boolean
   init: boolean
   help: boolean
   version: boolean
@@ -50,7 +49,6 @@ export const OPTIONS = {
   config: { type: 'string' },
   'no-config': { type: 'boolean' },
   quiet: { type: 'boolean' },
-  watch: { type: 'boolean' },
   init: { type: 'boolean' },
   version: { type: 'boolean', short: 'v' },
   help: { type: 'boolean', short: 'h' },
@@ -133,7 +131,6 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
     dryRun: values['dry-run'] === true,
     strict: values.strict === true,
     quiet: values.quiet === true,
-    watch: values.watch === true,
     init: values.init === true,
     help: values.help === true,
     version: values.version === true,

@@ -83,7 +83,7 @@ The specification is primary source: when the code and those documents disagree,
 
 **It is on npm, and it is early.** The badge above carries the published version, so this paragraph does not have to and cannot go stale. M0 through M3 are done: the five checks and `--fix`. M4 has delivered the `--json` / `--github` / `--sarif` formats and the GitHub Action; what is left of it is the audience — a GIF and a one-page site.
 
-Early means the checks and the fixes are what is finished. `--watch` parses and then tells you which milestone it belongs to; the four tier 2 checks land in M5.
+Early means the checks and the fixes are what is finished. `--watch` is not in the tool at all until M6 owns it, and the four tier 2 checks land in M5.
 
 **The package is scoped, the Marketplace listing is suffixed, and the command is neither.** npm refuses `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read; the GitHub Marketplace refuses it too, because a user account called Driftwatch already exists and a listing name has to be unique across every action, user and organisation. So the package is `@abr4xas/driftwatch` and the listing is `driftwatch-action`.
 

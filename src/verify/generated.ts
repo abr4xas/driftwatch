@@ -7,8 +7,9 @@
  * ("the bundle ends up in `dist/cli.js`", "do not edit `node_modules/`"), so
  * reporting them is guaranteed noise in almost any real repo.
  *
- * SPEC.md § 7 allows declaring more with `knownPaths`; this list is the default
- * that makes the tool usable with no configuration at all.
+ * This list is the whole of it, and there is no config key for adding to it:
+ * `knownPaths` was accepted and read by nobody until `1.0.0` withdrew it. A
+ * directory that belongs here belongs here for everybody.
  */
 const GENERATED = new Set([
   'node_modules',

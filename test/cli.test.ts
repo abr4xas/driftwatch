@@ -63,7 +63,6 @@ describe('main', () => {
       '--config',
       '--no-config',
       '--quiet',
-      '--watch',
       '--init',
       '--version',
       '--help',
@@ -100,15 +99,17 @@ describe('main', () => {
     await expect(main([], c.io, root)).resolves.toBe(EXIT.ok)
   })
 
-  it.each([['--watch']])(
-    '%s is not implemented yet and says so, instead of being ignored',
-    async (flag) => {
-      const c = capture()
-      await expect(main([flag], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-      expect(c.stderr()).toContain(flag)
-      expect(c.stderr()).toContain('is not implemented yet')
-    },
-  )
+  /**
+   * `--watch` used to parse and then refuse with a bespoke "not implemented
+   * yet". It belongs to M6, nothing here implements it, and a flag we do not
+   * have should fail the way any flag we do not have fails.
+   */
+  it('--watch is an unknown flag, not a bespoke refusal', async () => {
+    const c = capture()
+    await expect(main(['--watch'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain('unknown option: --watch')
+    expect(c.stderr()).not.toContain('is not implemented yet')
+  })
 
   /**
    * `--strict` used to be on the list above, and a caller who read `--help`

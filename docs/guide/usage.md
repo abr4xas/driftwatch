@@ -28,7 +28,7 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 
 `--only` and `--skip` take a comma-separated list and accept a prefix, so `--only path,script` and `--only path/missing` both work. **A selection that leaves no check enabled is refused** rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
-One flag parses and then tells you it is not implemented, naming the milestone it belongs to: `--watch`.
+`--watch` is not here. It belongs to M6 and nothing implements it, so it fails as an unknown flag rather than parsing and then refusing.
 
 ## Exit codes
 
@@ -94,7 +94,7 @@ The same thing as JSON, if you would rather not add a YAML file:
 
 **An unknown key fails the run** instead of being ignored. A typo in a key that silently disables what it was meant to configure is worse than a red run.
 
-Three keys in `SPEC.md` § 7 are accepted and validated but **do nothing yet**: `ignore`, `knownPaths` and `staleThreshold`. The first two land with the checks that need them, `staleThreshold` with `stale/churn` in M5.
+Three keys used to be accepted and do nothing — `ignore`, `knownPaths` and `staleThreshold`. `1.0.0` withdrew them: a config that sets one now fails with the loader's usual message, which is the right answer for a key that was never read. `staleThreshold` comes back with `stale/churn`.
 
 ## Ignore directives
 

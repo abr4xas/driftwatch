@@ -1,12 +1,13 @@
 /**
  * The optional config file (`docs/spec/SPEC.md` § 7).
  *
- * `sources` and `checks` reach the pipeline. `ignore`, `knownPaths` and
- * `staleThreshold` are validated and carried anyway, because a config written
- * against the specification should not fail against an incomplete
- * implementation — an unknown key is an error, and a key that exists in the
- * spec is not unknown. `src/cli/init.ts` is where that split is visible to the
- * user: what is inert is written commented out.
+ * **Every key here reaches the pipeline.** Until `1.0.0` three more were
+ * accepted, validated and carried — `ignore`, `knownPaths` and
+ * `staleThreshold` — on the argument that a config written against the
+ * specification should not fail against an incomplete implementation. The
+ * freeze reversed it: a key that is accepted is a key a user reasonably
+ * believes does something, and three of six did nothing. `staleThreshold`
+ * comes back with `stale/churn`, which under the version policy is a minor.
  */
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -30,10 +31,7 @@ export type Config = {
    * green run that means nothing. Ticket `12`.
    */
   skillRoots?: readonly string[]
-  ignore?: readonly string[]
   checks?: Readonly<Record<string, CheckSeverity>>
-  knownPaths?: readonly string[]
-  staleThreshold?: number
 }
 
 /**
@@ -53,10 +51,7 @@ const CONFIG_FILENAMES: readonly string[] = [
 
 export const KNOWN_KEYS: readonly string[] = [
   'sources',
-  'ignore',
   'checks',
-  'knownPaths',
-  'staleThreshold',
   // Last on purpose: the unknown-key message lists these in order and the
   // older entries are what a reader recognises first.
   'skillRoots',
@@ -107,9 +102,12 @@ function severityMap(value: unknown, where: string): Readonly<Record<string, Che
 /**
  * Validates whatever the config exported.
  *
- * An unknown key **fails** instead of being ignored. A typo in `ignore` that
- * silently disables the ignore list is worse than a red run: the tool would
- * keep working and stop doing what the file says.
+ * An unknown key **fails** instead of being ignored. A typo in `sources` that
+ * silently drops the extra documents is worse than a red run: the tool would
+ * keep working and stop doing what the file says. Since `1.0.0` that rule
+ * covers three more names than it did — `ignore`, `knownPaths` and
+ * `staleThreshold` used to validate and do nothing, and now fail like any
+ * other key the tool does not act on.
  */
 export function validateConfig(raw: unknown, where: string): Config {
   if (raw === undefined || raw === null) return {}
@@ -126,18 +124,7 @@ export function validateConfig(raw: unknown, where: string): Config {
   if (raw.skillRoots !== undefined) {
     config.skillRoots = stringArray(raw.skillRoots, 'skillRoots', where)
   }
-  if (raw.ignore !== undefined) config.ignore = stringArray(raw.ignore, 'ignore', where)
-  if (raw.knownPaths !== undefined) {
-    config.knownPaths = stringArray(raw.knownPaths, 'knownPaths', where)
-  }
   if (raw.checks !== undefined) config.checks = severityMap(raw.checks, where)
-  if (raw.staleThreshold !== undefined) {
-    const threshold = raw.staleThreshold
-    if (typeof threshold !== 'number' || !Number.isInteger(threshold) || threshold <= 0) {
-      throw invalid(where, 'staleThreshold has to be a positive integer')
-    }
-    config.staleThreshold = threshold
-  }
   return config
 }
 

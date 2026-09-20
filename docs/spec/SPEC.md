@@ -143,7 +143,6 @@ Options
   --config <path>        Explicit path to the config
   --no-config            Ignore any config found
   --quiet                Show problems only, no summary
-  --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
   --version, -v
   --help, -h
@@ -291,6 +290,8 @@ Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in 
 
 A list that *replaced* the built-ins would let one misspelling silence the check across a repository, and silence is what this key exists to fix — an install root nobody has heard of is a repository audited to a green run that means nothing. A typo costs the entry and nothing else.
 
+**Three keys were withdrawn in `1.0.0`.** `ignore`, `knownPaths` and `staleThreshold` were listed here, accepted by the loader, validated, carried into the run, and read by nobody. The argument for keeping them was that a config written against this document should not fail against an incomplete implementation; the freeze reversed it, because a key the loader accepts is a key a user reasonably believes does something, and three of six did not. They are now refused like any other unknown key. `staleThreshold` returns with `stale/churn`, which is a minor under the version policy — see [`CONTRACT.md`](../../CONTRACT.md).
+
 ```yaml
 # What --init writes, minus the commentary.
 sources:
@@ -300,20 +301,11 @@ sources:
 skillRoots:
   - 'skills'
 
-ignore:
-  - '**/fixtures/**'
-
 # 'error' | 'warning' | 'off' — quoted, because `off` is a YAML 1.1 boolean
 checks:
   'dep/missing': 'off'
   'stale/churn': 'warning'
   'symbol/missing': 'error'
-
-knownPaths:
-  - 'dist/**'
-  - '.next/**'
-
-staleThreshold: 15
 ```
 
 The same config as JSON, for a repository that would rather not add a YAML file:
@@ -321,14 +313,12 @@ The same config as JSON, for a repository that would rather not add a YAML file:
 ```json
 {
   "sources": ["docs/agent-notes.md"],
-  "ignore": ["**/fixtures/**"],
+  "skillRoots": ["skills"],
   "checks": {
     "dep/missing": "off",
     "stale/churn": "warning",
     "symbol/missing": "error"
-  },
-  "knownPaths": ["dist/**", ".next/**"],
-  "staleThreshold": 15
+  }
 }
 ```
 

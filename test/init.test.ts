@@ -78,14 +78,17 @@ describe('--init', () => {
     expect(INIT_TEMPLATE).toContain(key)
   })
 
-  it('the inert keys are commented out, the live ones are not', () => {
-    for (const key of ['sources', 'skillRoots', 'checks']) {
+  it('every key it writes is live, because every key there is does something', () => {
+    for (const key of KNOWN_KEYS) {
       expect(lineFor(key), `${key} should be live`).not.toBe('')
     }
-    for (const key of ['ignore', 'knownPaths', 'staleThreshold']) {
-      expect(lineFor(key), `${key} does nothing yet and must not look like it does`).toBe('')
-      expect(INIT_TEMPLATE).toContain(`# ${key}:`)
-    }
+  })
+
+  // Three keys were written commented out, with a note that nothing read them.
+  // `1.0.0` withdrew them from the loader instead, so a template mentioning
+  // one would be teaching a config the tool now refuses.
+  it.each([['ignore'], ['knownPaths'], ['staleThreshold']])('does not mention %s', (key) => {
+    expect(INIT_TEMPLATE).not.toContain(key)
   })
 
   // The template is YAML, so the keys are asserted against the loader's own

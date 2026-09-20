@@ -18,17 +18,20 @@ export type Io = {
 }
 
 /**
- * The boolean flags the parser accepts but that do not do anything yet. This
- * list is a to-do list the test suite watches: when a ticket implements a flag,
- * it deletes it from here and the test that demanded exit 2 fails.
+ * The boolean flags the parser accepts but that do not do anything yet.
  *
- * Exported for the same reason as `OPTIONS`: a flag that parses and then exits
- * 2 is part of the surface as it stands, and the frozen surface records it
- * that way rather than pretending it works.
+ * **Empty since `1.0.0`, and that is the claim it makes.** It held `--strict`,
+ * implemented in ticket `02`, and `--watch`, which ticket `03` took out of the
+ * parser altogether rather than leave advertised and broken — a flag we do not
+ * have should fail the way any unknown flag fails. Nothing the tool accepts
+ * refuses to run.
+ *
+ * It is kept because that claim needs somewhere to be false: a flag added
+ * ahead of its milestone goes here, and `CONTRACT.md` records it as refused
+ * rather than as working. Exported for the same reason as `OPTIONS` — the
+ * frozen surface reads it.
  */
-export const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
-  ['watch', '--watch'],
-]
+export const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = []
 
 function assertNotYetImplemented(args: CliArgs): void {
   for (const [key, flag] of UNIMPLEMENTED_BOOLEANS) {

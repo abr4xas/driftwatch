@@ -50,7 +50,6 @@ records what is emitted rather than what was intended.
 - `--skip <value>` — advertised, implemented
 - `--strict` — advertised, implemented
 - `--version, -v` — advertised, implemented
-- `--watch` — advertised, refused at runtime
 
 Positional arguments narrow the run to those paths. Any number of them.
 
@@ -175,11 +174,8 @@ One annotation per finding, and no other output: the job log is the transport.
 ## Config keys
 
 - `checks`
-- `ignore`
-- `knownPaths`
 - `skillRoots`
 - `sources`
-- `staleThreshold`
 
 Severities a check can be set to: `error`, `warning`, `off`.
 
