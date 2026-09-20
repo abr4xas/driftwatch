@@ -178,3 +178,56 @@ describe('the gates are shared, so the count is too', () => {
     expect(collected.map((d) => d.kind)).toEqual(['path'])
   })
 })
+
+/**
+ * The rule a model proposed, the measurement that refused it, and why the
+ * refusal is the useful part.
+ *
+ * `discovery claims` put 800 `bare-word` discards that resolve nowhere to Jev,
+ * asking whether the sentence puts the word forward as a path in this
+ * repository. It said no 92% of the time — ADR-0003's "almost never", with a
+ * number on it at last. The 8% left had a shape: 61 of 64 carry an extension
+ * and 33 sit in a sentence that already names a directory. So: claim a bare
+ * name against the nearest directory the sentence gave it.
+ *
+ * Built, and measured against the 66 as `07` prescribes. It took the corpus
+ * from **37 findings to 118**, and narrowing it — no suffix patterns like
+ * `.spec.ts`, no base with a hole in it — only reached 104. The two failures
+ * are structural rather than tuning:
+ *
+ * - **The directory usually has no trailing slash.** `unjs/nitro` writes
+ *   "- `src/dev` — Development server logic (`app.ts`, `server.ts`)". Looking
+ *   for a token ending in `/` finds `src/config/` from the item *above* and
+ *   claims `src/app.ts`, a file nobody mentioned.
+ * - **A bare name in a document that teaches a convention is the reader's.**
+ *   `remix-run/react-router` writes "- `about.tsx` → `/about`". That is
+ *   `readers-project`, a class `CLASSIFICATION.md` already names.
+ *
+ * So the gate stays shut, and these tests pin it shut with the evidence
+ * attached. What Jev found was real — the 33 examples exist — and what the 66
+ * said is that no rule reaching them survives contact with the same corpus.
+ */
+describe('a bare name the sentence seems to locate', () => {
+  it('is discarded, directory in the sentence or not', () => {
+    const content = '- `config/` — agent definitions (`agents.json`) and the skills list.\n'
+    expect(causesOf(content)).toContain('bare-word')
+    expect(extractPathClaims(contextOf(content)).map((claim) => claim.text)).toEqual([])
+  })
+
+  it('is discarded when the sentence names no directory at all', () => {
+    const content = 'Rename it to `config.ts` when you are done.\n'
+    expect(causesOf(content)).toContain('bare-word')
+    expect(extractPathClaims(contextOf(content))).toEqual([])
+  })
+
+  it('is discarded where the base would have been wrong', () => {
+    // The `unjs/nitro` shape, which is what refused the rule: the directory
+    // this list item is about carries no slash, and the one that does belongs
+    // to the item before it.
+    const content =
+      '- `src/config/` — Config defaults.\n- `src/dev` — Dev server (`app.ts`, `server.ts`).\n'
+    const texts = extractPathClaims(contextOf(content)).map((claim) => claim.text)
+    expect(texts).not.toContain('src/app.ts')
+    expect(texts).not.toContain('src/dev/app.ts')
+  })
+})
