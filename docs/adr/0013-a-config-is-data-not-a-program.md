@@ -1,6 +1,6 @@
 # ADR-0013 — A config is data, not a program
 
-- **Status:** accepted, amended 2026-09-20 by ADR-0014 (see "The flag is gone, the route is not")
+- **Status:** accepted, amended 2026-09-20 by [ADR-0014](./0014-what-1-0-0-asserts.md) (see "The flag is gone, the route is not")
 - **Date:** 2026-09-18
 
 ## Context

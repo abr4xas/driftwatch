@@ -32,12 +32,45 @@ The roadmap gets one line pointing here.
 
 **Blocked by:** 02, 03, 04, 05, 06
 
-**Status:** ready-for-agent
+**Status:** done 2026-09-20. [ADR-0014](../../../docs/adr/0014-what-1-0-0-asserts.md). See
+§"What was built".
 
-- [ ] The ADR is numbered next in sequence and follows the existing format
-- [ ] It describes the surface as it actually is after the preceding tickets
-- [ ] It states the version policy as a table
-- [ ] It records why the precision measurement is decoupled from releases, not only that it is
-- [ ] It resolves the apparent contradiction with the config ADR
-- [ ] The roadmap points at it
-- [ ] The documentation link check passes
+- [x] The ADR is numbered next in sequence and follows the existing format
+- [x] It describes the surface as it actually is after the preceding tickets
+- [x] It states the version policy as a table
+- [x] It records why the precision measurement is decoupled from releases, not only that it is
+- [x] It resolves the apparent contradiction with the config ADR
+- [x] The roadmap points at it
+- [x] The documentation link check passes
+
+## What was built
+
+`docs/adr/0014-what-1-0-0-asserts.md`, next in sequence and in the existing format. It carries
+the four things the ticket named, and the numbers in it are the ones the snapshots read today
+rather than the ones the ticket quoted from memory: **58 of 66, 87.9%**, with the validation
+group alone at 29 of 32, 90.6%.
+
+The version policy is a table, and the sentence that makes it affordable is next to it: the
+lower half is free **by construction**, because a tier 2 check defaults to warning and the exit
+code ignores warnings unless asked, so it cannot turn a green run red. The upper half is priced
+with its own example — `0.5.0` would have been a major under it, and the next skills root is
+`2.0.0`.
+
+§"Why precision does not gate the version" is three arguments rather than a rule, because the
+rule is the part that gets reversed: tying the version to condition 6 manufactures pressure to
+reclassify findings, precision is a measurement and a version is not, and the criterion was
+chosen to survive failing for six months.
+
+ADR-0013's status line now links here, and §"Why `--migrate-config` is gone" says plainly that
+the two do not contradict each other — that ADR promised a route, not a flag, and the route is
+alive as a version.
+
+`ROADMAP.md` gains a section above "What a release is, by hand" pointing at both the ADR and
+`CONTRACT.md`.
+
+§"What is lost" is deliberately not empty. A tier 1 check that ought to default to error now
+waits for a major or ships as a warning it does not deserve; a staged skills root was considered
+and rejected; and some readers will take `1.0.0` as a statement about precision, which is the
+one thing it is not.
+
+Both self-audits are clean: 5 files with the repo config, 34 with the documentation one.

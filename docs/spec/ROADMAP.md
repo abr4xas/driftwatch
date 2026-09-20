@@ -220,6 +220,10 @@ Do not wait for M6 to show the project. Visible cadence is part of what makes so
 5. Launch post with the GIF when **M4** closes.
 6. Sustain commits over months, not a one-week sprint.
 
+### What `1.0.0` means, and what it does not
+
+[ADR-0014](../adr/0014-what-1-0-0-asserts.md) is the decision: **a claim about compatibility, not about quality.** It lists the eight surfaces that are frozen, states the version policy as a table — a new tier 1 check or a new skills root is a major, a new tier 2 check is a minor — and records why the precision measurement neither gates nor delays a release. Condition 6 is unmet at 87.9% and stays published. [`CONTRACT.md`](../../CONTRACT.md) is the frozen surface itself, generated and held by a test.
+
 ### What a release is, by hand
 
 `npm pkg set version=<x.y.z>`, commit, tag `v<x.y.z>`, push the tag. The workflow refuses a tag that disagrees with `package.json` before it sends anything. Then update the `uses:` lines in the documentation, which `docs-links.test.ts` § "the documented action ref" holds to `package.json`.
