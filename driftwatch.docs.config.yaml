@@ -15,12 +15,12 @@
 # It was vacuous when it was added — the repo's documents cross-reference each
 # other with `§` in prose and none of them wrote a `](...#...)` link — and it
 # stopped being vacuous in the round that ruled on `vercel/next.js`'s anchors.
-# `CLASSIFICATION.md` now quotes `[Sibling fix A](#anchor-a)` as a **specimen of
-# another repository's output**, and this run reads it as a link of its own and
-# reports it. Two findings, both false, and the same class the round they come
-# from decided not to write a rule for. Left standing rather than silenced:
-# the document says plainly what those anchors are, and a config that hid them
-# would hide the next real one too.
+# `CLASSIFICATION.md` quotes `[Sibling fix A](#anchor-a)` as a **specimen of
+# another repository's output**, and this run read it as a link of its own and
+# reported it twice. The fix was in the document, not here: a specimen of a
+# link is quoted as code now, which is the distinction `docs-links.test.ts`
+# already makes about `SPEC.md`. Nothing is suppressed in this file, and
+# nothing should be — a config that hid those two would hide the next real one.
 
 sources:
   - 'docs/**/*.md'

@@ -58,7 +58,7 @@ jobs:
       - name: driftwatch on driftwatch
         run: node ./dist/cli.js
       - name: driftwatch on its own documentation
-        run: node ./dist/cli.js --config driftwatch.docs.config.ts
+        run: node ./dist/cli.js --config driftwatch.docs.config.yaml
 
       # A tag that disagrees with `package.json` publishes a version nobody
       # asked for, and the mistake is unfixable afterwards: npm does not allow

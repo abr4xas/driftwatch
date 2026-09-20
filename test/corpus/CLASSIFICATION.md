@@ -1910,8 +1910,11 @@ One finding, and it was false. Nothing else moved anywhere.
 ### The anchors are not a class, and the measurement is the answer
 
 `#anchor-a` and `#anchor-b` in `vercel/next.js` sit inside a **specimen of output** the skill
-is instructing an agent to write: *"Choose [Sibling fix A](#anchor-a) or [Sibling fix B](#anchor-b)
-when either is feasible."* They are obviously stand-ins to a reader.
+is instructing an agent to write: `Choose [Sibling fix A](#anchor-a) or [Sibling fix B](#anchor-b)
+when either is feasible.` They are obviously stand-ins to a reader — and quoted as code here
+rather than as prose, because a specimen of a link is not a link. That is the same distinction
+`test/docs-links.test.ts` makes about `SPEC.md`, and until this line was written that way the
+tool reported its own document twice.
 
 Two rules were considered and the discovery corpus refused both.
 
