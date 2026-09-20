@@ -11,7 +11,7 @@
  * grouping that cannot do that will not propose useful ones over the
  * unlabelled discovery corpus, and `07` and `17` do not need it either way.
  *
- *   pnpm corpus-classify [--dry-run]
+ *   pnpm jev:classify [--dry-run]
  *
  * Two questions per finding, over one shared state, in one request: Jev
  * evaluates them in parallel and they cannot see each other's answers. The

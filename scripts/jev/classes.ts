@@ -14,7 +14,7 @@
  * homogeneous group is a class worth a rule. If it lumps everything together,
  * that is worth knowing at 666 pairs rather than at a hundred thousand.
  *
- *   pnpm corpus-classes [--dry-run] [--concurrency N]
+ *   pnpm jev:classes [--dry-run] [--concurrency N]
  *
  * **Nothing here writes a verdict or a class.** The output is a comparison in
  * `.scratch/`; `CLASSIFICATION.md` is written by a person and stays that way.

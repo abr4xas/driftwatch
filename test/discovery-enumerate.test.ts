@@ -1,16 +1,15 @@
 /**
- * The acquisition runner's decidable parts, with no network and no disk.
+ * The enumeration stage's decidable parts, with no network.
  *
- * Enumerating, cloning and running are three network- or disk-bound loops
- * around a handful of decisions, and the decisions are where the damage lives:
- * a query written in the website's syntax returns a plausible wrong number
- * (ticket `02`), a merge that forgets to subtract the certification corpus
- * contaminates the split the whole design rests on, and a disk check that is
- * wrong by a factor of ten fills a laptop. Each of those is a function here.
+ * Enumerating is a rate-limited loop around a handful of decisions, and the
+ * decisions are where the damage lives: a query written in the website's
+ * syntax returns a plausible wrong number (ticket `02`), and a merge that
+ * forgets to subtract the certification corpus contaminates the split the
+ * whole design rests on — invisibly, because nothing downstream looks at
+ * where a repository came from.
  */
 import { describe, expect, it } from 'vitest'
 import { CORPUS } from '../scripts/corpus/repos.ts'
-import { BYTES_PER_REPO, refuseForDisk } from '../scripts/discovery/clone.ts'
 import {
   FACETS,
   facetQuery,
@@ -20,7 +19,6 @@ import {
   queriesOf,
   reposIn,
 } from '../scripts/discovery/enumerate.ts'
-import { recordedIn } from '../scripts/discovery/journal.ts'
 import { parseList } from '../scripts/discovery/files.ts'
 
 describe('the facets', () => {
@@ -161,30 +159,6 @@ describe('the rate limit', () => {
   })
 })
 
-describe('the disk budget', () => {
-  it('lets a run start when the space is there', () => {
-    expect(refuseForDisk(100 * 1024 ** 3, 2000)).toBeUndefined()
-  })
-
-  it('refuses rather than filling the disk', () => {
-    const refusal = refuseForDisk(1024 ** 3, 2000)
-    expect(refusal).toMatch(/2000 repos/u)
-    expect(refusal).toMatch(/GB/u)
-  })
-
-  it('budgets from what 06 measured, not from a guess', () => {
-    // 2.8 MB per repo over all 66 corpus repos, `discovery-clone.ts`.
-    expect(BYTES_PER_REPO).toBe(2.8 * 1024 * 1024)
-  })
-
-  it('keeps headroom, because the estimate is a mean over 66 repos', () => {
-    // Exactly the measured mean is not enough space: half the repos are above
-    // it, and a run that dies at repo 1900 with a full disk has cost the whole
-    // rate-limit budget for nothing.
-    expect(refuseForDisk(2000 * BYTES_PER_REPO, 2000)).toBeDefined()
-  })
-})
-
 describe('the cursor', () => {
   it('reads the query back out of a spent key', () => {
     const query = facetQuery(FACETS[0] ?? { filename: 'CLAUDE.md', size: '<1000' })
@@ -193,26 +167,6 @@ describe('the cursor', () => {
 
   it('splits at the last separator, so a query holding one survives', () => {
     expect(queriesOf(new Set(['filename:a#b size:<1000#3']))).toEqual(['filename:a#b size:<1000'])
-  })
-})
-
-const line = (repo: string): string => JSON.stringify({ repo, ok: true })
-
-describe('reading the results back', () => {
-  it('names every repository already recorded, failures included', () => {
-    const text = `${line('a/one')}\n${JSON.stringify({ repo: 'b/two', ok: false })}\n`
-    expect(recordedIn(text)).toEqual(new Set(['a/one', 'b/two']))
-  })
-
-  it('survives the half-written last line of an interrupted run', () => {
-    // This is the whole reason the file is JSONL rather than a JSON array. A
-    // torn line must cost one repository; before this it threw, and one torn
-    // line made `run` and `status` permanently unusable.
-    expect(recordedIn(`${line('a/one')}\n{"repo":"b/tw`)).toEqual(new Set(['a/one']))
-  })
-
-  it('reads an absent file as nothing recorded', () => {
-    expect(recordedIn('')).toEqual(new Set())
   })
 })
 

@@ -51,9 +51,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "corpus": "node --experimental-strip-types scripts/corpus/run.ts",
-    "corpus-classify": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/classify.ts",
-    "corpus-classes": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/classes.ts",
-    "review": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/review.ts",
+    "jev:classify": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/classify.ts",
+    "jev:classes": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/classes.ts",
+    "jev:review": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/review.ts",
     "discovery": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/discovery/cli.ts",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

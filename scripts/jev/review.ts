@@ -1,7 +1,7 @@
 /**
  * What the extractor threw away in one repository, read by a model.
  *
- *   pnpm review <path-to-a-repo> [--show-at 0.7] [--cap 200]
+ *   pnpm jev:review <path-to-a-repo> [--show-at 0.7] [--cap 200]
  *
  * ## Why this exists, and why it is a script
  *
@@ -208,7 +208,7 @@ if (process.argv[1] === import.meta.filename) {
   const argv = process.argv.slice(2)
   const [target] = argv.filter((argument) => !argument.startsWith('--'))
   try {
-    if (target === undefined) throw new Error('usage: pnpm review <path-to-a-repo>')
+    if (target === undefined) throw new Error('usage: pnpm jev:review <path-to-a-repo>')
     process.exitCode = await reviewMain(
       target,
       numberFlag(argv, '--show-at') ?? 0.7,
