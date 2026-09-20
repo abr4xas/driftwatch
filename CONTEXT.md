@@ -106,6 +106,23 @@ tool and appears nowhere in the corpora.
 _Avoid_: using it for a person's decision about a finding — that is a **Ruling** — or for what
 a pass got back from Jev — that is an **Answer**. The word used to mean all three.
 
+## What a release promises
+
+**Frozen surface**:
+Everything `1.0.0` promises not to remove or reshape without a major version: the exit codes,
+the check ids, the CLI flags, the `--json` contract, the other output formats, the config
+format, the package's exported names, and the Node floor. It is generated and committed, so
+that changing it is a diff somebody accepts rather than a thing somebody notices.
+_Avoid_: public API, the contract, the interface.
+
+**Tier**:
+Whether a check reports an error or a warning by default. Tier 1 defaults to error and can fail
+a build; tier 2 defaults to warning and cannot, unless the caller asks for it. It is a fact
+about the contract, not only about the roadmap: adding a tier 2 check is a minor and adding a
+tier 1 check is a major, because only one of them can turn a green run red.
+_Avoid_: level, severity (a **severity** is what one finding carries; a tier is what a check
+defaults to), priority.
+
 ## Asking a model
 
 Jev is a research instrument for the corpora and never a component of the tool. Nothing under
