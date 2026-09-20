@@ -12,8 +12,8 @@ import { join } from 'node:path'
 /** `scripts/lib/` → the repository root. */
 export const REPO_ROOT = join(import.meta.dirname, '..', '..')
 
-/** The certification corpus: pinned repos, committed snapshots, human verdicts. */
+/** The certification corpus: pinned repos, committed snapshots, human rulings. */
 export const CORPUS_DIR = join(REPO_ROOT, 'test', 'corpus')
 
-/** The discovery corpus: disposable, unpinned, and carrying no verdicts. */
+/** The discovery corpus: disposable, unpinned, and carrying no rulings. */
 export const DISCOVERY_DIR = join(REPO_ROOT, 'test', 'discovery')

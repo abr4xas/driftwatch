@@ -10,7 +10,7 @@
  * What comes out is groups, not names. A **large homogeneous group** is a
  * class worth a person reading twenty examples of, and whatever rule that
  * reading suggests is written by hand in `src/` and measured against the 66.
- * Nothing here decides that a finding is wrong: there is no verdict in this
+ * Nothing here decides that a finding is wrong: there is no ruling in this
  * corpus and this pass does not manufacture one.
  *
  *   pnpm discovery findings [--sample 100] [--per-repo 2] [--concurrency 10]
@@ -236,7 +236,7 @@ export async function findingsMain(
   )
   process.stdout.write(`${formatGroups(asked, groups)}\n\n`)
   process.stdout.write(
-    'No verdict here. These findings have never been ruled on, so a group is a place to\n' +
+    'No ruling here. These findings have never been ruled on, so a group is a place to\n' +
       'read, not a class of error. No number enters CLASSIFICATION.md.\n',
   )
   return 0

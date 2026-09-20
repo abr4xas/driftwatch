@@ -8,7 +8,7 @@
  * bands are nearly disjoint, so the facets do not pay for each other.
  *
  * The certification corpus is subtracted here and nowhere else. A repository
- * that carries a human verdict must not arrive in the corpus that carries
+ * that carries a human ruling must not arrive in the corpus that carries
  * none, which is the split the whole design rests on.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'

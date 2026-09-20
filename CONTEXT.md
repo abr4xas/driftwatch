@@ -101,10 +101,10 @@ for a discard rule.
 _Avoid_: category, cluster, group, type.
 
 **Verdict**:
-The result of verifying one claim: `ok`, `broken`, `suspect` or `skipped`.
-_Avoid_: using it for a person's decision about a finding — that is a **Ruling**. The corpus
-code still calls a ruling a `verdict` in places; the two are different things and the word is
-owed a rename.
+The result of verifying one claim: `ok`, `broken`, `suspect` or `skipped`. It belongs to the
+tool and appears nowhere in the corpora.
+_Avoid_: using it for a person's decision about a finding — that is a **Ruling** — or for what
+a pass got back from Jev — that is an **Answer**. The word used to mean all three.
 
 ## Asking a model
 
@@ -128,6 +128,11 @@ The statement and criteria a pass puts to Jev. The wording *is* the instrument: 
 the number that exact wording produced, so a question two passes share is one object rather
 than two that match today.
 _Avoid_: prompt, query.
+
+**Answer**:
+What a pass got back from Jev about one item: a probability, or a choice with its confidence.
+Not a ruling — no person saw it — and nothing downstream may treat it as one.
+_Avoid_: verdict, judgement, result, score.
 
 **Family**:
 A set of documents across different repositories that are one document, copied. A third of the

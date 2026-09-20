@@ -28,7 +28,7 @@
  * condition of ADR-0006. What comes out is material to read — classes of
  * finding and classes of discard — and the rule that a person then writes is
  * measured the way every rule in this project is measured, against the 66 repos
- * that carry human verdicts.
+ * that carry human rulings.
  *
  * It does not touch `corpus.ts` either. The certification corpus keeps its full
  * shallow clones and its pinned shas, and is governed by ADR-0007.

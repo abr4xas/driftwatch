@@ -459,7 +459,7 @@ export async function discardsMain(limit: number | undefined): Promise<number> {
  * meaning of a sentence, and this project puts no model on its main path. What
  * comes out of the reading is a table in ticket `07`, and what may come out of
  * the table is a rule written by hand in `src/` and measured against the 66
- * repositories that carry human verdicts.
+ * repositories that carry human rulings.
  */
 export function sampleMain(n: number): number {
   if (!existsSync(DISCARDS)) {

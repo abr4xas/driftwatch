@@ -114,7 +114,10 @@ Single-context: [`CONTEXT.md`](CONTEXT.md) at the root and ADRs in `docs/adr/`. 
 
 `CONTEXT.md` is the glossary, and it is audited: it is listed in `driftwatch.config.yaml`, so a
 path it names that stops existing is a finding like any other. Use its words. `finding`,
-`discard`, `ruling`, `class`, `pass`, `family` and the two corpora all mean one thing each, and
-the file says which — including one word the code still gets wrong, `verdict`, which the
-specification uses for the result of verifying a claim and the corpus code uses for a person's
-ruling.
+`discard`, `ruling`, `answer`, `class`, `pass`, `family` and the two corpora all mean one thing
+each, and the file says which.
+
+The one worth knowing before you read anything: **verdict**, **ruling** and **answer** were all
+called `verdict` until they were told apart. A verdict is the tool's — `ok`, `broken`,
+`suspect`, `skipped`. A ruling is a person's, and it is the measurement. An answer is Jev's,
+and it measures nothing. Any code that blurs them is a bug, whatever it typechecks as.

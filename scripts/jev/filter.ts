@@ -16,7 +16,7 @@
  *   pnpm discovery filter [--limit N] [--dry-run] [--concurrency N]
  *
  * **It classifies; it decides nothing.** The output is a table over repositories
- * that carry no verdicts and measure nothing. A rule that comes out of reading
+ * that carry no rulings and measure nothing. A rule that comes out of reading
  * it is written by hand in `src/` and measured against the 66 that do.
  */
 import { execFileSync } from 'node:child_process'
@@ -74,7 +74,11 @@ export const QUESTIONS: Record<string, Experimental_EvaluationQuestion> = {
   },
 }
 
-export type Verdict = {
+/**
+ * What the pass got back about one document. Not a ruling: no person saw it,
+ * and nothing downstream may treat it as one.
+ */
+export type Answer = {
   repo: string
   path: string
   aboutThisRepo: number
@@ -130,7 +134,7 @@ export function stateOf(repo: string, dir: string, path: string, content: string
   }
 }
 
-async function jevAsk(): Promise<(state: State) => Promise<Omit<Verdict, 'repo' | 'path'>>> {
+async function jevAsk(): Promise<(state: State) => Promise<Omit<Answer, 'repo' | 'path'>>> {
   const ask = await openJev()
   return async (state) => {
     const answered = await ask(state, QUESTIONS)
@@ -144,7 +148,7 @@ async function jevAsk(): Promise<(state: State) => Promise<Omit<Verdict, 'repo' 
 }
 
 /** The table: what the corpus is made of, and how much of it is off-subject. */
-export function tabulate(rows: readonly Verdict[]): string {
+export function tabulate(rows: readonly Answer[]): string {
   const byRepo = new Map<string, string[]>()
   for (const row of rows) byRepo.set(row.repo, [...(byRepo.get(row.repo) ?? []), row.repoKind])
   const kinds = new Map<string, number>()
@@ -173,7 +177,7 @@ export function tabulate(rows: readonly Verdict[]): string {
 }
 
 /** What the pass asks: one document in, the two judgements out. */
-export type AskAboutDocument = (state: State) => Promise<Omit<Verdict, 'repo' | 'path'>>
+export type AskAboutDocument = (state: State) => Promise<Omit<Answer, 'repo' | 'path'>>
 
 export async function filterMain(
   limit: number | undefined,
@@ -219,12 +223,12 @@ export async function filterMain(
   return 0
 }
 
-/** Every verdict a previous run wrote. */
-export function verdictsIn(text: string): Verdict[] {
-  const rows: Verdict[] = []
+/** Every answer a previous run wrote. */
+export function answersIn(text: string): Answer[] {
+  const rows: Answer[] = []
   for (const parsed of jsonlIn(text)) {
-    const row = parsed as Partial<Verdict>
-    if (typeof row.repo === 'string' && typeof row.repoKind === 'string') rows.push(row as Verdict)
+    const row = parsed as Partial<Answer>
+    if (typeof row.repo === 'string' && typeof row.repoKind === 'string') rows.push(row as Answer)
   }
   return rows
 }

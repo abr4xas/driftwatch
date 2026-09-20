@@ -24,7 +24,7 @@ describe('a per-finding row', () => {
         location: 'AGENTS.md:701:34',
         check: 'path/missing',
         claim: 'docs/SECURITY.md',
-        verdict: 'true',
+        ruling: 'true',
         className: '—',
       },
     ])
@@ -35,7 +35,7 @@ describe('a per-finding row', () => {
       '| 7 | `a/b` | `CLAUDE.md:3:1` | `path/missing` | `dist/bundle.js` | ' +
       '**false** | generated-bundle | calibration |'
     expect(rowsIn(row)[0]?.className).toBe('generated-bundle')
-    expect(rowsIn(row)[0]?.verdict).toBe('false')
+    expect(rowsIn(row)[0]?.ruling).toBe('false')
   })
 
   it('keeps an empty claim, which is a cell and not an absence', () => {

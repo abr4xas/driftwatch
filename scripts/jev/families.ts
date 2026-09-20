@@ -18,7 +18,7 @@
  *
  * **It groups; it does not adjudicate.** What comes out is a table of families.
  * Any rule that comes out of reading them is still written by hand in `src/`
- * and still measured against the 66 repositories that carry human verdicts.
+ * and still measured against the 66 repositories that carry human rulings.
  * Nothing here is on driftwatch's main path — `ai` and `zod` are
  * devDependencies and `tsdown` builds `src/` alone.
  */
@@ -29,7 +29,7 @@ import { join } from 'node:path'
 import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { slugOf } from '../corpus/repos.ts'
-import { FAMILIES, readList, REPOS_DIR, VERDICTS } from '../discovery/files.ts'
+import { FAMILIES, FAMILY_ANSWERS, readList, REPOS_DIR } from '../discovery/files.ts'
 
 /** One source document, as the family pass sees it. */
 export type Doc = {
@@ -366,7 +366,8 @@ function docsOf(repo: string, dir: string): Doc[] {
   return docs
 }
 
-type Verdict = { pair: [string, string]; overlap: number; probability: number; same: boolean }
+/** What the pass got back about one pair. Not a ruling. */
+type Answer = { pair: [string, string]; overlap: number; probability: number; same: boolean }
 
 /**
  * Asks about one pair. A failure is recorded and is **not** a `no`.
@@ -380,7 +381,7 @@ async function judge(
   ask: (state: JudgementState) => Promise<number>,
   candidate: Candidate,
   read: (print: Fingerprint) => Doc | undefined,
-): Promise<Verdict | undefined> {
+): Promise<Answer | undefined> {
   const a = read(candidate.a)
   const b = read(candidate.b)
   // Not a failure: a fingerprint whose document is gone was never asked about.
@@ -441,13 +442,13 @@ export function stratifiedSample(candidates: readonly Candidate[], want: number)
 }
 
 /** Agreement with the overlap filter, band by band. The table the sample buys. */
-export function bandTable(verdicts: readonly Verdict[]): string {
-  const bands = new Map<number, Verdict[]>()
-  for (const verdict of verdicts) {
-    const band = Math.min(9, Math.floor((verdict.overlap - 0.5) / 0.05))
+export function bandTable(answers: readonly Answer[]): string {
+  const bands = new Map<number, Answer[]>()
+  for (const answer of answers) {
+    const band = Math.min(9, Math.floor((answer.overlap - 0.5) / 0.05))
     const bucket = bands.get(band)
-    if (bucket === undefined) bands.set(band, [verdict])
-    else bucket.push(verdict)
+    if (bucket === undefined) bands.set(band, [answer])
+    else bucket.push(answer)
   }
   const lines = ['   overlap   judged   one document   mean p']
   for (const band of [...bands.keys()].toSorted((a, b) => a - b)) {
@@ -496,7 +497,7 @@ export async function familiesMain(
       `${candidates.length} pairs to judge\n`,
   )
 
-  const verdicts: Verdict[] = []
+  const answers: Answer[] = []
   if (dryRun) {
     // What the pass would spend, before it spends it. Said out loud for the
     // reason `clone` announces its gigabytes.
@@ -515,7 +516,7 @@ export async function familiesMain(
         `${settled.length} pairs are one document by overlap alone (>= ${certainAbove}), unasked\n`,
       )
       for (const candidate of settled) {
-        verdicts.push({
+        answers.push({
           pair: [keyOf(candidate.a), keyOf(candidate.b)],
           overlap: Number(candidate.overlap.toFixed(3)),
           probability: 1,
@@ -530,13 +531,13 @@ export async function familiesMain(
       nameOf: (candidate) => `${keyOf(candidate.a)} ~ ${keyOf(candidate.b)}`,
       answer: async (candidate) => judge(ask, candidate, readDoc),
     })
-    verdicts.push(...answered)
+    answers.push(...answered)
   }
 
-  if (verdicts.length > 0) {
-    writeFileSync(VERDICTS, verdicts.map((v) => JSON.stringify(v)).join('\n') + '\n', 'utf8')
+  if (answers.length > 0) {
+    writeFileSync(FAMILY_ANSWERS, answers.map((v) => JSON.stringify(v)).join('\n') + '\n', 'utf8')
   }
-  const confirmed = verdicts.filter((verdict) => verdict.same).map((verdict) => verdict.pair)
+  const confirmed = answers.filter((answer) => answer.same).map((answer) => answer.pair)
 
   // A sample cannot build the family table. Families come from the transitive
   // closure of confirmed pairs, so a run that judged one pair in two hundred
@@ -545,18 +546,18 @@ export async function familiesMain(
   // table; `FAMILIES` is left as whatever the last whole pass wrote.
   if (sample !== undefined) {
     process.stderr.write(
-      `\n${confirmed.length} of ${verdicts.length} sampled pairs are one document ` +
+      `\n${confirmed.length} of ${answers.length} sampled pairs are one document ` +
         `(p >= ${MERGE_AT}); ${FAMILIES} left alone\n\n`,
     )
-    process.stdout.write(`${bandTable(verdicts)}\n`)
+    process.stdout.write(`${bandTable(answers)}\n`)
     return 0
   }
 
   const families = familiesOf(prints, confirmed)
   writeFileSync(FAMILIES, `${JSON.stringify([...families.values()], null, 2)}\n`, 'utf8')
   process.stderr.write(
-    `\n${confirmed.length} of ${verdicts.length} judged pairs are one document ` +
-      `(p >= ${MERGE_AT}); ${candidates.length - verdicts.length} went unjudged\n` +
+    `\n${confirmed.length} of ${answers.length} judged pairs are one document ` +
+      `(p >= ${MERGE_AT}); ${candidates.length - answers.length} went unjudged\n` +
       `families in ${FAMILIES}\n\n`,
   )
   process.stdout.write(`${formatFamilies(families)}\n`)

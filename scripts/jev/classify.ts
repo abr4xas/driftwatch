@@ -15,12 +15,13 @@
  *
  * Two questions per finding, over one shared state, in one request: Jev
  * evaluates them in parallel and they cannot see each other's answers. The
- * class answer is consumed only when the verdict answer says false, which is
+ * class answer is consumed only when the `isReal` answer says false, which is
  * the speculative half of the fan-out pattern — asked up front because a second
  * request would cost a round trip to learn something the first already knew.
  *
- * **Nothing here writes a verdict.** The output is a comparison table in
- * `.scratch/`; `CLASSIFICATION.md` is written by a person and stays that way.
+ * **Nothing here writes a ruling.** The output is a comparison table in
+ * `test/discovery/corpus-classify.jsonl`; `CLASSIFICATION.md` is written by a person and stays
+ * that way.
  */
 import type { Experimental_EvaluationQuestion } from 'ai'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
@@ -40,7 +41,8 @@ export type Row = {
   location: string
   check: string
   claim: string
-  verdict: 'true' | 'false'
+  /** A person's ruling: whether the finding is a true or a false positive. */
+  ruling: 'true' | 'false'
   className: string
 }
 
@@ -65,7 +67,7 @@ export function rowsIn(doc: string): Row[] {
       location: cells[3] ?? '',
       check: cells[4] ?? '',
       claim: cells[5] ?? '',
-      verdict: cells[6] === 'true' ? 'true' : 'false',
+      ruling: cells[6] === 'true' ? 'true' : 'false',
       className: (cells[7] ?? '').trim(),
     })
   }
@@ -194,7 +196,7 @@ const DESCRIPTIONS: Record<string, string> = {
  * Jev's answer, under names that cannot collide with the row's.
  *
  * The first version called this field `className` too and spread both objects
- * into one record, so the model's answer silently overwrote the verdict it was
+ * into one record, so the model's answer silently overwrote the ruling it was
  * being compared against. Every class matched, which is what a scoring bug
  * looks like from the outside.
  */

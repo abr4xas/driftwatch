@@ -16,8 +16,9 @@
  *
  *   pnpm jev:classes [--dry-run] [--concurrency N]
  *
- * **Nothing here writes a verdict or a class.** The output is a comparison in
- * `.scratch/`; `CLASSIFICATION.md` is written by a person and stays that way.
+ * **Nothing here writes a ruling or a class.** The output is a comparison in
+ * `test/discovery/corpus-classes.jsonl`; `CLASSIFICATION.md` is written by a person and stays
+ * that way.
  */
 import type { Experimental_EvaluationQuestion } from 'ai'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
@@ -125,9 +126,9 @@ export function groupsOf(ids: readonly number[], judged: readonly Judged[]): num
     while (parent.get(at) !== at) at = parent.get(at) ?? at
     return at
   }
-  for (const verdict of judged) {
-    if (!verdict.same) continue
-    const [x, y] = [find(verdict.a), find(verdict.b)]
+  for (const answer of judged) {
+    if (!answer.same) continue
+    const [x, y] = [find(answer.a), find(answer.b)]
     if (x !== y) parent.set(x, y)
   }
   const byRoot = new Map<number, number[]>()
@@ -150,7 +151,7 @@ export function groupsOf(ids: readonly number[], judged: readonly Judged[]): num
  * group among the true findings.
  */
 export function labelOf(row: Row): string {
-  if (row.verdict === 'false') return row.className
+  if (row.ruling === 'false') return row.className
   return `true:${row.check}:${row.repo}`
 }
 
@@ -165,13 +166,13 @@ export function agreement(
   let both = 0
   let split = 0
   let overJoined = 0
-  for (const verdict of judged) {
-    const same = labels.get(verdict.a) === labels.get(verdict.b)
+  for (const answer of judged) {
+    const same = labels.get(answer.a) === labels.get(answer.b)
     if (same) together += 1
-    if (verdict.same) joined += 1
-    if (same && verdict.same) both += 1
-    if (same && !verdict.same) split += 1
-    if (!same && verdict.same) overJoined += 1
+    if (answer.same) joined += 1
+    if (same && answer.same) both += 1
+    if (same && !answer.same) split += 1
+    if (!same && answer.same) overJoined += 1
   }
   return { together, joined, both, split, overJoined }
 }
@@ -185,7 +186,7 @@ export function formatGroups(rows: readonly Row[], groups: readonly number[][]):
     lines.push(`group of ${group.length}  [person: ${drawn.join(', ')}]`)
     for (const row of members) {
       lines.push(
-        `    ${String(row.id).padStart(2)}  ${row.verdict.padEnd(5)} ${row.repo} — ${row.claim}`,
+        `    ${String(row.id).padStart(2)}  ${row.ruling.padEnd(5)} ${row.repo} — ${row.claim}`,
       )
     }
   }
@@ -216,7 +217,7 @@ export async function classesMain(
   const pairs = pairsOf(rows)
   const drawn = new Set(rows.map((row) => labelOf(row)))
   process.stderr.write(
-    `${rows.length} findings (${rows.filter((r) => r.verdict === 'false').length} false), ` +
+    `${rows.length} findings (${rows.filter((r) => r.ruling === 'false').length} false), ` +
       `${drawn.size} groups a person drew, ${pairs.length} pairs\n`,
   )
 
@@ -258,7 +259,7 @@ export async function classesMain(
       `  both agreed:              ${score.both}\n` +
       `  person joined, Jev split: ${score.split}\n` +
       `  Jev joined, person split: ${score.overJoined}\n\n` +
-      'Not a measurement of driftwatch. Nothing here writes a verdict or a class.\n',
+      'Not a measurement of driftwatch. Nothing here writes a ruling or a class.\n',
   )
   return 0
 }

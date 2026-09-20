@@ -2,7 +2,7 @@
  * The corpus's bookkeeping, with no clones.
  *
  * `pnpm corpus --check` is the real precision gate and it does not run in CI:
- * it needs ~2.7 GB of clones, and the verdict on a changed snapshot requires a
+ * it needs ~2.7 GB of clones, and the ruling on a changed snapshot requires a
  * person reading the diff (see ADR-0007). This file covers the part of the
  * corpus that *is* mechanical — that the repo list, the stored snapshots and
  * the numbers `CLASSIFICATION.md` cites still agree with each other.
@@ -111,7 +111,7 @@ describe('corpus bookkeeping', () => {
     const [cited = 0, false_ = 0] = match.slice(1).map(Number)
     expect(totalsOver(CORPUS).fixable).toBe(cited)
     // The false count is read back too, so the sentence stating condition 2's
-    // verdict cannot be reworded into agreeing with itself. It is not asserted
+    // ruling cannot be reworded into agreeing with itself. It is not asserted
     // against anything: a test that goes red when the false positives get
     // fixed is the gate ADR-0007 argues against.
     expect(false_).toBeLessThanOrEqual(cited)
@@ -171,13 +171,13 @@ describe('CLASSIFICATION.md agrees with the snapshots', () => {
  * 18 to 24 lived only in the prose of the rounds that made them. Round
  * twenty-three then justified a bound with a finding it called true which round
  * thirteen had ruled false — a mistake nobody could have caught by reading,
- * because there was nowhere to look the verdict up.
+ * because there was nowhere to look the ruling up.
  *
  * These assertions are the reason that cannot happen twice. They check
- * bookkeeping, not verdicts: whether a finding is true is a judgement and
+ * bookkeeping, not rulings: whether a finding is true is a judgement and
  * ADR-0007 keeps judgements out of CI.
  */
-describe('every finding has a row and a verdict', () => {
+describe('every finding has a row and a ruling', () => {
   const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
 
   /** `repo location` for every finding the snapshots carry. */
@@ -195,7 +195,7 @@ describe('every finding has a row and a verdict', () => {
     return found
   }
 
-  /** The rows of the per-finding table, as `repo location` plus its verdict. */
+  /** The rows of the per-finding table, as `repo location` plus its ruling. */
   function recordedFindings(): Map<string, string> {
     const rows = new Map<string, string>()
     for (const line of doc.split('\n')) {
@@ -221,11 +221,11 @@ describe('every finding has a row and a verdict', () => {
     const cited = /\*\*(\d+) true, (\d+) false, (\d+) findings\.\*\*/u.exec(doc)
     if (cited === null) throw new Error('CLASSIFICATION.md does not state its per-finding totals')
     const [trueCount = 0, falseCount = 0, total = 0] = cited.slice(1).map(Number)
-    const verdicts = [...recordedFindings().values()]
+    const rulings = [...recordedFindings().values()]
     expect({
-      true: verdicts.filter((verdict) => verdict === 'true').length,
-      false: verdicts.filter((verdict) => verdict === 'false').length,
-      total: verdicts.length,
+      true: rulings.filter((ruling) => ruling === 'true').length,
+      false: rulings.filter((ruling) => ruling === 'false').length,
+      total: rulings.length,
     }).toEqual({ true: trueCount, false: falseCount, total })
   })
 
@@ -233,9 +233,9 @@ describe('every finding has a row and a verdict', () => {
     const cited = /corpus produces \*\*(\d+) findings, (\d+) true and (\d+) false\*\*/u.exec(doc)
     if (cited === null) throw new Error('CLASSIFICATION.md does not cite its aggregate')
     const [total = 0, trueCount = 0] = cited.slice(1).map(Number)
-    const verdicts = [...recordedFindings().values()]
-    expect(verdicts).toHaveLength(total)
-    expect(verdicts.filter((verdict) => verdict === 'true')).toHaveLength(trueCount)
+    const rulings = [...recordedFindings().values()]
+    expect(rulings).toHaveLength(total)
+    expect(rulings.filter((ruling) => ruling === 'true')).toHaveLength(trueCount)
   })
 })
 
@@ -250,7 +250,7 @@ describe('every finding has a row and a verdict', () => {
  *
  * This asserts that the cited counts **match the rows**, and nothing about
  * whether the condition passes. A test that goes red when a false positive is
- * found is a test that discourages finding one, and ADR-0007 keeps the verdict
+ * found is a test that discourages finding one, and ADR-0007 keeps the ruling
  * out of CI.
  */
 describe('condition 6 is divided from the rows it is about', () => {

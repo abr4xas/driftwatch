@@ -2,14 +2,14 @@
  * The acquisition filter's decidable parts, with no clone and no model.
  *
  * What can go wrong is not that a judgement is wrong — nothing here is a
- * verdict. It is that the model is handed the wrong question, or that one
+ * ruling. It is that the model is handed the wrong question, or that one
  * monorepo's four hundred skills become most of a run and the table then
  * describes that repository rather than the ecosystem.
  */
 import { describe, expect, it } from 'vitest'
-import { QUESTIONS, tabulate, verdictsIn, type Verdict } from '../scripts/jev/filter.ts'
+import { answersIn, QUESTIONS, tabulate, type Answer } from '../scripts/jev/filter.ts'
 
-const row = (repo: string, path: string, kind: string, about = 0.9): Verdict => ({
+const row = (repo: string, path: string, kind: string, about = 0.9): Answer => ({
   repo,
   path,
   aboutThisRepo: about,
@@ -81,8 +81,8 @@ describe('the table', () => {
 })
 
 describe('reading a previous run back', () => {
-  it('skips a torn line and anything not shaped like a verdict', () => {
+  it('skips a torn line and anything not shaped like an answer', () => {
     const text = `${JSON.stringify(row('a/one', 'A.md', 'dotfiles'))}\n{"repo":"b/tw\n{"repo":"c"}\n`
-    expect(verdictsIn(text)).toHaveLength(1)
+    expect(answersIn(text)).toHaveLength(1)
   })
 })

@@ -38,14 +38,17 @@ export const DISCARDS = join(ROOT, 'discards.jsonl')
  * Which documents are the same template, and the judgements behind it.
  *
  * Disposable like everything else here. The families are derived from the
- * clones and the verdicts are kept beside them so a reader can check the model
+ * clones and the answers are kept beside them so a reader can check the model
  * rather than take it — ticket `17`: it groups, it does not adjudicate.
  */
 export const FAMILIES = join(ROOT, 'families.json')
 /** The acquisition filter's judgements, one line per document. Ticket `12`'s
  * neighbour: see `discovery-filter.ts`. */
 export const FILTER = join(ROOT, 'filter.jsonl')
-export const VERDICTS = join(ROOT, 'family-verdicts.jsonl')
+// The name on disk stays `family-verdicts.jsonl`: the artifact is 42 MB that
+// cost a gateway run, and renaming a file is not worth re-buying it. What is
+// in it are answers — see `jev/ask.ts` — and no person has seen one.
+export const FAMILY_ANSWERS = join(ROOT, 'family-verdicts.jsonl')
 
 export function parseList(text: string): string[] {
   return text

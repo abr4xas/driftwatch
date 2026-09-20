@@ -1,7 +1,7 @@
 /**
  * The sampler in front of the recall probe, which decides what gets asked.
  *
- * Nothing here is a verdict, and that is exactly why the sampler matters more
+ * Nothing here is a ruling, and that is exactly why the sampler matters more
  * than the question: twelve repositories hold 35% of the discovery corpus's
  * documents and one skill farm holds 10 293 of them. A cap that does not hold
  * turns "what does the `bare-word` rule throw away" into a survey of one
