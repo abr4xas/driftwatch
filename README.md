@@ -62,7 +62,7 @@ It applies a correction only when there is exactly one candidate above 0.8 confi
 
 ```yaml
 - uses: actions/checkout@v7
-- uses: abr4xas/driftwatch@v0.5.0
+- uses: abr4xas/driftwatch@v1.0.0
 ```
 
 Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
@@ -81,13 +81,13 @@ The specification is primary source: when the code and those documents disagree,
 
 ## Status
 
-**It is on npm, and it is early.** The badge above carries the published version, so this paragraph does not have to and cannot go stale. M0 through M3 are done: the five checks and `--fix`. M4 has delivered the `--json` / `--github` / `--sarif` formats and the GitHub Action; what is left of it is the audience — a GIF and a one-page site.
+**It is on npm, and the surface is frozen.** The badge above carries the published version, so this paragraph does not have to and cannot go stale. M0 through M3 are done: the five checks and `--fix`. M4 has delivered the `--json` / `--github` / `--sarif` formats, the GitHub Action and the one-page site; what is left of it is a GIF. `1.0.0` freezes eight surfaces, listed in [CONTRACT.md](./CONTRACT.md) and held there by a test — it is a claim about compatibility and not about precision ([ADR-0014](./docs/adr/0014-what-1-0-0-asserts.md)).
 
 Early means the checks and the fixes are what is finished. `--watch` is not in the tool at all until M6 owns it, and the four tier 2 checks land in M5.
 
 **The package is scoped, the Marketplace listing is suffixed, and the command is neither.** npm refuses `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read; the GitHub Marketplace refuses it too, because a user account called Driftwatch already exists and a listing name has to be unique across every action, user and organisation. So the package is `@abr4xas/driftwatch` and the listing is `driftwatch-action`.
 
-Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v0.5.0`, which comes from the repository rather than from the listing.
+Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v1.0.0`, which comes from the repository rather than from the listing.
 
 ## License
 
