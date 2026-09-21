@@ -89,7 +89,7 @@ If the script does not exist but there is one with a similar name (edit distance
 A relative Markdown link to a file that does not exist, or to an anchor (`#section`) that does not exist in the target file.
 
 #### `frontmatter/invalid`
-Frontmatter YAML that does not parse, or fields with the wrong type.
+A frontmatter block that is not valid YAML. What a field *holds* is not checked: a type is the author's business, not a claim about the repository.
 
 ### Tier 2 — Medium confidence (emit `warning`)
 

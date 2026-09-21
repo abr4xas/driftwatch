@@ -1,14 +1,14 @@
 import type { Fixture } from '../helpers/fixture.ts'
 
 /**
- * `frontmatter/invalid`, both halves: a block that does not parse, and a known
- * field holding the wrong type.
+ * `frontmatter/invalid`: a block that does not parse.
  *
- * The negative cases are the ones that matter. Every file below whose findings
- * are absent from `expected` is a false positive class the check has to refuse:
- * a prose block that only looks like frontmatter, a template placeholder, an
- * empty value, a nested key, a kind with no schema, and the boolean spelled as
- * a word.
+ * It used to have a second half — a known field holding the wrong type — and
+ * round twenty-eight withdrew it, so most of the files below are now negative
+ * cases and that is deliberate. Every one whose findings are absent from
+ * `expected` is something the check has to stay quiet about: a prose block
+ * that only looks like frontmatter, a template placeholder, an empty value, a
+ * nested key, a field of the wrong type, and the boolean spelled as a word.
  */
 export const frontmatter: Fixture = {
   name: 'frontmatter',
@@ -145,47 +145,11 @@ export const frontmatter: Fixture = {
     {
       check: 'frontmatter/invalid',
       severity: 'error',
-      file: '.claude/agents/reviewer.md',
-      line: 4,
-      column: 1,
-      text: 'model',
-      message: 'expected a string, found a number',
-    },
-    {
-      check: 'frontmatter/invalid',
-      severity: 'error',
-      file: '.claude/agents/reviewer.md',
-      line: 5,
-      column: 1,
-      text: 'tools',
-      message: 'expected a string or a list, found a mapping',
-    },
-    {
-      check: 'frontmatter/invalid',
-      severity: 'error',
-      file: '.claude/commands/ship.md',
-      line: 4,
-      column: 1,
-      text: 'disable-model-invocation',
-      message: 'expected a boolean, found a list',
-    },
-    {
-      check: 'frontmatter/invalid',
-      severity: 'error',
       file: '.claude/skills/duplicated/SKILL.md',
       line: 4,
       column: 1,
       text: 'name: duplicated-again',
       message: 'invalid YAML: Map keys must be unique',
-    },
-    {
-      check: 'frontmatter/invalid',
-      severity: 'error',
-      file: '.claude/skills/mistyped/SKILL.md',
-      line: 3,
-      column: 1,
-      text: 'description',
-      message: 'expected a string, found a list',
     },
     {
       check: 'frontmatter/invalid',
@@ -196,15 +160,6 @@ export const frontmatter: Fixture = {
       text: 'name: [unclosed',
       message:
         'invalid YAML: Flow sequence in block collection must be sufficiently indented and end with a ]',
-    },
-    {
-      check: 'frontmatter/invalid',
-      severity: 'error',
-      file: '.cursor/rules/loose.mdc',
-      line: 3,
-      column: 1,
-      text: 'alwaysApply',
-      message: 'expected a boolean, found a string',
     },
   ],
 }

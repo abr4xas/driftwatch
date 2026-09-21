@@ -52,10 +52,10 @@ Anchors match on a canonical key rather than a reimplementation of GitHub's slug
 
 ## frontmatter/invalid
 
-**The YAML block at the top does not parse, or a key whose type the format fixes holds something else.**
+**The YAML block at the top of the file does not parse.**
 
-Two checks wearing one id, carrying very different risk. The first is a fact: the block either is YAML or it is not, and a parser we did not write says which. The second needs a schema, and a schema we get wrong reports a field every real consumer accepts — so only keys whose type the format fixes are checked, and everything else in a block is the author's business.
+A fact rather than a judgement: the block either is YAML or it is not, and a parser we did not write says which. A duplicate key comes with it for free, and it is the case worth having — YAML drops one of the two values and nothing tells the author.
 
-An unknown key is only ever reported as a near miss of a known one ([ADR-0011](../adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md)).
+**What a field holds is not checked.** That needed a schema, and a schema we get wrong reports a field every real consumer accepts. It was withdrawn in round twenty-eight along with `skill/frontmatter`, and over 2533 repositories it had produced **zero** findings: a `description` that is a list is malformed on the day it is written, and this tool reports what a repository has since made untrue.
 
 **Never fixable.** The only such finding in 66 real repositories was an unquoted `description:` whose text already contained double quotes: quoting it would mean escaping them, and a `--fix` that escapes is a YAML serializer.

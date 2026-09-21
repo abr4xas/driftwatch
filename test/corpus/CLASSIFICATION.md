@@ -2009,3 +2009,49 @@ free, because `1.0.0` is not tagged.
 
 A `SKILL.md` is still a source. Every path it names is still `path/missing`'s business, and
 that is the whole of what the tool now claims about a skill.
+
+## Twenty-eighth round, 2026-09-21: `frontmatter/invalid` keeps the half that is a fact
+
+The other half of round twenty-seven's decision, and it moved **nothing at all**.
+
+`frontmatter/invalid` shipped as two checks under one id, and its own header said so: the
+block either parses or it does not, which a parser we did not write decides; and a table of
+keys whose *type* the format fixes, which is a schema somebody maintains by hand. The second
+is format validation by the definition round twenty-five used, so it went.
+
+### The type table had never fired
+
+Measured before it was removed and again after, over **2533 discovery repositories**:
+
+| | before | after |
+|---|---|---|
+| `frontmatter/invalid` | 315 | **315** |
+| everything else | unchanged | unchanged |
+
+**All 315 are parse failures.** The schema half produced zero findings in the wild and one in
+the corpus — and that one, `colinhacks/zod`'s `description:`, is a parse failure too, so it
+survives. Certification is unchanged at 66 · 341 · 32.
+
+That is the cheapest removal this project has made: a table of four source kinds and eleven
+keys, plus `BOOLEAN_WORDS` and the YAML 1.1 argument around it, all carried since M2 and never
+once used. It was not wrong, it was unexercised, and nothing had ever asked.
+
+### Why the parse half stays
+
+Angel's line is that driftwatch checks whether the paths a document names are still there, and
+a YAML parse error is not a path. What keeps it is the second half of the same sentence —
+*"que no esté roto donde se menciona"*. A frontmatter block that does not parse **is** broken,
+and unlike `name` against a directory there is no reading in which it is fine: whatever the
+block declares is not what a reader gets. The case it earns its keep on is a duplicate key,
+where YAML drops one of the two values and nothing tells the author.
+
+### What was considered and rejected
+
+Turning the parse failure into a **skipped source** instead of a finding. It does not fit: a
+skip means the file could not be read, and here the file reads fine — only its frontmatter
+does not parse, and the body is still audited for every path it names. Skipping the source
+would throw away real `path/missing` findings to avoid reporting one YAML error.
+
+### The counts
+
+None move. 66 · 341 · 32, calibration 20 · validation 12, one fixable and it is true.

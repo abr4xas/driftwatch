@@ -258,11 +258,11 @@ The claim spans the **whole command**, which is what SPEC § 5 prints, so `Claim
 
 ## Frontmatter validation
 
-`frontmatter/invalid` is two checks wearing one id, and they carry very different risk.
+`frontmatter/invalid` was two checks wearing one id, and they carried very different risk.
 
-That the block **is** YAML is a fact: `parse/frontmatter.ts` hands it to `yaml` and the parser says. A duplicate key comes with it for free, and it is real drift — one of the two values is silently lost.
+That the block **is** YAML is a fact: `parse/frontmatter.ts` hands it to `yaml` and the parser says. A duplicate key comes with it for free, and it is the case that earns the check — one of the two values is silently lost.
 
-That a field holds the right **type** needs a schema, and a schema we get wrong reports a field every real consumer accepts. So the table in `verify/checks/frontmatter-invalid.ts` is deliberately small: only top-level keys whose type the format fixes, only for the kinds that have a documented format, and nothing at all for `claude-md`, `agents-md` or `copilot` — no format defines a frontmatter for a `CLAUDE.md`, so whatever is in one belongs to its author.
+That a field holds the right **type** needed a schema, and a schema we get wrong reports a field every real consumer accepts. Round twenty-eight withdrew it: it is format validation, and over 2533 discovery repositories the whole table produced **zero** findings, so removing it moved nothing anywhere.
 
 Three refusals shape the rest, and each is a false positive class:
 

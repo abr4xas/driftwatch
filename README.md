@@ -42,7 +42,7 @@ Linters check your code. Nothing checks the document you wrote *about* your code
 - `path/missing` — every path a context file claims exists, verified against the repo index.
 - `script/missing` — the package manager commands a document tells you to run, against the nearest `package.json`, `Makefile` or `deno.json`.
 - `link/broken` — a Markdown link to an anchor no heading in the target document produces.
-- `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes.
+- `frontmatter/invalid` — a frontmatter block that is not valid YAML, so what it declares is not what a reader gets.
 
 `path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of **66 real repositories** before anything else was allowed to land, and **61 of them produce no false positive at all**.
 
