@@ -113,6 +113,7 @@ async function main(argv: readonly string[]): Promise<number> {
         countFlag(argv, '--limit'),
         countFlag(argv, '--concurrency') ?? 12,
         argv.includes('--dry-run'),
+        argv.includes('--certification'),
       )
     }
     case 'diff': {

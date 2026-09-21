@@ -16,13 +16,25 @@
  * as anything.
  *
  * The question is `CLAIMS_A_PATH`, unchanged and unreworded, asked of the
- * finding's own sentence. A **low** probability is the interesting end here,
- * which is the opposite of how `discovery claims` reads the same instrument: a
- * finding whose sentence does not put the path forward is a finding the tool
- * should probably not have made.
+ * finding's own sentence, and **it is the wrong instrument for this job** —
+ * measured, not suspected. Against the 28 ruled `path/missing` findings of the
+ * certification corpus it orders 25 readings where arbitrary order takes 26.
+ *
+ * The reason is worth keeping, because it says what the right question would
+ * ask. `CLAIMS_A_PATH` asks whether the sentence puts a path forward. For a
+ * true positive the answer is yes. For this corpus's false positives it is
+ * *also* yes: a crate nickname, a runtime log, a generated bundle and a path
+ * in the reader's own project are all put forward as paths, and are absent for
+ * a reason that has nothing to do with the sentence. Ordering adjudication
+ * needs a question about **why a path might legitimately be missing**, which
+ * nobody has written.
+ *
+ * What is left unmeasured is whether it helps on a repository with hundreds of
+ * findings, where the corpus has none to check against.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { CORPUS_DIR } from '../lib/paths.ts'
 import { REPOS_DIR, ROOT } from '../discovery/files.ts'
 import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
@@ -30,6 +42,14 @@ import { CLAIMS_A_PATH } from './questions.ts'
 
 const OUT = join(ROOT, 'queue.jsonl')
 const RESULTS = join(ROOT, 'results.jsonl')
+/**
+ * The certification corpus can be queued too, and for a different reason: its
+ * findings are already ruled, so the ordering can be checked against the only
+ * labelled data this project has. Reading a finding's own prose is what a
+ * person does to rule on it — ADR-0006 condition 9 contaminates on inspecting
+ * a repository's **discards**, not on classifying its findings.
+ */
+const CORPUS_RESULTS = join(CORPUS_DIR, 'results.jsonl')
 
 /** How much of the document a reader needs around the claim. */
 const RADIUS = 2
@@ -109,11 +129,13 @@ export function itemsIn(
   return out
 }
 
-function readSource(repo: string, path: string): string | undefined {
-  try {
-    return readFileSync(join(REPOS_DIR, repo.replace('/', '__'), path), 'utf8')
-  } catch {
-    return undefined
+function readerIn(dir: string) {
+  return (repo: string, path: string): string | undefined => {
+    try {
+      return readFileSync(join(dir, repo.replace('/', '__'), path), 'utf8')
+    } catch {
+      return undefined
+    }
   }
 }
 
@@ -164,15 +186,21 @@ export async function queueMain(
   limit: number | undefined,
   concurrency: number,
   dryRun: boolean,
+  /** Queue the certification corpus instead, whose findings carry rulings. */
+  certification = false,
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskQueue,
 ): Promise<number> {
   if (!dryRun && askWith === undefined) requireKey('queue')
-  if (!existsSync(RESULTS)) {
-    process.stderr.write(`${RESULTS} is missing; run pnpm discovery run first\n`)
+  const results = certification ? CORPUS_RESULTS : RESULTS
+  if (!existsSync(results)) {
+    process.stderr.write(
+      `${results} is missing; run ${certification ? 'pnpm corpus --json' : 'pnpm discovery run'} first\n`,
+    )
     return 2
   }
-  const all = itemsIn(readFileSync(RESULTS, 'utf8'), repos, readSource)
+  const read = readerIn(certification ? join(CORPUS_DIR, 'repos') : REPOS_DIR)
+  const all = itemsIn(readFileSync(results, 'utf8'), repos, read)
   const asked = limit === undefined ? all : all.slice(0, limit)
   process.stderr.write(
     `${asked.length} path/missing findings in ${new Set(asked.map((i) => i.repo)).size} repositories\n`,
@@ -191,8 +219,11 @@ export async function queueMain(
     nameOf: (item) => `${item.repo} ${item.text}`,
     answer: async (item): Promise<Answer> => ({ ...item, claimsAPath: await ask(stateOf(item)) }),
   })
-  writeFileSync(OUT, `${answered.map((a) => JSON.stringify(a)).join('\n')}\n`, 'utf8')
-  process.stderr.write(`\n${answered.length} of ${asked.length} answered; ${OUT}\n`)
+  // Two populations, two files: a certification run must not overwrite the
+  // discovery queue, because the comparison between them is the point.
+  const out = certification ? join(ROOT, 'queue-certification.jsonl') : OUT
+  writeFileSync(out, `${answered.map((a) => JSON.stringify(a)).join('\n')}\n`, 'utf8')
+  process.stderr.write(`\n${answered.length} of ${asked.length} answered; ${out}\n`)
   process.stdout.write(`${queueOf(answered)}\n`)
   process.stdout.write(
     '\nThis is a reading order and nothing else. A low number is a finding worth ' +

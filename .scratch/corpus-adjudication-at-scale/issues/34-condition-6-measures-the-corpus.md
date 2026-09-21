@@ -205,3 +205,59 @@ repository, the deferred 300-repo plan costs on the order of **310 rulings** rat
 The bottleneck the spec named — *"adjudication that stays cheap without losing the authority
 of the measurement"* — is the thing `queue` addresses, and it is job 1 of § "Where the model
 goes" arriving three days late.
+
+
+## The queue was measured against the rulings, and it does not work
+
+Added 2026-09-21, the same day, after running it on the one labelled set that exists.
+
+The section above claimed 301 readings become 31, on the strength of two repositories whose
+most doubtful finding I read myself and called false. Nobody ruled on them. The certification
+corpus has 28 ruled `path/missing` findings, so the claim can be checked properly.
+
+| ordering | readings to settle all 18 repositories |
+|---|---|
+| worst-first, by `CLAIMS_A_PATH` | **25** |
+| arbitrary order, mean of 2000 shuffles | **26.0** |
+| reading every finding | 28 |
+
+**One reading saved in twenty-six.** The ordering is worth nothing here.
+
+### Why, and this is the part worth keeping
+
+`CLAIMS_A_PATH` asks whether the sentence puts the candidate forward as a path in this
+repository. For a true positive the answer is yes — it is a real claim about a path that has
+gone. For **this corpus's false positives the answer is also yes**:
+
+| p | ruling | finding | why it is false |
+|---|---|---|---|
+| 0.85 | false | `gateway/run.rs` | a crate's nickname |
+| 0.89 | false | `agent/goose.txt` | a runtime log |
+| 0.91 | false | `content/scripts/linter.js` | a generated bundle |
+| 0.81 | false | `app/entry.server.tsx` | a path in the reader's project |
+
+Every one of those sentences does put a path forward. They are absent for reasons that have
+nothing to do with the sentence. The distributions overlap almost completely — false
+positives mean 0.77, true positives 0.86, and the second most doubtful finding in the whole
+corpus is **true**.
+
+So ordering adjudication needs a question about **why a path might legitimately be missing**
+— generated, foreign, a log, the reader's own tree — and that question does not exist. It is
+not `CLAIMS_A_PATH` with the sign flipped.
+
+### What survives
+
+- The **arithmetic** stands: declaring a repository dirty costs one ruling, not all of them,
+  so the cost of growing the corpus is bounded by repositories rather than by findings. That
+  was the correction worth making and it is unaffected.
+- The **9× on the blind thirty** does not stand as a measurement. It rests on two findings
+  nobody ruled, in repositories with 27 and 245 findings — a regime the certification corpus
+  cannot speak to at all, since its largest repository has four.
+- `pnpm discovery queue` is committed with the negative result written into its own header,
+  because the next person to reach for `CLAIMS_A_PATH` for this should find out here rather
+  than by re-running it.
+
+This is the second question this session to fail its control — the first was
+`REWRITE_IS_RIGHT` in ticket `32` — and the failure has the same shape both times: an existing
+instrument reached for because it was there, rather than a question designed for what was
+actually being asked.
