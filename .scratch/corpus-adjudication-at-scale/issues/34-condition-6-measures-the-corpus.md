@@ -338,9 +338,11 @@ there by a different question over a different population.
 
 ### What this does to the options
 
-Option 3 — grow the corpus — costs on the order of **half a reading per repository**. Three
-hundred repositories is roughly **150 rulings**, not 3000 findings and not the 310 the
-previous revision guessed. That is a week of somebody's evenings, not an impossibility, and
+Option 3 — grow the corpus — costs on the order of **half a reading per repository** *for
+condition 6*. That turned out not to be the binding cost: conditions 3, 4 and 5 count false
+positives per repository rather than asking whether there are any, and proving a ceiling
+requires reading everything. Ticket `35` hit that wall with the thirty repositories selected
+and nine of their findings ruled, and it is the demonstration option 5 was waiting for. That is a week of somebody's evenings, not an impossibility, and
 the reason the plan was deferred in 2026-09-12 does not survive it.
 
 What does survive is the other half, unchanged through all three revisions: **growing blind
