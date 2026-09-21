@@ -20,6 +20,7 @@
  *   pnpm discovery families  [--dry-run]    one observation per template (`17`)
  *   pnpm discovery filter    [--dry-run]    the acquisition filter's two judgements
  *   pnpm discovery scope     [--family F]   what a gate rules over (`27`)
+ *   pnpm discovery diff --before A --after B   what a rule change moved
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and
@@ -103,6 +104,16 @@ async function main(argv: readonly string[]): Promise<number> {
       const { sampleMain } = await import('./discards.ts')
       return sampleMain(countFlag(argv, '--sample') ?? 20)
     }
+    case 'diff': {
+      const before = stringFlag(argv, '--before')
+      const after = stringFlag(argv, '--after')
+      if (before === undefined || after === undefined) {
+        process.stderr.write('diff wants --before and --after, each a results.jsonl\n')
+        return 2
+      }
+      const { diffMain } = await import('./diff.ts')
+      return diffMain(before, after)
+    }
     case 'scope': {
       const { scopeMain } = await import('../jev/scope.ts')
       const family = stringFlag(argv, '--family') ?? 'both'
@@ -140,7 +151,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|status>\n',
       )
       return 2
   }

@@ -279,6 +279,14 @@ job does. This job produces a table saying **where an experiment is worth spendi
 experiment is its own ticket. A pass that shipped a table and an experiment together would
 read as though the table had concluded something. It concludes nothing; it says where to look.
 
+The three experiments it produced are `29`, `30` and `31`, and **all three came back
+negative**: every gate-scope the table pointed at turned out to be the scope the gate needs.
+That is the outcome this job was built to be able to have. A shortlist of three places to
+look, spent in an afternoon for the cost of four local audits and no network, ending in three
+rules vindicated on evidence rather than three rules defended by their own comments — which
+is what `16` demonstrated one gate at a time and what `§ The hard limit` says the discovery
+corpus is for.
+
 Ticket `27`, and it is **resolved**: 670 candidates, a negative control that holds, and
 three gate-scope experiments worth spending. `creation-target` reaches the whole document and
 roughly a quarter of its claimed candidates are ungoverned, which is the first one.
@@ -540,6 +548,9 @@ same day.
 | `03` | ~~Sampling design for a model-adjudicated corpus~~ | — | **withdrawn**: nothing is model-adjudicated |
 | `27` | What does a gate rule over, and where does it reach too far? | research | **resolved**: 100 of 634 gate discards read as claims the gate did not govern |
 | `28` | A `Verdict` nothing produces — is it a residue or an intention owed? | research | **new** 2026-09-20, raised while reading for `27` |
+| `29` | Should `creation-target` be scoped to a section? | research | **resolved**: no — it resurrects the ADR-0006 condition 2 finding |
+| `30` | What should `HEDGED_SPLIT`'s `{0,80}` window be? | research | **resolved**: unchanged — 80 and 40 are indistinguishable, 20 is worse |
+| `31` | Should `external-root` start at the marker rather than the heading? | research | **resolved**: no — it breaks "X or `~/X`" |
 
 This table stopped being maintained at `14`. Tickets `15` to `26` exist in
 [`issues/`](./issues/) and carry their own `Status:` line, which is the authority; the rows
