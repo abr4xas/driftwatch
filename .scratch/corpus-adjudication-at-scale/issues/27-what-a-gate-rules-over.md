@@ -175,3 +175,77 @@ Nothing here is a driftwatch measurement. No number this pass prints is a precis
 enters `CLASSIFICATION.md`, and none moves a condition of ADR-0006. The rule it might suggest
 is still written by hand in `src/extract/`, by a person, and still measured against the 66
 repositories that carry human rulings.
+
+## The baseline, run 2026-09-20
+
+Run before building anything, as this ticket says to. `pnpm discovery claims --cause <x>
+--sample 400` over all eight prose causes, against the 2533 repositories in
+`discards.jsonl`.
+
+**Nothing was truncated.** After dropping `exists === true`, one per `family|cause|text` and
+two per repository, every pool came in under the 400 cap, so each row below is the whole
+askable population for that gate and not a sample of it.
+
+| gate | discards | `absent` | askable | p >= 0.8 | share |
+|---|---|---|---|---|---|
+| `hedged` | 7127 | 2186 | 370 | 201 | 54% |
+| `example` | 2695 | 1676 | 358 | 141 | 39% |
+| `create-instruction` | 5569 | 1160 | 294 | 204 | 69% |
+| `creation-target` | 1930 | 786 | 112 | 85 | 76% |
+| `external-root` | 1501 | 716 | 114 | 43 | 38% |
+| `another-repo` | 385 | 249 | 50 | 15 | 30% |
+| `conditional` | 237 | 162 | 66 | 21 | 32% |
+| `elsewhere` | 35 | 19 | 11 | 6 | 55% |
+
+1375 requests. **No number here is a precision**, none enters `CLASSIFICATION.md`, and none
+moves a condition of ADR-0006.
+
+`claims.jsonl` holds only the **last** run: the pass rewrites it whole. The eight rows above
+are what survives, and re-reading any one gate's candidates means re-running that gate.
+
+### Four readings
+
+**The create family cannot be scored by this question, and that is the finding.**
+`CLAIMS_A_PATH`'s `criteria.true` includes *"saying where to put something"*, so a sentence
+telling the reader to create a file scores true **by construction**. `create-instruction` at
+69% is the question agreeing that a create instruction is a create instruction; it measures
+nothing about the gate. `creation-target` at 76% is not quite the same case — that gate
+suppresses a candidate wherever it appears in the document once some create sentence
+elsewhere named it, so the window scored here is often an assertion rather than the create
+sentence, and 76% is genuinely suggestive of the cost the file admits. But the baseline
+cannot separate the two, and that separation is exactly what
+`QUALIFIES_THE_CANDIDATE` exists to make. **This strengthens the case for the pass rather
+than weakening it**: the two gates with the highest apparent cost are the two the cheap
+question is structurally unable to judge.
+
+**`hedged` carries the volume.** 370 askable and 201 above 0.8 is the largest absolute pool
+of doubtful suppressions in the corpus, and it is the gate `16` already probed by hand. It is
+the only one with enough mass for the per-marker breakdown this ticket asks for.
+
+**`conditional` is exactly as small as `07` predicted, and stays defensible.** 162 absent over
+2533 repositories, 66 askable, 21 above 0.8. `07` read 26 occurrences over 700 repos as
+"roughly half real claims" and then corrected itself: those 26 were 18 distinct texts, one
+document voting four times. At full scale it is 32% of 66. The file calls this "the riskiest
+list" and the number that keeps it defensible is its size, which has not changed.
+
+**`elsewhere` is 11 askable candidates in 6 repositories.** `context-prose.ts` calls it *"the
+widest gate in the file"* and its stated risk — a long section with one aside in it — is real
+in principle and almost absent from this population. It does not earn a place in the pass. Its
+one legible case is worth recording anyway: `DocRoms/Kronn` `templates/docs/AGENTS.md:116`,
+where the marker *"not in this repo"* sits inside a table row about a different subject and
+silences `docs/linked-repos.md`, which the same row asserts plainly. That is a scope error
+visible without asking anything.
+
+### What the pass becomes
+
+The baseline narrows it rather than confirming it as designed.
+
+- **Sentence or line**: `hedged` (370), `example` (358), `conditional` (66), `another-repo`
+  (50). 844 items, and `hedged` gets the per-marker cap.
+- **Section or document**: `creation-target` (112) and `external-root` (114). 226 items, and
+  these two are now the highest-value rows in the ticket, not the afterthought.
+- **Dropped**: `elsewhere`, at 11 items in 6 repositories. Recorded above rather than asked.
+- **Kept as designed**: the negative control over shape-rule discards, and the positive
+  control on `haddocking/haddock3`.
+
+1070 items, one request each carrying both questions.
