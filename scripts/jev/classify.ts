@@ -41,8 +41,18 @@ export type Row = {
   location: string
   check: string
   claim: string
-  /** A person's ruling: whether the finding is a true or a false positive. */
-  ruling: 'true' | 'false'
+  /**
+   * A person's ruling: whether the finding is a true or a false positive, or
+   * `pending` for one nobody has read yet.
+   *
+   * `pending` arrived with round thirty-one and
+   * [ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md):
+   * once conditions 3 to 5 were withdrawn, what the surviving ones need is a
+   * ruling on every `fixable` finding and enough of the rest to settle each
+   * repository, not a ruling on all of them. A pass that scores itself against
+   * the rulings must **exclude** these rather than count them as either.
+   */
+  ruling: 'true' | 'false' | 'pending'
   className: string
 }
 
@@ -57,7 +67,7 @@ export function rowsIn(doc: string): Row[] {
   const rows: Row[] = []
   for (const line of doc.split('\n')) {
     const cells =
-      /^\| (\d+) \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `(.*)` \| \*\*(true|false)\*\* \| ([^|]+)\|/u.exec(
+      /^\| (\d+) \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `(.*)` \| \*\*(true|false|pending)\*\* \| ([^|]+)\|/u.exec(
         line,
       )
     if (cells === null) continue
@@ -67,7 +77,7 @@ export function rowsIn(doc: string): Row[] {
       location: cells[3] ?? '',
       check: cells[4] ?? '',
       claim: cells[5] ?? '',
-      ruling: cells[6] === 'true' ? 'true' : 'false',
+      ruling: cells[6] === 'true' ? 'true' : cells[6] === 'pending' ? 'pending' : 'false',
       className: (cells[7] ?? '').trim(),
     })
   }

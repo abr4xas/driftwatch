@@ -1,0 +1,1025 @@
+# BuilderIO/agent-native
+
+sources: 768
+errors: 247
+warnings: 0
+fixable: 3
+
+## sources
+skill  .agents/skills/a2a-protocol/SKILL.md
+skill  .agents/skills/actions/SKILL.md
+skill  .agents/skills/adding-a-feature/SKILL.md
+skill  .agents/skills/adding-workspace-apps/SKILL.md
+skill  .agents/skills/address-feedback-with-replies/SKILL.md
+skill  .agents/skills/address-feedback/SKILL.md
+skill  .agents/skills/agent-native-docs/SKILL.md
+skill  .agents/skills/agent-native-toolkit/SKILL.md
+skill  .agents/skills/agent-page/SKILL.md
+skill  .agents/skills/audit-log/SKILL.md
+skill  .agents/skills/authentication/SKILL.md
+skill  .agents/skills/automations/SKILL.md
+skill  .agents/skills/babysit-pr/SKILL.md
+skill  .agents/skills/browser-sessions/SKILL.md
+skill  .agents/skills/capture-learnings/SKILL.md
+skill  .agents/skills/changelog/SKILL.md
+skill  .agents/skills/chat-first-workbench/SKILL.md
+skill  .agents/skills/client-methods/SKILL.md
+skill  .agents/skills/client-side-routing/SKILL.md
+skill  .agents/skills/composable-mini-apps/SKILL.md
+skill  .agents/skills/concurrent-agents/SKILL.md
+skill  .agents/skills/configuration/SKILL.md
+skill  .agents/skills/context-awareness/SKILL.md
+skill  .agents/skills/context-xray/SKILL.md
+skill  .agents/skills/create-skill/SKILL.md
+skill  .agents/skills/customizing-agent-native/SKILL.md
+skill  .agents/skills/data-programs/SKILL.md
+skill  .agents/skills/delegate-to-agent/SKILL.md
+skill  .agents/skills/delegating-work/SKILL.md
+skill  .agents/skills/extension-points/SKILL.md
+skill  .agents/skills/extensions/SKILL.md
+skill  .agents/skills/external-agents/SKILL.md
+skill  .agents/skills/feature-flags/SKILL.md
+skill  .agents/skills/fix-at-the-boundary/SKILL.md
+skill  .agents/skills/frontend-design/SKILL.md
+skill  .agents/skills/generative-ui/SKILL.md
+skill  .agents/skills/harness-agents/SKILL.md
+skill  .agents/skills/integration-webhooks/SKILL.md
+skill  .agents/skills/internationalization/SKILL.md
+skill  .agents/skills/multi-frontier-desktop/SKILL.md
+skill  .agents/skills/mvp-followup/SKILL.md
+skill  .agents/skills/native-navigation/SKILL.md
+skill  .agents/skills/new-branch/SKILL.md
+skill  .agents/skills/observability/SKILL.md
+skill  .agents/skills/onboarding/SKILL.md
+skill  .agents/skills/performance/SKILL.md
+skill  .agents/skills/portability/SKILL.md
+skill  .agents/skills/portal/SKILL.md
+skill  .agents/skills/qa/SKILL.md
+skill  .agents/skills/real-time-collab/SKILL.md
+skill  .agents/skills/real-time-sync/SKILL.md
+skill  .agents/skills/recurring-jobs/SKILL.md
+skill  .agents/skills/reliable-mutations/SKILL.md
+skill  .agents/skills/reporting-progress/SKILL.md
+skill  .agents/skills/review-latest-feedback/SKILL.md
+skill  .agents/skills/review-prs/SKILL.md
+skill  .agents/skills/secrets/SKILL.md
+skill  .agents/skills/security/SKILL.md
+skill  .agents/skills/self-modifying-code/SKILL.md
+skill  .agents/skills/server-plugins/SKILL.md
+skill  .agents/skills/shadcn-ui/SKILL.md
+skill  .agents/skills/sharing/SKILL.md
+skill  .agents/skills/ship-and-monitor/SKILL.md
+skill  .agents/skills/ship-now/SKILL.md
+skill  .agents/skills/ship/SKILL.md
+skill  .agents/skills/storing-data/SKILL.md
+skill  .agents/skills/tracking/SKILL.md
+skill  .agents/skills/turn-into-skill/SKILL.md
+skill  .agents/skills/upgrade-agent-native/SKILL.md
+skill  .agents/skills/verifying-changes/SKILL.md
+skill  .agents/skills/visual-answer/SKILL.md
+skill  .agents/skills/voice-transcription/SKILL.md
+skill  .agents/skills/workspace-conventions/SKILL.md
+skill  .agents/skills/writing-agent-instructions/SKILL.md
+skill  .agents/skills/writing-reference-docs/SKILL.md
+command  .claude/commands/sidecar.md
+agents-md  AGENTS.md
+skill  community-templates/account-expert/.agents/skills/actions/SKILL.md
+skill  community-templates/account-expert/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/account-expert/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/account-expert/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/account-expert/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/account-expert/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/account-expert/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/account-expert/.agents/skills/external-agents/SKILL.md
+skill  community-templates/account-expert/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/account-expert/.agents/skills/portability/SKILL.md
+skill  community-templates/account-expert/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/account-expert/.agents/skills/secrets/SKILL.md
+skill  community-templates/account-expert/.agents/skills/security/SKILL.md
+skill  community-templates/account-expert/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/account-expert/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/account-expert/.agents/skills/sharing/SKILL.md
+skill  community-templates/account-expert/.agents/skills/storing-data/SKILL.md
+skill  community-templates/account-expert/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/account-expert/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/account-expert/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/account-expert/AGENTS.md
+skill  community-templates/account-tiering/.agents/skills/actions/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/external-agents/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/portability/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/secrets/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/security/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/sharing/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/storing-data/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/account-tiering/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/account-tiering/AGENTS.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/actions/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/external-agents/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/portability/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/secrets/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/security/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/sharing/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/call-follow-up-drafter/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/call-follow-up-drafter/AGENTS.md
+skill  community-templates/churn-early-warning/.agents/skills/actions/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/external-agents/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/portability/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/secrets/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/security/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/sharing/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/churn-early-warning/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/churn-early-warning/AGENTS.md
+skill  community-templates/demo-clip-library/.agents/skills/actions/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/external-agents/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/portability/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/secrets/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/security/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/sharing/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/demo-clip-library/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/demo-clip-library/AGENTS.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/actions/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/external-agents/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/portability/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/secrets/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/security/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/sharing/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/linkedin-icp-prospect-tracker/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/linkedin-icp-prospect-tracker/AGENTS.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/actions/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/external-agents/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/portability/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/secrets/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/security/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/sharing/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/linkedin-signal-watch/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/linkedin-signal-watch/AGENTS.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/actions/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/external-agents/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/portability/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/secrets/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/security/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/sharing/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/outbound-in-your-voice/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/outbound-in-your-voice/AGENTS.md
+skill  community-templates/win-loss-memo/.agents/skills/actions/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/adding-a-feature/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/agent-native-docs/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/agent-native-toolkit/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/context-awareness/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/customizing-agent-native/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/delegate-to-agent/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/external-agents/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/frontend-design/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/portability/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/real-time-sync/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/secrets/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/security/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/self-modifying-code/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/shadcn-ui/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/sharing/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/turn-into-app/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/turn-into-skill/SKILL.md
+skill  community-templates/win-loss-memo/.agents/skills/workspace-conventions/SKILL.md
+agents-md  community-templates/win-loss-memo/AGENTS.md
+agents-md  packages/core/docs/AGENTS.md
+skill  packages/core/src/templates/default/.agents/skills/actions/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/adding-a-feature/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/agent-engines/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/agent-native-docs/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/agent-native-toolkit/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/app-branding/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/app-permissions/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/context-awareness/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/customizing-agent-native/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/delegate-to-agent/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/external-agents/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/frontend-design/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/inline-embeds/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/notifications/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/portability/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/progress/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/real-time-sync/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/secrets/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/security/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/self-modifying-code/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/shadcn-ui/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/sharing/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/turn-into-app/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/turn-into-skill/SKILL.md
+skill  packages/core/src/templates/default/.agents/skills/workspace-conventions/SKILL.md
+agents-md  packages/core/src/templates/default/AGENTS.md
+skill  packages/core/src/templates/headless/.agents/skills/actions/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/agent-native-docs/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/agent-native-toolkit/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/customizing-agent-native/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/delegate-to-agent/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/secrets/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/security/SKILL.md
+skill  packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md
+agents-md  packages/core/src/templates/headless/AGENTS.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/actions/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/adding-a-feature/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/agent-native-docs/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/agent-native-toolkit/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/context-awareness/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/customizing-agent-native/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/delegate-to-agent/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/external-agents/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/frontend-design/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/portability/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/real-time-sync/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/secrets/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/security/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/self-modifying-code/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/shadcn-ui/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/sharing/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/turn-into-app/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/turn-into-skill/SKILL.md
+skill  packages/core/src/templates/workspace-core/.agents/skills/workspace-conventions/SKILL.md
+agents-md  packages/core/src/templates/workspace-core/AGENTS.md
+agents-md  packages/core/src/templates/workspace-root/AGENTS.md
+skill  packages/pinpoint/.agents/skills/pinpoint/SKILL.md
+agents-md  registry/agent-native-app/AGENTS.md
+skill  templates/analytics/.agents/skills/account-health/SKILL.md
+skill  templates/analytics/.agents/skills/actions/SKILL.md
+skill  templates/analytics/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/analytics/.agents/skills/adhoc-analysis/SKILL.md
+skill  templates/analytics/.agents/skills/admin-surfaces/SKILL.md
+skill  templates/analytics/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/analytics/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/analytics/.agents/skills/analysis-workspace/SKILL.md
+skill  templates/analytics/.agents/skills/bigquery/SKILL.md
+skill  templates/analytics/.agents/skills/context-awareness/SKILL.md
+skill  templates/analytics/.agents/skills/creative-context/SKILL.md
+skill  templates/analytics/.agents/skills/cross-source-analysis/SKILL.md
+skill  templates/analytics/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/analytics/.agents/skills/dashboard-management/SKILL.md
+skill  templates/analytics/.agents/skills/dashboard-ops/SKILL.md
+skill  templates/analytics/.agents/skills/data-programs/SKILL.md
+skill  templates/analytics/.agents/skills/data-querying/SKILL.md
+skill  templates/analytics/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/analytics/.agents/skills/external-agents/SKILL.md
+skill  templates/analytics/.agents/skills/frontend-design/SKILL.md
+skill  templates/analytics/.agents/skills/gong/SKILL.md
+skill  templates/analytics/.agents/skills/hubspot/SKILL.md
+skill  templates/analytics/.agents/skills/monitoring/SKILL.md
+skill  templates/analytics/.agents/skills/portability/SKILL.md
+skill  templates/analytics/.agents/skills/prometheus/SKILL.md
+skill  templates/analytics/.agents/skills/provider-api/SKILL.md
+skill  templates/analytics/.agents/skills/real-time-sync/SKILL.md
+skill  templates/analytics/.agents/skills/secrets/SKILL.md
+skill  templates/analytics/.agents/skills/security/SKILL.md
+skill  templates/analytics/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/analytics/.agents/skills/session-replay/SKILL.md
+skill  templates/analytics/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/analytics/.agents/skills/sharing/SKILL.md
+skill  templates/analytics/.agents/skills/storing-data/SKILL.md
+skill  templates/analytics/.agents/skills/turn-into-app/SKILL.md
+skill  templates/analytics/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/analytics/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/analytics/AGENTS.md
+skill  templates/assets/.agents/skills/a2a-assets/SKILL.md
+skill  templates/assets/.agents/skills/actions/SKILL.md
+skill  templates/assets/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/assets/.agents/skills/agent-engines/SKILL.md
+skill  templates/assets/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/assets/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/assets/.agents/skills/asset-generation/SKILL.md
+skill  templates/assets/.agents/skills/assets-navigation/SKILL.md
+skill  templates/assets/.agents/skills/context-awareness/SKILL.md
+skill  templates/assets/.agents/skills/creative-context/SKILL.md
+skill  templates/assets/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/assets/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/assets/.agents/skills/external-agents/SKILL.md
+skill  templates/assets/.agents/skills/frontend-design/SKILL.md
+skill  templates/assets/.agents/skills/image-generation/SKILL.md
+skill  templates/assets/.agents/skills/inline-embeds/SKILL.md
+skill  templates/assets/.agents/skills/library-management/SKILL.md
+skill  templates/assets/.agents/skills/logo-composite/SKILL.md
+skill  templates/assets/.agents/skills/notifications/SKILL.md
+skill  templates/assets/.agents/skills/portability/SKILL.md
+skill  templates/assets/.agents/skills/progress/SKILL.md
+skill  templates/assets/.agents/skills/real-time-sync/SKILL.md
+skill  templates/assets/.agents/skills/secrets/SKILL.md
+skill  templates/assets/.agents/skills/security/SKILL.md
+skill  templates/assets/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/assets/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/assets/.agents/skills/sharing/SKILL.md
+skill  templates/assets/.agents/skills/storing-data/SKILL.md
+skill  templates/assets/.agents/skills/turn-into-app/SKILL.md
+skill  templates/assets/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/assets/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/assets/AGENTS.md
+skill  templates/brain/.agents/skills/actions/SKILL.md
+skill  templates/brain/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/brain/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/brain/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/brain/.agents/skills/ask-across-everything/SKILL.md
+skill  templates/brain/.agents/skills/brain/SKILL.md
+skill  templates/brain/.agents/skills/context-awareness/SKILL.md
+skill  templates/brain/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/brain/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/brain/.agents/skills/external-agents/SKILL.md
+skill  templates/brain/.agents/skills/frontend-design/SKILL.md
+skill  templates/brain/.agents/skills/ingestion-and-connectors/SKILL.md
+skill  templates/brain/.agents/skills/portability/SKILL.md
+skill  templates/brain/.agents/skills/real-time-sync/SKILL.md
+skill  templates/brain/.agents/skills/secrets/SKILL.md
+skill  templates/brain/.agents/skills/security/SKILL.md
+skill  templates/brain/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/brain/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/brain/.agents/skills/sharing/SKILL.md
+skill  templates/brain/.agents/skills/storing-data/SKILL.md
+skill  templates/brain/.agents/skills/turn-into-app/SKILL.md
+skill  templates/brain/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/brain/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/brain/AGENTS.md
+skill  templates/calendar/.agents/skills/actions/SKILL.md
+skill  templates/calendar/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/calendar/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/calendar/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/calendar/.agents/skills/availability-booking/SKILL.md
+skill  templates/calendar/.agents/skills/context-awareness/SKILL.md
+skill  templates/calendar/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/calendar/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/calendar/.agents/skills/event-management/SKILL.md
+skill  templates/calendar/.agents/skills/external-agents/SKILL.md
+skill  templates/calendar/.agents/skills/frontend-design/SKILL.md
+skill  templates/calendar/.agents/skills/portability/SKILL.md
+skill  templates/calendar/.agents/skills/real-time-sync/SKILL.md
+skill  templates/calendar/.agents/skills/secrets/SKILL.md
+skill  templates/calendar/.agents/skills/security/SKILL.md
+skill  templates/calendar/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/calendar/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/calendar/.agents/skills/sharing/SKILL.md
+skill  templates/calendar/.agents/skills/storing-data/SKILL.md
+skill  templates/calendar/.agents/skills/turn-into-app/SKILL.md
+skill  templates/calendar/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/calendar/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/calendar/AGENTS.md
+skill  templates/chat/.agents/skills/actions/SKILL.md
+skill  templates/chat/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/chat/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/chat/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/chat/.agents/skills/context-awareness/SKILL.md
+skill  templates/chat/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/chat/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/chat/.agents/skills/external-agents/SKILL.md
+skill  templates/chat/.agents/skills/frontend-design/SKILL.md
+skill  templates/chat/.agents/skills/portability/SKILL.md
+skill  templates/chat/.agents/skills/real-time-sync/SKILL.md
+skill  templates/chat/.agents/skills/secrets/SKILL.md
+skill  templates/chat/.agents/skills/security/SKILL.md
+skill  templates/chat/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/chat/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/chat/.agents/skills/sharing/SKILL.md
+skill  templates/chat/.agents/skills/storing-data/SKILL.md
+skill  templates/chat/.agents/skills/turn-into-app/SKILL.md
+skill  templates/chat/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/chat/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/chat/AGENTS.md
+skill  templates/clips/.agents/skills/actions/SKILL.md
+skill  templates/clips/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/clips/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/clips/.agents/skills/ai-video-tools/SKILL.md
+skill  templates/clips/.agents/skills/brain-export/SKILL.md
+skill  templates/clips/.agents/skills/bug-reports/SKILL.md
+skill  templates/clips/.agents/skills/crm-call-evidence/SKILL.md
+skill  templates/clips/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/clips/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/clips/.agents/skills/dictate/SKILL.md
+skill  templates/clips/.agents/skills/external-agents/SKILL.md
+skill  templates/clips/.agents/skills/external-integrations/SKILL.md
+skill  templates/clips/.agents/skills/frontend-design/SKILL.md
+skill  templates/clips/.agents/skills/meetings/SKILL.md
+skill  templates/clips/.agents/skills/recording/SKILL.md
+skill  templates/clips/.agents/skills/screen-memory/SKILL.md
+skill  templates/clips/.agents/skills/secrets/SKILL.md
+skill  templates/clips/.agents/skills/security/SKILL.md
+skill  templates/clips/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/clips/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/clips/.agents/skills/turn-into-app/SKILL.md
+skill  templates/clips/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/clips/.agents/skills/video-editing/SKILL.md
+skill  templates/clips/.agents/skills/video-sharing/SKILL.md
+skill  templates/clips/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/clips/AGENTS.md
+skill  templates/content/.agents/skills/actions/SKILL.md
+skill  templates/content/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/content/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/content/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/content/.agents/skills/content-product-development/SKILL.md
+skill  templates/content/.agents/skills/content/SKILL.md
+skill  templates/content/.agents/skills/context-awareness/SKILL.md
+skill  templates/content/.agents/skills/creative-context/SKILL.md
+skill  templates/content/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/content/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/content/.agents/skills/document-editing/SKILL.md
+skill  templates/content/.agents/skills/external-agents/SKILL.md
+skill  templates/content/.agents/skills/frontend-design/SKILL.md
+skill  templates/content/.agents/skills/notion-integration/SKILL.md
+skill  templates/content/.agents/skills/portability/SKILL.md
+skill  templates/content/.agents/skills/real-time-sync/SKILL.md
+skill  templates/content/.agents/skills/secrets/SKILL.md
+skill  templates/content/.agents/skills/security/SKILL.md
+skill  templates/content/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/content/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/content/.agents/skills/sharing/SKILL.md
+skill  templates/content/.agents/skills/storing-data/SKILL.md
+skill  templates/content/.agents/skills/turn-into-app/SKILL.md
+skill  templates/content/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/content/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/content/AGENTS.md
+skill  templates/crm/.agents/skills/actions/SKILL.md
+skill  templates/crm/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/crm/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/crm/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/crm/.agents/skills/context-awareness/SKILL.md
+skill  templates/crm/.agents/skills/crm/SKILL.md
+skill  templates/crm/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/crm/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/crm/.agents/skills/external-agents/SKILL.md
+skill  templates/crm/.agents/skills/frontend-design/SKILL.md
+skill  templates/crm/.agents/skills/portability/SKILL.md
+skill  templates/crm/.agents/skills/real-time-sync/SKILL.md
+skill  templates/crm/.agents/skills/secrets/SKILL.md
+skill  templates/crm/.agents/skills/security/SKILL.md
+skill  templates/crm/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/crm/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/crm/.agents/skills/sharing/SKILL.md
+skill  templates/crm/.agents/skills/storing-data/SKILL.md
+skill  templates/crm/.agents/skills/turn-into-app/SKILL.md
+skill  templates/crm/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/crm/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/crm/AGENTS.md
+skill  templates/design/.agents/skills/actions/SKILL.md
+skill  templates/design/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/design/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/design/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/design/.agents/skills/context-awareness/SKILL.md
+skill  templates/design/.agents/skills/creative-context/SKILL.md
+skill  templates/design/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/design/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/design/.agents/skills/design-editor-architecture/SKILL.md
+skill  templates/design/.agents/skills/design-generation/SKILL.md
+skill  templates/design/.agents/skills/design-review-feedback/SKILL.md
+skill  templates/design/.agents/skills/design-systems/SKILL.md
+skill  templates/design/.agents/skills/design-templates/SKILL.md
+skill  templates/design/.agents/skills/export-handoff/SKILL.md
+skill  templates/design/.agents/skills/external-agents/SKILL.md
+skill  templates/design/.agents/skills/frontend-design/SKILL.md
+skill  templates/design/.agents/skills/full-app-build/SKILL.md
+skill  templates/design/.agents/skills/portability/SKILL.md
+skill  templates/design/.agents/skills/real-time-sync/SKILL.md
+skill  templates/design/.agents/skills/responsive-breakpoints/SKILL.md
+skill  templates/design/.agents/skills/secrets/SKILL.md
+skill  templates/design/.agents/skills/security/SKILL.md
+skill  templates/design/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/design/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/design/.agents/skills/shader-fills/SKILL.md
+skill  templates/design/.agents/skills/sharing/SKILL.md
+skill  templates/design/.agents/skills/storing-data/SKILL.md
+skill  templates/design/.agents/skills/turn-into-app/SKILL.md
+skill  templates/design/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/design/.agents/skills/visual-edit/SKILL.md
+skill  templates/design/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/design/AGENTS.md
+skill  templates/dispatch/.agents/skills/actions/SKILL.md
+skill  templates/dispatch/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/dispatch/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/dispatch/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/dispatch/.agents/skills/context-awareness/SKILL.md
+skill  templates/dispatch/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/dispatch/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/dispatch/.agents/skills/external-agents/SKILL.md
+skill  templates/dispatch/.agents/skills/frontend-design/SKILL.md
+skill  templates/dispatch/.agents/skills/portability/SKILL.md
+skill  templates/dispatch/.agents/skills/real-time-sync/SKILL.md
+skill  templates/dispatch/.agents/skills/secrets/SKILL.md
+skill  templates/dispatch/.agents/skills/security/SKILL.md
+skill  templates/dispatch/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/dispatch/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/dispatch/.agents/skills/sharing/SKILL.md
+skill  templates/dispatch/.agents/skills/storing-data/SKILL.md
+skill  templates/dispatch/.agents/skills/turn-into-app/SKILL.md
+skill  templates/dispatch/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/dispatch/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/dispatch/AGENTS.md
+skill  templates/factory/.agents/skills/actions/SKILL.md
+skill  templates/factory/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/factory/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/factory/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/factory/.agents/skills/context-awareness/SKILL.md
+skill  templates/factory/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/factory/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/factory/.agents/skills/external-agents/SKILL.md
+skill  templates/factory/.agents/skills/factory-graphs/SKILL.md
+skill  templates/factory/.agents/skills/frontend-design/SKILL.md
+skill  templates/factory/.agents/skills/portability/SKILL.md
+skill  templates/factory/.agents/skills/real-time-sync/SKILL.md
+skill  templates/factory/.agents/skills/secrets/SKILL.md
+skill  templates/factory/.agents/skills/security/SKILL.md
+skill  templates/factory/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/factory/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/factory/.agents/skills/sharing/SKILL.md
+skill  templates/factory/.agents/skills/storing-data/SKILL.md
+skill  templates/factory/.agents/skills/turn-into-app/SKILL.md
+skill  templates/factory/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/factory/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/factory/AGENTS.md
+skill  templates/forms/.agents/skills/actions/SKILL.md
+skill  templates/forms/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/forms/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/forms/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/forms/.agents/skills/context-awareness/SKILL.md
+skill  templates/forms/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/forms/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/forms/.agents/skills/external-agents/SKILL.md
+skill  templates/forms/.agents/skills/form-building/SKILL.md
+skill  templates/forms/.agents/skills/form-publishing/SKILL.md
+skill  templates/forms/.agents/skills/form-responses/SKILL.md
+skill  templates/forms/.agents/skills/frontend-design/SKILL.md
+skill  templates/forms/.agents/skills/portability/SKILL.md
+skill  templates/forms/.agents/skills/real-time-sync/SKILL.md
+skill  templates/forms/.agents/skills/secrets/SKILL.md
+skill  templates/forms/.agents/skills/security/SKILL.md
+skill  templates/forms/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/forms/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/forms/.agents/skills/sharing/SKILL.md
+skill  templates/forms/.agents/skills/storing-data/SKILL.md
+skill  templates/forms/.agents/skills/turn-into-app/SKILL.md
+skill  templates/forms/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/forms/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/forms/AGENTS.md
+skill  templates/mail/.agents/skills/actions/SKILL.md
+skill  templates/mail/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/mail/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/mail/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/mail/.agents/skills/contacts-and-crm/SKILL.md
+skill  templates/mail/.agents/skills/context-awareness/SKILL.md
+skill  templates/mail/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/mail/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/mail/.agents/skills/draft-queue/SKILL.md
+skill  templates/mail/.agents/skills/email-drafts/SKILL.md
+skill  templates/mail/.agents/skills/external-agents/SKILL.md
+skill  templates/mail/.agents/skills/frontend-design/SKILL.md
+skill  templates/mail/.agents/skills/inbox-automations/SKILL.md
+skill  templates/mail/.agents/skills/inbox-reads-and-triage/SKILL.md
+skill  templates/mail/.agents/skills/mail-backends/SKILL.md
+skill  templates/mail/.agents/skills/mail-interaction-parity/SKILL.md
+skill  templates/mail/.agents/skills/portability/SKILL.md
+skill  templates/mail/.agents/skills/provider-api-scans/SKILL.md
+skill  templates/mail/.agents/skills/real-time-sync/SKILL.md
+skill  templates/mail/.agents/skills/secrets/SKILL.md
+skill  templates/mail/.agents/skills/security/SKILL.md
+skill  templates/mail/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/mail/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/mail/.agents/skills/sharing/SKILL.md
+skill  templates/mail/.agents/skills/storing-data/SKILL.md
+skill  templates/mail/.agents/skills/turn-into-app/SKILL.md
+skill  templates/mail/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/mail/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/mail/AGENTS.md
+skill  templates/plan/.agents/skills/actions/SKILL.md
+skill  templates/plan/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/plan/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/plan/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/plan/.agents/skills/context-awareness/SKILL.md
+skill  templates/plan/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/plan/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/plan/.agents/skills/external-agents/SKILL.md
+skill  templates/plan/.agents/skills/frontend-design/SKILL.md
+skill  templates/plan/.agents/skills/plan-authoring-flow/SKILL.md
+skill  templates/plan/.agents/skills/plan-browser-editing/SKILL.md
+skill  templates/plan/.agents/skills/plan-comments-and-feedback/SKILL.md
+skill  templates/plan/.agents/skills/plan-events/SKILL.md
+skill  templates/plan/.agents/skills/plan-hosted-writes/SKILL.md
+skill  templates/plan/.agents/skills/plan-local-codebase-chat/SKILL.md
+skill  templates/plan/.agents/skills/plan-review-recaps/SKILL.md
+skill  templates/plan/.agents/skills/plan-source-sync/SKILL.md
+skill  templates/plan/.agents/skills/plan-version-history/SKILL.md
+skill  templates/plan/.agents/skills/portability/SKILL.md
+skill  templates/plan/.agents/skills/real-time-sync/SKILL.md
+skill  templates/plan/.agents/skills/secrets/SKILL.md
+skill  templates/plan/.agents/skills/security/SKILL.md
+skill  templates/plan/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/plan/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/plan/.agents/skills/sharing/SKILL.md
+skill  templates/plan/.agents/skills/storing-data/SKILL.md
+skill  templates/plan/.agents/skills/turn-into-app/SKILL.md
+skill  templates/plan/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/plan/.agents/skills/visual-plan/SKILL.md
+skill  templates/plan/.agents/skills/visual-recap/SKILL.md
+skill  templates/plan/.agents/skills/visualize-repo/SKILL.md
+skill  templates/plan/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/plan/AGENTS.md
+skill  templates/slides/.agents/skills/actions/SKILL.md
+skill  templates/slides/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/slides/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/slides/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/slides/.agents/skills/analytics-data-for-decks/SKILL.md
+skill  templates/slides/.agents/skills/context-awareness/SKILL.md
+skill  templates/slides/.agents/skills/create-deck/SKILL.md
+skill  templates/slides/.agents/skills/creative-context/SKILL.md
+skill  templates/slides/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/slides/.agents/skills/deck-management/SKILL.md
+skill  templates/slides/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/slides/.agents/skills/design-systems/SKILL.md
+skill  templates/slides/.agents/skills/external-agents/SKILL.md
+skill  templates/slides/.agents/skills/frontend-design/SKILL.md
+skill  templates/slides/.agents/skills/image-generation-via-a2a/SKILL.md
+skill  templates/slides/.agents/skills/portability/SKILL.md
+skill  templates/slides/.agents/skills/real-time-sync/SKILL.md
+skill  templates/slides/.agents/skills/secrets/SKILL.md
+skill  templates/slides/.agents/skills/security/SKILL.md
+skill  templates/slides/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/slides/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/slides/.agents/skills/sharing/SKILL.md
+skill  templates/slides/.agents/skills/slide-editing/SKILL.md
+skill  templates/slides/.agents/skills/slide-images/SKILL.md
+skill  templates/slides/.agents/skills/storing-data/SKILL.md
+skill  templates/slides/.agents/skills/turn-into-app/SKILL.md
+skill  templates/slides/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/slides/.agents/skills/workspace-conventions/SKILL.md
+agents-md  templates/slides/AGENTS.md
+skill  templates/tasks/.agents/skills/action-reference/SKILL.md
+skill  templates/tasks/.agents/skills/actions/SKILL.md
+skill  templates/tasks/.agents/skills/adding-a-feature/SKILL.md
+skill  templates/tasks/.agents/skills/agent-native-docs/SKILL.md
+skill  templates/tasks/.agents/skills/agent-native-toolkit/SKILL.md
+skill  templates/tasks/.agents/skills/agent-watchdog/SKILL.md
+skill  templates/tasks/.agents/skills/change-summary/SKILL.md
+skill  templates/tasks/.agents/skills/context-awareness/SKILL.md
+skill  templates/tasks/.agents/skills/custom-fields/SKILL.md
+skill  templates/tasks/.agents/skills/customizing-agent-native/SKILL.md
+skill  templates/tasks/.agents/skills/delegate-to-agent/SKILL.md
+skill  templates/tasks/.agents/skills/efficient-fable/SKILL.md
+skill  templates/tasks/.agents/skills/efficient-frontier/SKILL.md
+skill  templates/tasks/.agents/skills/external-agents/SKILL.md
+skill  templates/tasks/.agents/skills/frontend-design/SKILL.md
+skill  templates/tasks/.agents/skills/plan-arbiter/SKILL.md
+skill  templates/tasks/.agents/skills/plow-ahead/SKILL.md
+skill  templates/tasks/.agents/skills/portability/SKILL.md
+skill  templates/tasks/.agents/skills/quick-recap/SKILL.md
+skill  templates/tasks/.agents/skills/read-the-damn-docs/SKILL.md
+skill  templates/tasks/.agents/skills/real-time-sync/SKILL.md
+skill  templates/tasks/.agents/skills/secrets/SKILL.md
+skill  templates/tasks/.agents/skills/security/SKILL.md
+skill  templates/tasks/.agents/skills/self-modifying-code/SKILL.md
+skill  templates/tasks/.agents/skills/shadcn-ui/SKILL.md
+skill  templates/tasks/.agents/skills/sharing/SKILL.md
+skill  templates/tasks/.agents/skills/stay-within-limits/SKILL.md
+skill  templates/tasks/.agents/skills/store-conventions/SKILL.md
+skill  templates/tasks/.agents/skills/storing-data/SKILL.md
+skill  templates/tasks/.agents/skills/task-inbox-workflow/SKILL.md
+skill  templates/tasks/.agents/skills/turn-into-app/SKILL.md
+skill  templates/tasks/.agents/skills/turn-into-skill/SKILL.md
+skill  templates/tasks/.agents/skills/visual-plan/SKILL.md
+skill  templates/tasks/.agents/skills/visual-recap/SKILL.md
+skill  templates/tasks/.agents/skills/workspace-conventions/SKILL.md
+command  templates/tasks/.claude/commands/visual-plan.md
+command  templates/tasks/.claude/commands/visual-recap.md
+agents-md  templates/tasks/AGENTS.md
+skill  templates/videos/.agents/skills/upgrade-agent-native/SKILL.md
+
+## findings
+.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+.agents/skills/automations/SKILL.md:234:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+.agents/skills/capture-learnings/SKILL.md:21:28  [path/missing] inline-code  memory/MEMORY.md
+.agents/skills/configuration/SKILL.md:188:2  [path/missing] inline-code  plans/core-configuration-attack-plan.md
+.agents/skills/create-skill/SKILL.md:27:61  [path/missing] inline-code  memory/MEMORY.md
+.agents/skills/create-skill/SKILL.md:194:43  [path/missing] inline-code  memory/MEMORY.md
+.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+.agents/skills/new-branch/SKILL.md:26:110  [path/missing] inline-code  feat/
+.agents/skills/onboarding/SKILL.md:63:6  [path/missing] inline-code  packages/core/docs/content/onboarding.md
+.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+.agents/skills/writing-agent-instructions/SKILL.md:348:14  [path/missing] inline-code  memory/MEMORY.md
+.claude/commands/sidecar.md:3:1  [frontmatter/invalid] frontmatter  argument-hint: [investigation task, e.g. "check PR #1660 for regressions in the retry path"]
+community-templates/account-expert/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/account-expert/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/account-expert/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/account-expert/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/account-expert/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/account-expert/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/account-expert/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/account-expert/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/account-tiering/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/account-tiering/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/account-tiering/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/account-tiering/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/account-tiering/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/account-tiering/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/account-tiering/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/account-tiering/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/call-follow-up-drafter/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/call-follow-up-drafter/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/call-follow-up-drafter/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/call-follow-up-drafter/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/call-follow-up-drafter/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/churn-early-warning/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/churn-early-warning/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/churn-early-warning/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/churn-early-warning/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/churn-early-warning/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/demo-clip-library/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/demo-clip-library/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/demo-clip-library/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/demo-clip-library/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/demo-clip-library/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/linkedin-signal-watch/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/linkedin-signal-watch/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/linkedin-signal-watch/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/linkedin-signal-watch/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/linkedin-signal-watch/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/outbound-in-your-voice/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/outbound-in-your-voice/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/outbound-in-your-voice/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/outbound-in-your-voice/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/outbound-in-your-voice/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/win-loss-memo/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+community-templates/win-loss-memo/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+community-templates/win-loss-memo/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+community-templates/win-loss-memo/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+community-templates/win-loss-memo/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/agent/context-xray/schema.ts (0.3)
+packages/core/src/templates/default/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+packages/core/src/templates/default/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+packages/core/src/templates/default/.agents/skills/app-permissions/SKILL.md:19:2  [path/missing] inline-code  server/plugins/permission-policy.ts
+packages/core/src/templates/default/.agents/skills/app-permissions/SKILL.md:75:28  [path/missing] inline-code  server/plugins/permission-policy.ts
+packages/core/src/templates/default/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+packages/core/src/templates/default/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+packages/core/src/templates/default/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (1, fixable)
+packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/app-config/schema.ts (0.3)
+packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/app-config/schema.ts (0.3)
+packages/core/src/templates/headless/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+packages/core/src/templates/headless/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+packages/core/src/templates/headless/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (1, fixable)
+packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/app-config/schema.ts (0.3)
+packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/app-config/schema.ts (0.3)
+packages/core/src/templates/workspace-core/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+packages/core/src/templates/workspace-core/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+packages/core/src/templates/workspace-core/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> .agents/plugins/agent-native-design/mcp.json (0.3)
+packages/core/src/templates/workspace-core/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+packages/core/src/templates/workspace-core/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (1, fixable)
+packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/app-config/schema.ts (0.3)
+packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> packages/core/src/app-config/schema.ts (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:5:2  [path/missing] inline-code  packages/shared/AGENTS.md  -> packages/core/src/templates/default/AGENTS.md (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:5:33  [path/missing] inline-code  packages/shared/.agents/skills/  -> packages/core/src/templates/default/.claude/skills (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:35:25  [path/missing] inline-code  packages/shared/AGENTS.md  -> packages/core/src/templates/default/AGENTS.md (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:36:2  [path/missing] inline-code  packages/shared/.agents/skills/  -> packages/core/src/templates/default/.claude/skills (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:88:9  [path/missing] inline-code  packages/shared/.agents/skills/delegate-to-agent/SKILL.md  -> packages/core/docs/SKILL.md (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:163:4  [path/missing] inline-code  packages/shared/.agents/skills/composable-mini-apps/SKILL.md  -> packages/core/docs/SKILL.md (0.3)
+packages/core/src/templates/workspace-root/AGENTS.md:221:9  [path/missing] inline-code  packages/shared/.agents/skills/shadcn-ui/SKILL.md  -> packages/core/docs/SKILL.md (0.3)
+templates/analytics/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/analytics/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/analytics/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/analytics/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/analytics/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/analytics/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/analytics/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/analytics/server/db/schema.ts (0.3)
+templates/analytics/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/analytics/server/db/schema.ts (0.3)
+templates/assets/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/assets/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/assets/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/assets/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/assets/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/assets/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/assets/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/assets/server/db/schema.ts (0.3)
+templates/assets/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/assets/server/db/schema.ts (0.3)
+templates/brain/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/brain/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/brain/.agents/skills/brain/SKILL.md:187:72  [path/missing] inline-code  context/company-brain/
+templates/brain/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/brain/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/brain/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/brain/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/brain/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/brain/server/db/schema.ts (0.3)
+templates/brain/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/brain/server/db/schema.ts (0.3)
+templates/calendar/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/calendar/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/calendar/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/calendar/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/calendar/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/calendar/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/calendar/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/calendar/server/db/schema.ts (0.3)
+templates/calendar/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/calendar/server/db/schema.ts (0.3)
+templates/chat/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/chat/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/chat/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/chat/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/chat/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/chat/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/chat/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/analytics/server/db/schema.ts (0.3)
+templates/chat/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/analytics/server/db/schema.ts (0.3)
+templates/clips/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/clips/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/clips/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/clips/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/content/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/content/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/content/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/content/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/content/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/content/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/content/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/content/server/db/schema.ts (0.3)
+templates/content/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/content/server/db/schema.ts (0.3)
+templates/crm/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/crm/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/crm/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/crm/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/crm/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/crm/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/crm/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/crm/server/db/schema.ts (0.3)
+templates/crm/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/crm/server/db/schema.ts (0.3)
+templates/design/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/design/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/design/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/design/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/design/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/design/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/design/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/design/server/db/schema.ts (0.3)
+templates/design/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/design/server/db/schema.ts (0.3)
+templates/dispatch/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/dispatch/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/dispatch/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/dispatch/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/dispatch/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/dispatch/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/dispatch/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/analytics/server/db/schema.ts (0.3)
+templates/dispatch/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/analytics/server/db/schema.ts (0.3)
+templates/factory/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/factory/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/factory/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/factory/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/factory/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/factory/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/factory/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/factory/server/db/schema.ts (0.3)
+templates/factory/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/factory/server/db/schema.ts (0.3)
+templates/forms/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/forms/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/forms/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/forms/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/forms/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/forms/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/forms/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/forms/server/db/schema.ts (0.3)
+templates/forms/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/forms/server/db/schema.ts (0.3)
+templates/mail/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/mail/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/mail/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/mail/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/mail/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/mail/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/mail/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/mail/server/db/schema.ts (0.3)
+templates/mail/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/mail/server/db/schema.ts (0.3)
+templates/plan/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/plan/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/plan/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/plan/.agents/skills/plan-local-codebase-chat/SKILL.md:19:40  [path/missing] inline-code  instructions/local-codebases/
+templates/plan/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/plan/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/plan/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/plan/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/plan/server/db/schema.ts (0.3)
+templates/plan/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/plan/server/db/schema.ts (0.3)
+templates/slides/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/slides/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/slides/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/slides/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/slides/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/slides/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/slides/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/slides/server/db/schema.ts (0.3)
+templates/slides/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/slides/server/db/schema.ts (0.3)
+templates/tasks/.agents/skills/actions/SKILL.md:29:91  [path/missing] inline-code  actions/list-meals.ts
+templates/tasks/.agents/skills/actions/SKILL.md:149:100  [path/missing] inline-code  actions/foo-bar.ts
+templates/tasks/.agents/skills/efficient-frontier/SKILL.md:3:1  [frontmatter/invalid] frontmatter  description: Apply the same orchestration as `/efficient-fable` to any high-cost frontier model: delegate research, coding, and testing to cheaper subagents while keeping planning, synthesis, and final review with the expensive model.
+templates/tasks/.agents/skills/external-agents/SKILL.md:457:51  [path/missing] inline-code  .vscode/mcp.json  -> templates/analytics/mcp.json (0.3)
+templates/tasks/.agents/skills/portability/SKILL.md:92:65  [path/missing] inline-code  netlify/functions/
+templates/tasks/.agents/skills/secrets/SKILL.md:426:4  [path/missing] inline-code  packages/core/src/tools/fetch-tool.ts  -> packages/core/src/extensions/fetch-tool.ts (0.6)
+templates/tasks/.agents/skills/storing-data/SKILL.md:32:52  [path/missing] inline-code  drizzle/START_HERE.md
+templates/tasks/.agents/skills/storing-data/SKILL.md:32:160  [path/missing] inline-code  drizzle/schema.ts  -> templates/tasks/server/custom-fields/schema.ts (0.3)
+templates/tasks/.agents/skills/storing-data/SKILL.md:53:65  [path/missing] inline-code  drizzle/schema.ts  -> templates/tasks/server/custom-fields/schema.ts (0.3)

@@ -1,0 +1,13 @@
+# Stringmk/claude-code-bootcamp-excercises
+
+sources: 2
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+claude-md  CLAUDE.md
+claude-md  module-03/CLAUDE.md
+
+## findings
+(none)

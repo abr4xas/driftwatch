@@ -6,13 +6,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Is your CLAUDE.md or AGENTS.md still true? — driftwatch</title>
 		<meta name="description"
-			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 58 of 66 real repositories.">
+			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 81 of 96 real repositories.">
 		<link rel="icon" href="favicon.svg" type="image/svg+xml">
 		<meta name="theme-color" content="#313031">
 		<meta name="color-scheme" content="dark">
 		<meta property="og:title" content="driftwatch — dead context, found">
 		<meta property="og:description"
-			content="knip finds dead code. driftwatch finds dead context. 58 of 66 real repositories produce no false positive at all.">
+			content="knip finds dead code. driftwatch finds dead context. 81 of 96 real repositories produce no false positive at all.">
 		<meta property="og:type" content="website">
 		<link rel="canonical" href="https://driftwatch-cli.vercel.app/">
 		<meta property="og:url" content="https://driftwatch-cli.vercel.app/">
@@ -71,7 +71,7 @@
       "@id": "https://driftwatch-cli.vercel.app/#website",
       "name": "driftwatch",
       "url": "https://driftwatch-cli.vercel.app/",
-      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 58 of 66 real repositories.",
+      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 81 of 96 real repositories.",
       "inLanguage": "en",
       "author": {
         "@id": "https://driftwatch-cli.vercel.app/#author"
@@ -173,7 +173,7 @@
 			<hr class="rule">
 
 			<div class="proof">
-				<p class="proof-claim"><strong>58 of 66</strong> real repositories produce <strong>zero</strong> false
+				<p class="proof-claim"><strong>81 of 96</strong> real repositories produce <strong>zero</strong> false
 					positives.</p>
 				<a class="btn" href="#reliability">See the survey</a>
 			</div>
@@ -312,10 +312,10 @@
 
 				<div class="survey">
 					<div class="survey-map">
-						<p class="marg"><span>341 context files</span><span aria-hidden="true">·</span><span>66
+						<p class="marg"><span>1901 context files</span><span aria-hidden="true">·</span><span>66
 								repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine
 								languages</span></p>
-						<div class="cells" id="cells" aria-label="341 context files, grouped into 66 repositories">
+						<div class="cells" id="cells" aria-label="1901 context files, grouped into 96 repositories">
 						</div>
 						<div class="readout" id="readout" aria-live="polite"></div>
 						<p class="cell-key">
@@ -325,23 +325,27 @@
 								in and use the arrow keys.</span>
 						</p>
 						<p class="fine cell-caveat">A lit mark is a context file driftwatch reported <em>anything at
-								all</em> about: 24 of the 341, carrying 32 findings between them, and 22 of those are
-							true drift the maintainers had not noticed. The four figures below count only the
-							<strong>false</strong> ones.</p>
+								all</em> about: 217 of the 1901, carrying 338 findings between them, and 32 of those are
+							true drift the maintainers had not noticed. The figures below count only the
+							<strong>false</strong> ones, and 289 findings in the nine noisiest repositories are
+							unread: each of those repositories already carries a false positive, so reading the
+							rest could not move the figure below.</p>
 					</div>
 
 					<dl class="figures">
 						<div>
 							<dt>Repositories with zero false positives</dt>
-							<dd><b>58</b><span>/ 66</span></dd>
-							<dd class="pct">87.9%, and the project's own bar is 90%. Said here rather than quietly:
-								the bar is not met on the whole corpus</dd>
+							<dd><b>81</b><span>/ 96</span></dd>
+							<dd class="pct">84.4%, and the project's own bar is 90%. Said here rather than quietly:
+								the bar is not met, and it moved further away when the corpus stopped being built
+								out of small repositories</dd>
 						</div>
 						<div>
 							<dt>Same, over the validation group alone</dt>
 							<dd><b>29</b><span>/ 32</span></dd>
-							<dd class="pct">90.6%. Added after the heuristics were frozen, and never used to derive one
-							</dd>
+							<dd class="pct">90.6%. Added after the heuristics were frozen, and never used to derive one.
+								Unchanged by the thirty repositories added in round thirty-one, which are all
+								calibration</dd>
 						</div>
 						<div>
 							<dt>Worst single repository</dt>
@@ -350,7 +354,7 @@
 						</div>
 						<div class="hero-fig">
 							<dt>Edits <code>--fix</code> would apply across all 66</dt>
-							<dd><b>1</b></dd>
+							<dd><b>6</b></dd>
 							<dd class="pct">and every one is correct, checked by hand at the level of the edit and not
 								only of the finding</dd>
 						</div>

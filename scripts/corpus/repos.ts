@@ -31,13 +31,14 @@ export type CorpusRepo = {
 /**
  * Public repos with real `AGENTS.md` or `CLAUDE.md` files, verified by hand.
  *
- * There are 66: 34 calibration and 32 validation, and no replacement is
+ * There are 96: 64 calibration and 32 validation, and no replacement is
  * outstanding, which is what ADR-0006 condition 8 requires.
  *
- * Cloning them all costs ~2.7 GB, so the list is kept deliberately short and
- * new additions are chosen small. `oven-sh/bun` and `supabase/supabase` have
- * good context files but add ~1.5 GB between them, and are not needed. If they
- * are added, warn about the size before starting the download.
+ * Cloning them all costs a few GB. The list **used** to be kept short and new
+ * additions chosen small for that reason, and round thirty-one ended it: that
+ * rule is what made the corpus a sample of small repositories, which ADR-0015
+ * found was most of what conditions 3 to 5 were measuring. Size is now a
+ * property the corpus should have rather than one it avoids.
  *
  * With `--only <pattern>` a subset runs without re-cloning the rest.
  */
@@ -322,6 +323,63 @@ export const CORPUS: readonly CorpusRepo[] = [
     holdout: true,
   },
   { repo: 'fancy1108/Clutch', sha: 'da61f6f85dcf0c3043b998a3ab024b5a4333dab4', holdout: true },
+  // ---------------------------------------------------------------------------
+  // Round thirty-one, 2026-09-21. Thirty repositories chosen **blind** from the
+  // discovery corpus by even stride through `test/discovery/repos.txt`, whose
+  // order cycles the twelve acquisition facets. No exclusion based on findings:
+  // not count, not cleanliness, not whether the repository is a skill farm. The
+  // selection was pre-registered in ticket `35` before anything was looked at.
+  //
+  // **Calibration, all of them.** Round twenty-nine's `@` rule was derived from a
+  // frequency over all 2533 discovery repositories, these included, so none can
+  // honestly be held out — condition 9 is about not having looked, and we did.
+  //
+  // They are why the corpus stops being a sample of small repositories: the
+  // largest here carries 244 findings where the previous largest carried four.
+  // That is the point, and ADR-0015 is what made it affordable.
+  // ---------------------------------------------------------------------------
+  { repo: 'eggjs/egg', sha: 'd4129fca99e92fadaf0cb8d1f26688b743d582b9' },
+  { repo: 'boring-design/elastic-fruit-runner', sha: '46f1d04355d0e53bf0b4b3b38d2ba0cb9141be25' },
+  { repo: 'bmad-labs/skills', sha: 'f2e09b317c6fc7cd1d926e424388adb52310dad7' },
+  { repo: 'hasseily/NoxArchaistCompanion', sha: '77fe10d12fc6187057e4df3f556e7ce831772226' },
+  { repo: 'alperhankendi/Ctxo', sha: '9a71337018f5df47b5edba172bbb2b45016cf17a' },
+  { repo: 'jaychempan/coding-with-beat', sha: '0c5eb49da6f82cb1e2fac9d9d8bf3f76986bf6a2' },
+  { repo: 'NanoNative/nano', sha: '7ea67d0e31093fd922ca65a17d79db046aa09946' },
+  { repo: 'Andersbakken/rtags', sha: '4abf149e27645dd2bd0e4f7557e114fa86822055' },
+  { repo: '6enta0/CPAplus', sha: '0662b85a1af87fe9dbafafb8773ed8edce51cdc3' },
+  { repo: 'BetterSEQTA/DesQTA', sha: 'c38f4f15cdc52e27c7dcc021e381fc20b6cba4ee' },
+  { repo: 'chippeddog/english.now', sha: '1ba86c51181716d60f68ac93b500dec7730cabc5' },
+  { repo: 'RajX-dev/N3MO', sha: '3f18bed4d111ebe3c55f20fa133236fdbcc8c52c' },
+  { repo: 'qingshanliuci/cnki-aigc---skill', sha: '8d69669a7e5289ca2c73e7aed79032ef955f39b3' },
+  { repo: 'Canine89/hwpxskill', sha: 'cb5f25b6557b47b0339398d3b5d45a57bdcb4b28' },
+  { repo: 'fideus-labs/fidnii', sha: '846ffc9ba09295d0427772a86fddb822b9d7d307' },
+  { repo: 'TommyLike/KnowledgeBase', sha: '5ed0620047ce6d9472de2a8019ca450122355f36' },
+  {
+    repo: 'Stringmk/claude-code-bootcamp-excercises',
+    sha: '58fe26c1b01b45bd7e68e63f63b04a9566c5bb55',
+  },
+  {
+    repo: 'nadzbernardino/Chris-and-the-Jollibabees',
+    sha: '2947a260140507cb39bb8a7de35cbfe8e9492aa8',
+  },
+  { repo: 'MuLTiAcidi/claudeos', sha: '34f52967f5e1e025e58059c14551634cd0956436' },
+  {
+    repo: 'hosungseo/local-delegation-field-admin',
+    sha: 'fe223cdd85b2018ebb5993b0dae22fabb008b961',
+  },
+  { repo: 'imarshallwidjaja/data-etl-dagster', sha: '7c3bb8d8a91aae14b4d385e0790fcf46d40c442d' },
+  { repo: 'hecateq/hecateq-openagent', sha: '32df8db122e87af6130b036e3ab11ca36c054e95' },
+  { repo: 'BuilderIO/agent-native', sha: '33231dfb331e919931f88c6a2b61c45596ab769b' },
+  { repo: 'factory-level/no-one-left-behind', sha: '1d1827f9034a1f7c052a2d114e0c818530e1383b' },
+  { repo: 'Compass-Brand/compass-engine', sha: 'e131cdcced9cdf3ebba785621289c9b85f20762d' },
+  { repo: 'CamilleScholtz/swmpc', sha: 'bf923ebf238ddd767616abb383a0bb34725184e1' },
+  { repo: 'Theycallmeholla/skills', sha: '4ab0845bf08985288defc96b6e76e00daf71cdf2' },
+  { repo: 'unbound-force/replicator', sha: '3e527a578cf3957d9b8f72a3edaed7b773b526bf' },
+  {
+    repo: 'AzureLocal/azurelocal-nutanix-migration',
+    sha: '86570e7ad71dc28cdf1af96001531c951274ef5a',
+  },
+  { repo: 'andrewevans0102/reygent', sha: '6de8b4d0f29701989113e63e83c953e0cc57676d' },
 ]
 
 /** `owner/repo` as a single filename-safe segment. */

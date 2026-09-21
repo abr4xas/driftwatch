@@ -176,6 +176,22 @@ describe('CLASSIFICATION.md agrees with the snapshots', () => {
  * These assertions are the reason that cannot happen twice. They check
  * bookkeeping, not rulings: whether a finding is true is a judgement and
  * ADR-0007 keeps judgements out of CI.
+ *
+ * A ruling may be **pending**, and that is round thirty-one's doing rather
+ * than a loosening. When every finding had to be ruled, the corpus could only
+ * hold repositories small enough to read end to end — which is what
+ * [ADR-0015](../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)
+ * found conditions 3 to 5 were really measuring. With those withdrawn, what
+ * the surviving conditions need is narrower, and the two things they do need
+ * are asserted below rather than implied by ruling everything:
+ *
+ * - **No `fixable` finding is pending.** Condition 2 admits no false positive
+ *   among them at any rate, so an unread autofix is the one thing this file
+ *   may never contain.
+ * - **Every repository is settled.** Condition 6 asks whether a repository
+ *   produces a false positive at all: one `false` settles it, and otherwise
+ *   every one of its findings has to be ruled. A repository with a pending
+ *   ruling and no false one is a repository nobody has answered.
  */
 describe('every finding has a row and a ruling', () => {
   const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
@@ -200,7 +216,9 @@ describe('every finding has a row and a ruling', () => {
     const rows = new Map<string, string>()
     for (const line of doc.split('\n')) {
       const row =
-        /^\| \d+ \| `([^`]+)` \| `([^`]+)` \| `[^`]+` \| .* \| \*\*(true|false)\*\* \|/u.exec(line)
+        /^\| \d+ \| `([^`]+)` \| `([^`]+)` \| `[^`]+` \| .* \| \*\*(true|false|pending)\*\* \|/u.exec(
+          line,
+        )
       if (row !== null) rows.set(`${row[1]} ${row[2]}`, row[3] ?? '')
     }
     return rows
@@ -218,19 +236,54 @@ describe('every finding has a row and a ruling', () => {
   })
 
   it('agrees with the count it states about itself', () => {
-    const cited = /\*\*(\d+) true, (\d+) false, (\d+) findings\.\*\*/u.exec(doc)
+    const cited = /\*\*(\d+) true, (\d+) false, (\d+) pending, (\d+) findings\.\*\*/u.exec(doc)
     if (cited === null) throw new Error('CLASSIFICATION.md does not state its per-finding totals')
-    const [trueCount = 0, falseCount = 0, total = 0] = cited.slice(1).map(Number)
+    const [trueCount = 0, falseCount = 0, pending = 0, total = 0] = cited.slice(1).map(Number)
     const rulings = [...recordedFindings().values()]
     expect({
       true: rulings.filter((ruling) => ruling === 'true').length,
       false: rulings.filter((ruling) => ruling === 'false').length,
+      pending: rulings.filter((ruling) => ruling === 'pending').length,
       total: rulings.length,
-    }).toEqual({ true: trueCount, false: falseCount, total })
+    }).toEqual({ true: trueCount, false: falseCount, pending, total })
+  })
+
+  /** `repo location` for every finding a snapshot marks `fixable`. */
+  function fixableFindings(): string[] {
+    const found: string[] = []
+    for (const name of snapshotNames()) {
+      const text = snapshot(name)
+      const [, findings = ''] = text.split('## findings\n')
+      const repo = /^# (.+)$/mu.exec(text)?.[1] ?? name
+      for (const line of findings.split('\n')) {
+        const location = /^(\S+:\d+:\d+)\s/u.exec(line.trim())?.[1]
+        if (location !== undefined && line.includes('fixable')) found.push(`${repo} ${location}`)
+      }
+    }
+    return found
+  }
+
+  it('leaves no fixable finding unread, whatever else is pending', () => {
+    const recorded = recordedFindings()
+    const unread = fixableFindings().filter((finding) => recorded.get(finding) === 'pending')
+    expect(unread).toEqual([])
+  })
+
+  it('settles every repository: a false positive, or every finding ruled', () => {
+    const byRepo = new Map<string, string[]>()
+    for (const [finding, ruling] of recordedFindings()) {
+      const repo = finding.slice(0, finding.lastIndexOf(' '))
+      byRepo.set(repo, [...(byRepo.get(repo) ?? []), ruling])
+    }
+    const unsettled = [...byRepo]
+      .filter(([, rulings]) => rulings.includes('pending') && !rulings.includes('false'))
+      .map(([repo]) => repo)
+    expect(unsettled).toEqual([])
   })
 
   it('agrees with the aggregate the document opens with', () => {
-    const cited = /corpus produces \*\*(\d+) findings, (\d+) true and (\d+) false\*\*/u.exec(doc)
+    const cited =
+      /corpus produces \*\*(\d+) findings, (\d+) true, (\d+) false and (\d+) unruled\*\*/u.exec(doc)
     if (cited === null) throw new Error('CLASSIFICATION.md does not cite its aggregate')
     const [total = 0, trueCount = 0] = cited.slice(1).map(Number)
     const rulings = [...recordedFindings().values()]

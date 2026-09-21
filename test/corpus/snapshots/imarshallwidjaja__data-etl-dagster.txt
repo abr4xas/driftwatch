@@ -1,0 +1,31 @@
+# imarshallwidjaja/data-etl-dagster
+
+sources: 17
+errors: 4
+warnings: 0
+fixable: 0
+
+## sources
+agents-md  .github/workflows/AGENTS.md
+agents-md  AGENTS.md
+agents-md  configs/AGENTS.md
+agents-md  libs/models/AGENTS.md
+agents-md  libs/spatial_utils/AGENTS.md
+agents-md  libs/transformations/AGENTS.md
+agents-md  scripts/AGENTS.md
+agents-md  services/dagster/AGENTS.md
+agents-md  services/dagster/etl_pipelines/AGENTS.md
+agents-md  services/minio/AGENTS.md
+agents-md  services/mongodb/AGENTS.md
+agents-md  services/postgis/AGENTS.md
+agents-md  services/webapp/AGENTS.md
+agents-md  tests/AGENTS.md
+agents-md  tests/integration/AGENTS.md
+agents-md  tests/integration/fixtures/AGENTS.md
+agents-md  tests/unit/AGENTS.md
+
+## findings
+services/dagster/etl_pipelines/AGENTS.md:13:87  [path/missing] inline-code  data-lake/blobs/
+services/minio/AGENTS.md:8:25  [path/missing] inline-code  landing-zone/manifests/
+services/minio/AGENTS.md:9:43  [path/missing] inline-code  landing-zone/archive/
+services/minio/AGENTS.md:10:61  [path/missing] inline-code  data-lake/blobs/
