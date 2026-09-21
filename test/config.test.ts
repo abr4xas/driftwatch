@@ -198,9 +198,7 @@ describe('--config and --no-config', () => {
       'driftwatch.config.json': JSON.stringify({ skillRoots: ['root'] }),
       'tools/dw.json': JSON.stringify({ skillRoots: ['explicit'] }),
     })
-    expect((await audit(root, { config: 'tools/dw.json' })).config.skillRoots).toEqual([
-      'explicit',
-    ])
+    expect((await audit(root, { config: 'tools/dw.json' })).config.skillRoots).toEqual(['explicit'])
   })
 
   it('a --config that does not exist is a user error', async () => {
