@@ -552,6 +552,8 @@ same day.
 | `30` | What should `HEDGED_SPLIT`'s `{0,80}` window be? | research | **resolved**: unchanged — 80 and 40 are indistinguishable, 20 is worse |
 | `31` | Should `external-root` start at the marker rather than the heading? | research | **resolved**: no — it breaks "X or `~/X`" |
 | `32` | `skill/frontmatter`'s autofix, measured where it actually fires | bug | **new**: 670 fixable rewrites in 58 repos, 29 of them the case it was built for |
+| `33` | Who are these documents about? | research | **new**: 19% of findings sit in documents about another project |
+| `34` | Condition 6 measures the corpus, and the corpus is small on purpose | research | **new**: growing it blind lowers the rate |
 
 This table stopped being maintained at `14`. Tickets `15` to `26` exist in
 [`issues/`](./issues/) and carry their own `Status:` line, which is the authority; the rows
