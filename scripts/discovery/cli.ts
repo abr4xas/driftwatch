@@ -21,6 +21,7 @@
  *   pnpm discovery filter    [--dry-run]    the acquisition filter's two judgements
  *   pnpm discovery scope     [--family F]   what a gate rules over (`27`)
  *   pnpm discovery diff --before A --after B   what a rule change moved
+ *   pnpm discovery queue    [--repos a,b]  what to adjudicate first (`34`)
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and
@@ -104,6 +105,16 @@ async function main(argv: readonly string[]): Promise<number> {
       const { sampleMain } = await import('./discards.ts')
       return sampleMain(countFlag(argv, '--sample') ?? 20)
     }
+    case 'queue': {
+      const { queueMain } = await import('../jev/queue.ts')
+      const list = stringFlag(argv, '--repos')
+      return queueMain(
+        list === undefined ? undefined : new Set(list.split(',').map((r) => r.trim())),
+        countFlag(argv, '--limit'),
+        countFlag(argv, '--concurrency') ?? 12,
+        argv.includes('--dry-run'),
+      )
+    }
     case 'diff': {
       const before = stringFlag(argv, '--before')
       const after = stringFlag(argv, '--after')
@@ -152,7 +163,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|queue|status>\n',
       )
       return 2
   }

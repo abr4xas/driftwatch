@@ -7,7 +7,12 @@ times in 58 repositories and the certification corpus has never produced one.
 
 **Blocked by:** nothing.
 
-**Status: new 2026-09-21.** Measured. The recommendation is to drop `fixable`. See §"Answer".
+**Status: superseded 2026-09-21 by round twenty-seven.** The recommendation here was to drop
+`fixable` from the `name` rewrite. Angel went further and withdrew the check: driftwatch does
+not rename a skill, and `name` against a directory is format validation whose right-hand side
+happens to live on disk. Nothing in this ticket is actionable any more — it is kept as the
+measurement that produced the decision, and `CLASSIFICATION.md` round twenty-seven is where
+the decision is recorded.
 
 ## Why nobody saw this
 

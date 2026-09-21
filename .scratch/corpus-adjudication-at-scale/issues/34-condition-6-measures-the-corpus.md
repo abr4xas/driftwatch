@@ -130,14 +130,18 @@ reading 247 findings, and that one has not moved.
    repositories, and no placeholder-shaped anchor appears in the discovery corpus's
    `link/broken` findings at all. Writing a rule for a class with one instance is tuning to the
    exam, on the cheap side of it.
-3. ~~**Grow the corpus blind.**~~ **Closed by the measurement above**: it lowers the rate and
-   costs 306 adjudications per thirty repositories.
+3. **Grow the corpus blind.** It lowers the rate — that half stands. It does **not** cost 306
+   adjudications; see §"The cost was wrong" below. Thirty repositories cost about **31
+   rulings**.
 4. **Rewrite the condition to normalise by size.** ADR-0006 rejected rates over findings and
    ADR-0009 rejected them again; this would need an argument for why this time is different.
 5. **Cap what one repository contributes.** Arbitrary, and the only option that addresses the
    actual cause: a per-repository binary over repositories of incomparable size.
 
-3 is closed. 1 and 2 are available today. 4 and 5 amend an accepted ADR and are Angel's call.
+1, 2 and 3 are all available today; 4 and 5 amend an accepted ADR and are Angel's call. The
+interesting combination is 3 **with** 5: growing the corpus is affordable now, and what growth
+exposes is precisely that a per-repository binary over repositories of incomparable size is
+the wrong shape.
 
 ## What is not claimed
 
@@ -145,3 +149,59 @@ The 83% projection is a projection. No one has ruled on the 306 findings, the di
 carries no rulings, and none of these numbers is a precision or enters `CLASSIFICATION.md`.
 What **is** measured is the shape: 71% against 66% clean, 4 against 247 at the worst
 repository, 32 against 306 in total.
+
+
+## The cost was wrong, and the correction is the useful part
+
+Added 2026-09-21, after Angel pushed back on it twice.
+
+This ticket first said thirty repositories cost **306 adjudications** and used that to close
+option 3. That number assumed a person reads findings in whatever order they come out in, and
+nothing forces that.
+
+**Condition 6 counts repositories with zero false positives.** Declaring a repository *dirty*
+costs exactly one ruling — the first false positive found. Only declaring it *clean* costs all
+of them. So the cost is not the number of findings, it is the number of findings a person has
+to read **before a repository is decided**, and that depends entirely on the order.
+
+`pnpm discovery queue` produces that order. It asks the frozen `CLAIMS_A_PATH` of each
+finding's own prose and sorts worst-first, repositories by their most doubtful finding. It
+**orders and does not adjudicate** — the spec permits confidence to sequence work and never to
+decide it, and no row means anything until a person opens the repository.
+
+Over the same blind thirty, 301 `path/missing` findings in 9 repositories:
+
+| repository | findings | lowest | readings to settle it |
+|---|---|---|---|
+| `MuLTiAcidi/claudeos` | 27 | **0.02** | 1 |
+| `BuilderIO/agent-native` | 245 | **0.07** | 1 |
+| `hecateq/hecateq-openagent` | 4 | 0.42 | 4 |
+| `eggjs/egg` | 6 | 0.52 | 6 |
+| `imarshallwidjaja/data-etl-dagster` | 4 | 0.53 | 4 |
+| `CamilleScholtz/swmpc` | 9 | 0.74 | 9 |
+| `TommyLike/KnowledgeBase` | 3 | 0.88 | 3 |
+| `bmad-labs/skills` | 1 | 0.91 | 1 |
+| `BetterSEQTA/DesQTA` | 2 | 0.93 | 2 |
+
+**301 readings in arbitrary order, about 31 worst-first.** Twenty-one of the thirty
+repositories need none at all.
+
+And the head of the queue is why it works. `MuLTiAcidi/claudeos` is a security-research
+repository whose most doubtful findings are `AAEAAAD/////`, `....//` and `././././etc/passwd`
+— a base64 magic number and two path-traversal payloads, sitting in Markdown tables.
+`BuilderIO/agent-native`'s is `feat/`, a branch prefix, then `.vscode/mcp.json` inside a
+sentence listing *other* tools' config locations. One reading settles each.
+
+**What is assumed and is not free.** That the lowest-scored finding really is a false
+positive. Where it is not, the reading continues down the list, and the true cost sits between
+31 and 301. For these two it is visibly 1; in general it is an ordering, not a guarantee.
+
+**What does not change.** The rate. Those two repositories are almost certainly dirty, so the
+blind thirty still land below the corpus's 87.9%, and growing blind still lowers the number.
+What changes is that it is no longer expensive to find that out — and at roughly a ruling per
+repository, the deferred 300-repo plan costs on the order of **310 rulings** rather than the
+3000 findings this ticket first quoted.
+
+The bottleneck the spec named — *"adjudication that stays cheap without losing the authority
+of the measurement"* — is the thing `queue` addresses, and it is job 1 of § "Where the model
+goes" arriving three days late.
