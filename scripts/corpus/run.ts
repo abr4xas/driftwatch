@@ -188,6 +188,18 @@ async function main(): Promise<number> {
   let totalFindings = 0
   let totalSources = 0
   let holdoutFindings = 0
+  /**
+   * Repositories the run could not read.
+   *
+   * They used to print one line and vanish from the arithmetic, while the
+   * totals below went on saying "66 repos" — the count of snapshot *files*,
+   * which is a fact about this directory and not about what was just checked.
+   * `spatie/bloom` was deleted from GitHub on 2026-09-20 and the corpus check
+   * reported a green whole-corpus run over 65 of them, seven sources short and
+   * confident. A partial measurement presented as a whole one is the failure
+   * this project exists to report.
+   */
+  const unreadable: string[] = []
 
   for (const entry of CORPUS) {
     // With --only the rest are skipped without touching their snapshot, so a
@@ -198,7 +210,8 @@ async function main(): Promise<number> {
     try {
       dir = ensureClone(entry)
     } catch {
-      process.stderr.write('could not clone, skipping\n')
+      process.stderr.write('could not clone\n')
+      unreadable.push(entry.repo)
       continue
     }
 
@@ -230,10 +243,27 @@ async function main(): Promise<number> {
     ? readdirSync(SNAPSHOTS_DIR).filter((name) => name.endsWith('.txt')).length
     : 0
 
+  // The count of repositories **read**, not of snapshots on disk. They differ
+  // exactly when something went wrong, which is when the difference matters.
+  const read = snapshotCount - unreadable.length
   process.stderr.write(
-    `\n${snapshotCount} repos · ${totalSources} sources · ${totalFindings} findings\n` +
+    `\n${read} repos · ${totalSources} sources · ${totalFindings} findings\n` +
       `  calibration: ${totalFindings - holdoutFindings} · validation: ${holdoutFindings}\n`,
   )
+
+  if (unreadable.length > 0) {
+    process.stderr.write(
+      `\n${unreadable.length} repo(s) could not be read, so this is not a whole-corpus run:\n` +
+        unreadable.map((repo) => `  ${repo}\n`).join('') +
+        'A clone that is merely stale is fixed by deleting it from test/corpus/repos/.\n' +
+        'A repository that no longer exists is a decision about the corpus, not a retry:\n' +
+        'removing it moves the denominator every published precision figure is counted over.\n',
+    )
+    // Only under --check. A plain `pnpm corpus` rewrites the snapshots it could
+    // produce and says which it could not, which is what you want while adding
+    // a repository; a --check that exits 0 here is a green light nobody earned.
+    if (check) return 1
+  }
 
   if (check && differing > 0) {
     process.stderr.write(
