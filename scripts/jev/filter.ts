@@ -26,7 +26,7 @@ import type { Experimental_EvaluationQuestion } from 'ai'
 import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
 import { slugOf } from '../corpus/repos.ts'
-import { FILTER, jsonlIn, readList, REPOS_DIR } from '../discovery/files.ts'
+import { FILTER, jsonlIn, readList, REPOS_DIR, ROOT } from '../discovery/files.ts'
 
 const EXCERPT = 1200
 
@@ -179,20 +179,69 @@ export function tabulate(rows: readonly Answer[]): string {
 /** What the pass asks: one document in, the two judgements out. */
 export type AskAboutDocument = (state: State) => Promise<Omit<Answer, 'repo' | 'path'>>
 
+/**
+ * The documents driftwatch actually reports on, rather than four per repository.
+ *
+ * `documentsOf` takes the four shallowest, which answers "what is this corpus
+ * made of" — ticket `24`'s question — and is the wrong population for a
+ * different one: **of the documents that produce a finding, how many are about
+ * the repository they sit in?** Crossing `24`'s answers against the findings
+ * covers 1884 of 32 209, and the miss is not random: in a repository holding
+ * 653 skills the four shallowest are its root `CLAUDE.md`, never the skills.
+ *
+ * Same question, same state, different selection, so the two runs are
+ * comparable. The question is not reworded and does not move to
+ * `questions.ts`: one pass asks it, in two modes.
+ */
+export function reportedDocuments(resultsText: string): Array<{ repo: string; path: string }> {
+  const seen = new Set<string>()
+  const out: Array<{ repo: string; path: string }> = []
+  for (const parsed of jsonlIn(resultsText)) {
+    const outcome = parsed as { repo?: unknown; findings?: unknown }
+    const repo = outcome.repo
+    if (typeof repo !== 'string' || !Array.isArray(outcome.findings)) continue
+    for (const raw of outcome.findings) {
+      const finding = raw as { check?: unknown; path?: unknown }
+      if (finding.check !== 'path/missing' || typeof finding.path !== 'string') continue
+      const key = `${repo}|${finding.path}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push({ repo, path: finding.path })
+    }
+  }
+  return out
+}
+
 export async function filterMain(
   limit: number | undefined,
   dryRun: boolean,
   width: number,
+  /** Judge the documents that produce findings instead of four per repository. */
+  reported = false,
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskAboutDocument,
 ): Promise<number> {
   if (!dryRun && askWith === undefined) requireKey('filter')
-  const repos = readList().slice(0, limit)
   const work: Array<{ repo: string; dir: string; path: string; content: string }> = []
-  for (const repo of repos) {
-    const dir = join(REPOS_DIR, slugOf(repo))
-    if (!existsSync(join(dir, '.git'))) continue
-    for (const [path, content] of documentsOf(repo, dir)) work.push({ repo, dir, path, content })
+  if (reported) {
+    const results = join(ROOT, 'results.jsonl')
+    if (!existsSync(results)) {
+      process.stderr.write(`${results} is missing; run pnpm discovery run first\n`)
+      return 2
+    }
+    for (const { repo, path } of reportedDocuments(readFileSync(results, 'utf8')).slice(0, limit)) {
+      const dir = join(REPOS_DIR, slugOf(repo))
+      const absolute = join(dir, path)
+      if (!existsSync(absolute)) continue
+      work.push({ repo, dir, path, content: readFileSync(absolute, 'utf8') })
+    }
+  } else {
+    const repos = readList().slice(0, limit)
+    for (const repo of repos) {
+      const dir = join(REPOS_DIR, slugOf(repo))
+      if (!existsSync(join(dir, '.git'))) continue
+      for (const [path, content] of documentsOf(repo, dir)) work.push({ repo, dir, path, content })
+    }
   }
   process.stderr.write(`${work.length} documents to judge, ${width} at a time\n`)
   if (dryRun) {
@@ -217,8 +266,11 @@ export async function filterMain(
       ...(await ask(stateOf(item.repo, item.dir, item.path, item.content))),
     }),
   })
-  writeFileSync(FILTER, rows.map((row) => JSON.stringify(row)).join('\n') + '\n', 'utf8')
-  process.stderr.write(`\n${rows.length} judged, ${failed} failed; ${FILTER}\n\n`)
+  // A reported-mode run must not overwrite ticket `24`'s answers: they are a
+  // different population and the comparison between them is the point.
+  const out = reported ? join(ROOT, 'filter-reported.jsonl') : FILTER
+  writeFileSync(out, rows.map((row) => JSON.stringify(row)).join('\n') + '\n', 'utf8')
+  process.stderr.write(`\n${rows.length} judged, ${failed} failed; ${out}\n\n`)
   process.stdout.write(`${tabulate(rows)}\n`)
   return 0
 }

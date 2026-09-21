@@ -144,6 +144,7 @@ async function main(argv: readonly string[]): Promise<number> {
         countFlag(argv, '--limit'),
         argv.includes('--dry-run'),
         countFlag(argv, '--concurrency') ?? 8,
+        argv.includes('--reported'),
       )
     }
     case 'families': {
