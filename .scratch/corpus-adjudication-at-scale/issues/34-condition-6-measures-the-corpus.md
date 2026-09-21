@@ -207,7 +207,7 @@ of the measurement"* — is the thing `queue` addresses, and it is job 1 of § "
 goes" arriving three days late.
 
 
-## The queue was measured against the rulings, and it does not work
+## The queue was measured against the rulings, and the first signal did not work
 
 Added 2026-09-21, the same day, after running it on the one labelled set that exists.
 
@@ -261,3 +261,87 @@ This is the second question this session to fail its control — the first was
 `REWRITE_IS_RIGHT` in ticket `32` — and the failure has the same shape both times: an existing
 instrument reached for because it was there, rather than a question designed for what was
 actually being asked.
+
+
+## The signal that does work, and it already existed
+
+Added 2026-09-21, third revision of this section in a day. The previous one is left standing
+because it is true of the question it tested.
+
+`CLAIMS_A_PATH` fails here because it asks the wrong thing: a true positive and a
+`generated-bundle` both have sentences that put a path forward. The question that separates
+them asks **which known kind of misreading this is**, with "none of the above" on the list —
+and it did not need writing, because `classify.ts` has asked it since the corpus-classify
+pass and its answers for all 32 ruled findings were already on disk.
+
+### Scored against the rulings
+
+| | result |
+|---|---|
+| true positives answering `new` | **21 of 22** |
+| false positives answering with a class | **9 of 10** |
+| rule "a class was named ⟹ read it first" | **94%** accurate, against 69% for assuming everything is true |
+| the `isReal` Noul beside it | true mean 0.51, false mean 0.43 — **separates nothing** |
+
+And the classes it names are the ones the person named, one for one: `placeholder` →
+`placeholder`, `runtime-log` → `runtime-log`, `crate-nickname` → `crate-nickname`,
+`readers-project` → `readers-project`, `generated-bundle` → `generated-bundle`,
+`foreign-project` → `foreign-project`, `comma-separated-globs` → `comma-separated-globs`,
+`another-tools-layout` → `another-tools-layout`. The one it missed is
+`third-party-convention`, which it called `new`.
+
+**The leakage caveat, stated rather than buried.** The class list was written by reading these
+very findings, so naming one of them is partly recognition and the 9-of-10 is an upper bound.
+What is *not* leakage is the other column: 22 true positives answering `new` to a list that
+was never fitted to them. That half is what the ordering rests on.
+
+### On this corpus it still saves nothing, and that is the corpus
+
+| ordering | readings to settle 19 repositories |
+|---|---|
+| reading everything | 32 |
+| arbitrary, mean of 2000 shuffles | 28.3 |
+| by `isReal` | 27 |
+| by "a class was named" | **27** — the theoretical optimum |
+
+The ordering is provably perfect here and buys 1.3 readings, because this corpus averages
+**1.7 findings per repository** and there is nothing to skip. The value of an ordering scales
+with findings per repository, and the certification corpus has none of the size where it
+matters.
+
+### On the blind thirty, where the size exists
+
+301 `path/missing` findings in 9 repositories, 131 of them (43%) carrying a named class:
+
+| repository | findings | with a class | first class named |
+|---|---|---|---|
+| `BuilderIO/agent-native` | 245 | 107 | `placeholder` |
+| `MuLTiAcidi/claudeos` | 27 | 17 | `readers-project` |
+| `eggjs/egg` | 6 | 3 | `readers-project` |
+| `hecateq/hecateq-openagent` | 4 | 2 | `another-tools-layout` |
+| `CamilleScholtz/swmpc` | 9 | 1 | `placeholder` |
+| `bmad-labs/skills` | 1 | 1 | `another-tools-layout` |
+| `BetterSEQTA/DesQTA` | 2 | 0 | — |
+| `TommyLike/KnowledgeBase` | 3 | 0 | — |
+| `imarshallwidjaja/data-etl-dagster` | 4 | 0 | — |
+
+Six of nine repositories settle on their first reading; three have no named class and cost all
+of theirs. **About 15 readings for thirty repositories**, against 301 read in full.
+
+Still a projection — the first named finding has to actually be false, which held 9 times in
+10 on the labelled set — but it rests on a measured instrument rather than on somebody's
+glance at two rows.
+
+`readers-project` is the most named class at 59 of 131, which is ticket `33` arriving from a
+second direction: 19% of findings sit in documents about somebody else's project, measured
+there by a different question over a different population.
+
+### What this does to the options
+
+Option 3 — grow the corpus — costs on the order of **half a reading per repository**. Three
+hundred repositories is roughly **150 rulings**, not 3000 findings and not the 310 the
+previous revision guessed. That is a week of somebody's evenings, not an impossibility, and
+the reason the plan was deferred in 2026-09-12 does not survive it.
+
+What does survive is the other half, unchanged through all three revisions: **growing blind
+lowers the rate.** The measurement is now cheap enough to stop arguing about and just do.

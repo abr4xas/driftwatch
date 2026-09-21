@@ -88,34 +88,46 @@ describe('the state the question is asked over', () => {
   })
 })
 
-const answered = (repo: string, text: string, claimsAPath: number) => ({
+const answered = (repo: string, text: string, jevClass: string, isReal = 0.5) => ({
   repo,
   path: 'AGENTS.md',
   check: 'path/missing',
   text,
   line: 3,
   window: 'w',
-  claimsAPath,
+  named: jevClass !== 'new',
+  jevClass,
+  isReal,
 })
 
 describe('the order, which is the whole point', () => {
-  it('puts the repository with the most doubtful finding first', () => {
+  it('puts a repository with a named class before one without', () => {
     const out = queueOf([
-      answered('o/solid', 'a', 0.9),
-      answered('o/doubtful', 'b', 0.05),
-      answered('o/middling', 'c', 0.5),
+      answered('o/unnamed', 'a', 'new'),
+      answered('o/named', 'b', 'placeholder'),
     ])
-    expect(out.indexOf('o/doubtful')).toBeLessThan(out.indexOf('o/middling'))
-    expect(out.indexOf('o/middling')).toBeLessThan(out.indexOf('o/solid'))
+    expect(out.indexOf('o/named')).toBeLessThan(out.indexOf('o/unnamed'))
   })
 
-  it('sorts within a repository worst first', () => {
-    const out = queueOf([answered('o/a', 'high', 0.9), answered('o/a', 'low', 0.1)])
-    expect(out.indexOf('low')).toBeLessThan(out.indexOf('high'))
+  it('breaks the tie between two unnamed repositories by size, cheapest first', () => {
+    const out = queueOf([
+      answered('o/big', 'a', 'new'),
+      answered('o/big', 'b', 'new'),
+      answered('o/small', 'c', 'new'),
+    ])
+    expect(out.indexOf('o/small')).toBeLessThan(out.indexOf('o/big'))
+  })
+
+  it('sorts a named class above an unnamed one inside a repository', () => {
+    const out = queueOf([
+      answered('o/a', 'plain', 'new', 0.1),
+      answered('o/a', 'classed', 'runtime-log'),
+    ])
+    expect(out.indexOf('classed')).toBeLessThan(out.indexOf('plain'))
   })
 
   it('a repository of 245 findings is one block, not 245 lines', () => {
-    const rows = Array.from({ length: 245 }, (_, i) => answered('o/big', `t${i}`, i / 245))
+    const rows = Array.from({ length: 245 }, (_, i) => answered('o/big', `t${i}`, 'new', i / 245))
     const out = queueOf(rows)
     expect(out).toContain('245 finding(s)')
     expect(out).toContain('… and 240 more, higher up')

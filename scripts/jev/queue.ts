@@ -38,7 +38,8 @@ import { CORPUS_DIR } from '../lib/paths.ts'
 import { REPOS_DIR, ROOT } from '../discovery/files.ts'
 import { runPass } from '../lib/pass.ts'
 import { openJev, requireKey } from './ask.ts'
-import { CLAIMS_A_PATH } from './questions.ts'
+import { classesIn, questionsFor, rowsIn } from './classify.ts'
+import { CORPUS_DIR as CORPUS } from '../lib/paths.ts'
 
 const OUT = join(ROOT, 'queue.jsonl')
 const RESULTS = join(ROOT, 'results.jsonl')
@@ -139,13 +140,39 @@ function readerIn(dir: string) {
   }
 }
 
-type Answer = Item & { claimsAPath: number }
-export type AskQueue = (state: QueueState) => Promise<number>
+type Answer = Item & { named: boolean; jevClass: string; isReal: number }
+export type AskQueue = (state: QueueState) => Promise<Omit<Answer, keyof Item>>
 
+/**
+ * The ordering signal, and it is `classify.ts`'s Choice rather than a Noul.
+ *
+ * Measured against the 32 ruled findings of the certification corpus. Asking
+ * *is this real* separates nothing — true positives mean 0.51, false 0.43,
+ * overlapping. Asking **which known kind of misreading this is**, with "none
+ * of the above" on the list, separates almost perfectly: 21 of 22 true
+ * positives come back `new`, 9 of 10 false positives come back carrying the
+ * class a person gave them, and the rule "a class was named, so read this
+ * first" is right 94% of the time against 69% for assuming everything is true.
+ *
+ * The caveat is why this orders and does not decide: the class list was
+ * written by reading those very findings, so naming one is partly
+ * recognition. What is not leakage is the other side — 22 true positives
+ * answering `new` to a list that was never fitted to them.
+ */
 async function jevAsk(): Promise<AskQueue> {
   const ask = await openJev()
-  return async (state) =>
-    (await ask(state, { claimsAPath: CLAIMS_A_PATH })).probability('claimsAPath')
+  const questions = questionsFor(
+    classesIn(rowsIn(readFileSync(join(CORPUS, 'CLASSIFICATION.md'), 'utf8'))),
+  )
+  return async (state) => {
+    const answers = await ask(state, questions)
+    const chosen = answers.chosen('className')
+    return {
+      named: chosen.choice !== 'new',
+      jevClass: chosen.choice,
+      isReal: answers.probability('isReal'),
+    }
+  }
 }
 
 /**
@@ -157,22 +184,34 @@ async function jevAsk(): Promise<AskQueue> {
  * of them. Sorting by the minimum puts the cheap decisions at the top of the
  * page, which is the whole point of the ordering.
  */
+/**
+ * A named class first, then the least confident of the unnamed: the first is
+ * the finding most likely to settle the repository, the second is where to
+ * keep reading if it does not.
+ */
+function rank(r: Answer): number {
+  return (r.named ? 0 : 1) + r.isReal / 10
+}
+
 export function queueOf(answers: readonly Answer[]): string {
   const byRepo = new Map<string, Answer[]>()
   for (const answer of answers) {
     byRepo.set(answer.repo, [...(byRepo.get(answer.repo) ?? []), answer])
   }
   const blocks = [...byRepo.entries()]
-    .map(([repo, rows]) => ({ repo, rows: rows.toSorted((p, q) => p.claimsAPath - q.claimsAPath) }))
-    .toSorted((a, b) => (a.rows[0]?.claimsAPath ?? 1) - (b.rows[0]?.claimsAPath ?? 1))
+    .map(([repo, rows]) => ({ repo, rows: rows.toSorted((p, q) => rank(p) - rank(q)) }))
+    .toSorted((a, b) => {
+      const byNamed = Number(b.rows.some((r) => r.named)) - Number(a.rows.some((r) => r.named))
+      return byNamed !== 0 ? byNamed : a.rows.length - b.rows.length
+    })
 
   const lines: string[] = []
   for (const { repo, rows } of blocks) {
-    const lowest = rows[0]?.claimsAPath ?? 1
-    lines.push(`\n${repo}  ${rows.length} finding(s), most doubtful at ${lowest.toFixed(2)}`)
+    const named = rows.filter((r) => r.named).length
+    lines.push(`\n${repo}  ${rows.length} finding(s), ${named} with a class named`)
     for (const row of rows.slice(0, 5)) {
       lines.push(
-        `  ${row.claimsAPath.toFixed(2)}  ${row.path}:${row.line}  ${row.text}\n` +
+        `  ${row.named ? row.jevClass : '—'}  ${row.path}:${row.line}  ${row.text}\n` +
           `        ${row.window.replaceAll('\n', ' ⏎ ').trim().slice(0, 150)}`,
       )
     }
@@ -217,7 +256,7 @@ export async function queueMain(
     width: concurrency,
     every: 100,
     nameOf: (item) => `${item.repo} ${item.text}`,
-    answer: async (item): Promise<Answer> => ({ ...item, claimsAPath: await ask(stateOf(item)) }),
+    answer: async (item): Promise<Answer> => ({ ...item, ...(await ask(stateOf(item))) }),
   })
   // Two populations, two files: a certification run must not overwrite the
   // discovery queue, because the comparison between them is the point.
