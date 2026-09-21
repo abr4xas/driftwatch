@@ -2055,3 +2055,51 @@ would throw away real `path/missing` findings to avoid reporting one YAML error.
 ### The counts
 
 None move. 66 · 341 · 32, calibration 20 · validation 12, one fixable and it is true.
+
+## Twenty-ninth round, 2026-09-21: a rule the certification corpus never saw
+
+The first rule this project has derived **entirely** from the discovery corpus, which is what
+the two-corpus split in [`spec.md`](../../.scratch/corpus-adjudication-at-scale/spec.md)
+§ "Two corpora, not one" was built to make possible. Nothing here was tuned against a
+certification repository, no repository is burnt, condition 9 does not fire, and the
+certification corpus is **unchanged: 66 · 341 · 32, calibration 20 · validation 12**.
+
+### What was found
+
+A frequency scan over the 32 209 `path/missing` findings of 2533 repositories, asking which
+first segments appear constantly and resolve nowhere. `@` is the largest class by both
+measures that matter: **128 distinct texts in 69 repositories**, and one repository in 2599
+has a top-level entry beginning with one.
+
+Two shapes, and they are the same thing:
+
+| shape | example | what it is |
+|---|---|---|
+| npm scope | `@n8n/typeorm/`, `@rails/request.js` | a package, resolved by a package manager |
+| path alias | `@/engine/`, `@/components/ui/`, `@/api/` | a `tsconfig` `paths` or Vite `resolve.alias` entry onto `src/` |
+
+Both are names a resolver turns into a location, which is exactly what `isSpecifier` already
+covered for `#lib/…` and `npm:`. It gains a third clause rather than a new rule.
+
+### What it moved
+
+| | |
+|---|---|
+| certification | **unchanged** |
+| discovery | 33 248 → 32 988, **−260 findings, 0 added** |
+
+All 129 distinct removed texts begin with `@`; nothing collateral. 132 were scoped packages,
+123 were aliases.
+
+### The cost, measured and written into the rule
+
+Three candidates in 17 607 beginning with `@` resolve to anything.
+
+And the one worth knowing: **Claude Code's `@./file` import is a path claim wearing a sigil.**
+`@../AGENTS.md` means read that file and a missing one is drift, and this rule cannot see it.
+The honest count is **5 candidates in 1 352 382 discards**, none of which resolves even with
+the `@` stripped — and all five sit in `willhama/md-file-study` and `modem-dev/ossrules`,
+which serve other projects' files, or say `@../other-project/file.js` in as many words.
+Narrowing the rule to strip the sigil is a code path for five strings, so the cost is written
+into `discard.ts` and pinned by a test instead. If that syntax becomes common, that comment
+is where to start.

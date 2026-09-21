@@ -19,6 +19,35 @@ describe('rule 1: URLs', () => {
   })
 })
 
+describe('module specifiers that start with an at sign', () => {
+  // Real cases from the discovery corpus, 128 distinct texts in 69
+  // repositories. Two shapes and both are a resolver's business: an npm
+  // scoped package, and the `paths` alias a tsconfig or a Vite config maps
+  // onto `src/`.
+  it.each([
+    '@n8n/typeorm/',
+    '@rails/request.js',
+    '@blackbelt-technology/pi-dashboard-shared/test-support/setup-home.ts',
+    '@/engine/',
+    '@/components/ui/',
+    '@/api/',
+    '@skills/testing/test-driven-development/SKILL.md',
+  ])('discards %s', (text) => {
+    expect(discardReason(text)).toBe('module-specifier')
+  })
+
+  it('does not discard a path that merely contains an at sign later on', () => {
+    expect(discardReason('docs/guide@v2.md')).toBeUndefined()
+  })
+
+  // The admitted cost, pinned so that closing it is a deliberate change: this
+  // is Claude Code's import syntax and it really is a path claim. 5 candidates
+  // in 1 352 382 discards, none of which resolves.
+  it('gives up Claude Code’s @./file import, which is a path wearing a sigil', () => {
+    expect(discardReason('@../AGENTS.md')).toBe('module-specifier')
+  })
+})
+
 describe('module specifiers, which start with a hash', () => {
   // Real case (vercel-labs/marketing-team-eve-template): `#lib/` is the `#*`
   // subpath declared under `imports` in package.json, not a directory.

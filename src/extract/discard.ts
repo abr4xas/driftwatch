@@ -65,13 +65,42 @@ const GLOB_OR_PLACEHOLDER = /[*?{}<>$[\]]/u
  * `:12` line suffix, and that one comes after a slash — `SCHEME` is anchored,
  * so it cannot reach it.
  *
- * Neither is a heuristic about likelihood. Both are the extractor being told
- * about a syntax it did not know.
+ * A leading `@` is the third, and it covers two things that are one thing.
+ * `@n8n/typeorm/`, `@rails/request.js`, `@blackbelt-technology/…` are npm
+ * **scoped packages**; `@/engine/`, `@/components/ui/`, `@/api/` are the
+ * **path alias** a `tsconfig.json` `paths` entry or a Vite `resolve.alias`
+ * maps onto `src/`. Both are names a resolver turns into a location, which is
+ * what every other entry in this function is, and neither is a location.
+ *
+ * Both were found in the discovery corpus and neither has ever appeared in the
+ * certification corpus: 128 distinct texts across 69 repositories, and the
+ * alias half is the larger — `@/engine/` alone is 44 findings.
+ *
+ * What it costs is two things, both measured rather than assumed.
+ *
+ * A directory literally named `@something`: **one repository in 2599** has a
+ * top-level entry starting with `@`, and of 17 607 discarded candidates
+ * beginning with one, **three** resolve to anything.
+ *
+ * And Claude Code's `@./file` import, which *is* a path claim wearing a
+ * sigil — `@../AGENTS.md` means read that file, and a missing one is drift.
+ * The rule cannot see it and the honest count is **5 candidates in 1 352 382
+ * discards**, none of which resolves even with the `@` stripped. Narrowing the
+ * rule to strip the sigil instead is a code path for five strings, so the cost
+ * is written here rather than built around. If that syntax becomes common this
+ * paragraph is where to start.
+ *
+ * The alias case is worth stating separately because the tool could not answer
+ * it even if it tried: resolving `@/engine/` means reading `tsconfig.json`'s
+ * `paths`, and a claim we cannot resolve is not a claim we may report broken.
+ *
+ * None of these is a heuristic about likelihood. All three are the extractor
+ * being told about a syntax it did not know.
  */
 const SCHEME = /^[a-z][a-z\d+.-]*:/u
 
 function isSpecifier(text: string): boolean {
-  return text.startsWith('#') || SCHEME.test(text)
+  return text.startsWith('#') || text.startsWith('@') || SCHEME.test(text)
 }
 
 /**
