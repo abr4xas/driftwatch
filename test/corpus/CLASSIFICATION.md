@@ -17,9 +17,9 @@ Round eighteen added two sources to the validation group and **no findings**: al
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
 | 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 19 |
-| 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
-| 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
+| 3 | ~~Median FP per repo = 0~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): implied by 6 |
+| 4 | ~~90th percentile of FP per repo ≤ 1~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): implied by 6 |
+| 5 | ~~No repo above 2 FP~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): unstatable over a repository of real size |
 | 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **58 of 66 = 87.9%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — see below |
 | 7 | ≥ 1 true positive in validation | 8 | **met** |
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
@@ -2103,3 +2103,43 @@ which serve other projects' files, or say `@../other-project/file.js` in as many
 Narrowing the rule to strip the sigil is a code path for five strings, so the cost is written
 into `discard.ts` and pinned by a test instead. If that syntax becomes common, that comment
 is where to start.
+
+
+## Thirtieth round, 2026-09-21: three conditions withdrawn, and none of them was measuring
+
+No finding moved and no snapshot changed. What changed is the table above.
+
+[ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)
+withdraws conditions 3, 4 and 5. Two of them had stopped being conditions the day
+[ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) rewrote condition 6,
+and nobody checked:
+
+- **3, median false positives per repo = 0.** If 90% of repositories have zero, more than half
+  do, so the median is zero. It cannot fail while 6 holds.
+- **4, 90th percentile ≤ 1.** The 90th percentile of a distribution with 90% zeroes is zero.
+  Same.
+
+Both have been reported **met** at every round since, which is the tell: a condition that has
+never failed deserves the question *could it have?*
+
+- **5, no repo above 2.** The only one of the three that added anything, and the one ticket
+  `35` broke against. `BuilderIO/agent-native` produces 244 findings; showing it is not above
+  two means ruling on all 244, because a ceiling is only provable by exhaustion. It held here
+  because `scripts/corpus/repos.ts` keeps the list short and picks new repositories small, for
+  disk. That is a property of the corpus, not of the tool.
+
+Three replacement denominators were measured before withdrawing it, and all three are worse —
+per 100 sources gives `edgecrab` **200**, per finding reintroduces the defect ADR-0009 killed,
+and "the first finding is true" scores 63% while duplicating condition 6. The numbers are in
+the ADR.
+
+**What is lost:** nothing now bounds how bad a single repository may get. That is accepted
+because condition 2 — zero false positives among the fixable, with no rate modulating it — is
+untouched, and it is the one that guards against damage rather than annoyance.
+
+**What is unblocked:** a repository can now join the corpus by answering condition 6 alone —
+*does it produce a false positive at all* — which is one ruling when it does. Ticket `35`'s
+thirty repositories go from 306 readings to roughly sixteen.
+
+**What has not changed:** condition 6 is still not met, at 58 of 66 = 87.9%. Withdrawing three
+conditions moves it by nothing, which is the point of withdrawing them.

@@ -1,6 +1,6 @@
 # ADR-0006 — The M1 precision criterion
 
-- **Status:** accepted; condition 6 withdrawn by [ADR-0009](./0009-precision-is-counted-in-quiet-repos.md)
+- **Status:** accepted; condition 6 withdrawn by [ADR-0009](./0009-precision-is-counted-in-quiet-repos.md), conditions 3, 4 and 5 by [ADR-0015](./0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)
 - **Date:** 2026-09-09
 - **Replaces:** the acceptance criterion in `ROADMAP.md` § M1 and the gate line in `AGENTS.md` § "Order of work"
 
@@ -56,9 +56,9 @@ The second is the one that really matters, and the original criterion ignored it
 
 Counted per repo, over the whole corpus:
 
-3. **Median false positives per repo: 0.** The typical experience has to be zero noise.
-4. **90th percentile ≤ 1.**
-5. **No repo above 2.**
+3. ~~**Median false positives per repo: 0.**~~ **Withdrawn 2026-09-21 by [ADR-0015](./0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)**: implied by condition 6 as ADR-0009 rewrote it — 90% of repos at zero puts the median at zero — so it cannot fail independently.
+4. ~~**90th percentile ≤ 1.**~~ **Withdrawn 2026-09-21 by [ADR-0015](./0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)**: also implied by condition 6 — the 90th percentile of a distribution with 90% zeroes is zero.
+5. ~~**No repo above 2.**~~ **Withdrawn 2026-09-21 by [ADR-0015](./0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)**: the only one of the three that added anything, and it can only be shown by exhaustive adjudication. Over `BuilderIO/agent-native`'s 244 findings it is unstatable, and it held until now because the corpus was built out of small repositories on purpose.
 
 Two doubtful lines in a run are forgiven. From the third on it reads as a pattern, and the person starts distrusting the true ones too, which is the failure that kills the project.
 

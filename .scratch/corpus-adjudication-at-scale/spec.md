@@ -554,7 +554,7 @@ same day.
 | `32` | `skill/frontmatter`'s autofix, measured where it actually fires | bug | **superseded**: the check was withdrawn entirely, round 27 |
 | `33` | Who are these documents about? | research | **new**: 19% of findings sit in documents about another project |
 | `34` | Condition 6 measures the corpus, and the corpus is small on purpose | research | **new**: growing it blind lowers the rate |
-| `35` | The corpus cannot grow under its own conditions | research | **new**: conditions 3-5 are per finding and unstatable over a real repository |
+| `35` | The corpus cannot grow under its own conditions | research | **resolved** by ADR-0015: the three conditions are withdrawn, two as tautologies |
 
 This table stopped being maintained at `14`. Tickets `15` to `26` exist in
 [`issues/`](./issues/) and carry their own `Status:` line, which is the authority; the rows

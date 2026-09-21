@@ -7,8 +7,12 @@ are unstatable over a repository the size of a real one.
 
 **Blocked by:** nothing. It has the measurement and the wall.
 
-**Status: new 2026-09-21.** Thirty repositories were selected, pinned and queued; nine
-findings were ruled by hand; the growth was then abandoned for a reason that is the ticket.
+**Status: resolved 2026-09-21 by [ADR-0015](../../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md).**
+Thirty repositories were selected, pinned and queued; nine findings were ruled by hand; the
+growth hit the wall below; and the wall was then removed by withdrawing the three conditions
+that made it. Conditions 3 and 4 turned out to be arithmetic consequences of condition 6 and
+condition 5 unstatable over a repository of real size. The thirty are affordable again — about
+sixteen readings — and the selection survives in [`35-packet.md`](./35-packet.md).
 
 ## What was done
 
