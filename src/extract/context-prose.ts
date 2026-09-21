@@ -18,13 +18,33 @@
  */
 
 /**
+ * The marker lists below are exported, and only `scripts/` reads them.
+ *
+ * A gate carries two things that fail independently: which markers it knows,
+ * and how far each one reaches. Ticket `27` measures the second, and to say
+ * "`optional` reached across a bullet" rather than "`hedged` did" it has to
+ * know which entry fired — which `markerReason` decides here with
+ * `lower.includes(marker)` and does not record.
+ *
+ * Exporting is the cheap half of that and copying is the expensive half: a
+ * hand-copied list of manifest filenames fell one entry behind `RUNNERS` and a
+ * real `script/missing` finding disappeared without an error (ticket `06`).
+ * `sparse-clone.ts` imports `RUNNERS` for that reason and the scope pass
+ * imports these for the same one.
+ *
+ * Nothing in `src/` outside this file reads them, and none of them joins the
+ * frozen surface: `src/index.ts` re-exports nothing from here, so `CONTRACT.md`
+ * is untouched.
+ */
+
+/**
  * The path is an **example** of a convention, not a path in the repo.
  * Real case (BerriAI/litellm): "Use subdirectories that match the
  * implementation path, **such as** `auth/test_token_exchange.py` for
  * `auth/token_exchange.py`". Neither file exists, and they should not: the
  * sentence describes how to name the ones you create.
  */
-const EXAMPLE = [
+export const EXAMPLE = [
   'such as',
   'for example',
   'for instance',
@@ -43,7 +63,7 @@ const EXAMPLE = [
  * The document already says it may not be there; reporting it contradicts the
  * author.
  */
-const HEDGED = [
+export const HEDGED = [
   'if exists',
   'if it exists',
   'if present',
@@ -107,7 +127,7 @@ const HEDGED = [
  * is a great many documents saying a thing *is* there. The counts are in
  * `CLASSIFICATION.md` round twenty-three.
  */
-const ELSEWHERE = [
+export const ELSEWHERE = [
   'not in this repo',
   'not part of this repo',
   'not included in this repo',
@@ -131,7 +151,7 @@ const ELSEWHERE = [
  * too much, because "add" and "create" show up everywhere in any
  * documentation.
  */
-const CREATE_IMPERATIVES = [
+export const CREATE_IMPERATIVES = [
   'create',
   'add',
   'new',
@@ -245,7 +265,7 @@ function segmentAround(text: string, claimAt: number): string {
  * above and nothing else; that is evidence, not proof, and it is the reason
  * this rule was measured before being kept rather than after.
  */
-const CONDITIONAL = [
+export const CONDITIONAL = [
   'would',
   'could',
   'might',
@@ -311,7 +331,7 @@ export type ProseReason =
  * the prose rather than a segment of a path: without that, `src/if.ts` in one
  * clause and "exists" in the next is a hedge nobody wrote.
  */
-const HEDGED_SPLIT = [/(?<![\w/.-])if\b(?:(?![.!?;]\s)[\s\S]){0,80}?\bexists\b/u]
+export const HEDGED_SPLIT = [/(?<![\w/.-])if\b(?:(?![.!?;]\s)[\s\S]){0,80}?\bexists\b/u]
 
 /** One character per inline code span: not whitespace, not part of a word. */
 function withMaskedCode(text: string): string {

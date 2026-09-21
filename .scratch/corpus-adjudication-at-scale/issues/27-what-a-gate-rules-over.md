@@ -9,7 +9,7 @@ where there is something to find.
 **Blocked by:** nothing. The discovery corpus is cloned (2599 repositories) and
 `discards.jsonl` already holds 1 352 382 discards over the 2533 that audited.
 
-**Status: new.**
+**Status: resolved 2026-09-20.** Built, run over 670 candidates, read. See §"Answer".
 
 ## Why this is not job 3
 
@@ -249,3 +249,103 @@ The baseline narrows it rather than confirming it as designed.
   control on `haddocking/haddock3`.
 
 1070 items, one request each carrying both questions.
+
+## Answer
+
+Built and run 2026-09-20. `scripts/jev/scope.ts`, `pnpm discovery scope`, 670 candidates,
+**670 answered and 0 failed**.
+
+`pnpm corpus --check` before and after the change to `src/extract/context-prose.ts`:
+**66 repos · 341 sources · 37 findings, calibration 21 · validation 16**, identical both
+times. Exporting six constants moved nothing, which is what it was supposed to do.
+
+### The control holds, and not through the column it was supposed to hold through
+
+The negative control was composed wrong. `over-reach` is counted only among rows that clear
+`CLAIMS_AT`, and no control row cleared it, so that column was structurally silent on the
+controls rather than reassuringly zero. The control is real anyway, in the raw distribution,
+which is the honest place to read it:
+
+| | n | mean `qualifies` | median | >= 0.8 |
+|---|---|---|---|---|
+| control (`bare-word`, `url`, `home-path`) | 36 | **0.22** | 0.17 | **0** |
+| gated | 634 | 0.43 | 0.37 | 106 |
+
+Where there is no marker the question says no qualification reaches the candidate; where
+there is one it fires on about a sixth. `home-path` is the noisiest control at mean 0.36,
+which reads right: a `~/...` path usually sits in prose about the reader's own machine, and
+that is close to being a qualification.
+
+### The table
+
+`n` is asked, `claims` is `claimsAPath >= 0.8`, `over` is that **and** `qualifies <= 0.2`,
+`unsure` is that and `qualifies` in the middle band.
+
+| gate | marker | n | claims | over | unsure |
+|---|---|---|---|---|---|
+| `hedged` | `optional` | 78 | 47 | **17** | 3 |
+| `example` | `e.g.` | 120 | 34 | **14** | 2 |
+| `creation-target` | — | 51 | 44 | **12** | 8 |
+| `hedged` | `if…exists` (split) | 57 | 45 | **11** | 10 |
+| `external-root` | — | 73 | 29 | **11** | 3 |
+| `hedged` | `deprecated` | 11 | 9 | 5 | 0 |
+| `example` | `such as` | 36 | 11 | 3 | 0 |
+| `example` | `for example` | 24 | 11 | 3 | 0 |
+| `conditional` | `could` | 19 | 3 | 3 | 0 |
+| `hedged` | `generated from` | 19 | 8 | 3 | 2 |
+| `conditional` | `would` | 15 | 6 | 2 | 1 |
+| `hedged` | `auto-generated` | 14 | 6 | 2 | 2 |
+| `another-repo` | — | 26 | 3 | 1 | 0 |
+
+**100 of 634 read as a real claim the gate did not govern.** No number here is a precision,
+none enters `CLASSIFICATION.md`, and none moves a condition of ADR-0006.
+
+### What it says, and the one thing it must not be read as saying
+
+**`optional` is the largest single row, and that experiment has already been run and lost.**
+17 over-reaches out of 78 is the biggest number in the table, and `16` changed exactly this
+scope, audited 700 repositories, got two new findings, read both as false positives, and
+reverted. A row this table ranks first is therefore not a recommendation: the marker prevents
+two false positives and costs no findings in the population that was actually diffed. What is
+new is the size of the bound — 17 rather than the one case `16` read — and that says the
+revert was more expensive than it looked, not that it was wrong. **Anyone reopening it owes a
+diff, not this row.**
+
+**`creation-target` is the finding.** 44 of 51 read as claims and 12 of those as ungoverned,
+plus 8 in the ambiguous band, on a gate that reaches the **whole document**. The module admits
+the cost — "a document that says Create `x` in one place and asserts `x` exists elsewhere" —
+and it turns out to be roughly a quarter of the gate's claimed candidates rather than an edge.
+It is also the gate whose scope has the most obvious cheaper alternative (a section, or a
+distance bound, instead of the document), so it is the first experiment worth spending.
+
+**The split hedge carries the most doubt of anything measured.** `if…exists (split)` is 45
+claims, 11 over, and **10 unsure** — the highest ambiguous count in the table, on the one
+marker that is a regex with a hand-tuned `{0,80}` character window rather than a word. That
+constant is the most directly testable thing in the file.
+
+**`e.g.` is the volume case.** 14 over-reaches out of 120, a low rate on the largest sample,
+and the shortlist's loosest entries are mostly its: a structural heading listing real files
+where an `e.g.` three lines up is about something else.
+
+**`conditional` behaves as `07` said.** 3 claims out of 19 `could`, and all 3 ungoverned;
+6 of 15 `would`, 2 ungoverned. The rate is bad and the volume is nil, which is exactly the
+shape `07` described and the reason the list stays defensible.
+
+### The shortlist, as tickets
+
+In the order the table supports spending them:
+
+1. **`creation-target`'s document-wide reach.** Highest claimed count, an admitted cost, and
+   an obvious narrower scope to test.
+2. **`HEDGED_SPLIT`'s `{0,80}` window.** Most ambiguity, one tunable integer, cheapest
+   possible experiment.
+3. **`external-root`'s section scope.** 29 claims and 11 over on a gate scoped
+   heading-to-heading.
+
+`optional` is deliberately not on this list. `16` owns it.
+
+### What was not done
+
+No rule was changed. Each of the three above is `16`'s method — change the scope, audit the
+discovery corpus before and after, diff the findings by hand — and each is a ticket of its
+own.

@@ -279,7 +279,9 @@ job does. This job produces a table saying **where an experiment is worth spendi
 experiment is its own ticket. A pass that shipped a table and an experiment together would
 read as though the table had concluded something. It concludes nothing; it says where to look.
 
-Ticket `27`.
+Ticket `27`, and it is **resolved**: 670 candidates, a negative control that holds, and
+three gate-scope experiments worth spending. `creation-target` reaches the whole document and
+roughly a quarter of its claimed candidates are ungoverned, which is the first one.
 
 ## Substituting judgement for fragile code inside `scripts/`, and why there is nothing to do
 
@@ -536,7 +538,7 @@ same day.
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` names? | research | a smoke test of job 1, gating nothing |
 | `05` | Pre-register the decision rule for condition 6 | task | no longer blocking |
 | `03` | ~~Sampling design for a model-adjudicated corpus~~ | — | **withdrawn**: nothing is model-adjudicated |
-| `27` | What does a gate rule over, and where does it reach too far? | research | **new** 2026-09-20, the fourth job |
+| `27` | What does a gate rule over, and where does it reach too far? | research | **resolved**: 100 of 634 gate discards read as claims the gate did not govern |
 | `28` | A `Verdict` nothing produces — is it a residue or an intention owed? | research | **new** 2026-09-20, raised while reading for `27` |
 
 This table stopped being maintained at `14`. Tickets `15` to `26` exist in
