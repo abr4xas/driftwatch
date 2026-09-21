@@ -108,9 +108,10 @@ export const frontmatterInvalid: Check = {
     }
 
     /**
-     * A key written with nothing after it asserts no type, so there is no
-     * type to be wrong. "Missing" and "empty" are `skill/frontmatter`'s
-     * rules, and reporting them here would double them.
+     * A key written with nothing after it asserts no type, so there is no type
+     * to be wrong. Reporting the absence of a value was `skill/frontmatter`'s
+     * and went with it; nothing replaced it, because an empty `description` is
+     * malformed rather than false.
      */
     if (fact.type === 'empty') return null
 

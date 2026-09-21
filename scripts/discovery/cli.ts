@@ -21,7 +21,6 @@
  *   pnpm discovery filter    [--dry-run]    the acquisition filter's two judgements
  *   pnpm discovery scope     [--family F]   what a gate rules over (`27`)
  *   pnpm discovery diff --before A --after B   what a rule change moved
- *   pnpm discovery names    [--limit N]   are the skill-name autofixes right?
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and
@@ -105,14 +104,6 @@ async function main(argv: readonly string[]): Promise<number> {
       const { sampleMain } = await import('./discards.ts')
       return sampleMain(countFlag(argv, '--sample') ?? 20)
     }
-    case 'names': {
-      const { namesMain } = await import('../jev/names.ts')
-      return namesMain(
-        countFlag(argv, '--limit'),
-        countFlag(argv, '--concurrency') ?? 8,
-        argv.includes('--dry-run'),
-      )
-    }
     case 'diff': {
       const before = stringFlag(argv, '--before')
       const after = stringFlag(argv, '--after')
@@ -161,7 +152,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|names|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|status>\n',
       )
       return 2
   }

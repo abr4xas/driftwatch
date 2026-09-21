@@ -164,23 +164,6 @@ export function suggestAnchor(anchors: DocumentAnchors, key: string): Suggestion
 }
 
 /**
- * The known key an unknown one is a near-miss of.
- *
- * This is what narrows `skill/frontmatter`'s unknown-key rule from "not on our
- * list" to "a misspelling of something on our list" ([ADR-0011](../../docs/adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md)):
- * the key set is not ours, Claude Code adds fields between releases, and a list
- * one release behind would report a valid `SKILL.md`. A field added later is
- * not two edits from an older one, so the divergence can only cost a detection.
- */
-export function suggestKey(known: readonly string[], key: string): Suggestion | undefined {
-  const only = nearestUnique(known, key)
-  if (only === undefined) return undefined
-  // Never fixable: it is a plausible correction, not the only one, and
-  // rewriting somebody's key means deciding what they meant.
-  return { value: only, confidence: 0.6, fixable: false }
-}
-
-/**
  * The script a mistyped one is a near-miss of, as a whole corrected command.
  *
  * `SPEC.md` § 8 lists this as autofixable, and unlike the two suggestions above

@@ -85,13 +85,6 @@ Nor is a command claimed at all when:
 
 If the script does not exist but there is one with a similar name (edit distance ≤ 2), it is suggested and autofixable.
 
-#### `skill/frontmatter`
-A `SKILL.md` whose `name` is not the directory it lives in — the directory was renamed and the frontmatter did not follow.
-
-Reported with the two shapes that make the question unanswerable: frontmatter missing outright, and frontmatter with no `name` or `description` (or an empty one). Those say "could not look", not "is malformed".
-
-**The format itself is not checked**, and that is § Non-goals in `BRIEF.md` rather than an omission: a `name` in snake_case, a short `description` and a key the format does not list are all wrong the day they are written, and this tool reports what a repository has since made false. `skills-ref validate` is what answers the other question.
-
 #### `link/broken`
 A relative Markdown link to a file that does not exist, or to an anchor (`#section`) that does not exist in the target file.
 
@@ -347,7 +340,6 @@ It only applies when the correction is **unambiguous**: there is exactly one can
 Autofixable:
 - `path/missing` with a single candidate by basename.
 - `script/missing` with a single script at edit distance ≤ 2.
-- `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's). Withheld when the directory name is not itself kebab-case: applying it would trade the finding for the kebab-case one, and a fix whose output is a finding is not a fix.
 
   Withheld, equally, when the directory is longer than 64 characters, which is the [specification](https://agentskills.io/specification.md)'s limit and what `skills-ref validate` enforces. That limit is a **gate and not a rule**: an over-long `name` is reported nowhere, because it is as wrong the day it is written as a year later and this tool is about documents that no longer match their repository. It still has to be known here, or the fix hands somebody an edit that makes their skill invalid.
 

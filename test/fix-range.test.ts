@@ -27,11 +27,6 @@ async function editsIn(
 }
 
 /** A `SKILL.md` whose `name` disagrees with its directory: the one autofix. */
-function skill(name: string): Record<string, string> {
-  return {
-    '.claude/skills/my-skill/SKILL.md': `---\nname: ${name}\ndescription: A skill that does a thing worth describing at length.\n---\n\n# Skill\n`,
-  }
-}
 
 describe('a path fix replaces the path and nothing around it', () => {
   it('covers the fragment as written', async () => {
@@ -111,30 +106,6 @@ describe('a path fix is refused when the correction would change a convention', 
       'src/helpers/date.ts': '',
     })
     expect(edits).toEqual([])
-  })
-})
-
-describe("a skill's name fix replaces the value, never the key", () => {
-  it('covers the value token', async () => {
-    const edits = await editsIn(skill('other-name'))
-    expect(edits).toHaveLength(1)
-    // The claim covers `name`. An edit that inherited it would produce
-    // `my-skill: other-name`, which is the way this milestone corrupts a file.
-    expect(edits[0]?.covers).toBe('other-name')
-    expect(edits[0]?.replacement).toBe('my-skill')
-  })
-
-  it("keeps the author's quoting", async () => {
-    const edits = await editsIn(skill('"other-name"'))
-    expect(edits[0]?.covers).toBe('"other-name"')
-    expect(edits[0]?.replacement).toBe('"my-skill"')
-  })
-
-  it('is not thrown off by a value longer or shorter than its key', async () => {
-    const short = await editsIn(skill('x-y'))
-    expect(short[0]?.covers).toBe('x-y')
-    const long = await editsIn(skill('a-considerably-longer-name-than-the-key'))
-    expect(long[0]?.covers).toBe('a-considerably-longer-name-than-the-key')
   })
 })
 

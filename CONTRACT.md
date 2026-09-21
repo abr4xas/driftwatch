@@ -32,7 +32,6 @@ records what is emitted rather than what was intended.
 - `link/broken` — tier 1, defaults to error
 - `path/missing` — tier 1, defaults to error
 - `script/missing` — tier 1, defaults to error
-- `skill/frontmatter` — tier 1, defaults to error
 
 ## CLI flags
 

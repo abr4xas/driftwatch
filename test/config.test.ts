@@ -385,7 +385,6 @@ describe('the sources key', () => {
       'script/missing',
       'link/broken',
       'frontmatter/invalid',
-      'skill/frontmatter',
     ])
   })
 })

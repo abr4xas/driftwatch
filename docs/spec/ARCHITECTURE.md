@@ -270,15 +270,11 @@ Three refusals shape the rest, and each is a false positive class:
 - **A template placeholder silences the block whole.** `description: {{DESCRIPTION}}` parses as a mapping; the file it generates will hold a string. Same direction the path extractor takes with placeholders.
 - **A boolean spelled as a word is accepted.** `alwaysApply: yes` is a string under YAML 1.2 core, which `yaml` implements, and a boolean under the 1.1 parsers half the ecosystem still loads frontmatter with. We cannot tell whose parser the author had in mind, and only the permissive reading cannot report a file that works.
 
-The extractor stays schema-free: it emits one claim per top-level key carrying the type it observed, and the table lives with the check. The division with `skill/frontmatter` follows from it — this check owns **types**, that one owns **structure**, and a `description` that is a list has no length to be too short.
+The extractor stays schema-free: it emits one claim per top-level key carrying the type it observed, and the table lives with the check.
 
 ---
 
-## Skill frontmatter
-
-`skill/frontmatter` reads a `SKILL.md`'s frontmatter as a **structure**, and only that: a field whose *type* is wrong is `frontmatter/invalid`'s finding, and a `description` that is a list has no length to be too short. A block that does not parse therefore produces one finding rather than six.
-
-Four of the five rules read the claims `extract/frontmatter.ts` already emits — one per top-level key, positioned at the key token. The fifth thing needed is the block itself, because "there is no `name`" is not a fact about any key; `extract/skill.ts` claims it at the opening `---`, and claims the first line of the file when there is no block at all.
+## One finding per claim
 
 `Check.run` returns one finding per claim, which turns out to shape the output for the better rather than constrain it:
 

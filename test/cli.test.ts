@@ -168,7 +168,7 @@ describe('main', () => {
 
   it('--skip that empties the registry is refused, not reported as no drift', async () => {
     const c = capture()
-    await expect(main(['--skip', 'path,script,link,frontmatter,skill'], c.io, CWD)).resolves.toBe(
+    await expect(main(['--skip', 'path,script,link,frontmatter'], c.io, CWD)).resolves.toBe(
       EXIT.toolFailure,
     )
     expect(c.stderr()).toContain('no checks enabled')

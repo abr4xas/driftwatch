@@ -182,7 +182,7 @@ function refuseModuleConfig(path: string, where: string): never {
  * Reads a YAML config.
  *
  * `yaml` is already a runtime dependency — `src/parse/frontmatter.ts` needs it
- * for `frontmatter/invalid` and `skill/frontmatter` — but it is imported here
+ * for `frontmatter/invalid` — but it is imported here
  * **lazily**, because that path only runs when a document actually has
  * frontmatter and this one would otherwise run on every invocation. The
  * cold-start budget is 80 ms and `AGENTS.md` § Dependencies is explicit that it

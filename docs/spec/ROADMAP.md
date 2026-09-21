@@ -81,7 +81,6 @@ This is the milestone that decides whether the project is worth it. Everything e
 
 ## M2 — The other tier 1 checks — **closed 2026-09-10**
 - `script/missing` resolving the nearest `package.json` (monorepo)
-- `skill/frontmatter` complete
 - `link/broken` including anchors
 - `frontmatter/invalid`
 - Inline ignore directives
@@ -109,7 +108,7 @@ Two things M2 also owed and paid:
 
 **Closed with all three delivered and the acceptance met**, in seven tickets. 496 tests, the corpus green at 66 repos with no snapshot moved, and the tool silent over its own repo and over `docs/`.
 
-**What the milestone was actually built around** is a trap the ticket that found it is named after. `Claim.offset` says it "enables --fix without reformatting", and that is true for one of the three autofixes: a `skill/frontmatter` claim spans the **key** token, so replacing it writes `my-skill: wrong-thing`, and a path claim from a Markdown link spans the whole url, so replacing it deletes the `#anchor`. `src/fix/range.ts` owns the answer now, the way `verify/path-claim.ts` owns the verdict on a path claim, and every branch of it checks the bytes it is about to overwrite before writing them.
+**What the milestone was actually built around** is a trap the ticket that found it is named after. `Claim.offset` says it "enables --fix without reformatting", and that is true for one of the autofixes: a path claim from a Markdown link spans the whole url, so replacing it deletes the `#anchor`. (`skill/frontmatter`'s name rewrite was the other, and it was withdrawn with the check.) `src/fix/range.ts` owns the answer now, the way `verify/path-claim.ts` owns the verdict on a path claim, and every branch of it checks the bytes it is about to overwrite before writing them.
 
 Three decisions worth carrying forward:
 

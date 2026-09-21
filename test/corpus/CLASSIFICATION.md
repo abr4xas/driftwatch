@@ -2,14 +2,14 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 37 findings.**
+Corpus: **66 public repos pinned to a commit, 32 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **37 findings, 27 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, and round twenty-six closed one class and measured another away.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **32 findings, 22 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, round twenty-six closed one class and measured another away, and round twenty-seven withdrew `skill/frontmatter` entirely.
 Of the 66, **32 form the validation group**. No replacement is outstanding.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 71 sources, 16 findings, 12 true and 4 false.**
+Validation group measurement: **32 repos, 71 sources, 12 findings, 8 true and 4 false.**
 
 Round eighteen added two sources to the validation group and **no findings**: all 48 of its new findings landed in calibration. The validation measurement is unchanged, which is why the conditions below can still be read at all.
 
@@ -25,7 +25,7 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus/repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. All six are true.
+Fixable findings: **1**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. Round twenty-seven withdrew the check that produced those five, so the one that remains is `fireSeqSearch`'s `path/missing`, and it is true.
 
 **Condition 6 is not met, and was not noticed.** Eight of the 66 repositories carry a false
 positive, not five: round eighteen opened three classes that were deliberately left open — the
@@ -113,7 +113,7 @@ lives.
 
 ## The full corpus
 
-The corpus produces **37 findings, 27 true and 10 false**, so 73.0% aggregate — and the aggregate
+The corpus produces **32 findings, 22 true and 10 false**, so 68.8% aggregate — and the aggregate
 is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
@@ -168,7 +168,7 @@ true which round thirteen had ruled **false**, because the verdict was fourteen 
 away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
 be fed to a model; the error is the argument for it.
 
-**27 true, 10 false, 37 findings.**
+**22 true, 10 false, 32 findings.**
 
 | # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
 |---|---|---|---|---|---|---|---|
@@ -188,27 +188,22 @@ be fed to a model; the error is the argument for it.
 | 14 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:93:60` | `path/missing` | `packages/server/src/server/auth/` | **true** | — | validation, round 14 |
 | 15 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:98:79` | `path/missing` | `packages/client/src/client/auth-extensions.ts` | **true** | — | validation, round 14 |
 | 16 | `northword/zotero-format-metadata` | `AGENTS.md:44:89` | `path/missing` | `content/scripts/linter.js` | **false** | generated-bundle | validation, round 14 |
-| 17 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | calibration, round 22 |
-| 18 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
-| 19 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
-| 20 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
-| 21 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
-| 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
-| 23 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
-| 24 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
-| 25 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
-| 26 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 27 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 28 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 29 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 30 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 31 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 33 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
-| 34 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
-| 35 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
-| 36 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
-| 37 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
+| 17 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
+| 18 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 19 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 20 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
+| 21 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
+| 22 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
+| 23 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
+| 24 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
+| 25 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 26 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 27 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 28 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
+| 29 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
+| 30 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
+| 31 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
+| 32 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
 
 ---
 
@@ -1939,3 +1934,78 @@ round twenty-five recorded it.
 
 The justified change did not move the bar and the change that would move the bar is not
 justified. Ticket `20` is unchanged and stays recorded.
+
+## Twenty-seventh round, 2026-09-21: `skill/frontmatter` is withdrawn
+
+Angel's decision, and it is the third time he has asked the same question. Round twenty-five
+quoted him — *"¿por qué hacemos lint de skills?"* — took three lint rules out and kept the
+fourth on the grounds that it was drift. This round takes the fourth.
+
+> no debemos cambiar el nombre a ninguna skill, no somos un validador de skills
+>
+> yo lo único que quiero es validar que las rutas que mencionan sean las correctas
+
+That is a **scope** decision, not a precision one, and it costs true positives rather than
+false ones. What follows is what it cost, so that nobody reads the drop from 37 to 32 as an
+improvement.
+
+### The five findings, and they were ruled true
+
+| repository | `name` | directory | round 24's ruling |
+|---|---|---|---|
+| `securego/gosec` | `Fix Gosec Bug From Issue` | `gosec-fix-issue` | **true** |
+| `securego/gosec` | `Create New Gosec Rule` | `gosec-new-rule` | **true** |
+| `securego/gosec` | `Update Gosec Action Version` | `gosec-update-action-version` | **true** |
+| `securego/gosec` | `Update Supported Go Versions` | `gosec-update-go-versions` | **true** |
+| `openai/codex` | a `name` that had lost a word | `code-review-breaking-changes` | **true**, round 22 |
+
+They are removed from the per-finding table because that table is held to the snapshots by
+`corpus-bookkeeping.test.ts` and the snapshots no longer carry them. They are recorded here
+instead, with their rulings intact. **Nothing about round 24's reading was wrong**; what
+changed is that the question it answered is no longer one this tool asks.
+
+Round 24's own justification is the tell, and it is worth quoting against itself:
+
+> `skills-ref validate` rejects every one of them three times over — not lowercase, invalid
+> characters, directory does not match name — and accepts the rewritten form.
+
+That is a validation argument. It is the same argument round twenty-five rejected for the
+other three rules, one round later, and it was left standing here because this rule's right
+hand side happens to live on disk. Being repo-dependent made it look like drift. It is not:
+a `SKILL.md` that says `name: "AgentDB Advanced Features"` in a directory called
+`agentdb-advanced` asserts nothing false about the repository.
+
+### What the discovery corpus said, and it is not a measurement
+
+Recorded because it is why the question was asked again rather than as evidence: over 2533
+discovery repositories the check produced **1884 findings, 670 of them fixable rewrites in 58
+repositories**. Ticket `32` has the classes. Four per cent of them are "the directory was
+renamed and the frontmatter did not follow", which is the sentence the check's own docstring
+gave as its reason to exist. No number there is a precision and none of it moves a condition.
+
+### The counts
+
+| | round 26 | round 27 |
+|---|---|---|
+| findings | 37 | **32** |
+| true | 27 | **22** |
+| false | 10 | **10** |
+| fixable | 6 | **1** |
+| false fixable | 0 | **0** |
+| validation findings | 16 | **12** |
+
+**No condition moves.** Every withdrawn finding was true, so no repository's false-positive
+count changes: condition 6 stays at 58 of 66 and validation at 29 of 32, and condition 2 stays
+met on a smaller base — one fixable finding rather than six, and it is true. `securego/gosec` is a
+validation repository that now produces nothing, which is a loss of evidence and not of
+precision.
+
+### What went with it
+
+`src/verify/checks/skill-frontmatter.ts`, `src/extract/skill.ts` and the `SkillFact` it
+carried; the `frontmatter` branch of `fix/range.ts`, which had no other caller; and
+`suggestKey`, which had had none since round twenty-five. `CONTRACT.md` loses one check id —
+free, because `1.0.0` is not tagged.
+
+A `SKILL.md` is still a source. Every path it names is still `path/missing`'s business, and
+that is the whole of what the tool now claims about a skill.

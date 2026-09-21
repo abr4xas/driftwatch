@@ -11,7 +11,6 @@ driftwatch --fix              # change it
 |---|---|
 | `path/missing` | the path, when one file in the repo has that name and sits somewhere close to where the document says |
 | `script/missing` | the command, when one script in the nearest manifest is within two edits of the one written |
-| `skill/frontmatter` | a `SKILL.md`'s `name`, to the directory it lives in — withheld when that directory name is not itself kebab-case |
 
 <a id="what-is-never-rewritten"></a>
 
@@ -27,7 +26,7 @@ This is a false negative with a number attached, and the number is honest: acros
 
 It replaces the claim and **nothing around it**. A `./` prefix, a `#anchor`, a `:42` line reference and the backticks all survive, because they sit outside the replaced range rather than being re-applied after it. Line endings, a missing trailing newline and the alignment of a table survive for the same reason: nothing outside the replaced bytes is looked at, let alone rewritten.
 
-Every branch checks the bytes it is about to overwrite before writing them — an offset that has drifted from the content produces no edit at all. That guard exists because the claim's range is *not* the fix range in two of the three cases: a `skill/frontmatter` claim spans the **key** token, so an edit inheriting it would write `my-skill: wrong-thing` over somebody's frontmatter.
+Every branch checks the bytes it is about to overwrite before writing them — an offset that has drifted from the content produces no edit at all. That guard exists because the claim's range is *not* the fix range for a path claim from a Markdown link: it spans the whole url, so an edit inheriting it would delete the `#anchor`.
 
 Two fixes that would land on the same fragment cancel each other out rather than one winning: two findings on one claim is a bug upstream, and resolving it quietly would both hide the bug and write on a guess.
 

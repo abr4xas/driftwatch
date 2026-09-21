@@ -1,9 +1,9 @@
 # openai/codex
 
 sources: 13
-errors: 4
+errors: 3
 warnings: 0
-fixable: 1
+fixable: 0
 
 ## sources
 skill  .codex/skills/babysit-pr/SKILL.md
@@ -21,7 +21,6 @@ agents-md  AGENTS.md
 agents-md  codex-rs/tui/src/bottom_pane/AGENTS.md
 
 ## findings
-.codex/skills/code-review-breaking-changes/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> code-review-breaking-changes (1, fixable)
 AGENTS.md:35:51  [path/missing] inline-code  codex-rs/codex-mcp/src/mcp_connection_manager.rs
 AGENTS.md:265:4  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs
 AGENTS.md:275:133  [path/missing] inline-code  app-server-protocol/src/protocol/v2.rs

@@ -122,7 +122,7 @@ export function extractFrontmatterClaims(context: ExtractContext): Claim[] {
     return [claim(offset, { subject: 'parse', reason: error.reason })]
   }
 
-  // Every top-level key, `empty` ones included: `skill/frontmatter` reads
+  // Every top-level key, `empty` ones included: `frontmatter/invalid` reads
   // these same claims and an empty `description:` is one of its rules.
   return frontmatter.keys.map((key) =>
     claim(key.offset, {
