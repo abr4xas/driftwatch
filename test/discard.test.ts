@@ -348,3 +348,23 @@ describe('a directory variable with its sigil left off', () => {
     expect(discardReason('NN-example-cifar10/train.py')).toBeUndefined()
   })
 })
+
+describe('nothing under .git/ is in any index', () => {
+  it('discards a path inside the git directory', () => {
+    expect(discardReason('.git/index.lock')).toBe('not-a-file')
+    expect(discardReason('.git/hooks/')).toBe('not-a-file')
+    expect(discardReason('.git/stack/state.json')).toBe('not-a-file')
+  })
+
+  it('reaches a nested one too, since a submodule has its own', () => {
+    expect(discardReason('packages/a/.git/config')).toBe('not-a-file')
+  })
+
+  it('leaves the names that merely look like it', () => {
+    expect(discardReason('.github/workflows/ci.yml')).toBeUndefined()
+    expect(discardReason('src/git/index.ts')).toBeUndefined()
+    // Discarded, by the bare-word rule rather than by this one: a segment is
+    // a segment, and `.gitignore` is not inside anything.
+    expect(discardReason('.gitignore')).not.toBe('not-a-file')
+  })
+})

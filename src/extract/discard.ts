@@ -422,6 +422,27 @@ function hasSpaces(text: string): boolean {
 }
 
 /**
+ * Nothing under `.git/` is in any repository's index, ever.
+ *
+ * `.git/index.lock`, `.git/stack/state.json`, `.git/PR_BODY.md`, `.git/hooks/`
+ * — a context file explaining a workflow names them, and they are reported as
+ * files the repository is missing because git does not version its own
+ * directory and `hasFile` only knows what git lists.
+ *
+ * **The cost is not low, it is structurally zero.** Not a measurement about
+ * how repositories happen to be arranged today but a property of git: 0 of
+ * 1 858 219 distinct path segments across 2599 repositories is `.git`, and no
+ * number of repositories would change it. Same category as `~/` being the
+ * reader's home directory and a scheme meaning a URL.
+ *
+ * Ticket `41`, and it is the only shape that class produced: 16 findings in 9
+ * repositories.
+ */
+function isInsideGitDir(text: string): boolean {
+  return text.split('/').includes('.git')
+}
+
+/**
  * An ellipsis in the middle of a path is the writer abbreviating it.
  *
  * `core/.../sql/parser/`, `datagsm-common/src/main/kotlin/.../domain/`,
@@ -497,6 +518,7 @@ export function discardReason(
   if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text) || isSchemelessHost(text)) return 'url'
   if (hasInteriorEllipsis(text) || DIRECTORY_VARIABLE.test(text)) return 'metasyntactic'
+  if (isInsideGitDir(text)) return 'not-a-file'
   if (isSpecifier(text)) return 'module-specifier'
   if (isHomePath(text) || isDrivePath(text)) return 'home-path'
   if (isAbsolutePath(text)) return 'absolute-path'
