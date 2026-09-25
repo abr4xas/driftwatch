@@ -246,16 +246,22 @@ describe('validateConfig', () => {
   // a red run: the tool would keep working and stop doing what the file says.
   it('an unknown key fails and names it, with the known ones', () => {
     expect(() => validateConfig({ source: [] }, 'test')).toThrow(/unknown key 'source'/u)
-    expect(() => validateConfig({ source: [] }, 'test')).toThrow(/sources, checks, skillRoots/u)
+    expect(() => validateConfig({ source: [] }, 'test')).toThrow(
+      /sources, checks, ignore, skillRoots/u,
+    )
   })
 
   /**
-   * The three keys `1.0.0` withdrew. They validated and were read by nobody,
-   * so a config setting one got a green run and no effect; now it gets the
-   * loader's usual refusal, which is the correct answer for a key that was
+   * Two of the three keys `1.0.0` withdrew. They validated and were read by
+   * nobody, so a config setting one got a green run and no effect; now it gets
+   * the loader's usual refusal, which is the correct answer for a key that was
    * never doing anything.
+   *
+   * `ignore` was the third and it is live again — withdrawn for being
+   * unimplemented rather than for being wrong, and implemented is the other
+   * way to settle that.
    */
-  it.each([['ignore'], ['knownPaths'], ['staleThreshold']])(
+  it.each([['knownPaths'], ['staleThreshold']])(
     'refuses %s, which used to validate and do nothing',
     (key) => {
       expect(() => validateConfig({ [key]: [] }, 'test')).toThrow(

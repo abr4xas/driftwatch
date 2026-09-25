@@ -66,6 +66,13 @@ Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or a `driftwa
 sources:
   - 'docs/agent-notes.md'
 
+# Documents NOT to audit: a skill somebody else wrote, a vendored file you do
+# not maintain. Subtracted after sources, and it reaches what driftwatch found
+# on its own. Unlike sources, an entry matching nothing is not an error.
+ignore:
+  - '**/fixtures/**'
+  - 'third_party/**'
+
 # Where your skills live, if it is not one of the six roots driftwatch knows.
 # A container is a directory whose children are skill directories.
 skillRoots:
@@ -94,7 +101,9 @@ The same thing as JSON, if you would rather not add a YAML file:
 
 **An unknown key fails the run** instead of being ignored. A typo in a key that silently disables what it was meant to configure is worse than a red run.
 
-Three keys used to be accepted and do nothing — `ignore`, `knownPaths` and `staleThreshold`. `1.0.0` withdrew them: a config that sets one now fails with the loader's usual message, which is the right answer for a key that was never read. `staleThreshold` comes back with `stale/churn`.
+Three keys used to be accepted and do nothing — `ignore`, `knownPaths` and `staleThreshold`. `1.0.0` withdrew them: a config that sets one now fails with the loader's usual message, which is the right answer for a key that was never read. `staleThreshold` comes back with `stale/churn`, and `ignore` has come back implemented.
+
+**`ignore` and the directives answer different questions.** Use an [inline directive](#ignore-directives) for a document you maintain — a line describing a file you have not written yet. Use `ignore` for a document you do not: an installed skill, a vendored `AGENTS.md`. Editing somebody else's file to quiet your linter loses the edit the next time they ship.
 
 ## Ignore directives
 

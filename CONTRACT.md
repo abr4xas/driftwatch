@@ -173,6 +173,7 @@ One annotation per finding, and no other output: the job log is the transport.
 ## Config keys
 
 - `checks`
+- `ignore`
 - `skillRoots`
 - `sources`
 

@@ -285,12 +285,23 @@ Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in 
 
 A list that *replaced* the built-ins would let one misspelling silence the check across a repository, and silence is what this key exists to fix — an install root nobody has heard of is a repository audited to a green run that means nothing. A typo costs the entry and nothing else.
 
-**Three keys were withdrawn in `1.0.0`.** `ignore`, `knownPaths` and `staleThreshold` were listed here, accepted by the loader, validated, carried into the run, and read by nobody. The argument for keeping them was that a config written against this document should not fail against an incomplete implementation; the freeze reversed it, because a key the loader accepts is a key a user reasonably believes does something, and three of six did not. They are now refused like any other unknown key. `staleThreshold` returns with `stale/churn`, which is a minor under the version policy — see [`CONTRACT.md`](../../CONTRACT.md).
+**`ignore` subtracts, which is what `sources` cannot do.** Same syntax, same root: globs matched against the files git lists. A matching document is not audited — not discovered, no findings, not counted as skipped, because it was never a source. Three rules make it useful rather than merely present: it is applied **after** `sources`, so a path in both is ignored; it reaches what **discovery found on its own**, which is the whole motivating case; and a pattern matching nothing is **not** an error, the deliberate opposite of `sources`, so that one config can be shared across repositories that do not all have a `vendor/`.
+
+What it is for is the case [ADR-0008](../adr/0008-a-specification-is-not-an-agent-context-file.md) settled: a document that does not assert about the repository it sits in — an installed skill, a vendored upstream's `AGENTS.md` — is the check being asked the wrong question, and the answer is configuration. `<!-- driftwatch-ignore-file -->` covers a document you own; this covers one you do not, where editing the file loses the edit on its next update.
+
+It never silences a claim by its **target**: `ignore` takes the path of the document, not the path a document claims. A glob over targets would silence drift in documents the user does own, and it is not this key.
+
+**Two keys were withdrawn in `1.0.0` and stay withdrawn.** `knownPaths` and `staleThreshold` were listed here, accepted by the loader, validated, carried into the run, and read by nobody. The argument for keeping them was that a config written against this document should not fail against an incomplete implementation; the freeze reversed it, because a key the loader accepts is a key a user reasonably believes does something, and three of six did not. They are now refused like any other unknown key. `staleThreshold` returns with `stale/churn`, which is a minor under the version policy — see [`CONTRACT.md`](../../CONTRACT.md). `ignore` was the third, and it came back the other way: implemented, which is the answer for a key withdrawn for being unimplemented rather than for being wrong.
 
 ```yaml
 # What --init writes, minus the commentary.
 sources:
   - 'docs/agent-notes.md'
+
+# Documents not to audit. Subtracted after sources; an entry matching nothing
+# is fine.
+ignore:
+  - '**/fixtures/**'
 
 # Directories whose children are skill directories, on top of the built-in ones
 skillRoots:

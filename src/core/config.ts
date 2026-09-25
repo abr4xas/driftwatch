@@ -21,6 +21,26 @@ export type Config = {
   /** Extra sources beyond the ones discovery finds. Literal paths or globs. */
   sources?: readonly string[]
   /**
+   * Globs for documents **not** to audit, matched against source paths from
+   * the repo root.
+   *
+   * A repository carries documents it did not write: a skill installed from
+   * somebody else, a vendored upstream's `AGENTS.md`, a template's scaffold.
+   * They assert about the project they came from, and
+   * [ADR-0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md)
+   * settled both what that is — the check being asked the wrong question —
+   * and that the answer is configuration. This repository fixed its own case
+   * with one line of `sources`; a user cannot, because `sources` only adds.
+   *
+   * `<!-- driftwatch-ignore-file -->` covers a document you own. This covers
+   * one you do not: editing somebody else's skill to quiet your linter loses
+   * the edit on its next update.
+   *
+   * Specified in `SPEC.md` § 7 from the start and withdrawn in `1.0.0` by
+   * ticket `03` for being accepted and unread. This is that key, implemented.
+   */
+  ignore?: readonly string[]
+  /**
    * Directories whose children are skill directories, on top of the built-in
    * ones. `skills`, `.flue/skills`, `packages/x/skills`.
    *
@@ -52,6 +72,7 @@ const CONFIG_FILENAMES: readonly string[] = [
 export const KNOWN_KEYS: readonly string[] = [
   'sources',
   'checks',
+  'ignore',
   // Last on purpose: the unknown-key message lists these in order and the
   // older entries are what a reader recognises first.
   'skillRoots',
@@ -105,9 +126,9 @@ function severityMap(value: unknown, where: string): Readonly<Record<string, Che
  * An unknown key **fails** instead of being ignored. A typo in `sources` that
  * silently drops the extra documents is worse than a red run: the tool would
  * keep working and stop doing what the file says. Since `1.0.0` that rule
- * covers three more names than it did — `ignore`, `knownPaths` and
- * `staleThreshold` used to validate and do nothing, and now fail like any
- * other key the tool does not act on.
+ * covers two more names than it did — `knownPaths` and `staleThreshold` used
+ * to validate and do nothing, and now fail like any other key the tool does
+ * not act on. `ignore` was withdrawn with them and has come back implemented.
  */
 export function validateConfig(raw: unknown, where: string): Config {
   if (raw === undefined || raw === null) return {}
@@ -121,6 +142,7 @@ export function validateConfig(raw: unknown, where: string): Config {
 
   const config: Config = {}
   if (raw.sources !== undefined) config.sources = stringArray(raw.sources, 'sources', where)
+  if (raw.ignore !== undefined) config.ignore = stringArray(raw.ignore, 'ignore', where)
   if (raw.skillRoots !== undefined) {
     config.skillRoots = stringArray(raw.skillRoots, 'skillRoots', where)
   }

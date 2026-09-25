@@ -46,6 +46,15 @@ export const INIT_TEMPLATE = `# driftwatch configuration
 # An entry matching nothing is an error: a source that disappeared is drift.
 sources: []
 
+# Documents NOT to audit: same glob syntax, same root. Subtracted after
+# sources, and it reaches what discovery found on its own, so it is how you
+# exclude a skill or a vendored file somebody else wrote and you do not
+# maintain. An entry matching nothing is fine, unlike sources.
+#
+# For a document you do own, a line at a time, use an inline directive
+# instead: <!-- driftwatch-ignore-next-line -->
+ignore: []
+
 # Directories whose children are skill directories, on top of the built-in
 # ones (.claude/skills, .agents/skills, .cursor/skills, .codex/skills,
 # .github/skills, .opencode/skills). Additive: a typo costs the entry and

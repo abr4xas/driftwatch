@@ -193,6 +193,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const { sources, skipped } = await discoverSources(index, {
     paths: options.paths ?? [],
     ...(config.sources === undefined ? {} : { sources: config.sources }),
+    ...(config.ignore === undefined ? {} : { ignore: config.ignore }),
     ...(config.skillRoots === undefined ? {} : { skillRoots: config.skillRoots }),
   })
 
