@@ -114,6 +114,7 @@ async function main(argv: readonly string[]): Promise<number> {
         countFlag(argv, '--concurrency') ?? 12,
         argv.includes('--dry-run'),
         argv.includes('--certification'),
+        countFlag(argv, '--per-repo'),
       )
     }
     case 'diff': {
@@ -150,6 +151,11 @@ async function main(argv: readonly string[]): Promise<number> {
         argv.includes('--reported'),
       )
     }
+    case 'ownership': {
+      const { ownershipMain } = await import('../jev/ownership.ts')
+      const mode = argv.includes('--ask') ? 'ask' : argv.includes('--score') ? 'score' : 'packet'
+      return ownershipMain(mode, countFlag(argv, '--concurrency') ?? 8, argv.includes('--dry-run'))
+    }
     case 'families': {
       const { familiesMain } = await import('../jev/families.ts')
       return familiesMain(
@@ -164,7 +170,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|queue|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|queue|ownership|status>\n',
       )
       return 2
   }

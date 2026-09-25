@@ -94,6 +94,15 @@ export function itemsIn(
   resultsText: string,
   repos: ReadonlySet<string> | undefined,
   read: (repo: string, path: string) => string | undefined,
+  /**
+   * At most this many findings per repository, for ticket `37`'s table.
+   *
+   * Ordering a repository's own findings wants all of them — that is what the
+   * queue is for. Measuring where a class sits in the wild wants the opposite:
+   * 42 repositories carry a third of this check's output, so an uncapped run
+   * measures a dozen hoarders and calls it the population.
+   */
+  perRepo?: number,
 ): Item[] {
   const out: Item[] = []
   for (const line of resultsText.split('\n')) {
@@ -109,7 +118,9 @@ export function itemsIn(
     if (repos !== undefined && !repos.has(repo)) continue
     if (!Array.isArray(outcome.findings)) continue
     const contents = new Map<string, string | undefined>()
+    let taken = 0
     for (const raw of outcome.findings) {
+      if (perRepo !== undefined && taken >= perRepo) break
       const finding = raw as { check?: unknown; path?: unknown; text?: unknown; line?: unknown }
       if (finding.check !== 'path/missing') continue
       const { path, text, line: at } = finding
@@ -117,6 +128,7 @@ export function itemsIn(
       if (!contents.has(path)) contents.set(path, read(repo, path))
       const content = contents.get(path)
       if (content === undefined) continue
+      taken += 1
       out.push({
         repo,
         path,
@@ -193,6 +205,50 @@ function rank(r: Answer): number {
   return (r.named ? 0 : 1) + r.isReal / 10
 }
 
+/**
+ * Ticket `37`: where the named classes sit in the wild.
+ *
+ * The same answers the queue sorts, counted by class instead of thrown away.
+ * A row is a place to look, never a rule and never a count of false positives:
+ * nobody has ruled on one of these. `new` is the control — it must carry real
+ * mass, or the list has grown permissive enough to agree with itself.
+ */
+export function classTableOf(answers: readonly Answer[]): string {
+  const byClass = new Map<string, Answer[]>()
+  for (const answer of answers) {
+    const key = answer.named ? answer.jevClass : 'new'
+    byClass.set(key, [...(byClass.get(key) ?? []), answer])
+  }
+  const rows = [...byClass.entries()].toSorted((a, b) => b[1].length - a[1].length)
+  const width = Math.max(12, ...[...byClass.keys()].map((k) => k.length))
+  const lines = [
+    `${answers.length} findings, ${new Set(answers.map((a) => a.repo)).size} repositories`,
+    '',
+    `${'class'.padEnd(width)}  items  repos  share`,
+  ]
+  for (const [name, rows_] of rows) {
+    const repos = new Set(rows_.map((r) => r.repo)).size
+    const share = `${((100 * rows_.length) / answers.length).toFixed(1)}%`
+    lines.push(
+      `${name.padEnd(width)}  ${String(rows_.length).padStart(5)}  ${String(repos).padStart(5)}  ${share.padStart(5)}`,
+    )
+  }
+  lines.push('', 'Three examples each, worst-confidence first:')
+  for (const [name, rows_] of rows) {
+    lines.push(`\n${name}`)
+    for (const row of rows_.toSorted((p, q) => p.isReal - q.isReal).slice(0, 3)) {
+      lines.push(`  ${row.repo}  ${row.path}:${row.line}  ${row.text}`)
+    }
+  }
+  lines.push(
+    '',
+    'Nothing here is a precision and nothing here is a false-positive count: no person has',
+    'ruled on one of these findings. A row is a place to look. A rule is written by hand in',
+    'src/ and measured with pnpm discovery diff, reading every finding it adds and removes.',
+  )
+  return lines.join('\n')
+}
+
 export function queueOf(answers: readonly Answer[]): string {
   const byRepo = new Map<string, Answer[]>()
   for (const answer of answers) {
@@ -227,6 +283,8 @@ export async function queueMain(
   dryRun: boolean,
   /** Queue the certification corpus instead, whose findings carry rulings. */
   certification = false,
+  /** Ticket `37`: cap per repository, and print the class table instead. */
+  perRepo?: number,
   /** The seam. A pass is driven by a fake in tests; the default opens Jev. */
   askWith?: AskQueue,
 ): Promise<number> {
@@ -239,7 +297,7 @@ export async function queueMain(
     return 2
   }
   const read = readerIn(certification ? join(CORPUS_DIR, 'repos') : REPOS_DIR)
-  const all = itemsIn(readFileSync(results, 'utf8'), repos, read)
+  const all = itemsIn(readFileSync(results, 'utf8'), repos, read, perRepo)
   const asked = limit === undefined ? all : all.slice(0, limit)
   process.stderr.write(
     `${asked.length} path/missing findings in ${new Set(asked.map((i) => i.repo)).size} repositories\n`,
@@ -260,9 +318,18 @@ export async function queueMain(
   })
   // Two populations, two files: a certification run must not overwrite the
   // discovery queue, because the comparison between them is the point.
-  const out = certification ? join(ROOT, 'queue-certification.jsonl') : OUT
+  const out =
+    perRepo !== undefined
+      ? join(ROOT, 'class-table.jsonl')
+      : certification
+        ? join(ROOT, 'queue-certification.jsonl')
+        : OUT
   writeFileSync(out, `${answered.map((a) => JSON.stringify(a)).join('\n')}\n`, 'utf8')
   process.stderr.write(`\n${answered.length} of ${asked.length} answered; ${out}\n`)
+  if (perRepo !== undefined) {
+    process.stdout.write(`${classTableOf(answered)}\n`)
+    return 0
+  }
   process.stdout.write(`${queueOf(answered)}\n`)
   process.stdout.write(
     '\nThis is a reading order and nothing else. A low number is a finding worth ' +

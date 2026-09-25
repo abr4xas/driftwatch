@@ -8,7 +8,14 @@
  * that order — none of it asks a model, and none of it decides anything.
  */
 import { describe, expect, it } from 'vitest'
-import { itemsIn, queueOf, stateOf, windowAround, type Item } from '../scripts/jev/queue.ts'
+import {
+  classTableOf,
+  itemsIn,
+  queueOf,
+  stateOf,
+  windowAround,
+  type Item,
+} from '../scripts/jev/queue.ts'
 
 const outcome = (repo: string, findings: unknown[]) => JSON.stringify({ repo, findings })
 const finding = (path: string, text: string, line = 3, check = 'path/missing') => ({
@@ -131,5 +138,59 @@ describe('the order, which is the whole point', () => {
     const out = queueOf(rows)
     expect(out).toContain('245 finding(s)')
     expect(out).toContain('… and 240 more, higher up')
+  })
+})
+
+describe('the per-repository cap, for ticket 37 table', () => {
+  const text = [
+    outcome('o/hoarder', [
+      finding('AGENTS.md', 'a.ts'),
+      finding('AGENTS.md', 'b.ts'),
+      finding('AGENTS.md', 'c.ts'),
+    ]),
+    outcome('o/quiet', [finding('AGENTS.md', 'd.ts')]),
+  ].join('\n')
+
+  it('takes at most the cap from each repository', () => {
+    expect(itemsIn(text, undefined, read, 2).map((i) => i.text)).toEqual(['a.ts', 'b.ts', 'd.ts'])
+  })
+
+  it('takes everything when no cap is given, which is what the queue wants', () => {
+    expect(itemsIn(text, undefined, read)).toHaveLength(4)
+  })
+})
+
+const answer = (repo: string, jevClass: string, isReal = 0.5) => ({
+  repo,
+  path: 'AGENTS.md',
+  check: 'path/missing',
+  text: 'x.ts',
+  line: 1,
+  window: 'w',
+  named: jevClass !== 'new',
+  jevClass,
+  isReal,
+})
+
+describe('the class table', () => {
+  it('counts items and repositories per class, largest first', () => {
+    const out = classTableOf([
+      answer('o/a', 'placeholder'),
+      answer('o/b', 'placeholder'),
+      answer('o/b', 'runtime-log'),
+    ])
+    expect(out).toContain('placeholder')
+    expect(out.indexOf('placeholder')).toBeLessThan(out.indexOf('runtime-log'))
+    expect(out).toContain('3 findings, 2 repositories')
+  })
+
+  it('counts an unnamed answer as the new control rather than dropping it', () => {
+    expect(classTableOf([answer('o/a', 'new')])).toMatch(/new\s+1\s+1/u)
+  })
+
+  it('says it is neither a precision nor a false-positive count', () => {
+    const out = classTableOf([answer('o/a', 'new')])
+    expect(out).toContain('Nothing here is a precision')
+    expect(out).toContain('written by hand in')
   })
 })
