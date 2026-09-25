@@ -422,6 +422,54 @@ function hasSpaces(text: string): boolean {
 }
 
 /**
+ * An ellipsis in the middle of a path is the writer abbreviating it.
+ *
+ * `core/.../sql/parser/`, `datagsm-common/src/main/kotlin/.../domain/`,
+ * `src/main/resources/META-INF/native-image/…/proxy-config.json`. Both
+ * spellings occur, three dots and U+2026, and neither names a directory.
+ * `GLOB_OR_PLACEHOLDER` does not see them because there is no sigil and no
+ * bracket: the hole is punched with punctuation that is legal in a filename.
+ *
+ * **The position is the rule and the care is all in it.** A text *ending* in
+ * `...` — `steps-c/...`, `.claude/skills/...` — normalises to its parent,
+ * which usually exists: 91 such candidates come back `exists: true`. They are
+ * already discarded by other rules and are not findings, but a rule written as
+ * "contains an ellipsis" would look identical and be resting on that
+ * normalisation. So the segment has to be an interior one, or the ellipsis has
+ * to be the unicode character, which never appears in a real path at all.
+ *
+ * Ticket `40`, reading the `placeholder` class. 104 findings in 35
+ * repositories, and the cost is zero twice over: **0** of **1 858 219**
+ * distinct path segments across 2599 repositories is `...` or contains `…`,
+ * and of 1946 discarded candidates carrying the shape, **0** resolve.
+ */
+function hasInteriorEllipsis(text: string): boolean {
+  if (text.includes('\u2026')) return true
+  const segments = text.split('/')
+  return segments.slice(0, -1).includes('...')
+}
+
+/**
+ * A SCREAMING_SNAKE name ending in `_DIR` is a variable with its sigil left off.
+ *
+ * `SKILL_DIR/wiki/`, `SCRIPT_DIR/`, `EXP_ROOT/user_workload.yaml`,
+ * `FEATURE_DIR/checklists/requirements.md`, `SPECIFY_FEATURE_DIRECTORY/spec.md`.
+ * Written `$SKILL_DIR` it is caught by `GLOB_OR_PLACEHOLDER`; written bare it
+ * reaches `path/missing` as a directory this repository is missing.
+ *
+ * **The suffix is a narrowing chosen on evidence rather than on nerves.** Any
+ * SCREAMING_SNAKE first segment would take 165 findings in 23 repositories and
+ * cost five real first segments in 12 439 — `FIX_BLOCCANTI`, `JSU_V2`,
+ * `README_IMAGES`, `UPSTREAM_WORKFLOWS_DISABLED`, `ZION_OS` — and one of those
+ * is live, `Yose144/Zion-v3.0.0` naming `ZION_OS/dashboard/app.py`, which
+ * resolves. Requiring the directory-shaped suffix keeps **157 of the 165** in
+ * 21 repositories and costs **0** of 12 439, with **0** of 50 discarded
+ * candidates resolving. It gives up three texts, and eight findings for five
+ * real directories is the trade this project takes every time.
+ */
+const DIRECTORY_VARIABLE = /^[A-Z][A-Z0-9_]*_(DIR|DIRECTORY|ROOT|PATH|HOME|FOLDER)\//u
+
+/**
  * Rule 7. A single-segment directory does not pin down a location.
  * Prevents: `feat/` and `fix/` (branch prefixes), `embeddings/` and
  * `security/` (test categories), `ppr/` (a mode), `partners/` (a package that
@@ -448,6 +496,7 @@ export function discardReason(
 ): DiscardReason | undefined {
   if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text) || isSchemelessHost(text)) return 'url'
+  if (hasInteriorEllipsis(text) || DIRECTORY_VARIABLE.test(text)) return 'metasyntactic'
   if (isSpecifier(text)) return 'module-specifier'
   if (isHomePath(text) || isDrivePath(text)) return 'home-path'
   if (isAbsolutePath(text)) return 'absolute-path'

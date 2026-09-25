@@ -301,3 +301,50 @@ describe('the TLDs ticket 39 measured in', () => {
     expect(discardReason('GameOfLife3D.NET/src/main.cs')).toBeUndefined()
   })
 })
+
+describe('an interior ellipsis is an abbreviation', () => {
+  it('discards a path whose middle was elided, in either spelling', () => {
+    expect(discardReason('core/.../sql/parser/')).toBe('metasyntactic')
+    expect(discardReason('datagsm-common/src/main/kotlin/.../domain/')).toBe('metasyntactic')
+    expect(discardReason('tests/…/sqliteStore.test.js')).toBe('metasyntactic')
+    expect(discardReason('src/main/resources/META-INF/…/proxy-config.json')).toBe('metasyntactic')
+  })
+
+  it('leaves a trailing ... alone, which is the whole care in the rule', () => {
+    // `steps-c/...` normalises to `steps-c/`, which usually exists: 91 such
+    // candidates come back exists:true. A rule written as "contains an
+    // ellipsis" would look the same and rest on that normalisation.
+    expect(discardReason('steps-c/...')).not.toBe('metasyntactic')
+    expect(discardReason('.claude/skills/...')).not.toBe('metasyntactic')
+  })
+
+  it('leaves a real path with dots alone', () => {
+    expect(discardReason('src/app.component.ts')).toBeUndefined()
+    expect(discardReason('../sibling/file.ts')).toBeUndefined()
+  })
+})
+
+describe('a directory variable with its sigil left off', () => {
+  it('discards the names that end in a directory word', () => {
+    expect(discardReason('SKILL_DIR/wiki/')).toBe('metasyntactic')
+    expect(discardReason('EXP_ROOT/user_workload.yaml')).toBe('metasyntactic')
+    expect(discardReason('SPECIFY_FEATURE_DIRECTORY/spec.md')).toBe('metasyntactic')
+    expect(discardReason('FEATURE_DIR/checklists/requirements.md')).toBe('metasyntactic')
+  })
+
+  it('leaves a SCREAMING_SNAKE directory that is a real one', () => {
+    // The five that exist in 12 439 first segments, and `ZION_OS/` is live:
+    // Yose144/Zion-v3.0.0 names `ZION_OS/dashboard/app.py` and it resolves.
+    // This is why the rule asks for the suffix instead of the case.
+    expect(discardReason('ZION_OS/dashboard/app.py')).toBeUndefined()
+    expect(discardReason('README_IMAGES/logo.png')).toBeUndefined()
+    expect(discardReason('FINAL_RELEASE_CHANGES/notes.md')).toBeUndefined()
+  })
+
+  it('does not fire on NN or XX, which mean neural network', () => {
+    // 66 findings of real mass, refused: of 1 858 219 real segments, 32 carry
+    // the shape and they are `NN-example-cifar10`, `NN_Lib_Tests`, `HP8XX.mod`.
+    expect(discardReason('docs/adr/NNNN-short-title.md')).toBeUndefined()
+    expect(discardReason('NN-example-cifar10/train.py')).toBeUndefined()
+  })
+})
