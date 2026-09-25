@@ -319,21 +319,22 @@
 						<p class="marg"><span>1901 context files</span><span aria-hidden="true">·</span><span>96
 								repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine
 								languages</span></p>
-						<div class="cells" id="cells" aria-label="1901 context files, grouped into 96 repositories">
+						<div class="cells" id="cells" aria-label="96 repositories, one mark each">
 						</div>
 						<div class="readout" id="readout" aria-live="polite"></div>
 						<p class="cell-key">
-							<span><i class="k-clean" aria-hidden="true"></i> checked, no drift</span>
-							<span><i class="k-hit" aria-hidden="true"></i> says something untrue</span>
-							<span class="fine">One mark is one file, one run is one repository. Point at a run, or tab
-								in and use the arrow keys.</span>
+							<span><i class="k-clean" aria-hidden="true"></i> nothing found</span>
+							<span><i class="k-seen" aria-hidden="true"></i> findings, none false</span>
+							<span><i class="k-hit" aria-hidden="true"></i> carries a false positive</span>
+							<span class="fine">One mark is one repository. Point at one, or tab in and use the arrow
+								keys.</span>
 						</p>
-						<p class="fine cell-caveat">A lit mark is a context file driftwatch reported <em>anything at
-								all</em> about: 216 of the 1901, carrying 337 findings between them, and 32 of those are
-							true drift the maintainers had not noticed. The figures below count only the
-							<strong>false</strong> ones, and 289 findings in the nine noisiest repositories are
-							unread: each of those repositories already carries a false positive, so reading the
-							rest could not move the figure below.</p>
+						<p class="fine cell-caveat">A lit mark is a repository carrying at least one
+							<strong>false</strong> positive — 15 of the 96, which is the figure below read the other
+							way. An outlined mark produced findings and none of them false: 216 context files carry
+							337 findings between them, and 32 are true drift the maintainers had not noticed. 289
+							findings in the nine noisiest repositories are unread, and cannot move the figure: each
+							of those repositories already carries a false positive, so it is already counted.</p>
 					</div>
 
 					<dl class="figures">
@@ -352,9 +353,12 @@
 								calibration</dd>
 						</div>
 						<div>
-							<dt>Worst single repository</dt>
-							<dd><b>2</b><span>false positives</span></dd>
-							<dd class="pct">No repo in the corpus sees more</dd>
+							<dt>Findings ruled, of 337</dt>
+							<dd><b>49</b><span>32 true, 17 false</span></dd>
+							<dd class="pct">The rest sit in repositories already settled by a false positive, which
+								is all condition 6 needs since <a
+									href="https://github.com/abr4xas/driftwatch/blob/master/docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md">ADR-0015</a>
+								withdrew the three that counted them</dd>
 						</div>
 						<div class="hero-fig">
 							<dt>Edits <code>--fix</code> would apply across all 96</dt>
@@ -380,16 +384,26 @@
 								or a line opening with "Create ..."</li>
 							<li>a path inside another assistant's configuration root, in a repo that does not use that
 								assistant</li>
+							<li>a host with the scheme left off, <code>linkedin.com/in/</code>, or a Windows drive
+								letter, <code>D:/Projects/…</code> — both name somewhere that is not this repository
+							</li>
+							<li>a path the writer abbreviated, <code>core/.../sql/</code>, or a variable with its
+								sigil missing, <code>SKILL_DIR/wiki/</code></li>
+							<li>anything under <code>.git/</code>, which no repository versions</li>
 						</ul>
 					</div>
 					<div>
 						<h3>How it was measured</h3>
-						<p>Twenty-six rounds, every finding classified by hand, including the four rounds where a
-							condition broke and the two where the corpus caught a regression that reading the diff would
-							not have.</p>
-						<p>Eleven false-positive classes have been found and closed, each with a fixture and a test
-							naming the repository and line it came from. Every fix was measured over the whole corpus
-							before being kept, and not one of them has ever removed a true positive.</p>
+						<p>Thirty-three rounds of hand adjudication, including the four where a condition broke and
+							the two where the corpus caught a regression that reading the diff would not have. A
+							repository is settled by its first false positive, so not every finding is read — and a
+							test refuses to count one clean on evidence nobody looked at.</p>
+						<p>Ten false-positive classes have been named, each with a fixture and a test naming the
+							repository and line it came from. Not every class becomes a rule: of the five largest,
+							three produced none — one because its vocabulary is the vocabulary of real directory
+							names, one because its marker says nothing about absence, one because its signal is not on
+							disk. Every rule that did ship was measured over both corpora before being kept, and not
+							one has ever removed a true positive.</p>
 						<p class="fine">The corpus does not run in CI, because the verdict requires a person. CI can
 							detect that a snapshot changed; it cannot rule on whether the change is an improvement, and
 							that ruling <em>is</em> the measurement.</p>
@@ -404,9 +418,9 @@
 
 			<section class="band" id="first-run" aria-labelledby="fr-h">
 				<h2 id="fr-h">Most first runs find nothing. That is an answer, not a failure.</h2>
-				<p class="lede">Fifty of the sixty-six repositories in the corpus report nothing at all. A tool built to
-					stay quiet when it is unsure is quiet most of the time, so a first run has three possible endings
-					and only one of them reports drift.</p>
+				<p class="lede">Sixty-seven of the ninety-six repositories in the corpus report nothing at all. A tool
+					built to stay quiet when it is unsure is quiet most of the time, so a first run has three possible
+					endings and only one of them reports drift.</p>
 
 				<ol class="outcomes">
 					<li>

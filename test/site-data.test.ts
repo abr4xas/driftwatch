@@ -18,6 +18,14 @@ import { siteData } from '../scripts/corpus/site-data.ts'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const page = readFileSync(join(ROOT, 'site', 'index.html'), 'utf8')
+/**
+ * The same page with runs of whitespace collapsed.
+ *
+ * A sentence in the markup is wrapped wherever Prettier decides, so an
+ * assertion about prose that matches the raw file is really an assertion about
+ * the formatter's line breaks. It broke once, on a figure that had not moved.
+ */
+const prose = page.replace(/\s+/gu, ' ')
 const { repos, summary } = siteData()
 
 describe('the data file the page reads', () => {
@@ -35,14 +43,25 @@ describe('the data file the page reads', () => {
 describe('the survey the page prints', () => {
   it('counts the context files the corpus audited', () => {
     expect(page).toContain(`<span>${summary.sources} context files</span>`)
-    expect(page).toContain(`aria-label="${summary.sources} context files`)
   })
 
-  it('counts the lit files, the findings and the true ones together', () => {
-    expect(page).toContain(
-      `${summary.litFiles} of the ${summary.sources}, carrying ${summary.findings} findings`,
-    )
-    expect(page).toContain(`${summary.trueFindings} of those are`)
+  /**
+   * The diagram's unit changed and the prose had to change with it.
+   *
+   * It was one mark per context file, and at 96 repositories the range runs
+   * from 1 to 768 documents: three repositories hold 72% of the files, and the
+   * longest run was 11 520px wide and left the page. One mark per repository
+   * is what condition 6 counts, so the label counts repositories and the
+   * caveat carries the file figures in a sentence instead of a heading.
+   */
+  it('labels the field by what a mark now is', () => {
+    expect(page).toContain(`aria-label="${summary.repos} repositories, one mark each"`)
+  })
+
+  it('counts the dirty repositories, the lit files, the findings and the true ones', () => {
+    expect(prose).toContain(`${summary.repos - summary.cleanRepos} of the ${summary.repos}`)
+    expect(prose).toContain(`${summary.litFiles} context files carry ${summary.findings} findings`)
+    expect(prose).toContain(`${summary.trueFindings} are`)
   })
 
   it('states the precision the corpus measures, not a better one', () => {

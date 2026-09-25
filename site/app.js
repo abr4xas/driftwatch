@@ -253,11 +253,19 @@
       litFiles += Object.keys(seen).length;
     }
 
+    var dirty = 0;
+    var quiet = 0;
+    for (var qi = 0; qi < CORPUS.length; qi++) {
+      if (CORPUS[qi].fp > 0) dirty += 1;
+      else if (!CORPUS[qi].f.length) quiet += 1;
+    }
+
     var idle =
-      '<p class="ro-idle"><b>' + totalFiles + ' context files</b> across ' +
-      CORPUS.length + ' repositories. ' +
-      'The <b class="lit">' + litFiles + '</b> lit ones say something the repository contradicts — ' +
-      'point at a run to read what.</p>';
+      '<p class="ro-idle"><b>' + CORPUS.length + ' repositories</b>, ' +
+      totalFiles + ' context files between them. ' +
+      '<b class="lit">' + dirty + '</b> carry a false positive and ' +
+      (CORPUS.length - dirty) + ' do not — ' +
+      'point at one to read what it found.</p>';
 
     function esc(s) {
       return String(s).replace(/[&<>]/g, function (ch) {
@@ -305,7 +313,7 @@
     }
 
     /* One tab stop for the whole field, the arrows move inside it. A
-       sixty-six-stop tab sequence is not navigation, it is a wall. */
+       ninety-six-stop tab sequence is not navigation, it is a wall. */
     function focusRun(i) {
       if (i < 0 || i >= buttons.length) return;
       buttons[active].tabIndex = -1;
@@ -322,24 +330,32 @@
       b.className = 'run';
       b.setAttribute('aria-label',
         r.n + ', ' + plural(r.s, 'context file', 'context files') + ', ' +
-        (r.f.length ? plural(r.f.length, 'finding', 'findings') : 'no drift'));
+        (r.f.length ? plural(r.f.length, 'finding', 'findings') : 'no drift') +
+        (r.fp > 0 ? ', ' + plural(r.fp, 'false positive', 'false positives') : ''));
       b.tabIndex = i === 0 ? 0 : -1;
       if (r.f.length) b.dataset.hit = '1';
 
-      /* One mark per context file. A file is lit when a finding names it, so a
-         document with three bad claims lights once: the mark is the file, and
-         the count belongs in the readout. */
-      var bad = {};
-      r.f.forEach(function (x) { bad[x.f] = true; });
-      var names = Object.keys(bad);
+      /* One mark per repository, which is what the figure beside it counts.
 
-      for (var k = 0; k < r.s; k++) {
-        var m = document.createElement('i');
-        m.className = 'mk';
-        if (k < names.length) { m.dataset.lit = '1'; marked += 1; }
-        m.style.setProperty('--i', order++);
-        b.appendChild(m);
-      }
+         It used to be one mark per context file, and that was right while the
+         corpus ran from one document to twenty-two: a grid of equal squares
+         would have read a repo with one document as the peer of a repo with
+         twenty-two. At 96 repositories the range is 1 to 768 and the argument
+         inverts — three repositories hold 72% of the files, so a field of 1901
+         marks is a picture of those three and the other 93 are noise around
+         them. It also did not fit: a run of 768 marks is 11 520px wide and
+         left the page.
+
+         Condition 6 counts repositories with zero false positives. The
+         diagram now counts the same thing, in three states a reader can tell
+         apart: nothing found, findings but none false, and carries a false
+         positive. The first two are the 81. */
+      var m = document.createElement('i');
+      m.className = 'mk';
+      if (r.fp > 0) { m.dataset.lit = '1'; marked += 1; }
+      else if (r.f.length) m.dataset.seen = '1';
+      m.style.setProperty('--i', order++);
+      b.appendChild(m);
 
       b.addEventListener('mouseenter', function () { show(r); });
       b.addEventListener('focus', function () { show(r); });

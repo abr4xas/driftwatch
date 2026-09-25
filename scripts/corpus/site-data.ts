@@ -53,6 +53,15 @@ export type SiteRepo = {
   v: boolean
   /** How many context files were audited. */
   s: number
+  /**
+   * False positives a person ruled, which is what condition 6 counts.
+   *
+   * The page needs it per repository rather than only in the summary: the
+   * diagram is one mark per repository and its three states are "produced
+   * nothing", "produced findings and none false", and "carries a false
+   * positive". Deriving that in the browser would mean shipping the rulings.
+   */
+  fp: number
   f: SiteFinding[]
 }
 
@@ -159,12 +168,14 @@ export function siteData(): { repos: SiteRepo[]; summary: SiteSummary } {
       n: entry.repo,
       v: entry.holdout === true,
       s: sourcesIn(snapshot),
+      fp: 0,
       f: findingsIn(snapshot),
     })
   }
 
   const falseIn = (repo: SiteRepo): number =>
     repo.f.filter((f) => rulings.get(`${repo.n} ${f.f}:${f.l}:${f.col}`) === 'false').length
+  for (const repo of repos) repo.fp = falseIn(repo)
   const clean = repos.filter((repo) => falseIn(repo) === 0)
   const validation = repos.filter((repo) => repo.v)
 
