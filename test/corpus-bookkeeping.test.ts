@@ -388,3 +388,37 @@ describe('results.jsonl is the same run the snapshots are', () => {
     expect(outcomes.reduce((total, o) => total + o.sources, 0)).toBe(inSnapshots)
   })
 })
+
+/**
+ * The other two conditions that cite a number, and they had both gone stale.
+ *
+ * Condition 6 has been derived from the rows since round thirty-one, and the
+ * two beside it were not: condition 2 said "1 fixable" through five rounds
+ * that took it to six, and condition 8 said "66 repos" over a corpus of 96.
+ * Neither is a tidiness problem — condition 2 is the one ADR-0006 calls the
+ * hard floor, and a table that misstates how many autofixes exist is a table
+ * nobody can use to check it.
+ *
+ * Found by running the full corpus after four rounds of rule changes, which is
+ * also the argument for this test: nothing else was going to notice.
+ */
+describe('the conditions that cite a number are held to it', () => {
+  const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
+
+  it('condition 2 cites the number of fixable findings the snapshots carry', () => {
+    const inSnapshots = snapshotNames().reduce(
+      (total, name) => total + field(snapshot(name), 'fixable'),
+      0,
+    )
+    const cited = /\| 2 \|[^|]*\|\s*\*\*(\d+) fixable\*\*/u.exec(doc)
+    if (cited === null) throw new Error('condition 2 does not cite a fixable count')
+    expect(Number(cited[1])).toBe(inSnapshots)
+  })
+
+  it('condition 8 cites the number of repositories in the corpus', () => {
+    const cited = /\| 8 \|[^|]*\|\s*\*\*(\d+) repos\*\*, (\d+) in validation/u.exec(doc)
+    if (cited === null) throw new Error('condition 8 does not cite a repository count')
+    expect(Number(cited[1])).toBe(CORPUS.length)
+    expect(Number(cited[2])).toBe(CORPUS.filter((entry) => entry.holdout === true).length)
+  })
+})

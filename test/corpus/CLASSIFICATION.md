@@ -16,13 +16,13 @@ Round eighteen added two sources to the validation group and **no findings**: al
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 19 |
+| 2 | Zero false positives among `fixable` findings | **6 fixable**, and all six are **true** | **met**, repaired in round 19 |
 | 3 | ~~Median FP per repo = 0~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): implied by 6 |
 | 4 | ~~90th percentile of FP per repo ≤ 1~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): implied by 6 |
 | 5 | ~~No repo above 2 FP~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): unstatable over a repository of real size |
 | 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **81 of 96 = 84.4%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — and further than before, see round thirty-one |
 | 7 | ≥ 1 true positive in validation | 8 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | **96 repos**, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus/repos.ts`; no debt outstanding | **met** |
 
 Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. Round twenty-seven withdrew the check that produced those five, leaving only `fireSeqSearch`'s. Round thirty-one added five more — three copies of one `tools/` to `extensions/` move in `BuilderIO/agent-native`, and one each in `hecateq/hecateq-openagent` and `BetterSEQTA/DesQTA`, all three of them a file that changed directory. All six are true, and under ADR-0015 a `fixable` finding is the one thing that may never be left unread.
