@@ -2,7 +2,7 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **96 public repos pinned to a commit, 338 findings.**
+Corpus: **96 public repos pinned to a commit, 337 findings.**
 
 Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **32 findings, 22 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, round twenty-six closed one class and measured another away, and round twenty-seven withdrew `skill/frontmatter` entirely.
 Of the 96, **32 form the validation group**. No replacement is outstanding: round thirty-one's thirty are all calibration, because round twenty-nine's `@` rule was derived from a frequency over the discovery corpus they came from.
@@ -113,7 +113,7 @@ lives.
 
 ## The full corpus
 
-The corpus produces **338 findings, 32 true, 17 false and 289 unruled**, so no aggregate is quoted — and the aggregate
+The corpus produces **337 findings, 32 true, 17 false and 288 unruled**, so no aggregate is quoted — and the aggregate
 is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
@@ -168,7 +168,7 @@ true which round thirteen had ruled **false**, because the verdict was fourteen 
 away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
 be fed to a model; the error is the argument for it.
 
-**32 true, 17 false, 289 pending, 338 findings.**
+**32 true, 17 false, 288 pending, 337 findings.**
 
 | # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
 |---|---|---|---|---|---|---|---|
@@ -462,7 +462,7 @@ be fed to a model; the error is the argument for it.
 | 288 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:29:12` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
 | 289 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:65:18` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
 | 290 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:204:10` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
-| 291 | `MuLTiAcidi/claudeos` | `agents/deserialization-hunter/CLAUDE.md:64:68` | `path/missing` | `AAEAAAD/////` | **pending** | — | calibration, round 31 |
+| 291 | `MuLTiAcidi/claudeos` | `agents/deserialization-hunter/CLAUDE.md:64:68` | `path/missing` | `AAEAAAD/////` | **false** | binary-signature | calibration, round 32 |
 | 292 | `MuLTiAcidi/claudeos` | `agents/discord-bot-manager/CLAUDE.md:613:10` | `path/missing` | `plugins/DiscordSRV/config.yml` | **pending** | — | calibration, round 31 |
 | 293 | `MuLTiAcidi/claudeos` | `agents/doc-generator/CLAUDE.md:854:16` | `path/missing` | `docs/api.md` | **pending** | — | calibration, round 31 |
 | 294 | `MuLTiAcidi/claudeos` | `agents/docker-inspector/CLAUDE.md:12:42` | `path/missing` | `redteam/loot/docker-inspector/` | **pending** | — | calibration, round 31 |
@@ -484,7 +484,6 @@ be fed to a model; the error is the argument for it.
 | 310 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:698:22` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
 | 311 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:699:19` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
 | 312 | `MuLTiAcidi/claudeos` | `agents/sqli-hunter/CLAUDE.md:247:42` | `path/missing` | `sqlmap/tamper/` | **pending** | — | calibration, round 31 |
-| 313 | `MuLTiAcidi/claudeos` | `agents/subdomain-takeover/CLAUDE.md:98:92` | `path/missing` | `herokucdn.com/error-pages/no-such-app.html` | **false** | foreign-project | calibration, round 31 |
 | 314 | `MuLTiAcidi/claudeos` | `agents/test-runner/CLAUDE.md:1209:21` | `path/missing` | `scripts/seed.sh` | **pending** | — | calibration, round 31 |
 | 315 | `MuLTiAcidi/claudeos` | `agents/test-runner/CLAUDE.md:1210:23` | `path/missing` | `scripts/regression-check.sh` | **pending** | — | calibration, round 31 |
 | 316 | `MuLTiAcidi/claudeos` | `agents/waf-fingerprinter/CLAUDE.md:334:2` | `path/missing` | `bypass-notes/target.example.com.md` | **pending** | — | calibration, round 31 |
@@ -2543,3 +2542,59 @@ rows say 81. It now keys by the full location.
 
 **`rowsIn` did not know `pending`** and silently dropped 289 rows, which is how the first
 regeneration claimed 91.7%.
+
+## Thirty-second round, 2026-09-24: a host without a scheme
+
+The first rule this project has derived from a **model's tabulation**, and the derivation is
+worth stating because the model never decided anything.
+
+Ticket `37` put `classify.ts`'s Choice — the question that scores 94% against these rulings —
+to 1262 wild findings, two per repository, and counted where the named classes sit. The same
+shape came back under three different names: `nextjs.org/docs/messages/` as `foreign-project`,
+`teams.microsoft.com/l/message/` as `placeholder`, `claude.ai/code/` as `third-party-convention`.
+A person read that, and from there the rule was derived and measured the ordinary way, with no
+model in the loop.
+
+`discard.ts` rule 1 has always discarded a text with a protocol. Prose drops the protocol half
+the time, and `linkedin.com/in/` reached `path/missing` as a file this repository was missing.
+
+Measured, all of it deterministic:
+
+| | |
+|---|---|
+| in the wild | 33 findings, 21 repositories, 23 distinct texts, every one a host |
+| directories really named like a host | **1** in 12 439 distinct first segments across 2599 repos |
+| discarded candidates of this shape | 284, of which **0** resolve to anything |
+| discovery | 32 988 to 32 955, **33 removed, none added** |
+| certification | 338 to 337, one snapshot moved, `MuLTiAcidi/claudeos` |
+
+The TLD list holds no file extension — `md`, `sh`, `py`, `rs`, `go` are out so that the rule is
+never the thing deciding whether `docs.md/` is a directory — and `io`, `dev`, `app`, `ai` and
+`co` are out too: real TLDs that are also ordinary directory names, and nothing measured
+justified the risk.
+
+**The match is case-sensitive, and the measurement is why.** Case-insensitively it matches two
+of those 12 439 first segments and one is `GameOfLife3D.NET`, a .NET project. Lowercase-only
+matches one: `my.sheerid.com/`, a scrape whose filenames still carry `%3Flocale=en-US`.
+
+### The treadmill, on schedule
+
+Removing the finding cost the repository that revealed it. `MuLTiAcidi/claudeos`'s
+`herokucdn.com/error-pages/no-such-app.html` was its only ruled false positive, so with the
+rule in place the repository had 26 unread findings and nothing settling it — which
+`corpus-bookkeeping.test.ts` caught, as it is there to.
+
+Angel settled it in one reading: `AAEAAAD/////`, at `agents/deserialization-hunter/CLAUDE.md:64`,
+in a table of deserialization signatures beside `0x00 0x01 0x00 0x00 0x00 FF FF FF FF`. **A
+binary signature, not a path.** New class, `binary-signature`, and it is the first class named
+since round twenty-nine.
+
+  findings 338 -> 337, true 32, false 17 -> 17, pending 289 -> 288
+
+**Condition 6 does not move: 81 of 96 = 84.4%.** claudeos was dirty before the rule and is dirty
+after it, for a different finding. Ticket `38` pre-registered that the condition could not be
+used as an argument for the rule, and the rule turns out not to touch it — which is the
+cleanest possible version of that separation.
+
+Validation is untouched at 29 of 32 = 90.6%, and condition 9 is silent: nothing here looked at
+a validation repository's discards.

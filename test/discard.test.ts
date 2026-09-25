@@ -214,3 +214,46 @@ describe('evaluatePathText', () => {
     expect(evaluatePathText('https://x.com/a.md.')).toEqual({ kind: 'discarded', reason: 'url' })
   })
 })
+
+describe('a host with the scheme left off', () => {
+  it('discards a bare host, which is what prose writes half the time', () => {
+    expect(discardReason('linkedin.com/in/')).toBe('url')
+    expect(discardReason('nextjs.org/docs/messages/')).toBe('url')
+    expect(discardReason('herokucdn.com/error-pages/no-such-app.html')).toBe('url')
+    expect(discardReason('ctbk.s3.amazonaws.com/index.html')).toBe('url')
+  })
+
+  it('does not fire on a .NET project directory, which is why the match is case-sensitive', () => {
+    // Over 12 439 distinct first segments in 2599 repositories, the
+    // case-insensitive version matched `GameOfLife3D.NET` and one real host.
+    // This is the whole reason the rule is not /iu.
+    expect(discardReason('GameOfLife3D.NET/src/main.cs')).toBeUndefined()
+    expect(discardReason('Foo.NET/README')).toBeUndefined()
+  })
+
+  it('leaves a file extension alone: the TLD list carries none', () => {
+    expect(discardReason('docs.md/guide')).toBeUndefined()
+    expect(discardReason('build.sh/x')).toBeUndefined()
+    expect(discardReason('main.go/x')).toBeUndefined()
+  })
+
+  it('leaves the TLDs that are also ordinary directory names', () => {
+    // `io`, `dev`, `app`, `ai` and `co` are real TLDs and also words people
+    // name directories after. Nothing measured justified the risk.
+    expect(discardReason('packages.io/x')).toBeUndefined()
+    expect(discardReason('my.app/config.json')).toBeUndefined()
+  })
+
+  it('needs a path after the host, so this rule does not claim a dotted word', () => {
+    // Both are discarded, by the bare-word rule rather than by this one: a
+    // host on its own names no file either way, and letting this rule claim
+    // it would blur which rule is answering for what.
+    expect(discardReason('release.notes.com')).not.toBe('url')
+    expect(discardReason('config.tech')).not.toBe('url')
+  })
+
+  it('still reports an ordinary dotted path', () => {
+    expect(discardReason('src/app.component.ts')).toBeUndefined()
+    expect(discardReason('.github/workflows/ci.yml')).toBeUndefined()
+  })
+})

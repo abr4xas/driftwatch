@@ -31,6 +31,49 @@ function isUrl(text: string): boolean {
 }
 
 /**
+ * Rule 1b. Prose drops the scheme, and the host is still not a location.
+ *
+ * Half the time a document writes `linkedin.com/in/` or `nextjs.org/docs/messages/`
+ * rather than spelling out `https://`. Rule 1 does not see those, so they reach
+ * `path/missing` and are reported as files this repository is missing. It is the
+ * same class rule 1 exists for, arriving with the scheme left off.
+ *
+ * Found by tabulating the named false-positive classes over the discovery
+ * corpus (ticket `37`): the same shape came back under three different class
+ * names — `foreign-project` for `nextjs.org/docs/messages/`, `placeholder` for
+ * `teams.microsoft.com/l/message/`, `third-party-convention` for `claude.ai/code/`.
+ * A frequency scan over the corpus's 32 988 `path/missing` findings then put it
+ * at **33 findings in 21 repositories, 23 distinct texts**, every one of them a
+ * host, read by hand.
+ *
+ * Two things make the rule narrow enough to be safe, and both are measured.
+ *
+ * **The TLD list is short and holds no file extension.** `md`, `sh`, `py`, `rs`
+ * and `go` are excluded because a rule must not be the thing that decides
+ * whether `docs.md/` is a directory. `io`, `dev`, `app`, `ai` and `co` are
+ * excluded too: they are real TLDs and also ordinary words people name
+ * directories after, and nothing measured here justifies the risk.
+ *
+ * **The match is case-sensitive**, which is not fussiness. Over 12 439 distinct
+ * first path segments in 2599 repositories, a case-insensitive version matches
+ * two and one of them is `GameOfLife3D.NET` — a .NET project, not a host.
+ * Lowercase-only matches **one**: `my.sheerid.com/`, a scrape whose filenames
+ * still carry `%3Flocale=en-US`.
+ *
+ * The cost, measured the way the `@` clause of `isSpecifier` measured its own:
+ * of 1 352 382 discarded candidates, **284 have this shape and none of them
+ * resolves to anything**. The `@` rule shipped at three resolving in 17 607.
+ *
+ * Like rule 1, this is the extractor being told about a syntax, not a guess
+ * about likelihood.
+ */
+const HOST = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.(com|org|net|gov|edu|xyz|cloud|tech|info|biz)\//u
+
+function isSchemelessHost(text: string): boolean {
+  return HOST.test(text)
+}
+
+/**
  * Rule 2. A glob or a placeholder does not name a file, it names a family or a
  * hole the reader is expected to fill in.
  * Prevents: `src/**\/*.test.ts`, `.scratch/<feature>/issues/`, `{{path}}/x.ts`,
@@ -372,7 +415,7 @@ export function discardReason(
   options: DiscardOptions = { couldBeCommand: true },
 ): DiscardReason | undefined {
   if (text.length === 0) return 'not-path-shaped'
-  if (isUrl(text)) return 'url'
+  if (isUrl(text) || isSchemelessHost(text)) return 'url'
   if (isSpecifier(text)) return 'module-specifier'
   if (isHomePath(text)) return 'home-path'
   if (isAbsolutePath(text)) return 'absolute-path'

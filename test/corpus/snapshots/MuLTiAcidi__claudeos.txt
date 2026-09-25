@@ -1,7 +1,7 @@
 # MuLTiAcidi/claudeos
 
 sources: 367
-errors: 27
+errors: 26
 warnings: 0
 fixable: 0
 
@@ -397,7 +397,6 @@ agents/proof-collector/CLAUDE.md:697:20  [path/missing] link  evidence/
 agents/proof-collector/CLAUDE.md:698:22  [path/missing] link  evidence/
 agents/proof-collector/CLAUDE.md:699:19  [path/missing] link  evidence/
 agents/sqli-hunter/CLAUDE.md:247:42  [path/missing] inline-code  sqlmap/tamper/
-agents/subdomain-takeover/CLAUDE.md:98:92  [path/missing] inline-code  herokucdn.com/error-pages/no-such-app.html
 agents/test-runner/CLAUDE.md:1209:21  [path/missing] inline-code  scripts/seed.sh
 agents/test-runner/CLAUDE.md:1210:23  [path/missing] inline-code  scripts/regression-check.sh
 agents/waf-fingerprinter/CLAUDE.md:334:2  [path/missing] inline-code  bypass-notes/target.example.com.md
