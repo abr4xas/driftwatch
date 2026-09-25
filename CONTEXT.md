@@ -117,6 +117,12 @@ _Avoid_: judgement, adjudication, label.
 The named kind a false positive belongs to — `placeholder`, `generated-bundle`,
 `crate-nickname`. A class is drawn by a person, and a class with a rule shape is a candidate
 for a discard rule.
+
+**Most classes have no rule shape, and how many findings one holds does not predict whether it
+does.** Measured: of the five largest, three produced no rule at all — one because its
+vocabulary is the vocabulary of real directory names, one because its marker is true and says
+nothing about absence, one because its signal is not on disk. Read a class before acting on its
+size.
 _Avoid_: category, cluster, group, type.
 
 **Verdict**:

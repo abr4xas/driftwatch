@@ -2598,3 +2598,40 @@ cleanest possible version of that separation.
 
 Validation is untouched at 29 of 32 = 90.6%, and condition 9 is silent: nothing here looked at
 a validation repository's discards.
+
+## Thirty-third round, 2026-09-24: the class gets its definition, and nothing moves
+
+No repository was re-read and no ruling changed. What changed is the document finding #23 rests
+on.
+
+`remix-run/react-router` `.agents/skills/react-router/SKILL.md:22` — `app/entry.server.tsx` —
+has been `false`, class `readers-project`, since round eighteen. The reasoning cited
+[ADR-0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md), and ADR-0008
+did not quite say it: its line was **instructs versus argues**, and a skill react-router
+publishes for its consumers does not argue. It instructs, about somebody else's repository —
+a third case the ADR had not met.
+
+ADR-0008 is amended rather than the ruling moved. Its premise was always the right one and is
+one sentence above the dichotomy: *an agent context file makes assertions about the repo it
+sits in.* A document instructing about another project breaks that premise while passing every
+test the old wording proposed.
+
+**Every number is unchanged**: 337 findings, 32 true, 17 false, 288 pending, condition 6 at 81
+of 96 = 84.4%, validation at 29 of 32 = 90.6%.
+
+That direction is what makes the amendment safe to accept. One that *improved* the percentage
+would deserve the suspicion § "When a condition fails" step 4 reserves for it.
+
+### What produced the amendment
+
+Ticket `36` asked whether the distinction could be drawn mechanically, pre-registered its
+threshold before looking, and came back negative twice — a model at **-31 points** against a
+person, and eleven comparable pairs in which every deterministic axis appears on both sides.
+The react-router document was that ticket's pre-registered control: Jev read it
+`another-project` at 0.29, agreeing with the ADR, and Angel read it `this-repo`. The
+disagreement is what this round settles, and it is settled by widening the ADR to what it
+always meant.
+
+The remedy for a user carrying somebody else's skill is `ignore`, which landed the same day.
+It is not a discard rule and it could not be one: ticket `36` is the measurement that says
+inference is unavailable here.
