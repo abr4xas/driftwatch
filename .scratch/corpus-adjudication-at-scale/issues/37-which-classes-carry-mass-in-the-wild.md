@@ -159,3 +159,22 @@ and after and a hand reading of every finding added and removed.
 
 Nothing here is a precision, nothing here is a false-positive count, nobody has ruled on one of
 these 1244 findings, and none of it enters `CLASSIFICATION.md`.
+
+## What the table produced, recorded here so it is not read cold again
+
+Tickets `39` to `43` worked the top five rows in order.
+
+```
+foreign-project    74 repos  ->   53 findings   two clauses
+placeholder        57 repos  ->  261 findings   two clauses, one shape refused
+runtime-log        36 repos  ->   16 findings   class refused
+generated-bundle   31 repos  ->    0 findings   class refused
+readers-project    29 repos  ->    0 findings   answered by `ignore`, not by a rule
+```
+
+330 findings removed. The ranking predicted the yield **once in five**: the second row produced
+five times what the first did, and rows three to five produced almost nothing between them.
+
+This ticket said, before any of it, that a row is a place to look and that mass is not cost.
+That was the right caveat and it was too quiet. Anyone reading this table should read the class
+first — three of these five refused a rule, each for a reason the table could not show.
