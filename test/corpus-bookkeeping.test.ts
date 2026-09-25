@@ -340,3 +340,51 @@ describe('condition 6 is divided from the rows it is about', () => {
     }).toEqual({ clean, cleanValidation })
   })
 })
+
+/**
+ * `results.jsonl` is the machine rendering of the same run the snapshots
+ * record, and it went stale without anybody noticing.
+ *
+ * It sat at 66 rows from a 66-repo corpus while the corpus grew to 96, so
+ * `pnpm discovery queue --certification` read it, found none of the thirty
+ * repositories round thirty-one added, and ordered silence. Nothing failed:
+ * the file was valid, just about a corpus that no longer existed. Worse, the
+ * message printed when it is missing named `pnpm corpus --json`, a flag that
+ * had never been implemented — so the one instruction for repairing it could
+ * not be followed.
+ *
+ * The flag exists now, and this is what stops the file drifting again. It
+ * clones nothing: both artifacts are on disk.
+ */
+describe('results.jsonl is the same run the snapshots are', () => {
+  type Outcome = { repo: string; sources: number; findings: unknown[] }
+  const outcomes: Outcome[] = readFileSync(
+    new URL('./corpus/results.jsonl', import.meta.url),
+    'utf8',
+  )
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .map((line) => JSON.parse(line) as Outcome)
+
+  it('covers every repository the snapshots do, and invents none', () => {
+    expect(outcomes.map((o) => slugOf(o.repo)).toSorted()).toEqual(
+      snapshotNames().map((name) => name.replace(/\.txt$/u, '')),
+    )
+  })
+
+  it('counts the same findings the snapshots count', () => {
+    const inSnapshots = snapshotNames().reduce(
+      (total, name) => total + findingCount(snapshot(name)),
+      0,
+    )
+    expect(outcomes.reduce((total, o) => total + o.findings.length, 0)).toBe(inSnapshots)
+  })
+
+  it('counts the same sources', () => {
+    const inSnapshots = snapshotNames().reduce(
+      (total, name) => total + field(snapshot(name), 'sources'),
+      0,
+    )
+    expect(outcomes.reduce((total, o) => total + o.sources, 0)).toBe(inSnapshots)
+  })
+})

@@ -16,12 +16,17 @@
  *   pnpm discovery clone     [--limit N]    sparse-clone what the list names
  *   pnpm discovery run       [--limit N]    audit each clone, record the result
  *   pnpm discovery discards  [--limit N]    what the extractor threw away (`07`)
+ *   pnpm discovery table                    the discards, one row per rule
  *   pnpm discovery sample    [--sample N]   n of each rule's discards, to read
+ *   pnpm discovery findings  [--per-repo N] what the checks reported, sampled
+ *   pnpm discovery claims    --cause X      does the prose put a path forward (`07`)
  *   pnpm discovery families  [--dry-run]    one observation per template (`17`)
- *   pnpm discovery filter    [--dry-run]    the acquisition filter's two judgements
+ *   pnpm discovery filter    [--reported]   the acquisition filter's two judgements
  *   pnpm discovery scope     [--family F]   what a gate rules over (`27`)
+ *   pnpm discovery ownership [--ask|--score]  whose document is this (`36`)
  *   pnpm discovery diff --before A --after B   what a rule change moved
  *   pnpm discovery queue    [--repos a,b]  what to adjudicate first (`34`)
+ *   pnpm discovery queue    --per-repo N   where the named classes sit (`37`)
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and

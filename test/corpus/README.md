@@ -6,6 +6,7 @@ This directory is the only honest false positive measurement the project has.
 
 - `repos/` — shallow clones of public repos, pinned to a commit. **Gitignored**: it is a local cache, rebuilt with `pnpm corpus`.
 - `snapshots/` — driftwatch's output for each repo. **Committed.**
+- `results.jsonl` — the same runs in the shape the discovery corpus uses, one row per repo, for the passes that read both. **Committed**, and written only by `pnpm corpus --json`.
 - `CLASSIFICATION.md` — every corpus finding reviewed by hand and classified as a true or false positive, with its justification.
 
 ## How it is used
@@ -14,7 +15,16 @@ This directory is the only honest false positive measurement the project has.
 pnpm corpus            clone what is missing and rewrite the snapshots
 pnpm corpus --check    fail if a snapshot differs from the stored one
 pnpm corpus --fixes    print every edit `--fix` would apply, and write nothing
+pnpm corpus --json     also write results.jsonl, for the passes that read it
 ```
+
+`--json` does not combine with `--only`, and writes nothing if a repository
+could not be read. Both refusals are the same rule: a results file covering
+part of the corpus and looking like the whole of it is the defect the flag was
+added to repair. It went 66 rows against a 96-repo corpus for three days, and
+`pnpm discovery queue --certification` read it and ordered silence.
+`test/corpus-bookkeeping.test.ts` now holds the file to the snapshots, and that
+guard clones nothing, so CI catches the next one.
 
 `--fixes` answers the question the snapshots cannot: not whether a path is
 really missing, which is what a finding claims, but whether the **rewrite** is
