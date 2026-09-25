@@ -102,7 +102,7 @@
   FIRST VIEWPORT: Sheet title block on the left; the dark field book — a live terminal running the
   real CLI — as the one instrument lying on the bright sheet. Thesis, install command and the
   precision figure all above the fold.
-  SIGNATURE: The reliability diagram — 66 real cells, one per corpus repository, the cartographic
+  SIGNATURE: The reliability diagram — 96 real cells, one per corpus repository, the cartographic
   convention for declaring your own survey confidence, carrying the project's central claim.
   RISK: A flat dark ground gives the page nothing to hide behind: every rule, interval and alignment
   is load-bearing. The marking orange is loud by design and must never be spent on decoration.
@@ -116,7 +116,7 @@
 				<p class="marg">
 					<span>Sheet 1 of 1</span>
 					<span aria-hidden="true">·</span>
-					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">1.0.0</a></span>
+					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">1.1.0</a></span>
 					<span aria-hidden="true">·</span>
 					<span>Node 24+</span>
 					<span aria-hidden="true">·</span>
@@ -143,6 +143,7 @@
 							<a href="https://github.com/abr4xas/driftwatch/tree/master/docs/guide">Docs</a>
 							<a href="#reliability">Precision</a>
 							<a href="#first-run">First run</a>
+							<a href="#commands">Commands</a>
 							<a href="#ci">CI</a>
 						</p>
 					</div>
@@ -153,7 +154,7 @@
 						<section class="fieldbook" id="demo" aria-label="Live terminal demonstration">
 							<div class="fb-bar">
 								<span class="fb-path">~/your-repo</span>
-								<span class="fb-ver">driftwatch 1.0.0</span>
+								<span class="fb-ver">driftwatch 1.1.0</span>
 							</div>
 							<pre class="fb-screen" id="screen" aria-live="polite" aria-atomic="false"></pre>
 							<div class="fb-keys" role="group" aria-label="Run a command">
@@ -227,7 +228,7 @@
 			<hr class="rule">
 
 			<section class="band" id="legend" aria-labelledby="legend-h">
-				<h2 id="legend-h">Five checks. Each answers a question the document already claimed to know.</h2>
+				<h2 id="legend-h">Four checks. Each answers a question the document already claimed to know.</h2>
 
 				<ul class="legend-list">
 					<li>
@@ -283,6 +284,9 @@
 								warning instead of silencing it</li>
 							<li>a directive in the document silences one line rather than a whole check, and <a
 									href="#first-run">the syntax is with the first run</a></li>
+							<li><code>ignore:</code> in the config drops a whole document — a skill somebody else
+								wrote, a vendored file you do not maintain — which is the one thing
+								<code>sources</code> cannot do</li>
 						</ul>
 						<p class="fine after-note">A selection that leaves no check enabled is refused.</p>
 					</div>
@@ -312,7 +316,7 @@
 
 				<div class="survey">
 					<div class="survey-map">
-						<p class="marg"><span>1901 context files</span><span aria-hidden="true">·</span><span>66
+						<p class="marg"><span>1901 context files</span><span aria-hidden="true">·</span><span>96
 								repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine
 								languages</span></p>
 						<div class="cells" id="cells" aria-label="1901 context files, grouped into 96 repositories">
@@ -353,7 +357,7 @@
 							<dd class="pct">No repo in the corpus sees more</dd>
 						</div>
 						<div class="hero-fig">
-							<dt>Edits <code>--fix</code> would apply across all 66</dt>
+							<dt>Edits <code>--fix</code> would apply across all 96</dt>
 							<dd><b>6</b></dd>
 							<dd class="pct">and every one is correct, checked by hand at the level of the edit and not
 								only of the finding</dd>
@@ -557,7 +561,7 @@
 					<div class="codeblock">
 						<p class="marg"><span>.github/workflows/ci.yml</span></p>
 						<pre><code><span class="c-dim">- uses:</span> actions/checkout@v7
-<span class="c-dim">- uses:</span> abr4xas/driftwatch@v1.0.0</code></pre>
+<span class="c-dim">- uses:</span> abr4xas/driftwatch@v1.1.0</code></pre>
 						<p class="fine"><code>fail-on-drift: false</code> makes it advisory. <code>sarif: true</code>
 							writes a file for Code Scanning.</p>
 
@@ -608,6 +612,46 @@
 
 			<hr class="rule">
 
+			<section class="band" id="commands" aria-labelledby="commands-h">
+				<h2 id="commands-h">One command with nothing after it, and a config file of two keys.</h2>
+
+				<div class="two">
+					<div class="codeblock">
+						<p class="marg"><span>on the command line</span></p>
+						<pre><code>driftwatch                       <span class="c-dim"># the whole repo</span>
+driftwatch docs/ AGENTS.md       <span class="c-dim"># only these paths</span>
+driftwatch --only path/missing   <span class="c-dim"># only this check</span>
+driftwatch --skip link/broken    <span class="c-dim"># everything but this one</span>
+driftwatch --strict              <span class="c-dim"># warnings fail the build too</span>
+driftwatch --fix --dry-run       <span class="c-dim"># what it would rewrite</span>
+driftwatch --json                <span class="c-dim"># the machine-readable contract</span>
+driftwatch --init                <span class="c-dim"># write a commented config</span></code></pre>
+						<p class="fine">Exit <code>0</code> clean, <code>1</code> drift, <code>2</code> the tool
+							could not run — a bad config, a path that does not exist. A crash never looks like a
+							clean run.</p>
+					</div>
+					<div class="codeblock">
+						<p class="marg"><span>driftwatch.config.yaml</span></p>
+						<pre><code><span class="c-dim"># documents you did not write</span>
+ignore:
+  - '.claude/skills/vendored/**'
+  - 'third_party/**'
+
+checks:
+  'link/broken': 'warning'</code></pre>
+						<p>A repository carries documents it did not write: an installed skill, a vendored
+							<code>AGENTS.md</code>, a template's scaffold. They name paths in the project they came
+							from, and reporting those is the check being asked the wrong question.</p>
+						<p class="fine">For a document you <em>do</em> maintain, silence one line with a directive
+							instead. A directive for a document you own, <code>ignore</code> for one you do not —
+							editing somebody else's skill to quiet your linter loses the edit the next time they
+							ship it.</p>
+					</div>
+				</div>
+			</section>
+
+			<hr class="rule">
+
 			<footer class="close">
 				<h2 class="close-h">It takes one command and about sixty milliseconds to find out.</h2>
 
@@ -619,15 +663,19 @@
 
 				<div class="status">
 					<p class="marg"><span>Status</span></p>
-					<p><strong>It is on npm, and it is early.</strong> What is finished is the part you would actually
-						run: the five checks, <code>--fix</code>, all four output formats and the GitHub Action. Four
-						further checks are next.</p>
-					<p><code>--watch</code> and <code>--strict</code> are recognised on the command line and not
-						implemented yet, and they say so when you pass them rather than quietly doing nothing.</p>
+					<p><strong>It is on npm, and the surface is frozen.</strong> What is finished is the part you
+						would actually run: the four checks, <code>--fix</code>, all four output formats and the
+						GitHub Action. Four further checks are next, and each defaults to a warning, so none of them
+						can turn a green run red.</p>
+					<p><code>1.0.0</code> froze eight surfaces and holds them with a test.
+						<code>1.1.0</code> adds the <code>ignore</code> config key and five discard rules derived from
+						a second corpus of 2533 unread repositories — nothing removed, so the contract grew by one
+						line. <code>--watch</code> is not in the tool at all until the milestone that owns it: it
+						fails as any unknown flag does, rather than being advertised and refused.</p>
 					<p class="fine">The package is <code>@abr4xas/driftwatch</code> because npm refuses
 						<code>driftwatch</code> for being too similar to an unrelated tool. Neither reaches you:
 						<code>bin</code> fixes the command at <code>driftwatch</code>, and the action is used as
-						<code>abr4xas/driftwatch@v1.0.0</code>.</p>
+						<code>abr4xas/driftwatch@v1.1.0</code>.</p>
 				</div>
 
 				<nav class="foot-links" aria-label="Project links">

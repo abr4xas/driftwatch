@@ -1,7 +1,7 @@
 # `driftwatch` is rejected by the Marketplace: the name has to be unique across
 # every action, user and organisation, and a GitHub user called Driftwatch
 # already exists. Same shape as npm refusing the unscoped package name. This is
-# the listing's label only — the action is still used as `abr4xas/driftwatch@v1.0.0`,
+# the listing's label only — the action is still used as `abr4xas/driftwatch@v1.1.0`,
 # which comes from the repository, so no caller's workflow changes.
 name: driftwatch-action
 description: Find the claims in your agent context files that are no longer true

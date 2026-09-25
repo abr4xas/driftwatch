@@ -93,7 +93,7 @@ One native annotation per finding, and **nothing else** — the job log is the t
 `::warning` for a warning-severity finding. `title` carries the check id, which is the only stable thing to group and search by. A run with no findings emits nothing at all — not a blank line. No fix diff reaches the log, because there is no workflow command for "I changed this file".
 
 ```yaml
-- uses: abr4xas/driftwatch@v1.0.0
+- uses: abr4xas/driftwatch@v1.1.0
 ```
 
 See [ci.md](./ci.md) for the action's inputs.
@@ -103,7 +103,7 @@ See [ci.md](./ci.md) for the action's inputs.
 SARIF 2.1.0, for upload to Code Scanning.
 
 ```yaml
-- uses: abr4xas/driftwatch@v1.0.0
+- uses: abr4xas/driftwatch@v1.1.0
   id: drift
   with:
     sarif: true

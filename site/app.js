@@ -231,7 +231,7 @@
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
   if (cells && typeof CORPUS !== 'undefined') {
-    /* The unit is the context file, not the repository. A grid of 66 equal
+    /* The unit is the context file, not the repository. A grid of 96 equal
        squares threw that away and reported a repo with one document as the
        peer of a repo with twenty-two. Every mark below is one file; the runs
        are the repos.
