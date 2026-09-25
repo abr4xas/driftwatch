@@ -48,11 +48,18 @@ function isUrl(text: string): boolean {
  *
  * Two things make the rule narrow enough to be safe, and both are measured.
  *
- * **The TLD list is short and holds no file extension.** `md`, `sh`, `py`, `rs`
- * and `go` are excluded because a rule must not be the thing that decides
- * whether `docs.md/` is a directory. `io`, `dev`, `app`, `ai` and `co` are
- * excluded too: they are real TLDs and also ordinary words people name
- * directories after, and nothing measured here justifies the risk.
+ * **The TLD list holds no file extension.** `md`, `sh`, `py`, `rs` and `go`
+ * are excluded because a rule must not be the thing that decides whether
+ * `docs.md/` is a directory.
+ *
+ * `io`, `dev`, `ai`, `app` and `co` were excluded in the first pass, on the
+ * argument that they are real TLDs and also ordinary words people name
+ * directories after, and on the condition that measurement rather than
+ * intuition would decide. Ticket `39` measured: **222** discarded candidates
+ * carry them and **0** resolve, against **one** real first segment in 12 439 —
+ * `forecast.io`. Fourteen findings in nine repositories against one possible
+ * missed claim is the trade `AGENTS.md` § "The rule that orders every
+ * decision" takes every time, so they are in.
  *
  * **The match is case-sensitive**, which is not fussiness. Over 12 439 distinct
  * first path segments in 2599 repositories, a case-insensitive version matches
@@ -67,7 +74,8 @@ function isUrl(text: string): boolean {
  * Like rule 1, this is the extractor being told about a syntax, not a guess
  * about likelihood.
  */
-const HOST = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.(com|org|net|gov|edu|xyz|cloud|tech|info|biz)\//u
+const HOST =
+  /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.(com|org|net|gov|edu|xyz|cloud|tech|info|biz|io|dev|ai|app|co)\//u
 
 function isSchemelessHost(text: string): boolean {
   return HOST.test(text)
@@ -144,6 +152,30 @@ const SCHEME = /^[a-z][a-z\d+.-]*:/u
 
 function isSpecifier(text: string): boolean {
   return text.startsWith('#') || text.startsWith('@') || SCHEME.test(text)
+}
+
+/**
+ * A text opening with a drive letter is on **the reader's machine** too.
+ *
+ * `D:/Projects/pjmagee/multi-stream-viewer/.claude/gsd-core/references/ai-evals.md`,
+ * `G:/Claude/`, `F:/Git-Repositories/Dalamud/VoicePack/`. Same category as
+ * `isHomePath`, arriving from Windows: a location on the machine of whoever
+ * wrote the document, unverifiable against any repository, and nothing in a
+ * repository is named `C:` — a colon is not legal in a Windows path component.
+ *
+ * Half of this was already covered by accident, which is the reason to write
+ * it down rather than leave it. `SCHEME` above is lowercase-only, so
+ * `d:/projects` is discarded as a module specifier and `D:/Projects` is not:
+ * 41 of the 276 drive-shaped discards arrive through that door and the rest
+ * used to arrive as findings.
+ *
+ * Found in ticket `39`, reading the `foreign-project` class. Cost measured
+ * both ways and it is the cleanest of these clauses: **276** discarded
+ * candidates carry a drive letter and **0** resolve to anything, and **0** of
+ * 12 439 distinct first path segments across 2599 repositories look like one.
+ */
+function isDrivePath(text: string): boolean {
+  return /^[A-Za-z]:[\\/]/u.test(text)
 }
 
 /**
@@ -417,7 +449,7 @@ export function discardReason(
   if (text.length === 0) return 'not-path-shaped'
   if (isUrl(text) || isSchemelessHost(text)) return 'url'
   if (isSpecifier(text)) return 'module-specifier'
-  if (isHomePath(text)) return 'home-path'
+  if (isHomePath(text) || isDrivePath(text)) return 'home-path'
   if (isAbsolutePath(text)) return 'absolute-path'
   if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
   if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'

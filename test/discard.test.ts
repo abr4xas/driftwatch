@@ -237,11 +237,13 @@ describe('a host with the scheme left off', () => {
     expect(discardReason('main.go/x')).toBeUndefined()
   })
 
-  it('leaves the TLDs that are also ordinary directory names', () => {
-    // `io`, `dev`, `app`, `ai` and `co` are real TLDs and also words people
-    // name directories after. Nothing measured justified the risk.
-    expect(discardReason('packages.io/x')).toBeUndefined()
-    expect(discardReason('my.app/config.json')).toBeUndefined()
+  it('covers io, dev, ai, app and co, which the first pass held back', () => {
+    // Held back on the argument that they are also ordinary directory names,
+    // and on the condition that measurement would decide. Ticket `39`
+    // measured: 222 discarded candidates carry them and none resolves,
+    // against one real first segment in 12 439 — `forecast.io`.
+    expect(discardReason('packages.io/x')).toBe('url')
+    expect(discardReason('my.app/config.json')).toBe('url')
   })
 
   it('needs a path after the host, so this rule does not claim a dotted word', () => {
@@ -255,5 +257,47 @@ describe('a host with the scheme left off', () => {
   it('still reports an ordinary dotted path', () => {
     expect(discardReason('src/app.component.ts')).toBeUndefined()
     expect(discardReason('.github/workflows/ci.yml')).toBeUndefined()
+  })
+})
+
+describe('a drive letter is the reader’s machine', () => {
+  it('discards a Windows path, with either separator', () => {
+    expect(discardReason('D:/Projects/app/.claude/references/ai-evals.md')).toBe('home-path')
+    expect(discardReason('G:/Claude/')).toBe('home-path')
+    expect(discardReason('C:\\Users\\me\\notes.md')).toBe('home-path')
+  })
+
+  it('covers the lowercase form the scheme rule was catching by accident', () => {
+    // `SCHEME` is lowercase-only, so `d:/x` was a module-specifier and `D:/x`
+    // was a finding. Both are the same thing and both are discarded now.
+    expect(discardReason('d:/projects/app/notes.md')).toBeDefined()
+    expect(discardReason('D:/projects/app/notes.md')).toBe('home-path')
+  })
+
+  it('leaves an ordinary path with a colon alone', () => {
+    expect(discardReason('src/App:Component.tsx')).not.toBe('home-path')
+    expect(discardReason('docs/a/b.md')).toBeUndefined()
+  })
+})
+
+describe('the TLDs ticket 39 measured in', () => {
+  it('discards the five that were held back in the first pass', () => {
+    expect(discardReason('mise.jdx.dev/tasks/')).toBe('url')
+    expect(discardReason('nvcr.io/')).toBe('url')
+    expect(discardReason('peonping.github.io/registry/index.json')).toBe('url')
+    expect(discardReason('us-docker.pkg.dev/moonrhythm-containers/gcr.io/')).toBe('url')
+    expect(discardReason('claude.ai/code/')).toBe('url')
+  })
+
+  it('still leaves every file extension alone', () => {
+    // The refusal that did not move: a rule must not be the thing deciding
+    // whether `docs.md/` is a directory.
+    expect(discardReason('docs.md/guide')).toBeUndefined()
+    expect(discardReason('build.sh/x')).toBeUndefined()
+    expect(discardReason('main.go/x')).toBeUndefined()
+  })
+
+  it('still reports GameOfLife3D.NET, which is why the match is case-sensitive', () => {
+    expect(discardReason('GameOfLife3D.NET/src/main.cs')).toBeUndefined()
   })
 })
