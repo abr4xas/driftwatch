@@ -40,49 +40,4 @@ describe('skillRoots', () => {
     const result = await run({ cwd: repoWith('skillRoots:\n  - skills\n'), paths: [] })
     expect(result.sources.filter((source) => source.kind === 'skill')).toHaveLength(1)
   })
-
-  it('does not compare a name against the container itself', async () => {
-    // A `SKILL.md` sitting directly in a declared container has no directory of
-    // its own, exactly as in a built-in root. Reporting it for not matching
-    // `skills` would be reporting a container it was never named after.
-    const root = makeTempRepo({
-      files: {
-        'skills/SKILL.md': [
-          '---',
-          'name: rootless',
-          'description: Sits in the container',
-          '---',
-          '',
-        ].join('\n'),
-        'driftwatch.config.yaml': 'skillRoots:\n  - skills\n',
-      },
-    })
-    const result = await run({ cwd: root, paths: [] })
-    expect(result.findings.filter((f) => f.check === 'skill/frontmatter')).toEqual([])
-  })
-
-  it('reports a name that disagrees with its directory, in a declared container', async () => {
-    const root = makeTempRepo({
-      files: {
-        'skills/deploy/SKILL.md': [
-          '---',
-          'name: ship',
-          'description: The directory says deploy and the name says ship',
-          '---',
-          '',
-        ].join('\n'),
-        'driftwatch.config.yaml': 'skillRoots:\n  - skills\n',
-      },
-    })
-    const result = await run({ cwd: root, paths: [] })
-    expect(result.findings.map((finding) => finding.message)).toEqual([
-      'name does not match the directory',
-    ])
-  })
-
-  it('a typo costs the entry and never the check', async () => {
-    const result = await run({ cwd: repoWith('skillRoots:\n  - skils\n'), paths: [] })
-    expect(result.sources.filter((source) => source.kind === 'skill')).toEqual([])
-    expect(result.findings).toEqual([])
-  })
 })

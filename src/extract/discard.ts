@@ -31,6 +31,57 @@ function isUrl(text: string): boolean {
 }
 
 /**
+ * Rule 1b. Prose drops the scheme, and the host is still not a location.
+ *
+ * Half the time a document writes `linkedin.com/in/` or `nextjs.org/docs/messages/`
+ * rather than spelling out `https://`. Rule 1 does not see those, so they reach
+ * `path/missing` and are reported as files this repository is missing. It is the
+ * same class rule 1 exists for, arriving with the scheme left off.
+ *
+ * Found by tabulating the named false-positive classes over the discovery
+ * corpus (ticket `37`): the same shape came back under three different class
+ * names — `foreign-project` for `nextjs.org/docs/messages/`, `placeholder` for
+ * `teams.microsoft.com/l/message/`, `third-party-convention` for `claude.ai/code/`.
+ * A frequency scan over the corpus's 32 988 `path/missing` findings then put it
+ * at **33 findings in 21 repositories, 23 distinct texts**, every one of them a
+ * host, read by hand.
+ *
+ * Two things make the rule narrow enough to be safe, and both are measured.
+ *
+ * **The TLD list holds no file extension.** `md`, `sh`, `py`, `rs` and `go`
+ * are excluded because a rule must not be the thing that decides whether
+ * `docs.md/` is a directory.
+ *
+ * `io`, `dev`, `ai`, `app` and `co` were excluded in the first pass, on the
+ * argument that they are real TLDs and also ordinary words people name
+ * directories after, and on the condition that measurement rather than
+ * intuition would decide. Ticket `39` measured: **222** discarded candidates
+ * carry them and **0** resolve, against **one** real first segment in 12 439 —
+ * `forecast.io`. Fourteen findings in nine repositories against one possible
+ * missed claim is the trade `AGENTS.md` § "The rule that orders every
+ * decision" takes every time, so they are in.
+ *
+ * **The match is case-sensitive**, which is not fussiness. Over 12 439 distinct
+ * first path segments in 2599 repositories, a case-insensitive version matches
+ * two and one of them is `GameOfLife3D.NET` — a .NET project, not a host.
+ * Lowercase-only matches **one**: `my.sheerid.com/`, a scrape whose filenames
+ * still carry `%3Flocale=en-US`.
+ *
+ * The cost, measured the way the `@` clause of `isSpecifier` measured its own:
+ * of 1 352 382 discarded candidates, **284 have this shape and none of them
+ * resolves to anything**. The `@` rule shipped at three resolving in 17 607.
+ *
+ * Like rule 1, this is the extractor being told about a syntax, not a guess
+ * about likelihood.
+ */
+const HOST =
+  /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.(com|org|net|gov|edu|xyz|cloud|tech|info|biz|io|dev|ai|app|co)\//u
+
+function isSchemelessHost(text: string): boolean {
+  return HOST.test(text)
+}
+
+/**
  * Rule 2. A glob or a placeholder does not name a file, it names a family or a
  * hole the reader is expected to fill in.
  * Prevents: `src/**\/*.test.ts`, `.scratch/<feature>/issues/`, `{{path}}/x.ts`,
@@ -65,13 +116,66 @@ const GLOB_OR_PLACEHOLDER = /[*?{}<>$[\]]/u
  * `:12` line suffix, and that one comes after a slash — `SCHEME` is anchored,
  * so it cannot reach it.
  *
- * Neither is a heuristic about likelihood. Both are the extractor being told
- * about a syntax it did not know.
+ * A leading `@` is the third, and it covers two things that are one thing.
+ * `@n8n/typeorm/`, `@rails/request.js`, `@blackbelt-technology/…` are npm
+ * **scoped packages**; `@/engine/`, `@/components/ui/`, `@/api/` are the
+ * **path alias** a `tsconfig.json` `paths` entry or a Vite `resolve.alias`
+ * maps onto `src/`. Both are names a resolver turns into a location, which is
+ * what every other entry in this function is, and neither is a location.
+ *
+ * Both were found in the discovery corpus and neither has ever appeared in the
+ * certification corpus: 128 distinct texts across 69 repositories, and the
+ * alias half is the larger — `@/engine/` alone is 44 findings.
+ *
+ * What it costs is two things, both measured rather than assumed.
+ *
+ * A directory literally named `@something`: **one repository in 2599** has a
+ * top-level entry starting with `@`, and of 17 607 discarded candidates
+ * beginning with one, **three** resolve to anything.
+ *
+ * And Claude Code's `@./file` import, which *is* a path claim wearing a
+ * sigil — `@../AGENTS.md` means read that file, and a missing one is drift.
+ * The rule cannot see it and the honest count is **5 candidates in 1 352 382
+ * discards**, none of which resolves even with the `@` stripped. Narrowing the
+ * rule to strip the sigil instead is a code path for five strings, so the cost
+ * is written here rather than built around. If that syntax becomes common this
+ * paragraph is where to start.
+ *
+ * The alias case is worth stating separately because the tool could not answer
+ * it even if it tried: resolving `@/engine/` means reading `tsconfig.json`'s
+ * `paths`, and a claim we cannot resolve is not a claim we may report broken.
+ *
+ * None of these is a heuristic about likelihood. All three are the extractor
+ * being told about a syntax it did not know.
  */
 const SCHEME = /^[a-z][a-z\d+.-]*:/u
 
 function isSpecifier(text: string): boolean {
-  return text.startsWith('#') || SCHEME.test(text)
+  return text.startsWith('#') || text.startsWith('@') || SCHEME.test(text)
+}
+
+/**
+ * A text opening with a drive letter is on **the reader's machine** too.
+ *
+ * `D:/Projects/pjmagee/multi-stream-viewer/.claude/gsd-core/references/ai-evals.md`,
+ * `G:/Claude/`, `F:/Git-Repositories/Dalamud/VoicePack/`. Same category as
+ * `isHomePath`, arriving from Windows: a location on the machine of whoever
+ * wrote the document, unverifiable against any repository, and nothing in a
+ * repository is named `C:` — a colon is not legal in a Windows path component.
+ *
+ * Half of this was already covered by accident, which is the reason to write
+ * it down rather than leave it. `SCHEME` above is lowercase-only, so
+ * `d:/projects` is discarded as a module specifier and `D:/Projects` is not:
+ * 41 of the 276 drive-shaped discards arrive through that door and the rest
+ * used to arrive as findings.
+ *
+ * Found in ticket `39`, reading the `foreign-project` class. Cost measured
+ * both ways and it is the cleanest of these clauses: **276** discarded
+ * candidates carry a drive letter and **0** resolve to anything, and **0** of
+ * 12 439 distinct first path segments across 2599 repositories look like one.
+ */
+function isDrivePath(text: string): boolean {
+  return /^[A-Za-z]:[\\/]/u.test(text)
 }
 
 /**
@@ -318,6 +422,75 @@ function hasSpaces(text: string): boolean {
 }
 
 /**
+ * Nothing under `.git/` is in any repository's index, ever.
+ *
+ * `.git/index.lock`, `.git/stack/state.json`, `.git/PR_BODY.md`, `.git/hooks/`
+ * — a context file explaining a workflow names them, and they are reported as
+ * files the repository is missing because git does not version its own
+ * directory and `hasFile` only knows what git lists.
+ *
+ * **The cost is not low, it is structurally zero.** Not a measurement about
+ * how repositories happen to be arranged today but a property of git: 0 of
+ * 1 858 219 distinct path segments across 2599 repositories is `.git`, and no
+ * number of repositories would change it. Same category as `~/` being the
+ * reader's home directory and a scheme meaning a URL.
+ *
+ * Ticket `41`, and it is the only shape that class produced: 16 findings in 9
+ * repositories.
+ */
+function isInsideGitDir(text: string): boolean {
+  return text.split('/').includes('.git')
+}
+
+/**
+ * An ellipsis in the middle of a path is the writer abbreviating it.
+ *
+ * `core/.../sql/parser/`, `datagsm-common/src/main/kotlin/.../domain/`,
+ * `src/main/resources/META-INF/native-image/…/proxy-config.json`. Both
+ * spellings occur, three dots and U+2026, and neither names a directory.
+ * `GLOB_OR_PLACEHOLDER` does not see them because there is no sigil and no
+ * bracket: the hole is punched with punctuation that is legal in a filename.
+ *
+ * **The position is the rule and the care is all in it.** A text *ending* in
+ * `...` — `steps-c/...`, `.claude/skills/...` — normalises to its parent,
+ * which usually exists: 91 such candidates come back `exists: true`. They are
+ * already discarded by other rules and are not findings, but a rule written as
+ * "contains an ellipsis" would look identical and be resting on that
+ * normalisation. So the segment has to be an interior one, or the ellipsis has
+ * to be the unicode character, which never appears in a real path at all.
+ *
+ * Ticket `40`, reading the `placeholder` class. 104 findings in 35
+ * repositories, and the cost is zero twice over: **0** of **1 858 219**
+ * distinct path segments across 2599 repositories is `...` or contains `…`,
+ * and of 1946 discarded candidates carrying the shape, **0** resolve.
+ */
+function hasInteriorEllipsis(text: string): boolean {
+  if (text.includes('\u2026')) return true
+  const segments = text.split('/')
+  return segments.slice(0, -1).includes('...')
+}
+
+/**
+ * A SCREAMING_SNAKE name ending in `_DIR` is a variable with its sigil left off.
+ *
+ * `SKILL_DIR/wiki/`, `SCRIPT_DIR/`, `EXP_ROOT/user_workload.yaml`,
+ * `FEATURE_DIR/checklists/requirements.md`, `SPECIFY_FEATURE_DIRECTORY/spec.md`.
+ * Written `$SKILL_DIR` it is caught by `GLOB_OR_PLACEHOLDER`; written bare it
+ * reaches `path/missing` as a directory this repository is missing.
+ *
+ * **The suffix is a narrowing chosen on evidence rather than on nerves.** Any
+ * SCREAMING_SNAKE first segment would take 165 findings in 23 repositories and
+ * cost five real first segments in 12 439 — `FIX_BLOCCANTI`, `JSU_V2`,
+ * `README_IMAGES`, `UPSTREAM_WORKFLOWS_DISABLED`, `ZION_OS` — and one of those
+ * is live, `Yose144/Zion-v3.0.0` naming `ZION_OS/dashboard/app.py`, which
+ * resolves. Requiring the directory-shaped suffix keeps **157 of the 165** in
+ * 21 repositories and costs **0** of 12 439, with **0** of 50 discarded
+ * candidates resolving. It gives up three texts, and eight findings for five
+ * real directories is the trade this project takes every time.
+ */
+const DIRECTORY_VARIABLE = /^[A-Z][A-Z0-9_]*_(DIR|DIRECTORY|ROOT|PATH|HOME|FOLDER)\//u
+
+/**
  * Rule 7. A single-segment directory does not pin down a location.
  * Prevents: `feat/` and `fix/` (branch prefixes), `embeddings/` and
  * `security/` (test categories), `ppr/` (a mode), `partners/` (a package that
@@ -343,9 +516,11 @@ export function discardReason(
   options: DiscardOptions = { couldBeCommand: true },
 ): DiscardReason | undefined {
   if (text.length === 0) return 'not-path-shaped'
-  if (isUrl(text)) return 'url'
+  if (isUrl(text) || isSchemelessHost(text)) return 'url'
+  if (hasInteriorEllipsis(text) || DIRECTORY_VARIABLE.test(text)) return 'metasyntactic'
+  if (isInsideGitDir(text)) return 'not-a-file'
   if (isSpecifier(text)) return 'module-specifier'
-  if (isHomePath(text)) return 'home-path'
+  if (isHomePath(text) || isDrivePath(text)) return 'home-path'
   if (isAbsolutePath(text)) return 'absolute-path'
   if (options.couldBeCommand && hasSpaces(text)) return 'has-spaces'
   if (GLOB_OR_PLACEHOLDER.test(text)) return 'glob-or-placeholder'

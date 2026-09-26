@@ -6,13 +6,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Is your CLAUDE.md or AGENTS.md still true? — driftwatch</title>
 		<meta name="description"
-			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 58 of 66 real repositories.">
+			content="A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 81 of 96 real repositories.">
 		<link rel="icon" href="favicon.svg" type="image/svg+xml">
 		<meta name="theme-color" content="#313031">
 		<meta name="color-scheme" content="dark">
 		<meta property="og:title" content="driftwatch — dead context, found">
 		<meta property="og:description"
-			content="knip finds dead code. driftwatch finds dead context. 58 of 66 real repositories produce no false positive at all.">
+			content="knip finds dead code. driftwatch finds dead context. 81 of 96 real repositories produce no false positive at all.">
 		<meta property="og:type" content="website">
 		<link rel="canonical" href="https://driftwatch-cli.vercel.app/">
 		<meta property="og:url" content="https://driftwatch-cli.vercel.app/">
@@ -71,7 +71,7 @@
       "@id": "https://driftwatch-cli.vercel.app/#website",
       "name": "driftwatch",
       "url": "https://driftwatch-cli.vercel.app/",
-      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 58 of 66 real repositories.",
+      "description": "A zero-config CLI that verifies every path, script and link your CLAUDE.md and AGENTS.md claim exists. Zero false positives in 81 of 96 real repositories.",
       "inLanguage": "en",
       "author": {
         "@id": "https://driftwatch-cli.vercel.app/#author"
@@ -102,7 +102,7 @@
   FIRST VIEWPORT: Sheet title block on the left; the dark field book — a live terminal running the
   real CLI — as the one instrument lying on the bright sheet. Thesis, install command and the
   precision figure all above the fold.
-  SIGNATURE: The reliability diagram — 66 real cells, one per corpus repository, the cartographic
+  SIGNATURE: The reliability diagram — 96 real cells, one per corpus repository, the cartographic
   convention for declaring your own survey confidence, carrying the project's central claim.
   RISK: A flat dark ground gives the page nothing to hide behind: every rule, interval and alignment
   is load-bearing. The marking orange is loud by design and must never be spent on decoration.
@@ -116,7 +116,7 @@
 				<p class="marg">
 					<span>Sheet 1 of 1</span>
 					<span aria-hidden="true">·</span>
-					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">0.5.0</a></span>
+					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">1.1.0</a></span>
 					<span aria-hidden="true">·</span>
 					<span>Node 24+</span>
 					<span aria-hidden="true">·</span>
@@ -143,6 +143,7 @@
 							<a href="https://github.com/abr4xas/driftwatch/tree/master/docs/guide">Docs</a>
 							<a href="#reliability">Precision</a>
 							<a href="#first-run">First run</a>
+							<a href="#commands">Commands</a>
 							<a href="#ci">CI</a>
 						</p>
 					</div>
@@ -153,7 +154,7 @@
 						<section class="fieldbook" id="demo" aria-label="Live terminal demonstration">
 							<div class="fb-bar">
 								<span class="fb-path">~/your-repo</span>
-								<span class="fb-ver">driftwatch 0.5.0</span>
+								<span class="fb-ver">driftwatch 1.1.0</span>
 							</div>
 							<pre class="fb-screen" id="screen" aria-live="polite" aria-atomic="false"></pre>
 							<div class="fb-keys" role="group" aria-label="Run a command">
@@ -173,7 +174,7 @@
 			<hr class="rule">
 
 			<div class="proof">
-				<p class="proof-claim"><strong>58 of 66</strong> real repositories produce <strong>zero</strong> false
+				<p class="proof-claim"><strong>81 of 96</strong> real repositories produce <strong>zero</strong> false
 					positives.</p>
 				<a class="btn" href="#reliability">See the survey</a>
 			</div>
@@ -227,7 +228,7 @@
 			<hr class="rule">
 
 			<section class="band" id="legend" aria-labelledby="legend-h">
-				<h2 id="legend-h">Five checks. Each answers a question the document already claimed to know.</h2>
+				<h2 id="legend-h">Four checks. Each answers a question the document already claimed to know.</h2>
 
 				<ul class="legend-list">
 					<li>
@@ -256,9 +257,9 @@
 					<li>
 						<span class="sym err" aria-hidden="true">✗</span>
 						<span class="lg-id">frontmatter/invalid</span>
-						<span class="lg-what">YAML that does not parse, and fields whose type the format fixes. <span
-								class="fine">An unknown key is only ever reported as a near miss of a known
-								one.</span></span>
+						<span class="lg-what">A frontmatter block that is not valid YAML. <span class="fine">What a field
+								holds is the author's business; only the block failing to parse is
+								reported.</span></span>
 						<span class="lg-fix">never fixable</span>
 					</li>
 					<li>
@@ -283,6 +284,9 @@
 								warning instead of silencing it</li>
 							<li>a directive in the document silences one line rather than a whole check, and <a
 									href="#first-run">the syntax is with the first run</a></li>
+							<li><code>ignore:</code> in the config drops a whole document — a skill somebody else
+								wrote, a vendored file you do not maintain — which is the one thing
+								<code>sources</code> cannot do</li>
 						</ul>
 						<p class="fine after-note">A selection that leaves no check enabled is refused.</p>
 					</div>
@@ -312,44 +316,52 @@
 
 				<div class="survey">
 					<div class="survey-map">
-						<p class="marg"><span>341 context files</span><span aria-hidden="true">·</span><span>66
+						<p class="marg"><span>1901 context files</span><span aria-hidden="true">·</span><span>96
 								repositories pinned to a commit</span><span aria-hidden="true">·</span><span>nine
 								languages</span></p>
-						<div class="cells" id="cells" aria-label="341 context files, grouped into 66 repositories">
+						<div class="cells" id="cells" aria-label="96 repositories, one mark each">
 						</div>
 						<div class="readout" id="readout" aria-live="polite"></div>
 						<p class="cell-key">
-							<span><i class="k-clean" aria-hidden="true"></i> checked, no drift</span>
-							<span><i class="k-hit" aria-hidden="true"></i> says something untrue</span>
-							<span class="fine">One mark is one file, one run is one repository. Point at a run, or tab
-								in and use the arrow keys.</span>
+							<span><i class="k-clean" aria-hidden="true"></i> nothing found</span>
+							<span><i class="k-seen" aria-hidden="true"></i> findings, none false</span>
+							<span><i class="k-hit" aria-hidden="true"></i> carries a false positive</span>
+							<span class="fine">One mark is one repository. Point at one, or tab in and use the arrow
+								keys.</span>
 						</p>
-						<p class="fine cell-caveat">A lit mark is a context file driftwatch reported <em>anything at
-								all</em> about: 29 of the 341, carrying 37 findings between them, and 27 of those are
-							true drift the maintainers had not noticed. The four figures below count only the
-							<strong>false</strong> ones.</p>
+						<p class="fine cell-caveat">A lit mark is a repository carrying at least one
+							<strong>false</strong> positive — 15 of the 96, which is the figure below read the other
+							way. An outlined mark produced findings and none of them false: 216 context files carry
+							337 findings between them, and 32 are true drift the maintainers had not noticed. 289
+							findings in the nine noisiest repositories are unread, and cannot move the figure: each
+							of those repositories already carries a false positive, so it is already counted.</p>
 					</div>
 
 					<dl class="figures">
 						<div>
 							<dt>Repositories with zero false positives</dt>
-							<dd><b>58</b><span>/ 66</span></dd>
-							<dd class="pct">87.9%, and the project's own bar is 90%. Said here rather than quietly:
-								the bar is not met on the whole corpus</dd>
+							<dd><b>81</b><span>/ 96</span></dd>
+							<dd class="pct">84.4%, and the project's own bar is 90%. Said here rather than quietly:
+								the bar is not met, and it moved further away when the corpus stopped being built
+								out of small repositories</dd>
 						</div>
 						<div>
 							<dt>Same, over the validation group alone</dt>
 							<dd><b>29</b><span>/ 32</span></dd>
-							<dd class="pct">90.6%. Added after the heuristics were frozen, and never used to derive one
-							</dd>
+							<dd class="pct">90.6%. Added after the heuristics were frozen, and never used to derive one.
+								Unchanged by the thirty repositories added in round thirty-one, which are all
+								calibration</dd>
 						</div>
 						<div>
-							<dt>Worst single repository</dt>
-							<dd><b>2</b><span>false positives</span></dd>
-							<dd class="pct">No repo in the corpus sees more</dd>
+							<dt>Findings ruled, of 337</dt>
+							<dd><b>49</b><span>32 true, 17 false</span></dd>
+							<dd class="pct">The rest sit in repositories already settled by a false positive, which
+								is all condition 6 needs since <a
+									href="https://github.com/abr4xas/driftwatch/blob/master/docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md">ADR-0015</a>
+								withdrew the three that counted them</dd>
 						</div>
 						<div class="hero-fig">
-							<dt>Edits <code>--fix</code> would apply across all 66</dt>
+							<dt>Edits <code>--fix</code> would apply across all 96</dt>
 							<dd><b>6</b></dd>
 							<dd class="pct">and every one is correct, checked by hand at the level of the edit and not
 								only of the finding</dd>
@@ -372,16 +384,26 @@
 								or a line opening with "Create ..."</li>
 							<li>a path inside another assistant's configuration root, in a repo that does not use that
 								assistant</li>
+							<li>a host with the scheme left off, <code>linkedin.com/in/</code>, or a Windows drive
+								letter, <code>D:/Projects/…</code> — both name somewhere that is not this repository
+							</li>
+							<li>a path the writer abbreviated, <code>core/.../sql/</code>, or a variable with its
+								sigil missing, <code>SKILL_DIR/wiki/</code></li>
+							<li>anything under <code>.git/</code>, which no repository versions</li>
 						</ul>
 					</div>
 					<div>
 						<h3>How it was measured</h3>
-						<p>Twenty-six rounds, every finding classified by hand, including the four rounds where a
-							condition broke and the two where the corpus caught a regression that reading the diff would
-							not have.</p>
-						<p>Eleven false-positive classes have been found and closed, each with a fixture and a test
-							naming the repository and line it came from. Every fix was measured over the whole corpus
-							before being kept, and not one of them has ever removed a true positive.</p>
+						<p>Thirty-three rounds of hand adjudication, including the four where a condition broke and
+							the two where the corpus caught a regression that reading the diff would not have. A
+							repository is settled by its first false positive, so not every finding is read — and a
+							test refuses to count one clean on evidence nobody looked at.</p>
+						<p>Ten false-positive classes have been named, each with a fixture and a test naming the
+							repository and line it came from. Not every class becomes a rule: of the five largest,
+							three produced none — one because its vocabulary is the vocabulary of real directory
+							names, one because its marker says nothing about absence, one because its signal is not on
+							disk. Every rule that did ship was measured over both corpora before being kept, and not
+							one has ever removed a true positive.</p>
 						<p class="fine">The corpus does not run in CI, because the verdict requires a person. CI can
 							detect that a snapshot changed; it cannot rule on whether the change is an improvement, and
 							that ruling <em>is</em> the measurement.</p>
@@ -396,9 +418,9 @@
 
 			<section class="band" id="first-run" aria-labelledby="fr-h">
 				<h2 id="fr-h">Most first runs find nothing. That is an answer, not a failure.</h2>
-				<p class="lede">Fifty of the sixty-six repositories in the corpus report nothing at all. A tool built to
-					stay quiet when it is unsure is quiet most of the time, so a first run has three possible endings
-					and only one of them reports drift.</p>
+				<p class="lede">Sixty-seven of the ninety-six repositories in the corpus report nothing at all. A tool
+					built to stay quiet when it is unsure is quiet most of the time, so a first run has three possible
+					endings and only one of them reports drift.</p>
 
 				<ol class="outcomes">
 					<li>
@@ -553,7 +575,7 @@
 					<div class="codeblock">
 						<p class="marg"><span>.github/workflows/ci.yml</span></p>
 						<pre><code><span class="c-dim">- uses:</span> actions/checkout@v7
-<span class="c-dim">- uses:</span> abr4xas/driftwatch@v0.5.0</code></pre>
+<span class="c-dim">- uses:</span> abr4xas/driftwatch@v1.1.0</code></pre>
 						<p class="fine"><code>fail-on-drift: false</code> makes it advisory. <code>sarif: true</code>
 							writes a file for Code Scanning.</p>
 
@@ -604,6 +626,46 @@
 
 			<hr class="rule">
 
+			<section class="band" id="commands" aria-labelledby="commands-h">
+				<h2 id="commands-h">One command with nothing after it, and a config file of two keys.</h2>
+
+				<div class="two">
+					<div class="codeblock">
+						<p class="marg"><span>on the command line</span></p>
+						<pre><code>driftwatch                       <span class="c-dim"># the whole repo</span>
+driftwatch docs/ AGENTS.md       <span class="c-dim"># only these paths</span>
+driftwatch --only path/missing   <span class="c-dim"># only this check</span>
+driftwatch --skip link/broken    <span class="c-dim"># everything but this one</span>
+driftwatch --strict              <span class="c-dim"># warnings fail the build too</span>
+driftwatch --fix --dry-run       <span class="c-dim"># what it would rewrite</span>
+driftwatch --json                <span class="c-dim"># the machine-readable contract</span>
+driftwatch --init                <span class="c-dim"># write a commented config</span></code></pre>
+						<p class="fine">Exit <code>0</code> clean, <code>1</code> drift, <code>2</code> the tool
+							could not run — a bad config, a path that does not exist. A crash never looks like a
+							clean run.</p>
+					</div>
+					<div class="codeblock">
+						<p class="marg"><span>driftwatch.config.yaml</span></p>
+						<pre><code><span class="c-dim"># documents you did not write</span>
+ignore:
+  - '.claude/skills/vendored/**'
+  - 'third_party/**'
+
+checks:
+  'link/broken': 'warning'</code></pre>
+						<p>A repository carries documents it did not write: an installed skill, a vendored
+							<code>AGENTS.md</code>, a template's scaffold. They name paths in the project they came
+							from, and reporting those is the check being asked the wrong question.</p>
+						<p class="fine">For a document you <em>do</em> maintain, silence one line with a directive
+							instead. A directive for a document you own, <code>ignore</code> for one you do not —
+							editing somebody else's skill to quiet your linter loses the edit the next time they
+							ship it.</p>
+					</div>
+				</div>
+			</section>
+
+			<hr class="rule">
+
 			<footer class="close">
 				<h2 class="close-h">It takes one command and about sixty milliseconds to find out.</h2>
 
@@ -615,15 +677,19 @@
 
 				<div class="status">
 					<p class="marg"><span>Status</span></p>
-					<p><strong>It is on npm, and it is early.</strong> What is finished is the part you would actually
-						run: the five checks, <code>--fix</code>, all four output formats and the GitHub Action. Four
-						further checks are next.</p>
-					<p><code>--watch</code> and <code>--strict</code> are recognised on the command line and not
-						implemented yet, and they say so when you pass them rather than quietly doing nothing.</p>
+					<p><strong>It is on npm, and the surface is frozen.</strong> What is finished is the part you
+						would actually run: the four checks, <code>--fix</code>, all four output formats and the
+						GitHub Action. Four further checks are next, and each defaults to a warning, so none of them
+						can turn a green run red.</p>
+					<p><code>1.0.0</code> froze eight surfaces and holds them with a test.
+						<code>1.1.0</code> adds the <code>ignore</code> config key and five discard rules derived from
+						a second corpus of 2533 unread repositories — nothing removed, so the contract grew by one
+						line. <code>--watch</code> is not in the tool at all until the milestone that owns it: it
+						fails as any unknown flag does, rather than being advertised and refused.</p>
 					<p class="fine">The package is <code>@abr4xas/driftwatch</code> because npm refuses
 						<code>driftwatch</code> for being too similar to an unrelated tool. Neither reaches you:
 						<code>bin</code> fixes the command at <code>driftwatch</code>, and the action is used as
-						<code>abr4xas/driftwatch@v0.5.0</code>.</p>
+						<code>abr4xas/driftwatch@v1.1.0</code>.</p>
 				</div>
 
 				<nav class="foot-links" aria-label="Project links">

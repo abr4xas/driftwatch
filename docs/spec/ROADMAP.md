@@ -81,7 +81,6 @@ This is the milestone that decides whether the project is worth it. Everything e
 
 ## M2 — The other tier 1 checks — **closed 2026-09-10**
 - `script/missing` resolving the nearest `package.json` (monorepo)
-- `skill/frontmatter` complete
 - `link/broken` including anchors
 - `frontmatter/invalid`
 - Inline ignore directives
@@ -109,7 +108,7 @@ Two things M2 also owed and paid:
 
 **Closed with all three delivered and the acceptance met**, in seven tickets. 496 tests, the corpus green at 66 repos with no snapshot moved, and the tool silent over its own repo and over `docs/`.
 
-**What the milestone was actually built around** is a trap the ticket that found it is named after. `Claim.offset` says it "enables --fix without reformatting", and that is true for one of the three autofixes: a `skill/frontmatter` claim spans the **key** token, so replacing it writes `my-skill: wrong-thing`, and a path claim from a Markdown link spans the whole url, so replacing it deletes the `#anchor`. `src/fix/range.ts` owns the answer now, the way `verify/path-claim.ts` owns the verdict on a path claim, and every branch of it checks the bytes it is about to overwrite before writing them.
+**What the milestone was actually built around** is a trap the ticket that found it is named after. `Claim.offset` says it "enables --fix without reformatting", and that is true for one of the autofixes: a path claim from a Markdown link spans the whole url, so replacing it deletes the `#anchor`. (`skill/frontmatter`'s name rewrite was the other, and it was withdrawn with the check.) `src/fix/range.ts` owns the answer now, the way `verify/path-claim.ts` owns the verdict on a path claim, and every branch of it checks the bytes it is about to overwrite before writing them.
 
 Three decisions worth carrying forward:
 
@@ -131,7 +130,7 @@ What turns a tool that works into a project someone adopts.
 - README with a ≤15 s GIF at the very top, before any text
 - `--json`, `--github`, `--sarif` formats — **done 2026-09-11**
 - Published GitHub Action (`driftwatch/action@v1`) — **done 2026-09-11, as `abr4xas/driftwatch` pinned to an exact release tag.** The `@v1` this line writes never existed: the tags have been exact since `v0.1.0`, and a major-version tag would have to be force-pushed on every release.
-- One-page static site with the demo and the GIF
+- One-page static site with the demo and the GIF — **done 2026-09-11, and it replaced the GIF rather than carrying one.** The page shows the real output and the real corpus figures, generated from the snapshots by `pnpm site-data` and held to the page by a test. A GIF of a terminal is a picture of a measurement; the page publishes the measurement, and when the corpus moved under it the second time, a test said so.
 - Published to npm with provenance (`npm publish --provenance`) — **a state, not a schedule.** § "Suggested release order" puts the first publish at M2's close, and `.github/workflows/release.yml` already publishes with provenance, so M4 inherits this rather than waiting for it. What M4 adds is the audience, not the package.
 - MIT license (done: `LICENSE`)
 
@@ -145,7 +144,7 @@ What turns a tool that works into a project someone adopts.
 
 The corpus was re-run and is green at 66 repos with no snapshot moved — 26 findings, 20 true. A batch about output formats that moved a detection would have been a batch with a bug in it.
 
-**Second batch closed 2026-09-11: the GitHub Action.** It lives in this repository as `action.yml` at the root, so it is used as `abr4xas/driftwatch@v0.5.0` rather than from the `driftwatch/action` organisation this line names — that organisation does not exist, and a separate repository would need its own tags plus a hand-maintained answer to "which version of the package does `@v1` run". Here the tag that selects the action selects the `package.json` beside it, and pinning the action pins the tool.
+**Second batch closed 2026-09-11: the GitHub Action.** It lives in this repository as `action.yml` at the root, so it is used as `abr4xas/driftwatch@v1.1.0` rather than from the `driftwatch/action` organisation this line names — that organisation does not exist, and a separate repository would need its own tags plus a hand-maintained answer to "which version of the package does `@v1` run". Here the tag that selects the action selects the `package.json` beside it, and pinning the action pins the tool.
 
 **The documented ref is an exact release tag, and there is no floating `v0` or `v1`.** A major-version tag is the Marketplace convention, and it is convention rather than requirement: it buys a caller upgrades without an edit, and costs a force-pushed tag on every release — the one operation in this repo that rewrites something already published. The tags here have been exact since `v0.1.0`, and the documentation now matches that instead of promising a ref nobody created. What a reader loses is automatic upgrades; what they gain is a workflow file that says which version it runs.
 
@@ -155,7 +154,9 @@ Two things it had to get right that are not visible in the YAML: every input rea
 
 **The action did not work until the next publish.** `0.1.1` had no `--format github`; the flag parsed and refused. `0.2.0` is the release that paid that debt, published 2026-09-12 — and it is the first release where `version` defaults to something the action can actually use.
 
-**Still open in M4:** the GIF and the one-page site, deferred to a later session. Plus the acceptance criterion itself, which nobody who has read this repository can certify.
+**Still open in M4:** the GIF, and with it the launch post § "Suggested release order" schedules. Plus the acceptance criterion itself, which nobody who has read this repository can certify.
+
+The site landed on 2026-09-11 and this line went on saying it had not for nine days, which is the exact shape of the thing the tool reports — in the roadmap of the tool. `path/missing` cannot catch it: the claim is about the state of the work, not about a path.
 
 ---
 
@@ -217,8 +218,13 @@ Do not wait for M6 to show the project. Visible cadence is part of what makes so
 2. **`0.2.0` — published 2026-09-12.** Everything since `0.1.1` was additive — `--fix` and `--dry-run`, the three output formats, the Action, `--init` — and the public API of `src/index.ts` did not lose a line, so the minor covered the whole of it. It mattered more than a version bump usually does: `0.1.1` had no `--format github`, so the Action was unusable until it landed.
 3. **`0.3.0` — the YAML config.** `--init` writes `driftwatch.config.yaml` instead of a `.ts`, and the loader reads `.yaml` and `.yml`. Additive again: every existing config keeps working, and what changes is which format gets written into a repo that had none.
 4. **`0.4.0` — a config is data.** The minor half of the sentence above stops being true: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew `.ts`, `.js` and `.mjs` from the loader, and `defineConfig` left `src/index.ts`. **The first release that takes something away**, which is why it is a minor and not a patch, and why `--migrate-config` shipped in the same commit — a withdrawn format with no route off it is a cost moved onto users. The measured basis for doing it now: zero of the 66 corpus repositories carry a driftwatch config of any kind, so the population that has to migrate is the one that reads this file.
-5. Launch post with the GIF when **M4** closes.
-6. Sustain commits over months, not a one-week sprint.
+5. **`1.0.0` — the contract freeze.** [ADR-0014](../adr/0014-what-1-0-0-asserts.md), and the first release where the version means something specific: the public surface stops moving without a major. It is one release and not two, because the cleanup ships with the freeze — `--strict` implemented, `--watch` and `--migrate-config` withdrawn, three dead config keys removed, three types exported, two corrections to this specification. `0.x` is the last time removing something is free. Precision does not gate it and did not: condition 6 stands at 87.9% and is published as such.
+6. Launch post with the GIF when **M4** closes.
+7. Sustain commits over months, not a one-week sprint.
+
+### What `1.0.0` means, and what it does not
+
+[ADR-0014](../adr/0014-what-1-0-0-asserts.md) is the decision: **a claim about compatibility, not about quality.** It lists the eight surfaces that are frozen, states the version policy as a table — a new tier 1 check or a new skills root is a major, a new tier 2 check is a minor — and records why the precision measurement neither gates nor delays a release. Condition 6 is unmet at 87.9% and stays published. [`CONTRACT.md`](../../CONTRACT.md) is the frozen surface itself, generated and held by a test.
 
 ### What a release is, by hand
 

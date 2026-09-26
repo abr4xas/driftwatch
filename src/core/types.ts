@@ -155,17 +155,8 @@ export type FrontmatterFact =
       valueOffset?: [number, number]
     }
 
-/** What a `SKILL.md`'s frontmatter block asserts by existing, or by not. */
-export type SkillFact = {
-  subject: 'skill-block'
-  /** `false` when the file has no frontmatter at all. */
-  present: boolean
-  /** The top-level keys, in the order they are written. */
-  keys: readonly string[]
-}
-
 /** Everything a claim can carry. The `subject` is the discriminant. */
-export type ClaimFact = ScriptFact | FrontmatterFact | SkillFact
+export type ClaimFact = ScriptFact | FrontmatterFact
 
 export type Verdict = 'ok' | 'broken' | 'suspect' | 'skipped'
 

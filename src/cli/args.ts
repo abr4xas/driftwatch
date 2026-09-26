@@ -16,9 +16,7 @@ export type CliArgs = {
   dryRun: boolean
   strict: boolean
   quiet: boolean
-  watch: boolean
   init: boolean
-  migrateConfig: boolean
   help: boolean
   version: boolean
   tier2: boolean
@@ -33,7 +31,13 @@ export type BooleanFlag = {
   [K in keyof CliArgs]: CliArgs[K] extends boolean ? K : never
 }[keyof CliArgs]
 
-const OPTIONS = {
+/**
+ * What the parser accepts. Exported because `scripts/release/surface.ts` reads
+ * it: the flags are part of the frozen contract, and an artifact that listed
+ * the ones `--help` advertises would miss exactly the flags where the two
+ * disagree.
+ */
+export const OPTIONS = {
   fix: { type: 'boolean' },
   'dry-run': { type: 'boolean' },
   json: { type: 'boolean' },
@@ -45,9 +49,7 @@ const OPTIONS = {
   config: { type: 'string' },
   'no-config': { type: 'boolean' },
   quiet: { type: 'boolean' },
-  watch: { type: 'boolean' },
   init: { type: 'boolean' },
-  'migrate-config': { type: 'boolean' },
   version: { type: 'boolean', short: 'v' },
   help: { type: 'boolean', short: 'h' },
 } as const
@@ -129,9 +131,7 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
     dryRun: values['dry-run'] === true,
     strict: values.strict === true,
     quiet: values.quiet === true,
-    watch: values.watch === true,
     init: values.init === true,
-    migrateConfig: values['migrate-config'] === true,
     help: values.help === true,
     version: values.version === true,
     tier2: values['no-tier2'] !== true,

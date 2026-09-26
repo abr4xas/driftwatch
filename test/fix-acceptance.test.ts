@@ -40,8 +40,8 @@ const BEFORE: Record<string, string> = {
   // CRLF throughout.
   'CLAUDE.md': '# Notes\r\n\r\nThe clock is `src/util/time.ts`.\r\n',
 
-  // A value longer than its key, which is where an edit that took the claim's
-  // own range would land in the wrong place.
+  // A skill whose `name` disagrees with its directory, kept deliberately: it
+  // used to be the third autofix and it must now produce nothing.
   '.claude/skills/deploy-app/SKILL.md': [
     '---',
     'name: deploy-application-to-production',
@@ -66,9 +66,13 @@ const AFTER: Record<string, string> = {
 
   'CLAUDE.md': '# Notes\r\n\r\nThe clock is `src/helpers/time.ts`.\r\n',
 
+  // Byte for byte what it was. The name disagrees with the directory and
+  // that is not driftwatch's business: `skill/frontmatter` was withdrawn, and
+  // this document stays in the fixture as the guard that nothing renames a
+  // skill again.
   '.claude/skills/deploy-app/SKILL.md': [
     '---',
-    'name: deploy-app',
+    'name: deploy-application-to-production',
     'description: Ships the application to production, with the checks that matter.',
     '---',
     '',
@@ -102,15 +106,20 @@ function identify(finding: { check: string; claim: { text: string } }): string {
 }
 
 describe('the M3 acceptance', () => {
-  it('the broken version really does exercise all three autofixes', async () => {
+  it('the broken version really does exercise both autofixes', async () => {
     // Without this, the fixture could stop covering a check — a rule narrowed,
     // a suggestion withdrawn — and every assertion below would still pass.
     const before = await run({ cwd: brokenRepo(), paths: [] })
     const fixable = before.findings.filter((finding) => finding.suggestion?.fixable === true)
     expect(new Set(fixable.map((finding) => finding.check))).toEqual(
-      new Set(['path/missing', 'script/missing', 'skill/frontmatter']),
+      new Set(['path/missing', 'script/missing']),
     )
-    expect(fixable).toHaveLength(5)
+    expect(fixable).toHaveLength(4)
+  })
+
+  it('reports nothing at all about a skill whose name disagrees with its directory', async () => {
+    const before = await run({ cwd: brokenRepo(), paths: [] })
+    expect(before.findings.filter((f) => f.claim.source.path.endsWith('SKILL.md'))).toEqual([])
   })
 
   it('a fixed document is byte-for-byte its correct version', async () => {

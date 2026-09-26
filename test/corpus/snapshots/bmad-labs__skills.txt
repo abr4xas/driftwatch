@@ -1,0 +1,12 @@
+# bmad-labs/skills
+
+sources: 1
+errors: 1
+warnings: 0
+fixable: 0
+
+## sources
+claude-md  CLAUDE.md
+
+## findings
+CLAUDE.md:24:4  [path/missing] inline-code  .claude/commands/

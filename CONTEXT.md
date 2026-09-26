@@ -48,9 +48,28 @@ positive costs more than ten false negatives.
 _Avoid_: rejection, filtered candidate, skipped claim.
 
 **Cause**:
-The named reason a candidate was discarded — `bare-word`, `metasyntactic`, `module-specifier`,
-`not-path-shaped`. Every cause carries a comment saying which false positive it prevents.
+The named reason a candidate was discarded. There are two kinds and they are one union
+deliberately, because they answer one question: a **shape rule** reads the candidate itself —
+`bare-word`, `metasyntactic`, `module-specifier`, `not-path-shaped` — and a **gate** reads the
+prose around it — `example`, `hedged`, `elsewhere`, `another-repo`, `create-instruction`,
+`conditional`, `external-root`, `creation-target`. Every cause carries a comment saying which
+false positive it prevents.
 _Avoid_: reason, discard type, rule name.
+
+**Gate**:
+A discard rule that refuses a candidate for what the text around it says rather than for how
+the candidate is written: the sentence calls it an example, hedges it, places it in somebody
+else's project, or tells the reader to create it. Gates are the half of the extractor that
+reads prose, and the only half that can be wrong about a candidate it read correctly.
+_Avoid_: prose rule, filter, suppressor, disclaimer (a marker may disclaim; the gate is the
+rule).
+
+**Scope**:
+The stretch of text a gate rules over — a sentence, a two-line window, a Markdown section, or
+the whole document. A gate can carry the right marker and still be wrong by reaching too far,
+and that is a different defect from carrying the wrong marker: a qualification that belongs to
+one bullet silencing its neighbours is a scope error, not a vocabulary one.
+_Avoid_: range, reach, window (a window is one scope among four, not the concept).
 
 ## The two corpora
 
@@ -98,6 +117,12 @@ _Avoid_: judgement, adjudication, label.
 The named kind a false positive belongs to — `placeholder`, `generated-bundle`,
 `crate-nickname`. A class is drawn by a person, and a class with a rule shape is a candidate
 for a discard rule.
+
+**Most classes have no rule shape, and how many findings one holds does not predict whether it
+does.** Measured: of the five largest, three produced no rule at all — one because its
+vocabulary is the vocabulary of real directory names, one because its marker is true and says
+nothing about absence, one because its signal is not on disk. Read a class before acting on its
+size.
 _Avoid_: category, cluster, group, type.
 
 **Verdict**:
@@ -105,6 +130,23 @@ The result of verifying one claim: `ok`, `broken`, `suspect` or `skipped`. It be
 tool and appears nowhere in the corpora.
 _Avoid_: using it for a person's decision about a finding — that is a **Ruling** — or for what
 a pass got back from Jev — that is an **Answer**. The word used to mean all three.
+
+## What a release promises
+
+**Frozen surface**:
+Everything `1.0.0` promises not to remove or reshape without a major version: the exit codes,
+the check ids, the CLI flags, the `--json` contract, the other output formats, the config
+format, the package's exported names, and the Node floor. It is generated and committed, so
+that changing it is a diff somebody accepts rather than a thing somebody notices.
+_Avoid_: public API, the contract, the interface.
+
+**Tier**:
+Whether a check reports an error or a warning by default. Tier 1 defaults to error and can fail
+a build; tier 2 defaults to warning and cannot, unless the caller asks for it. It is a fact
+about the contract, not only about the roadmap: adding a tier 2 check is a minor and adding a
+tier 1 check is a major, because only one of them can turn a green run red.
+_Avoid_: level, severity (a **severity** is what one finding carries; a tier is what a check
+defaults to), priority.
 
 ## Asking a model
 

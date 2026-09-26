@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: abr4xas/driftwatch@v0.5.0
+      - uses: abr4xas/driftwatch@v1.1.0
 ```
 
 That is the whole thing. The action defaults to `--format github`, so every stale claim shows up as an annotation on the diff, on the line that makes it.
@@ -44,7 +44,7 @@ The two ways to run this want opposite things, so the choice is an input rather 
 
 ```yaml
 # Advisory: annotate the diff, never block the merge
-- uses: abr4xas/driftwatch@v0.5.0
+- uses: abr4xas/driftwatch@v1.1.0
   with:
     fail-on-drift: false
 ```
@@ -61,7 +61,7 @@ permissions:
 steps:
   - uses: actions/checkout@v7
 
-  - uses: abr4xas/driftwatch@v0.5.0
+  - uses: abr4xas/driftwatch@v1.1.0
     id: drift
     with:
       sarif: true
@@ -85,7 +85,7 @@ The action runs **the version of driftwatch that shipped with it**. A release ta
 Override it when you need to:
 
 ```yaml
-- uses: abr4xas/driftwatch@v0.5.0
+- uses: abr4xas/driftwatch@v1.1.0
   with:
     version: 0.2.0
 ```

@@ -42,12 +42,48 @@ Linters check your code. Nothing checks the document you wrote *about* your code
 - `path/missing` — every path a context file claims exists, verified against the repo index.
 - `script/missing` — the package manager commands a document tells you to run, against the nearest `package.json`, `Makefile` or `deno.json`.
 - `link/broken` — a Markdown link to an anchor no heading in the target document produces.
-- `frontmatter/invalid` — YAML that does not parse, and fields whose type the format fixes.
-- `skill/frontmatter` — a `SKILL.md` whose `name` is not the directory it lives in.
+- `frontmatter/invalid` — a frontmatter block that is not valid YAML, so what it declares is not what a reader gets.
 
-`path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong: it was certified against a corpus of **66 real repositories** before anything else was allowed to land, and **61 of them produce no false positive at all**.
+`path/missing` is the one that pays for the project, because the paths are what an agent acts on, and it is the one that had to survive being wrong. It is measured against a corpus of **96 real repositories** whose findings are ruled by hand: **81 of them produce no false positive at all**, which is 84.4% against a bar of 90% the project publishes unmet rather than move. A repository is settled by its first false positive, so not every finding is read — but no repository is ever counted clean on evidence nobody looked at, and a test holds that.
 
 That is the rule the whole tool is built on — **one false positive costs more than ten false negatives** — and [docs/guide/precision.md](./docs/guide/precision.md) is the argument, with the numbers and the rounds where they broke.
+
+## Running it
+
+```bash
+driftwatch                       # the whole repo
+driftwatch docs/ AGENTS.md       # only these paths
+driftwatch --only path/missing   # only this check
+driftwatch --skip link/broken    # everything but this one
+driftwatch --strict              # warnings fail the build too
+driftwatch --json                # the machine-readable contract
+driftwatch --init                # write a commented config
+```
+
+Exit `0` clean, `1` drift, `2` the tool could not run — a bad config, a path that does not exist. A crash never looks like a clean run.
+
+## Telling it what is not yours
+
+A repository carries documents it did not write: a skill installed from somebody else, a vendored `AGENTS.md`, a template's scaffold. They name paths in the project they came from, and reporting them is the check being asked the wrong question ([ADR-0008](./docs/adr/0008-a-specification-is-not-an-agent-context-file.md)).
+
+```yaml
+# driftwatch.config.yaml
+ignore:
+  - '.claude/skills/vendored/**'
+  - 'third_party/**'
+
+checks:
+  'link/broken': 'warning'
+```
+
+`ignore` subtracts, which is the one thing `sources` cannot do, and it reaches what discovery found on its own. For a document you *do* maintain, silence one line instead:
+
+```markdown
+<!-- driftwatch-ignore-next-line -->
+`src/planned/feature.ts` does not exist yet, it is the plan
+```
+
+The distinction is the point: a directive for a document you own, `ignore` for one you do not — editing somebody else's skill to quiet your linter loses the edit the next time they ship it.
 
 ## Fixing what it finds
 
@@ -62,7 +98,7 @@ It applies a correction only when there is exactly one candidate above 0.8 confi
 
 ```yaml
 - uses: actions/checkout@v7
-- uses: abr4xas/driftwatch@v0.5.0
+- uses: abr4xas/driftwatch@v1.1.0
 ```
 
 Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
@@ -74,20 +110,22 @@ Every stale claim becomes an annotation on the diff, on the line that makes it. 
 | [docs/guide/](./docs/guide/README.md) | using it: the checks, the flags, the fixes, the output formats, the precision numbers |
 | [docs/spec/](./docs/spec/README.md) | the reference specification: brief, spec, architecture, roadmap |
 | [docs/adr/](./docs/adr/) | decision records, including the ones that cost precision |
-| [test/corpus/](./test/corpus/README.md) | the 66-repo corpus: the only false positive measurement there is |
+| [test/corpus/](./test/corpus/README.md) | the 96-repo corpus: the only false positive measurement there is |
 | [AGENTS.md](./AGENTS.md) | the handoff for the agent doing the building |
 
 The specification is primary source: when the code and those documents disagree, the first step is deciding which one is wrong, not adjusting the document to fit ([ADR-0001](./docs/adr/0001-the-specification-lives-inside-the-repo.md)).
 
 ## Status
 
-**It is on npm, and it is early.** The badge above carries the published version, so this paragraph does not have to and cannot go stale. M0 through M3 are done: the five checks and `--fix`. M4 has delivered the `--json` / `--github` / `--sarif` formats and the GitHub Action; what is left of it is the audience — a GIF and a one-page site.
+**It is on npm, and the surface is frozen.** The badge above carries the published version, so this paragraph does not have to and cannot go stale. M0 through M3 are done: the four checks and `--fix`. M4 has delivered the `--json` / `--github` / `--sarif` formats, the GitHub Action and the one-page site. `1.0.0` froze eight surfaces, listed in [CONTRACT.md](./CONTRACT.md) and held there by a test — it is a claim about compatibility and not about precision ([ADR-0014](./docs/adr/0014-what-1-0-0-asserts.md)).
 
-Early means the checks and the fixes are what is finished. `--watch` and `--strict` parse and then tell you which milestone they belong to; the four tier 2 checks land in M5.
+`1.1.0` adds the `ignore` config key and five discard rules derived from a second corpus of 2533 unread repositories. Nothing was removed, so the contract grew by one line.
+
+Early means the checks and the fixes are what is finished. `--watch` is not in the tool at all until M6 owns it, and the four tier 2 checks land in M5.
 
 **The package is scoped, the Marketplace listing is suffixed, and the command is neither.** npm refuses `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read; the GitHub Marketplace refuses it too, because a user account called Driftwatch already exists and a listing name has to be unique across every action, user and organisation. So the package is `@abr4xas/driftwatch` and the listing is `driftwatch-action`.
 
-Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v0.5.0`, which comes from the repository rather than from the listing.
+Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v1.1.0`, which comes from the repository rather than from the listing.
 
 ## License
 

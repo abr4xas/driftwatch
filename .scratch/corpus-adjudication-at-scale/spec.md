@@ -231,6 +231,90 @@ candidates by frequency; the model filters the ones that are a tool's vocabulary
 than a project's; **a person commits the `Set`.** The shipped artifact is a static list, so
 the binary keeps every product commitment: no network, no key, 192 ms.
 
+## A fourth job, and it was not in this file
+
+**Added 2026-09-20.** Jobs 1 to 3 were written on 2026-09-18 and they share an assumption
+nobody noticed until the tickets came back: that what a rule gets wrong is **which words it
+knows**. Job 3 is a vocabulary job, job 2 reads the discards a vocabulary produced, job 1
+groups what survived. Three answers to one question.
+
+There is a second question, and the project has already paid for it once.
+
+A gate does not only carry a list of markers. It carries a **scope** — the stretch of text the
+marker rules over — and the two fail independently. `hedged` holds the right word and
+`context-prose.ts` tests it as a substring against a **two-line window**, so in `16` a sentence
+about optional *parameters* silenced the assertions of its neighbours: `haddocking/haddock3`
+asserts three files exist in three consecutive sentences and lost all three. The marker was
+correct. The reach was not.
+
+The code names three of these scopes itself, and grades two of them:
+
+- `leadInStart`'s walk upward stops after one blank line — *"Arbitrary, and it errs towards
+  reporting… so it is written down rather than widened without a measurement."*
+- `elsewhereSections` is *"the widest gate in the file"*, with *"a measured cost of zero, which
+  is not the same as no cost"*, and its stated risk is **a long section with one aside in it,
+  and a document with no `#` heading is one section.**
+- `creationTargets` reaches the whole document, and admits the cost: a document that says
+  "Create `x`" in one place and asserts `x` elsewhere.
+
+Job 3's shape does not reach any of this. Frequency over two thousand repositories says which
+words appear; it cannot say whether a word that appeared governs the line three lines down.
+Nor can a regex: that is a question about what a sentence is about, which is the one thing in
+this project that has no deterministic approximation at all. Everywhere else — families by
+Jaccard, blocks by extension, candidates by frequency — arithmetic picks the neighbourhood and
+the judgement works inside it. Here there is no arithmetic to pick a neighbourhood with.
+
+**What the job is.** Over the gate discards the discovery corpus already holds, ask two
+questions in one request: the frozen `CLAIMS_A_PATH`, and a new Noul on whether the marker's
+qualification reaches this candidate. The cell that matters is the cross — **claims a path and
+is not governed** — which is a gate that reached across and ate a real claim. Claims a path
+**and** governed is the ordinary cost this project chose to pay, and separating those two is
+the whole deliverable.
+
+**What the job is not**, and `16` is the reason it has to be said. `16` changed a scope,
+audited 700 repositories before and after, got two new findings, read both as false positives,
+and reverted. It closed with the method: *"change it, audit the discovery corpus before and
+after, and diff the findings."* That experiment is the expensive part and it is not what this
+job does. This job produces a table saying **where an experiment is worth spending**, and each
+experiment is its own ticket. A pass that shipped a table and an experiment together would
+read as though the table had concluded something. It concludes nothing; it says where to look.
+
+The three experiments it produced are `29`, `30` and `31`, and **all three came back
+negative**: every gate-scope the table pointed at turned out to be the scope the gate needs.
+That is the outcome this job was built to be able to have. A shortlist of three places to
+look, spent in an afternoon for the cost of four local audits and no network, ending in three
+rules vindicated on evidence rather than three rules defended by their own comments — which
+is what `16` demonstrated one gate at a time and what `§ The hard limit` says the discovery
+corpus is for.
+
+Ticket `27`, and it is **resolved**: 670 candidates, a negative control that holds, and
+three gate-scope experiments worth spending. `creation-target` reaches the whole document and
+roughly a quarter of its claimed candidates are ungoverned, which is the first one.
+
+## Substituting judgement for fragile code inside `scripts/`, and why there is nothing to do
+
+**Added 2026-09-20**, from the same review, and recorded because it is a reasonable idea that
+turns out to be answered.
+
+The three jobs and the fourth all point the model at the corpus. The other direction — using
+it to replace brittle parsing in the research instruments themselves — was looked for and did
+not produce a candidate worth building.
+
+The most fragile code in `scripts/` is `rowsIn` in `jev/classify.ts`, which parses
+`CLASSIFICATION.md`'s Markdown table with a regex. It has already had its accident: the first
+version named the model's field `className` too and silently overwrote the ruling it was being
+scored against — *"Every class matched, which is what a scoring bug looks like from the
+outside."* That is fixed, and replacing the parse with a judgement would put model uncertainty
+into the reading of the one artifact in this repository that carries human rulings, which is
+the opposite of every line in § "The hard limit".
+
+The rest of the arithmetic in `scripts/` — `blockOf`'s neighbourhoods, `families.ts`'s Jaccard
+pre-filter, the evenly spaced `spread` — exists **so that the judgement does not have to do
+it**, and each one is load-bearing for a reason its own comments give. That is a property of
+the design, not a debt in it.
+
+The slot stays open. Nothing is being built into it.
+
 ## The hard limit, and it is methodological
 
 **A verdict emitted by a model is not ground truth.** That was true in the first version of
@@ -462,6 +546,19 @@ same day.
 | `01` | Does grouping the 26 known findings reproduce the classes `CLASSIFICATION.md` names? | research | a smoke test of job 1, gating nothing |
 | `05` | Pre-register the decision rule for condition 6 | task | no longer blocking |
 | `03` | ~~Sampling design for a model-adjudicated corpus~~ | — | **withdrawn**: nothing is model-adjudicated |
+| `27` | What does a gate rule over, and where does it reach too far? | research | **resolved**: 100 of 634 gate discards read as claims the gate did not govern |
+| `28` | A `Verdict` nothing produces — is it a residue or an intention owed? | research | **new** 2026-09-20, raised while reading for `27` |
+| `29` | Should `creation-target` be scoped to a section? | research | **resolved**: no — it resurrects the ADR-0006 condition 2 finding |
+| `30` | What should `HEDGED_SPLIT`'s `{0,80}` window be? | research | **resolved**: unchanged — 80 and 40 are indistinguishable, 20 is worse |
+| `31` | Should `external-root` start at the marker rather than the heading? | research | **resolved**: no — it breaks "X or `~/X`" |
+| `32` | `skill/frontmatter`'s autofix, measured where it actually fires | bug | **superseded**: the check was withdrawn entirely, round 27 |
+| `33` | Who are these documents about? | research | **new**: 19% of findings sit in documents about another project |
+| `34` | Condition 6 measures the corpus, and the corpus is small on purpose | research | **new**: growing it blind lowers the rate |
+| `35` | The corpus cannot grow under its own conditions | research | **resolved** by ADR-0015: the three conditions are withdrawn, two as tautologies |
+
+This table stopped being maintained at `14`. Tickets `15` to `26` exist in
+[`issues/`](./issues/) and carry their own `Status:` line, which is the authority; the rows
+above are not. `27` and `28` are listed because they are what this revision adds.
 
 `06` was done first and is resolved: 66 of 66 corpus repos reproduce byte-identical
 conclusions from a checkout averaging 2.8 MB against 52.7.
@@ -523,6 +620,17 @@ measured the old way.
 The tell, in hindsight, is that the first version's §"The hard limit" had to argue for
 several paragraphs that the measurement would survive. A design that needs that much
 argument to stay honest is usually one artifact short. It was: the second corpus.
+
+Revised 2026-09-20, and the shape of the mistake is the same one for the third time, one
+level further down again. The first version put the model in the runtime; the second left it
+standing inside the certification corpus; this one had three jobs that were all the same job.
+Vocabulary, discards-of-a-vocabulary, and grouping-what-a-vocabulary-let-through are three
+answers to "which words does the rule know", and none of them reaches "how far does the word
+reach" — which is the defect `16` found, measured, and reverted, while this file was
+describing job 3 as the one with a ceiling. § "A fourth job" is the correction.
+
+The tell this time was not an argument that had to be too long. It was that `16`'s closing
+paragraph already contained the method for a job this file did not have.
 
 Two things are deliberately left unresolved here. Whether Jev specifically is the right
 model for jobs 1-3 is untested and nothing above depends on it — any classifier with

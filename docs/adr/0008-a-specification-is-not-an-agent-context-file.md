@@ -1,6 +1,6 @@
 # ADR-0008 — A specification is not an agent context file
 
-- **Status:** accepted
+- **Status:** accepted, amended 2026-09-24 (see "What the premise actually is")
 - **Date:** 2026-09-10
 
 ## Context
@@ -62,6 +62,84 @@ driftwatch --config driftwatch.docs.config.yaml --only link/broken
 ```
 
 Two runs rather than one, because `sources` and the check filter are both global. That is a limitation worth knowing before someone tries to express it as a single run.
+
+## Amendment, 2026-09-24: what the premise actually is
+
+This ADR drew one line — a context file **instructs**, a specification **argues** — and it held
+for fourteen days because every case in front of it was on one side or the other. Then a case
+arrived that is on neither, and the corpus had been carrying it the whole time.
+
+`remix-run/react-router` publishes `.agents/skills/react-router/SKILL.md`, which names
+`app/entry.server.tsx` at line 22. That file does not exist in react-router and never will: it
+is a file in **your** app, the one that installs the skill. The document does not argue and it
+does not quote. **It instructs, and it instructs about somebody else's repository.**
+
+So the dichotomy was the wrong shape. Instruct-versus-argue is a useful symptom, not the
+premise. The premise is the sentence two paragraphs above it, and it is the one to keep:
+
+> **An agent context file makes assertions about the repo it sits in.** `path/missing` is only
+> as precise as that premise is true.
+
+A document that instructs about another project breaks that premise exactly as a specification
+quoting other projects does, and it breaks it while passing every test the old wording
+proposed. Where this ADR says "quotes rather than asserts", read **"does not assert about this
+repository"** — the ADR's own table already lists "paths in *the reader's* repo" as a cause,
+which was the amendment arriving fourteen days early in a row of a table.
+
+### What settled it
+
+Not an argument. Ticket
+[`36`](../../.scratch/corpus-adjudication-at-scale/issues/36-does-jev-know-whose-document-this-is.md)
+asked whether the distinction could be drawn mechanically at all, pre-registered the answer's
+threshold, and came back negative twice:
+
+- A model cannot draw it. `aboutThisRepo` scored **-31 points** against a person over a blind
+  sample of 29 documents.
+- The disk cannot draw it either. Eleven comparable pairs, and every deterministic axis —
+  provenance metadata, the document copied into other repositories, the container directory,
+  naming another project — appears on **both** sides.
+
+The react-router document was that ticket's pre-registered control, and Jev read it
+`another-project` at 0.29 — agreeing with this ADR. Angel read it `this-repo`, which is the
+disagreement this amendment exists to settle, and settled it this way after the pairs were on
+the table: the ADR's premise is right and its wording was too narrow.
+
+### What this does not change
+
+**Corpus finding #23 stays `false`.** `app/entry.server.tsx` in `remix-run/react-router` is a
+false positive, class `readers-project`, exactly as it has been recorded since round eighteen.
+The amendment gives it the reasoning it was always resting on; it moves no number, and
+condition 6 stays at 81 of 96.
+
+That is the direction that makes this safe to accept. An amendment that *improved* the
+percentage would deserve the suspicion `CLASSIFICATION.md` § "When a condition fails" reserves
+for exactly that move.
+
+### What it costs, and who pays
+
+A user whose repository carries an installed skill gets findings about the project the skill
+came from. That is this premise failing in their repository, and until 2026-09-24 they had no
+way to say so: `sources` only adds, `checks` turns a check off everywhere, and
+`<!-- driftwatch-ignore-file -->` needs the document edited, which loses the edit the next time
+that skill ships.
+
+`ignore` is the remedy and it is the same one this ADR used on its own `docs/`:
+
+```yaml
+ignore:
+  - '.claude/skills/vendored/**'
+```
+
+Configuration, not inference — because ticket `36` measured that inference is not available.
+
+### What is deliberately still open
+
+Whether driftwatch should **discover** fewer such documents, rather than letting the user
+exclude them. Ticket
+[`33`](../../.scratch/corpus-adjudication-at-scale/issues/33-who-are-these-documents-about.md)
+holds that question and it is a product decision with no measurement behind it yet: the package
+promises to find what is no longer true in "your `CLAUDE.md`, `AGENTS.md` and skills", and what
+"your" means to a user with sixty installed skills is answered by users, not by a corpus.
 
 ## Consequences
 

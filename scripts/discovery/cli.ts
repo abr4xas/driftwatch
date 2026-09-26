@@ -16,9 +16,17 @@
  *   pnpm discovery clone     [--limit N]    sparse-clone what the list names
  *   pnpm discovery run       [--limit N]    audit each clone, record the result
  *   pnpm discovery discards  [--limit N]    what the extractor threw away (`07`)
+ *   pnpm discovery table                    the discards, one row per rule
  *   pnpm discovery sample    [--sample N]   n of each rule's discards, to read
+ *   pnpm discovery findings  [--per-repo N] what the checks reported, sampled
+ *   pnpm discovery claims    --cause X      does the prose put a path forward (`07`)
  *   pnpm discovery families  [--dry-run]    one observation per template (`17`)
- *   pnpm discovery filter    [--dry-run]    the acquisition filter's two judgements
+ *   pnpm discovery filter    [--reported]   the acquisition filter's two judgements
+ *   pnpm discovery scope     [--family F]   what a gate rules over (`27`)
+ *   pnpm discovery ownership [--ask|--score]  whose document is this (`36`)
+ *   pnpm discovery diff --before A --after B   what a rule change moved
+ *   pnpm discovery queue    [--repos a,b]  what to adjudicate first (`34`)
+ *   pnpm discovery queue    --per-repo N   where the named classes sit (`37`)
  *   pnpm discovery status                   what exists so far
  *
  * **Nothing here is a measurement.** Ticket `09` § "What it must not do" and
@@ -102,13 +110,56 @@ async function main(argv: readonly string[]): Promise<number> {
       const { sampleMain } = await import('./discards.ts')
       return sampleMain(countFlag(argv, '--sample') ?? 20)
     }
+    case 'queue': {
+      const { queueMain } = await import('../jev/queue.ts')
+      const list = stringFlag(argv, '--repos')
+      return queueMain(
+        list === undefined ? undefined : new Set(list.split(',').map((r) => r.trim())),
+        countFlag(argv, '--limit'),
+        countFlag(argv, '--concurrency') ?? 12,
+        argv.includes('--dry-run'),
+        argv.includes('--certification'),
+        countFlag(argv, '--per-repo'),
+      )
+    }
+    case 'diff': {
+      const before = stringFlag(argv, '--before')
+      const after = stringFlag(argv, '--after')
+      if (before === undefined || after === undefined) {
+        process.stderr.write('diff wants --before and --after, each a results.jsonl\n')
+        return 2
+      }
+      const { diffMain } = await import('./diff.ts')
+      return diffMain(before, after)
+    }
+    case 'scope': {
+      const { scopeMain } = await import('../jev/scope.ts')
+      const family = stringFlag(argv, '--family') ?? 'both'
+      if (family !== 'both' && family !== 'sentence' && family !== 'section') {
+        process.stderr.write(`--family takes sentence, section or both; got ${family}\n`)
+        return 2
+      }
+      return scopeMain(
+        family,
+        countFlag(argv, '--per-marker') ?? 120,
+        countFlag(argv, '--per-repo') ?? 2,
+        countFlag(argv, '--concurrency') ?? 8,
+        argv.includes('--dry-run'),
+      )
+    }
     case 'filter': {
       const { filterMain } = await import('../jev/filter.ts')
       return filterMain(
         countFlag(argv, '--limit'),
         argv.includes('--dry-run'),
         countFlag(argv, '--concurrency') ?? 8,
+        argv.includes('--reported'),
       )
+    }
+    case 'ownership': {
+      const { ownershipMain } = await import('../jev/ownership.ts')
+      const mode = argv.includes('--ask') ? 'ask' : argv.includes('--score') ? 'score' : 'packet'
+      return ownershipMain(mode, countFlag(argv, '--concurrency') ?? 8, argv.includes('--dry-run'))
     }
     case 'families': {
       const { familiesMain } = await import('../jev/families.ts')
@@ -124,7 +175,7 @@ async function main(argv: readonly string[]): Promise<number> {
       return statusMain()
     default:
       process.stderr.write(
-        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|status>\n',
+        'usage: discovery <enumerate|clone|run|discards|table|claims|findings|sample|families|filter|scope|diff|queue|ownership|status>\n',
       )
       return 2
   }

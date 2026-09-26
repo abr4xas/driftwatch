@@ -2,12 +2,16 @@
  * Which bytes an autofix is allowed to overwrite, and what of the author's
  * spelling survives.
  *
- * `Claim.offset` says it "enables --fix without reformatting", and for one of
- * the three autofixes that is true. For the other two it is not: a
- * `skill/frontmatter` claim spans the **key** token, so replacing it turns
- * `name: wrong-thing` into `my-skill: wrong-thing`, and a path claim from a
+ * `Claim.offset` says it "enables --fix without reformatting", and for the
+ * script autofix that is true. For the path one it is not: a path claim from a
  * Markdown link spans the whole url, anchor included, so replacing it deletes
  * the `#section`.
+ *
+ * There used to be a third, and the reason this module exists at all: a
+ * `skill/frontmatter` claim spanned the **key** token, so an edit that
+ * inherited it wrote `my-skill: wrong-thing` over somebody's frontmatter. That
+ * check was withdrawn — driftwatch does not rename a skill — and the value-edit
+ * branch went with it.
  *
  * One module owns the answer, the way `verify/path-claim.ts` owns the verdict
  * on a path claim. The alternative shapes — a `range` on `Suggestion`, or one
@@ -29,8 +33,6 @@ export type FixEdit = {
   replacement: string
 }
 
-const QUOTES = new Set(['"', "'"])
-
 /** What the range currently holds. The guard every case below runs. */
 function currently(claim: Claim, range: [number, number]): string {
   return claim.source.content.slice(range[0], range[1])
@@ -48,36 +50,6 @@ function currently(claim: Claim, range: [number, number]): string {
 function wholeClaimEdit(claim: Claim, value: string): FixEdit | undefined {
   if (currently(claim, claim.offset) !== claim.raw) return undefined
   return { source: claim.source, range: claim.offset, replacement: value }
-}
-
-/**
- * `skill/frontmatter`: the value of a top-level key, never the key.
- *
- * The span comes from the YAML parser through `FrontmatterFact.valueOffset`.
- * Finding it here by searching the line would be a second parser, and the one
- * we have already knows where quoting starts and ends.
- */
-function frontmatterValueEdit(claim: Claim, value: string): FixEdit | undefined {
-  const fact = claim.fact
-  if (fact?.subject !== 'key') return undefined
-  const range = fact.valueOffset
-  if (range === undefined) return undefined
-
-  const token = currently(claim, range)
-  // The author's quoting survives: a `name: "wrong"` stays quoted. Rewriting
-  // it unquoted is a reformat of somebody's YAML, which is the one thing this
-  // milestone refuses to do.
-  const quote =
-    token.length >= 2 && QUOTES.has(token[0] ?? '') && token.at(-1) === token[0]
-      ? (token[0] ?? '')
-      : ''
-  const inner = quote === '' ? token : token.slice(1, -1)
-  // The strongest guard there is: the bytes at that span have to be the value
-  // the check reasoned about. If they are not, the offsets have drifted from
-  // the content and no edit is safe.
-  if (inner !== fact.scalar) return undefined
-
-  return { source: claim.source, range, replacement: `${quote}${value}${quote}` }
 }
 
 /** The path half of a link url: `./docs/x.md#section` claims `./docs/x.md`. */
@@ -158,11 +130,10 @@ export function fixEditFor(finding: Finding): FixEdit | undefined {
       return pathEdit(claim, suggestion.value)
     case 'script':
       return wholeClaimEdit(claim, suggestion.value)
-    case 'frontmatter':
-      return frontmatterValueEdit(claim, suggestion.value)
     // No other kind produces a fixable suggestion today, and a kind that
     // starts to has to be given its range here rather than inheriting the
-    // claim's by default.
+    // claim's by default. `frontmatter` used to, for `skill/frontmatter`'s
+    // name rewrite; that check is gone and the value-edit path with it.
     default:
       return undefined
   }

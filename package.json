@@ -1,6 +1,6 @@
 {
   "name": "@abr4xas/driftwatch",
-  "version": "0.5.0",
+  "version": "1.1.0",
   "description": "Find the parts of your CLAUDE.md, AGENTS.md and skills that are no longer true",
   "keywords": [
     "claude",
@@ -56,7 +56,8 @@
     "jev:review": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/jev/review.ts",
     "discovery": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-strip-types scripts/discovery/cli.ts",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "site-data": "node --experimental-strip-types scripts/corpus/site-data.ts"
+    "site-data": "node --experimental-strip-types scripts/corpus/site-data.ts",
+    "surface": "node --experimental-strip-types scripts/release/surface.ts"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {

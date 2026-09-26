@@ -4,7 +4,6 @@ import { extractFrontmatterClaims } from './frontmatter.ts'
 import { extractLinkClaims } from './links.ts'
 import { extractPathClaims } from './paths.ts'
 import { extractScriptClaims } from './scripts.ts'
-import { extractSkillClaims } from './skill.ts'
 
 /**
  * Static extractor registry, the twin of `verify/checks/index.ts`. Adding an
@@ -22,7 +21,6 @@ export const EXTRACTORS: readonly ((context: ExtractContext) => Claim[])[] = [
   extractScriptClaims,
   extractLinkClaims,
   extractFrontmatterClaims,
-  extractSkillClaims,
 ]
 
 /** Every claim one source makes. */

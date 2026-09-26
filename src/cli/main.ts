@@ -18,16 +18,20 @@ export type Io = {
 }
 
 /**
- * The boolean flags the parser accepts but that do not do anything yet. This
- * list is a to-do list the test suite watches: when a ticket implements a flag,
- * it deletes it from here and the test that demanded exit 2 fails.
+ * The boolean flags the parser accepts but that do not do anything yet.
+ *
+ * **Empty since `1.0.0`, and that is the claim it makes.** It held `--strict`,
+ * implemented in ticket `02`, and `--watch`, which ticket `03` took out of the
+ * parser altogether rather than leave advertised and broken — a flag we do not
+ * have should fail the way any unknown flag fails. Nothing the tool accepts
+ * refuses to run.
+ *
+ * It is kept because that claim needs somewhere to be false: a flag added
+ * ahead of its milestone goes here, and `CONTRACT.md` records it as refused
+ * rather than as working. Exported for the same reason as `OPTIONS` — the
+ * frozen surface reads it.
  */
-const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = [
-  ['watch', '--watch'],
-  // --strict only changes something once warnings exist, and warnings are
-  // tier 2, which is M5. Until then, accepting it would promise too much.
-  ['strict', '--strict'],
-]
+export const UNIMPLEMENTED_BOOLEANS: ReadonlyArray<readonly [BooleanFlag, string]> = []
 
 function assertNotYetImplemented(args: CliArgs): void {
   for (const [key, flag] of UNIMPLEMENTED_BOOLEANS) {
@@ -172,21 +176,6 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
         import('../verify/repo-index.ts'),
       ])
       io.out(`wrote ${await writeInitConfig(findRepoRoot(cwd))}\n`)
-      return EXIT.ok
-    }
-
-    // Same shape as `--init`: it writes a file and leaves, without auditing.
-    // The second line is not decoration — until the original is deleted it is
-    // still the config the loader reaches first, so the repo is unchanged in
-    // effect and the user has to be told what is left to do.
-    if (args.migrateConfig) {
-      const [{ migrateConfig }, { findRepoRoot }] = await Promise.all([
-        import('./migrate.ts'),
-        import('../verify/repo-index.ts'),
-      ])
-      const { from, written } = await migrateConfig(findRepoRoot(cwd))
-      io.out(`wrote ${written} from ${from}\n`)
-      io.out(`  now delete ${from}: driftwatch still reads it while it is there\n`)
       return EXIT.ok
     }
 

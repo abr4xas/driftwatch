@@ -17,24 +17,24 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--format <fmt>` | `pretty` (default), `json`, `github`, `sarif` — see [output.md](./output.md) |
 | `--only <ids>` | run only these checks; a prefix works: `--only path` |
 | `--skip <ids>` | run everything except these |
+| `--strict` | warnings count as errors for the exit code |
 | `--no-tier2` | turn off every tier 2 check |
 | `--config <path>` | use this config file |
 | `--no-config` | ignore any config found |
 | `--quiet` | problems only, no summary (`pretty` only) |
 | `--init` | write a commented `driftwatch.config.yaml` and exit |
-| `--migrate-config` | convert a `.ts` or `.js` config to YAML and exit |
 | `--version`, `-v` | print the version |
 | `--help`, `-h` | print the options |
 
 `--only` and `--skip` take a comma-separated list and accept a prefix, so `--only path,script` and `--only path/missing` both work. **A selection that leaves no check enabled is refused** rather than run: reporting `no drift` after verifying nothing is the failure this tool exists to catch elsewhere.
 
-Two flags parse and then tell you they are not implemented, naming the milestone they belong to: `--watch` and `--strict`.
+`--watch` is not here. It belongs to M6 and nothing implements it, so it fails as an unknown flag rather than parsing and then refusing.
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| `0` | no errors |
+| `0` | no errors — there may be warnings, unless `--strict` |
 | `1` | at least one error was found |
 | `2` | the tool itself failed — bad config, a path that does not exist, a crash |
 
@@ -66,6 +66,13 @@ Optional. `driftwatch.config.yaml`, `.yml`, `.ts`, `.js`, `.json`, or a `driftwa
 sources:
   - 'docs/agent-notes.md'
 
+# Documents NOT to audit: a skill somebody else wrote, a vendored file you do
+# not maintain. Subtracted after sources, and it reaches what driftwatch found
+# on its own. Unlike sources, an entry matching nothing is not an error.
+ignore:
+  - '**/fixtures/**'
+  - 'third_party/**'
+
 # Where your skills live, if it is not one of the six roots driftwatch knows.
 # A container is a directory whose children are skill directories.
 skillRoots:
@@ -90,11 +97,13 @@ The same thing as JSON, if you would rather not add a YAML file:
 
 **Quote the severity.** `off` is one of the three values and also a boolean in YAML 1.1; the parser here implements 1.2, where the unquoted form is a string and works, but a file edited elsewhere may not survive the round trip. If a severity ever arrives as a boolean the error says so rather than blaming your check ids.
 
-**A config is data, not a program.** `.ts`, `.js` and `.mjs` configs were accepted until 2026-09-18 and are not loaded any more — [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch runs code it finds in a repository. If you have one, `driftwatch --migrate-config` converts it to YAML and tells you to delete the original.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` configs were accepted until 2026-09-18 and are not loaded any more — [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch runs code it finds in a repository. If you have one, `npx @abr4xas/driftwatch@0.5.0 --migrate-config` converts it to YAML and tells you to delete the original: the converter was withdrawn in `1.0.0`, and `0.5.0` is the last release that carries it.
 
 **An unknown key fails the run** instead of being ignored. A typo in a key that silently disables what it was meant to configure is worse than a red run.
 
-Three keys in `SPEC.md` § 7 are accepted and validated but **do nothing yet**: `ignore`, `knownPaths` and `staleThreshold`. The first two land with the checks that need them, `staleThreshold` with `stale/churn` in M5.
+Three keys used to be accepted and do nothing — `ignore`, `knownPaths` and `staleThreshold`. `1.0.0` withdrew them: a config that sets one now fails with the loader's usual message, which is the right answer for a key that was never read. `staleThreshold` comes back with `stale/churn`, and `ignore` has come back implemented.
+
+**`ignore` and the directives answer different questions.** Use an [inline directive](#ignore-directives) for a document you maintain — a line describing a file you have not written yet. Use `ignore` for a document you do not: an installed skill, a vendored `AGENTS.md`. Editing somebody else's file to quiet your linter loses the edit the next time they ship.
 
 ## Ignore directives
 

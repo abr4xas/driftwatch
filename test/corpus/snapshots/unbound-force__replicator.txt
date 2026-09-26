@@ -1,0 +1,28 @@
+# unbound-force/replicator
+
+sources: 17
+errors: 0
+warnings: 0
+fixable: 0
+
+## sources
+cursor-rule  .cursorrules
+skill  .opencode/skills/always-on-guidance/SKILL.md
+skill  .opencode/skills/forge-coordination/SKILL.md
+skill  .opencode/skills/forge-global/SKILL.md
+skill  .opencode/skills/learning-systems/SKILL.md
+skill  .opencode/skills/openspec-apply-change/SKILL.md
+skill  .opencode/skills/openspec-archive-change/SKILL.md
+skill  .opencode/skills/openspec-explore/SKILL.md
+skill  .opencode/skills/openspec-propose/SKILL.md
+skill  .opencode/skills/pre-flight/SKILL.md
+skill  .opencode/skills/replicator-cli/SKILL.md
+skill  .opencode/skills/review-context/SKILL.md
+skill  .opencode/skills/speckit-workflow/SKILL.md
+skill  .opencode/skills/system-design/SKILL.md
+skill  .opencode/skills/testing-patterns/SKILL.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+
+## findings
+(none)

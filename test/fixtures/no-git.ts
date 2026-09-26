@@ -33,9 +33,9 @@ export const noGit: Fixture = {
       text: 'generated/output.js',
       message: 'path does not exist',
       // Known false positive: the file exists on disk but is gitignored, so it
-      // never enters the index. SPEC.md § 7 solves this with `knownPaths`,
-      // which is M2. It is pinned here as current behaviour, not as desired
-      // behaviour.
+      // never enters the index. `knownPaths` was the planned answer and was
+      // withdrawn in `1.0.0` without ever being read, so this is pinned as
+      // current behaviour with no fix scheduled.
     },
     {
       check: 'path/missing',

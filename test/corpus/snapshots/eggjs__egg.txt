@@ -1,0 +1,21 @@
+# eggjs/egg
+
+sources: 5
+errors: 6
+warnings: 0
+fixable: 0
+
+## sources
+copilot  .github/copilot-instructions.md
+agents-md  AGENTS.md
+claude-md  CLAUDE.md
+claude-md  packages/skills/CLAUDE.md
+claude-md  tegg/CLAUDE.md
+
+## findings
+.github/copilot-instructions.md:46:6  [path/missing] inline-code  packages/mock/
+AGENTS.md:95:76  [path/missing] inline-code  src/global.d.ts  -> tools/egg-bin/test/fixtures/example-ts-cluster/typings/global.d.ts (0.3)
+AGENTS.md:154:4  [path/missing] inline-code  wiki/decisions/
+AGENTS.md:155:4  [path/missing] inline-code  wiki/sources/
+tegg/CLAUDE.md:58:73  [path/missing] inline-code  ../egg
+tegg/CLAUDE.md:96:55  [path/missing] inline-code  ../egg

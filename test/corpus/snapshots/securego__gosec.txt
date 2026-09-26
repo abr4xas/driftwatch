@@ -1,9 +1,9 @@
 # securego/gosec
 
 sources: 9
-errors: 4
+errors: 0
 warnings: 0
-fixable: 4
+fixable: 0
 
 ## sources
 command  .claude/commands/create-gosec-rule.md
@@ -17,7 +17,4 @@ skill  .github/skills/gosec-update-go-versions/SKILL.md
 claude-md  CLAUDE.md
 
 ## findings
-.github/skills/gosec-fix-issue/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> gosec-fix-issue (1, fixable)
-.github/skills/gosec-new-rule/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> gosec-new-rule (1, fixable)
-.github/skills/gosec-update-action-version/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> gosec-update-action-version (1, fixable)
-.github/skills/gosec-update-go-versions/SKILL.md:2:1  [skill/frontmatter] frontmatter  name  -> gosec-update-go-versions (1, fixable)
+(none)

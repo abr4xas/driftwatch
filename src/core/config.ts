@@ -1,12 +1,13 @@
 /**
  * The optional config file (`docs/spec/SPEC.md` § 7).
  *
- * `sources` and `checks` reach the pipeline. `ignore`, `knownPaths` and
- * `staleThreshold` are validated and carried anyway, because a config written
- * against the specification should not fail against an incomplete
- * implementation — an unknown key is an error, and a key that exists in the
- * spec is not unknown. `src/cli/init.ts` is where that split is visible to the
- * user: what is inert is written commented out.
+ * **Every key here reaches the pipeline.** Until `1.0.0` three more were
+ * accepted, validated and carried — `ignore`, `knownPaths` and
+ * `staleThreshold` — on the argument that a config written against the
+ * specification should not fail against an incomplete implementation. The
+ * freeze reversed it: a key that is accepted is a key a user reasonably
+ * believes does something, and three of six did nothing. `staleThreshold`
+ * comes back with `stale/churn`, which under the version policy is a minor.
  */
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -20,6 +21,26 @@ export type Config = {
   /** Extra sources beyond the ones discovery finds. Literal paths or globs. */
   sources?: readonly string[]
   /**
+   * Globs for documents **not** to audit, matched against source paths from
+   * the repo root.
+   *
+   * A repository carries documents it did not write: a skill installed from
+   * somebody else, a vendored upstream's `AGENTS.md`, a template's scaffold.
+   * They assert about the project they came from, and
+   * [ADR-0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md)
+   * settled both what that is — the check being asked the wrong question —
+   * and that the answer is configuration. This repository fixed its own case
+   * with one line of `sources`; a user cannot, because `sources` only adds.
+   *
+   * `<!-- driftwatch-ignore-file -->` covers a document you own. This covers
+   * one you do not: editing somebody else's skill to quiet your linter loses
+   * the edit on its next update.
+   *
+   * Specified in `SPEC.md` § 7 from the start and withdrawn in `1.0.0` by
+   * ticket `03` for being accepted and unread. This is that key, implemented.
+   */
+  ignore?: readonly string[]
+  /**
    * Directories whose children are skill directories, on top of the built-in
    * ones. `skills`, `.flue/skills`, `packages/x/skills`.
    *
@@ -30,10 +51,7 @@ export type Config = {
    * green run that means nothing. Ticket `12`.
    */
   skillRoots?: readonly string[]
-  ignore?: readonly string[]
   checks?: Readonly<Record<string, CheckSeverity>>
-  knownPaths?: readonly string[]
-  staleThreshold?: number
 }
 
 /**
@@ -53,10 +71,8 @@ const CONFIG_FILENAMES: readonly string[] = [
 
 export const KNOWN_KEYS: readonly string[] = [
   'sources',
-  'ignore',
   'checks',
-  'knownPaths',
-  'staleThreshold',
+  'ignore',
   // Last on purpose: the unknown-key message lists these in order and the
   // older entries are what a reader recognises first.
   'skillRoots',
@@ -107,9 +123,12 @@ function severityMap(value: unknown, where: string): Readonly<Record<string, Che
 /**
  * Validates whatever the config exported.
  *
- * An unknown key **fails** instead of being ignored. A typo in `ignore` that
- * silently disables the ignore list is worse than a red run: the tool would
- * keep working and stop doing what the file says.
+ * An unknown key **fails** instead of being ignored. A typo in `sources` that
+ * silently drops the extra documents is worse than a red run: the tool would
+ * keep working and stop doing what the file says. Since `1.0.0` that rule
+ * covers two more names than it did — `knownPaths` and `staleThreshold` used
+ * to validate and do nothing, and now fail like any other key the tool does
+ * not act on. `ignore` was withdrawn with them and has come back implemented.
  */
 export function validateConfig(raw: unknown, where: string): Config {
   if (raw === undefined || raw === null) return {}
@@ -123,21 +142,11 @@ export function validateConfig(raw: unknown, where: string): Config {
 
   const config: Config = {}
   if (raw.sources !== undefined) config.sources = stringArray(raw.sources, 'sources', where)
+  if (raw.ignore !== undefined) config.ignore = stringArray(raw.ignore, 'ignore', where)
   if (raw.skillRoots !== undefined) {
     config.skillRoots = stringArray(raw.skillRoots, 'skillRoots', where)
   }
-  if (raw.ignore !== undefined) config.ignore = stringArray(raw.ignore, 'ignore', where)
-  if (raw.knownPaths !== undefined) {
-    config.knownPaths = stringArray(raw.knownPaths, 'knownPaths', where)
-  }
   if (raw.checks !== undefined) config.checks = severityMap(raw.checks, where)
-  if (raw.staleThreshold !== undefined) {
-    const threshold = raw.staleThreshold
-    if (typeof threshold !== 'number' || !Number.isInteger(threshold) || threshold <= 0) {
-      throw invalid(where, 'staleThreshold has to be a positive integer')
-    }
-    config.staleThreshold = threshold
-  }
   return config
 }
 
@@ -172,14 +181,19 @@ const WITHDRAWN_EXTENSIONS: readonly string[] = ['.ts', '.js', '.mjs', '.cjs']
  * and `PRODUCT.md`'s "deterministic, offline, no network, no API key" wants
  * "and it runs no code it finds in your repository" next to it.
  *
- * The error carries the way out. Withdrawing a format and leaving the user to
- * work out the conversion buys us a property at their expense.
+ * **The error carries the way out, and the way out is now a version.**
+ * ADR-0013 shipped `--migrate-config` in the same commit that withdrew these
+ * formats, on the argument that a withdrawn format with no route off it moves
+ * a cost onto the user. `1.0.0` withdrew the flag as well, so the route is to
+ * run the last release that still had it — which needs no install, because the
+ * advertised way to run this tool is `npx`. The version is safe to name here:
+ * `0.5.0` is the last `0.x` there will ever be.
  */
 function refuseModuleConfig(path: string, where: string): never {
   throw new UserError(
     `${where} is a ${extname(path)} config, which driftwatch no longer loads`,
-    'a config is data, not a program (ADR-0013). Run `driftwatch --migrate-config` ' +
-      'to convert it to YAML, then delete the original',
+    'a config is data, not a program (ADR-0013). To convert it: ' +
+      '`npx @abr4xas/driftwatch@0.5.0 --migrate-config`, then delete the original',
   )
 }
 
@@ -190,7 +204,7 @@ function refuseModuleConfig(path: string, where: string): never {
  * Reads a YAML config.
  *
  * `yaml` is already a runtime dependency — `src/parse/frontmatter.ts` needs it
- * for `frontmatter/invalid` and `skill/frontmatter` — but it is imported here
+ * for `frontmatter/invalid` — but it is imported here
  * **lazily**, because that path only runs when a document actually has
  * frontmatter and this one would otherwise run on every invocation. The
  * cold-start budget is 80 ms and `AGENTS.md` § Dependencies is explicit that it
@@ -242,32 +256,14 @@ export type FoundConfig = {
   inManifest: boolean
 }
 
-export type FindConfigOptions = {
-  /**
-   * Filenames to pass over.
-   *
-   * `--migrate-config` needs to ask "what would the loader read **once the
-   * module config is gone**", which is not a question the plain lookup can
-   * answer: the module config is first in the order, so it always wins.
-   */
-  skip?: readonly string[]
-}
-
 /**
  * The first config the lookup order finds, without loading it.
  *
- * `loadConfig` uses it for the automatic lookup, `--init` uses it to refuse
- * rather than write a second config next to an existing one, and
- * `--migrate-config` uses it twice — once for what is there, once with the
- * withdrawn names skipped, for what would be there afterwards.
+ * `loadConfig` uses it for the automatic lookup, and `--init` uses it to
+ * refuse rather than write a second config next to an existing one.
  */
-export async function findConfig(
-  root: string,
-  options: FindConfigOptions = {},
-): Promise<FoundConfig | undefined> {
-  const skip = options.skip ?? []
+export async function findConfig(root: string): Promise<FoundConfig | undefined> {
   for (const name of CONFIG_FILENAMES) {
-    if (skip.includes(name)) continue
     const path = join(root, name)
     if (existsSync(path)) return { path, where: name, inManifest: false }
   }

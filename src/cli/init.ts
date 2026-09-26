@@ -28,13 +28,14 @@ const CONFIG_FILENAME = 'driftwatch.config.yaml'
  * turned the first half of that paragraph from a recommendation into the only
  * option. The reasoning is unchanged and is why the ADR left `--init` alone.
  *
- * **Only the keys that do something are live.** `sources` and `checks` reach
- * `src/run.ts`; `ignore`, `knownPaths` and `staleThreshold` are validated by
- * the loader and read by nobody, so they are commented out with the reason. A
- * template presenting all five as working config would be a document claiming
- * more than the code delivers, written by the tool that reports exactly that.
+ * **Every key it writes does something**, which since `1.0.0` is a property of
+ * the loader rather than of this file. Three keys used to be written commented
+ * out, with the reason, because they validated and were read by nobody; the
+ * freeze withdrew them instead. A template presenting a key as working config
+ * when it is not would be a document claiming more than the code delivers,
+ * written by the tool that reports exactly that.
  *
- * As it stands, with nothing uncommented, it is valid input to the loader it
+ * As it stands, with nothing filled in, it is valid input to the loader it
  * documents: an empty `sources` and an empty `checks` both validate.
  */
 export const INIT_TEMPLATE = `# driftwatch configuration
@@ -44,6 +45,15 @@ export const INIT_TEMPLATE = `# driftwatch configuration
 # globs, matched against the files git lists, relative to the repo root.
 # An entry matching nothing is an error: a source that disappeared is drift.
 sources: []
+
+# Documents NOT to audit: same glob syntax, same root. Subtracted after
+# sources, and it reaches what discovery found on its own, so it is how you
+# exclude a skill or a vendored file somebody else wrote and you do not
+# maintain. An entry matching nothing is fine, unlike sources.
+#
+# For a document you do own, a line at a time, use an inline directive
+# instead: <!-- driftwatch-ignore-next-line -->
+ignore: []
 
 # Directories whose children are skill directories, on top of the built-in
 # ones (.claude/skills, .agents/skills, .cursor/skills, .codex/skills,
@@ -59,22 +69,6 @@ skillRoots: []
 checks: {}
   # 'path/missing': 'error'
   # 'dep/missing': 'off'
-
-# The three keys below are in the specification and accepted by the loader,
-# but nothing reads them yet. They are commented out so this file does not
-# promise more than the tool does.
-
-# Excluded from discovery.
-# ignore:
-#   - '**/fixtures/**'
-
-# Paths that are real but not on disk, such as build outputs.
-# knownPaths:
-#   - 'dist/**'
-#   - '.next/**'
-
-# Days before a document counts as stale. Tier 2, so it lands with them.
-# staleThreshold: 15
 `
 
 /**

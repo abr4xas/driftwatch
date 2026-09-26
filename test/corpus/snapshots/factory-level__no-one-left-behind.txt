@@ -1,0 +1,18 @@
+# factory-level/no-one-left-behind
+
+sources: 5
+errors: 3
+warnings: 0
+fixable: 0
+
+## sources
+subagent  .claude/agents/accessible-ai-course-writer.md
+subagent  .claude/agents/course-module-scaffolder.md
+subagent  .claude/agents/mkdocs-optimizer.md
+command  .claude/commands/create-module.md
+claude-md  CLAUDE.md
+
+## findings
+.claude/agents/accessible-ai-course-writer.md:3:1  [frontmatter/invalid] frontmatter  description: Use this agent when you need to create educational content about AI, CLI tools, or low-code programming for beginners. Examples: <example>Context: User needs to write a lesson about using Claude CLI for the first time. user: 'I need to write a tutorial on how to install and use Claude CLI for complete beginners' assistant: 'I'll use the accessible-ai-course-writer agent to create beginner-friendly content about Claude CLI installation and usage'</example> <example>Context: User wants to explain AI concepts in simple terms. user: 'Can you help me write a module explaining what large language models are to people who have never heard of AI?' assistant: 'I'll use the accessible-ai-course-writer agent to break down LLMs into digestible, non-technical explanations'</example>
+.claude/agents/course-module-scaffolder.md:3:1  [frontmatter/invalid] frontmatter  description: Use this agent when you need to create or update the module structure for a course project based on COURSE.md specifications. Examples: <example>Context: User has updated their COURSE.md file with new module requirements and needs the mkdocs structure updated accordingly. user: 'I've updated my course outline in COURSE.md, can you update the mkdocs structure to match?' assistant: 'I'll use the course-module-scaffolder agent to read your COURSE.md and update the mkdocs project structure accordingly.' <commentary>The user needs the course structure updated based on COURSE.md changes, so use the course-module-scaffolder agent.</commentary></example> <example>Context: User is starting a new course project and has defined the structure in COURSE.md. user: 'I've created my COURSE.md file with the module breakdown. Can you set up the mkdocs structure?' assistant: 'I'll use the course-module-scaffolder agent to read your COURSE.md and create the appropriate mkdocs scaffold.' <commentary>The user needs initial scaffolding based on their COURSE.md, so use the course-module-scaffolder agent.</commentary></example>
+.claude/agents/mkdocs-optimizer.md:3:1  [frontmatter/invalid] frontmatter  description: Use this agent when working with MkDocs documentation sites to ensure proper implementation, aesthetic design, and correct plugin integration. Examples: <example>Context: User has just configured a new MkDocs site with multiple plugins. user: 'I've set up my MkDocs site with the material theme and several plugins, but I'm not sure if everything is configured correctly' assistant: 'Let me use the mkdocs-optimizer agent to review your configuration and ensure everything is properly implemented' <commentary>Since the user needs MkDocs configuration validation, use the mkdocs-optimizer agent to review the setup.</commentary></example> <example>Context: User is experiencing issues with MkDocs plugin integration. user: 'My search plugin isn't working and the navigation looks broken' assistant: 'I'll use the mkdocs-optimizer agent to diagnose and fix these MkDocs issues' <commentary>The user has specific MkDocs problems that need expert troubleshooting.</commentary></example>

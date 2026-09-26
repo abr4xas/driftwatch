@@ -1,94 +1,29 @@
 import { frontmatterFactOf } from '../../extract/frontmatter.ts'
-import type { FrontmatterType, SourceKind } from '../../core/types.ts'
 import type { Check } from '../check.ts'
 
 /**
- * `SPEC.md` § 3: frontmatter YAML that does not parse, or fields with the
- * wrong type.
+ * Frontmatter that is not YAML.
  *
- * Those are two checks wearing one id, and they carry very different risk. The
- * first is a fact: the block either is YAML or it is not, and a parser we did
- * not write says which. The second needs a **schema**, and a schema we get
- * wrong reports a field every real consumer accepts — so the table below only
- * holds keys whose type the format fixes, and everything else in a block is
- * the author's business.
- */
-
-/** The types a key may hold. Anything else is a finding. */
-type AcceptedTypes = readonly FrontmatterType[]
-
-const STRING: AcceptedTypes = ['string']
-/** Both spellings are documented for the tool lists, and both are common. */
-const STRING_OR_LIST: AcceptedTypes = ['string', 'list']
-const BOOLEAN: AcceptedTypes = ['boolean']
-
-/**
- * The curated table, by source kind.
+ * This used to be two checks wearing one id. The other one needed a **schema**
+ * — a table of keys whose type the format fixes — and round twenty-eight took
+ * it out with `skill/frontmatter`, for the reason Angel gave twice: driftwatch
+ * checks whether the paths a document names are still there, not whether the
+ * document is well formed. A `description` that is a list is malformed on the
+ * day it is written and nothing about the repository made it so.
  *
- * `claude-md`, `agents-md`, `copilot` and `configured` are **absent on
- * purpose**: no format defines a frontmatter for a `CLAUDE.md`, so whatever is
- * in one belongs to whoever put it there and its type is not ours to judge.
- * The parse half still covers them — invalid YAML is invalid whoever wrote it.
- *
- * `argument-hint` is absent for a different reason: `argument-hint:
- * [issue-number]` parses as a list, and writing the placeholder in brackets is
- * the established idiom. Claiming it would report a convention.
+ * What is left is a fact rather than a judgement: the block either is YAML or
+ * it is not, and a parser we did not write says which. It is kept for the one
+ * case that *is* a claim going wrong silently — a duplicate key, where one of
+ * the two values is dropped and nothing tells the author.
  */
-const SCHEMAS: Readonly<Partial<Record<SourceKind, Readonly<Record<string, AcceptedTypes>>>>> = {
-  skill: {
-    name: STRING,
-    description: STRING,
-    'allowed-tools': STRING_OR_LIST,
-  },
-  subagent: {
-    name: STRING,
-    description: STRING,
-    model: STRING,
-    tools: STRING_OR_LIST,
-  },
-  command: {
-    description: STRING,
-    model: STRING,
-    'allowed-tools': STRING_OR_LIST,
-    'disable-model-invocation': BOOLEAN,
-  },
-  'cursor-rule': {
-    description: STRING,
-    globs: STRING_OR_LIST,
-    alwaysApply: BOOLEAN,
-  },
-}
-
-/**
- * Words a YAML 1.1 parser reads as booleans and `yaml` — which implements 1.2
- * core — reads as strings. Half the ecosystem still loads frontmatter with a
- * 1.1 parser, and we cannot tell which one the author had in mind, so a
- * boolean field accepts them. The permissive direction is the only one that
- * cannot report a file that works.
- */
-const BOOLEAN_WORDS = new Set(['true', 'false', 'yes', 'no', 'on', 'off'])
-
-/** How each type is named in a message. Exhaustive, so a new type breaks here. */
-const TYPE_NAMES: Readonly<Record<FrontmatterType, string>> = {
-  string: 'a string',
-  number: 'a number',
-  boolean: 'a boolean',
-  list: 'a list',
-  mapping: 'a mapping',
-  empty: 'nothing',
-}
-
-function expectation(accepted: AcceptedTypes): string {
-  return accepted.map((type) => TYPE_NAMES[type]).join(' or ')
-}
 
 export const frontmatterInvalid: Check = {
   id: 'frontmatter/invalid',
-  title: 'Frontmatter does not parse, or a field holds the wrong type',
+  title: 'Frontmatter is not valid YAML',
   description:
-    'The YAML block at the top of the file is not valid YAML, or a key whose ' +
-    'type the format fixes holds something else. Only keys with a defined type ' +
-    "are checked; everything else in a block is the author's business.",
+    'The YAML block at the top of the file does not parse, so whatever it ' +
+    "declares is not what a reader gets. The block's contents are not " +
+    "otherwise checked: a field's type is the author's business.",
   tier: 1,
   defaultSeverity: 'error',
   claimKinds: ['frontmatter'],
@@ -107,32 +42,10 @@ export const frontmatterInvalid: Check = {
       }
     }
 
-    /**
-     * A key written with nothing after it asserts no type, so there is no
-     * type to be wrong. "Missing" and "empty" are `skill/frontmatter`'s
-     * rules, and reporting them here would double them.
-     */
-    if (fact.type === 'empty') return null
-
-    const accepted = SCHEMAS[claim.source.kind]?.[fact.key]
-    if (accepted === undefined) return null
-    if (accepted.includes(fact.type)) return null
-    if (
-      accepted.includes('boolean') &&
-      fact.scalar !== undefined &&
-      BOOLEAN_WORDS.has(fact.scalar.toLowerCase())
-    ) {
-      return null
-    }
-
-    return {
-      claim,
-      message: `expected ${expectation(accepted)}, found ${TYPE_NAMES[fact.type]}`,
-      // No suggestion, and never fixable. M3 read the corpus for this and left
-      // it as it was: the one frontmatter finding in 66 repos is an unquoted
-      // `description:` whose text already contains double quotes, so quoting it
-      // means escaping them, and a `--fix` that escapes is a YAML serializer
-      // reformatting somebody's document. See CLASSIFICATION.md, round 17.
-    }
+    // Everything else a block holds is the author's business. The type table
+    // that used to live here went the way of `skill/frontmatter`'s four lint
+    // rules: a `description` that is a list is malformed, not false, and this
+    // tool reports what a repository has since made untrue.
+    return null
   },
 }

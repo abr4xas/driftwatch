@@ -218,3 +218,59 @@ describe('a symlinked source is the same file, not a second one', () => {
     expect(sources[0]?.path).toBe('AGENTS.md')
   })
 })
+
+/**
+ * The four rules `.scratch/config-ignore/spec.md` fixed before the code, one
+ * case each. The one that breaks first if the implementation is careless is
+ * the second: a path discovery found on its own, never named in `sources`,
+ * which is the whole motivating case.
+ */
+describe('the config ignore key', () => {
+  const files = {
+    'CLAUDE.md': '# root\n',
+    'AGENTS.md': '# agents\n',
+    '.claude/skills/deploy/SKILL.md': '---\nname: deploy\n---\n',
+    '.claude/skills/vendored/SKILL.md': '---\nname: vendored\n---\n',
+    'docs/notes.md': '# a configured source\n',
+    'packages/a/skills/x.md': '# nested\n',
+  }
+  const pathsOf = async (options: Parameters<typeof discoverSources>[1]) => {
+    const root = makeTempRepo({ files })
+    const { sources } = await discoverSources(await buildRepoIndex(root), options)
+    return sources.map((s) => s.path)
+  }
+
+  it('drops a source discovery found on its own', async () => {
+    const kept = await pathsOf({ paths: [], ignore: ['.claude/skills/vendored/**'] })
+    expect(kept).not.toContain('.claude/skills/vendored/SKILL.md')
+    expect(kept).toContain('.claude/skills/deploy/SKILL.md')
+  })
+
+  it('beats sources: a path in both is ignored', async () => {
+    const kept = await pathsOf({ paths: [], sources: ['docs/notes.md'], ignore: ['docs/**'] })
+    expect(kept).not.toContain('docs/notes.md')
+    expect(kept).toContain('CLAUDE.md')
+  })
+
+  it('does not error on a pattern that matches nothing', async () => {
+    // The deliberate asymmetry with `sources`, which throws. One config shared
+    // across repositories must not fail on the repo that has no third_party/.
+    const kept = await pathsOf({ paths: [], ignore: ['third_party/**', 'vendor/**'] })
+    expect(kept).toEqual(await pathsOf({ paths: [] }))
+  })
+
+  it('matches from the repo root, not as a substring', async () => {
+    const kept = await pathsOf({ paths: [], ignore: ['/skills/**'] })
+    expect(kept).toContain('.claude/skills/deploy/SKILL.md')
+  })
+
+  it('takes a literal path as well as a glob', async () => {
+    expect(await pathsOf({ paths: [], ignore: ['AGENTS.md'] })).not.toContain('AGENTS.md')
+  })
+
+  it('changes nothing when it is absent or empty', async () => {
+    const base = await pathsOf({ paths: [] })
+    expect(await pathsOf({ paths: [], ignore: [] })).toEqual(base)
+    expect(await pathsOf({ paths: [], ignore: ['./'] })).toEqual(base)
+  })
+})

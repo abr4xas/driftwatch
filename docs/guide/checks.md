@@ -52,30 +52,10 @@ Anchors match on a canonical key rather than a reimplementation of GitHub's slug
 
 ## frontmatter/invalid
 
-**The YAML block at the top does not parse, or a key whose type the format fixes holds something else.**
+**The YAML block at the top of the file does not parse.**
 
-Two checks wearing one id, carrying very different risk. The first is a fact: the block either is YAML or it is not, and a parser we did not write says which. The second needs a schema, and a schema we get wrong reports a field every real consumer accepts — so only keys whose type the format fixes are checked, and everything else in a block is the author's business.
+A fact rather than a judgement: the block either is YAML or it is not, and a parser we did not write says which. A duplicate key comes with it for free, and it is the case worth having — YAML drops one of the two values and nothing tells the author.
 
-An unknown key is only ever reported as a near miss of a known one ([ADR-0011](../adr/0011-an-unknown-key-is-only-reported-as-a-near-miss.md)).
+**What a field holds is not checked.** That needed a schema, and a schema we get wrong reports a field every real consumer accepts. It was withdrawn in round twenty-eight along with `skill/frontmatter`, and over 2533 repositories it had produced **zero** findings: a `description` that is a list is malformed on the day it is written, and this tool reports what a repository has since made untrue.
 
 **Never fixable.** The only such finding in 66 real repositories was an unquoted `description:` whose text already contained double quotes: quoting it would mean escaping them, and a `--fix` that escapes is a YAML serializer.
-
----
-
-## skill/frontmatter
-
-**A `SKILL.md` names itself something other than its directory.**
-
-One thing: the directory was renamed and the frontmatter did not follow, so the folder and the `name` disagree. It is reported alongside frontmatter that is missing, or missing a `name` or `description`, because without one there is nothing to compare a directory against — those are the precondition, not a second rule.
-
-**driftwatch does not validate the format.** A `name` in snake_case, a `description` of four words, a key the specification does not list: all real problems, none of them *drift*. They are as wrong the day the file is written as a year later, and `BRIEF.md` § Non-goals puts style, formatting and quality outside this tool. [`skills-ref validate`](https://agentskills.io/specification.md) is what answers them.
-
-A field whose *type* is wrong is `frontmatter/invalid`'s finding, and a block that does not parse produces one finding rather than six.
-
-**Suggests** the directory name for a wrong `name`. **Fixable**, and withheld when the directory name is not itself kebab-case — correcting a name to something equally invalid is not a fix.
-
-**Fixable** only when the directory is usable as a name — kebab-case, and within the 64-character limit the format sets. driftwatch does not report an over-long name (it is not drift), but it will not offer you one either.
-
-The fix is safe to apply, checked rather than assumed. `skills-ref validate` — the reference implementation the [specification](https://agentskills.io/specification.md) names — rejects the skill before the fix and calls it valid after; renaming the directory instead leaves it invalid whenever the `name` is not lowercase, which is the usual reason the two disagree.
-
-The identity an agent invokes does not change either. `npx skills` was observed installing a deliberately mismatched skill: it writes to the **source directory** and leaves the frontmatter alone. Claude Code's command name is likewise the directory rather than the field — that one is from its documentation rather than from running it.

@@ -58,6 +58,16 @@ describe('a YAML config', () => {
   })
 })
 
+/**
+ * The way off a module config, now that the flag that did it is gone.
+ *
+ * ADR-0013 withdrew the formats and shipped `--migrate-config` in the same
+ * commit, because a withdrawn format with no route off it moves a cost onto
+ * the user. `1.0.0` withdrew the flag too, so the refusal has to name the
+ * release that still has it.
+ */
+const ROUTE_OFF = 'npx @abr4xas/driftwatch@0.5.0 --migrate-config'
+
 /** Message and hint together: the two lines a user actually sees. */
 async function refusal(root: string): Promise<string> {
   try {
@@ -78,12 +88,12 @@ describe('config lookup', () => {
       'driftwatch.config.ts': 'export default { sources: ["docs/notes.md"] }\n',
       'docs/notes.md': NOTES,
     })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
   })
 
   it('refuses a .js config the same way', async () => {
     const root = repo({ 'driftwatch.config.js': 'export default {}\n' })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
   })
 
   it('does not execute the module it refuses', async () => {
@@ -98,7 +108,7 @@ describe('config lookup', () => {
         '',
       ].join('\n'),
     })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
     expect(existsSync(join(root, 'EXECUTED'))).toBe(false)
   })
 
@@ -132,11 +142,11 @@ describe('config lookup', () => {
   // mistake, and merging them would hide it.
   it('prefers .json over .yaml over package.json', async () => {
     const root = repo({
-      'driftwatch.config.json': JSON.stringify({ staleThreshold: 3 }),
-      'driftwatch.config.yaml': 'staleThreshold: 5\n',
-      'package.json': JSON.stringify({ name: 'x', driftwatch: { staleThreshold: 4 } }),
+      'driftwatch.config.json': JSON.stringify({ skillRoots: ['json'] }),
+      'driftwatch.config.yaml': 'skillRoots:\n  - yaml\n',
+      'package.json': JSON.stringify({ name: 'x', driftwatch: { skillRoots: ['manifest'] } }),
     })
-    expect((await audit(root)).config.staleThreshold).toBe(3)
+    expect((await audit(root)).config.skillRoots).toEqual(['json'])
   })
 
   it('a withdrawn format still shadows a valid one, and says so', async () => {
@@ -144,10 +154,10 @@ describe('config lookup', () => {
     // load the .json and leave the author believing the .ts is in effect --
     // the two-configs-in-one-repo case the order exists to surface.
     const root = repo({
-      'driftwatch.config.ts': 'export default { staleThreshold: 1 }\n',
-      'driftwatch.config.json': JSON.stringify({ staleThreshold: 3 }),
+      'driftwatch.config.ts': 'export default { skillRoots: ["module"] }\n',
+      'driftwatch.config.json': JSON.stringify({ skillRoots: ['json'] }),
     })
-    expect(await refusal(root)).toMatch(/--migrate-config/u)
+    expect(await refusal(root)).toContain(ROUTE_OFF)
   })
 
   it('runs with no config at all', async () => {
@@ -185,10 +195,10 @@ describe('--config and --no-config', () => {
 
   it('--config wins over a config file in the root', async () => {
     const root = repo({
-      'driftwatch.config.json': JSON.stringify({ staleThreshold: 9 }),
-      'tools/dw.json': JSON.stringify({ staleThreshold: 1 }),
+      'driftwatch.config.json': JSON.stringify({ skillRoots: ['root'] }),
+      'tools/dw.json': JSON.stringify({ skillRoots: ['explicit'] }),
     })
-    expect((await audit(root, { config: 'tools/dw.json' })).config.staleThreshold).toBe(1)
+    expect((await audit(root, { config: 'tools/dw.json' })).config.skillRoots).toEqual(['explicit'])
   })
 
   it('a --config that does not exist is a user error', async () => {
@@ -216,15 +226,14 @@ describe('validateConfig', () => {
     const config = validateConfig(
       {
         sources: ['docs/a.md'],
-        ignore: ['**/fixtures/**'],
+        skillRoots: ['skills'],
         checks: { 'path/missing': 'off', 'stale/churn': 'warning' },
-        knownPaths: ['dist/**'],
-        staleThreshold: 15,
       },
       'test',
     )
     expect(config.checks).toEqual({ 'path/missing': 'off', 'stale/churn': 'warning' })
-    expect(config.staleThreshold).toBe(15)
+    expect(config.sources).toEqual(['docs/a.md'])
+    expect(config.skillRoots).toEqual(['skills'])
   })
 
   it('an empty or absent config is valid', () => {
@@ -233,27 +242,44 @@ describe('validateConfig', () => {
     expect(validateConfig(null, 'test')).toEqual({})
   })
 
-  // A typo in `ignore` that silently disables the ignore list is worse than a
-  // red run: the tool would keep working and stop doing what the file says.
+  // A typo in `sources` that silently drops the extra documents is worse than
+  // a red run: the tool would keep working and stop doing what the file says.
   it('an unknown key fails and names it, with the known ones', () => {
-    expect(() => validateConfig({ ignores: [] }, 'test')).toThrow(/unknown key 'ignores'/u)
-    expect(() => validateConfig({ ignores: [] }, 'test')).toThrow(/sources, ignore, checks/u)
+    expect(() => validateConfig({ source: [] }, 'test')).toThrow(/unknown key 'source'/u)
+    expect(() => validateConfig({ source: [] }, 'test')).toThrow(
+      /sources, checks, ignore, skillRoots/u,
+    )
   })
+
+  /**
+   * Two of the three keys `1.0.0` withdrew. They validated and were read by
+   * nobody, so a config setting one got a green run and no effect; now it gets
+   * the loader's usual refusal, which is the correct answer for a key that was
+   * never doing anything.
+   *
+   * `ignore` was the third and it is live again — withdrawn for being
+   * unimplemented rather than for being wrong, and implemented is the other
+   * way to settle that.
+   */
+  it.each([['knownPaths'], ['staleThreshold']])(
+    'refuses %s, which used to validate and do nothing',
+    (key) => {
+      expect(() => validateConfig({ [key]: [] }, 'test')).toThrow(
+        new RegExp(`unknown key '${key}'`, 'u'),
+      )
+    },
+  )
 
   it.each([
     ['sources', { sources: 'docs/a.md' }, /sources has to be an array of strings/u],
     ['sources with a number', { sources: [1] }, /sources has to be an array of strings/u],
-    ['ignore', { ignore: {} }, /ignore has to be an array of strings/u],
-    ['knownPaths', { knownPaths: 3 }, /knownPaths has to be an array of strings/u],
+    ['skillRoots', { skillRoots: 3 }, /skillRoots has to be an array of strings/u],
     ['checks', { checks: [] }, /checks has to be an object/u],
     [
       'a severity',
       { checks: { 'path/missing': 'loud' } },
       /has to be 'error', 'warning' or 'off'/u,
     ],
-    ['staleThreshold', { staleThreshold: '15' }, /staleThreshold has to be a positive integer/u],
-    ['a fractional threshold', { staleThreshold: 1.5 }, /positive integer/u],
-    ['a zero threshold', { staleThreshold: 0 }, /positive integer/u],
   ])('rejects a bad %s', (_label, raw, expected) => {
     expect(() => validateConfig(raw, 'test')).toThrow(expected)
   })
@@ -357,22 +383,14 @@ describe('the sources key', () => {
     expect(result.counts).toEqual({ errors: 1, warnings: 0 })
   })
 
-  it('the keys with no implementation yet are carried, not acted on', async () => {
-    const root = repo({
-      'driftwatch.config.json': JSON.stringify({
-        ignore: ['**/nope/**'],
-        staleThreshold: 30,
-      }),
-    })
+  it('a config that sets nothing leaves every check running', async () => {
+    const root = repo({ 'driftwatch.config.json': JSON.stringify({ sources: [] }) })
     const result = await audit(root)
-    expect(result.config.ignore).toEqual(['**/nope/**'])
-    expect(result.config.staleThreshold).toBe(30)
     expect(result.checks).toEqual([
       'path/missing',
       'script/missing',
       'link/broken',
       'frontmatter/invalid',
-      'skill/frontmatter',
     ])
   })
 })

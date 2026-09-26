@@ -2,30 +2,30 @@
 
 Hand review of every finding against the real repo. First measured 2026-09-09; re-measured 2026-09-10 after adding `spatie/bloom`, and **again after adding four more repos**.
 
-Corpus: **66 public repos pinned to a commit, 37 findings.**
+Corpus: **96 public repos pinned to a commit, 337 findings.**
 
-Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **37 findings, 27 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, and round twenty-six closed one class and measured another away.
-Of the 66, **32 form the validation group**. No replacement is outstanding.
+Round eighteen widened discovery to the other skills roots and added 48 findings; **18 of them were a bug and are gone**, and the remaining 30 are ruled on below: 2 true, 28 false. Rounds nineteen through twenty-one then closed every class round eighteen opened, removing 23 more. The corpus stands at **32 findings, 22 true and 10 false**: rounds twenty-two and twenty-four widened the skills roots, round twenty-five took the lint rules out of `skill/frontmatter`, round twenty-six closed one class and measured another away, and round twenty-seven withdrew `skill/frontmatter` entirely.
+Of the 96, **32 form the validation group**. No replacement is outstanding: round thirty-one's thirty are all calibration, because round twenty-nine's `@` rule was derived from a frequency over the discovery corpus they came from.
 
 ## Criterion status ([ADR-0006](../../docs/adr/0006-the-m1-precision-criterion.md), condition 6 as rewritten by [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md))
 
-Validation group measurement: **32 repos, 71 sources, 16 findings, 12 true and 4 false.**
+Validation group measurement: **32 repos, 71 sources, 12 findings, 8 true and 4 false.**
 
 Round eighteen added two sources to the validation group and **no findings**: all 48 of its new findings landed in calibration. The validation measurement is unchanged, which is why the conditions below can still be read at all.
 
 | # | Condition | Measured | Status |
 |---|---|---|---|
 | 1 | `false-positive-traps` fixture at zero | 0 findings | **met** |
-| 2 | Zero false positives among `fixable` findings | 1 fixable, and it is **true** (`fireSeqSearch`) | **met**, repaired in round 19 |
-| 3 | Median FP per repo = 0 | 0 (61 of 66 repos with no FP at all) | **met** |
-| 4 | 90th percentile of FP per repo ≤ 1 | 0 | **met** |
-| 5 | No repo above 2 FP | maximum **2** (`edgecrab`) | **met**, repaired in round 16 |
-| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **58 of 66 = 87.9%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — see below |
+| 2 | Zero false positives among `fixable` findings | **6 fixable**, and all six are **true** | **met**, repaired in round 19 |
+| 3 | ~~Median FP per repo = 0~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): implied by 6 |
+| 4 | ~~90th percentile of FP per repo ≤ 1~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): implied by 6 |
+| 5 | ~~No repo above 2 FP~~ | — | **withdrawn** ([ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)): unstatable over a repository of real size |
+| 6 | ≥ 90% of repos produce zero false positives, whole corpus and validation alone | **81 of 96 = 84.4%**; validation **29 of 32 = 90.6%** | **NOT met** on the whole-corpus half — and further than before, see round thirty-one |
 | 7 | ≥ 1 true positive in validation | 8 | **met** |
-| 8 | ≥ 20 repos, with ≥ 8 in validation | 66 repos, 32 in validation | **met** |
+| 8 | ≥ 20 repos, with ≥ 8 in validation | **96 repos**, 32 in validation | **met** |
 | 9 | Contamination rule encoded | `holdout` field in `scripts/corpus/repos.ts`; no debt outstanding | **met** |
 
-Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. All six are true.
+Fixable findings: **6**, of which **0 are false**. Round eighteen broke this with two false fixable findings in `remix-run/react-router`; round nineteen closed the class that produced them. Round twenty-two added the second, a `name` that had lost a word in `openai/codex`; round twenty-four added four more in `securego/gosec`. Round twenty-seven withdrew the check that produced those five, leaving only `fireSeqSearch`'s. Round thirty-one added five more — three copies of one `tools/` to `extensions/` move in `BuilderIO/agent-native`, and one each in `hecateq/hecateq-openagent` and `BetterSEQTA/DesQTA`, all three of them a file that changed directory. All six are true, and under ADR-0015 a `fixable` finding is the one thing that may never be left unread.
 
 **Condition 6 is not met, and was not noticed.** Eight of the 66 repositories carry a false
 positive, not five: round eighteen opened three classes that were deliberately left open — the
@@ -113,7 +113,7 @@ lives.
 
 ## The full corpus
 
-The corpus produces **37 findings, 27 true and 10 false**, so 73.0% aggregate — and the aggregate
+The corpus produces **337 findings, 32 true, 17 false and 288 unruled**, so no aggregate is quoted — and the aggregate
 is the least useful number here, for the reason [ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md)
 gives. The numbers the project holds itself to are in the condition table above.
 
@@ -168,7 +168,7 @@ true which round thirteen had ruled **false**, because the verdict was fourteen 
 away and there was nowhere to look it up. Ticket `01` asked for this table before anything could
 be fed to a model; the error is the argument for it.
 
-**27 true, 10 false, 37 findings.**
+**32 true, 17 false, 288 pending, 337 findings.**
 
 | # | Repo | Location | Check | Claim | Verdict | Class | Adjudicated |
 |---|---|---|---|---|---|---|---|
@@ -188,27 +188,327 @@ be fed to a model; the error is the argument for it.
 | 14 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:93:60` | `path/missing` | `packages/server/src/server/auth/` | **true** | — | validation, round 14 |
 | 15 | `modelcontextprotocol/typescript-sdk` | `CLAUDE.md:98:79` | `path/missing` | `packages/client/src/client/auth-extensions.ts` | **true** | — | validation, round 14 |
 | 16 | `northword/zotero-format-metadata` | `AGENTS.md:44:89` | `path/missing` | `content/scripts/linter.js` | **false** | generated-bundle | validation, round 14 |
-| 17 | `openai/codex` | `.codex/skills/code-review-breaking-changes/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | calibration, round 22 |
-| 18 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
-| 19 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
-| 20 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
-| 21 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
-| 22 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
-| 23 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
-| 24 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
-| 25 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
-| 26 | `securego/gosec` | `.github/skills/gosec-fix-issue/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 27 | `securego/gosec` | `.github/skills/gosec-new-rule/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 28 | `securego/gosec` | `.github/skills/gosec-update-action-version/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 29 | `securego/gosec` | `.github/skills/gosec-update-go-versions/SKILL.md:2:1` | `skill/frontmatter` | `name` | **true** | — | validation, round 24 |
-| 30 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 31 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 32 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
-| 33 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
-| 34 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
-| 35 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
-| 36 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
-| 37 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
+| 17 | `openai/codex` | `AGENTS.md:35:51` | `path/missing` | `codex-rs/codex-mcp/src/mcp_connection_manager.rs` | **true** | — | calibration, round 1 |
+| 18 | `openai/codex` | `AGENTS.md:265:4` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 19 | `openai/codex` | `AGENTS.md:275:133` | `path/missing` | `app-server-protocol/src/protocol/v2.rs` | **true** | — | calibration, round 1 |
+| 20 | `raphaelmansuy/edgecrab` | `AGENTS.md:508:41` | `path/missing` | `gateway/run.rs` | **false** | crate-nickname | validation, round 15 |
+| 21 | `raphaelmansuy/edgecrab` | `AGENTS.md:614:59` | `path/missing` | `adapters/base.py` | **false** | foreign-project | validation, round 15 |
+| 22 | `remix-run/react-router` | `.agents/skills/implement-rfc/SKILL.md:143:28` | `path/missing` | `docs/upgrading/future-flags.md` | **true** | — | calibration, round 18, F3 |
+| 23 | `remix-run/react-router` | `.agents/skills/react-router/SKILL.md:22:4` | `path/missing` | `app/entry.server.tsx` | **false** | readers-project | calibration, round 18, E |
+| 24 | `saubakirov/KZ-IT-telegram-list` | `.claude/commands/tfw-init.md:141:25` | `path/missing` | `.tfw/adapters/antigravity/rules/` | **false** | another-tools-layout | calibration, round 13 |
+| 25 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:158:24` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 26 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:242:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 27 | `tursodatabase/turso` | `.claude/skills/cdc/SKILL.md:246:15` | `path/missing` | `core/translate/emitter.rs` | **true** | — | calibration, rounds 8, 12 |
+| 28 | `tursodatabase/turso` | `.claude/skills/mvcc/SKILL.md:91:1` | `script/missing` | `make test-mvcc` | **true** | — | calibration, round 12 |
+| 29 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:281` | `link/broken` | `#anchor-a` | **false** | placeholder | calibration, round 18, D |
+| 30 | `vercel/next.js` | `.agents/skills/insight-error-page/SKILL.md:165:311` | `link/broken` | `#anchor-b` | **false** | placeholder | calibration, round 18, D |
+| 31 | `vercel/next.js` | `.agents/skills/update-docs/SKILL.md:50:4` | `path/missing` | `src/client/components/image.tsx` | **true** | — | calibration, round 18, F4 |
+| 32 | `vercel-labs/marketing-team-eve-template` | `AGENTS.md:136:169` | `path/missing` | `writing-quality/references/ai-phrases-to-avoid.md` | **false** | third-party-convention | calibration, round 3 |
+| 33 | `BetterSEQTA/DesQTA` | `.cursor/skills/premium-ui-refinement/SKILL.md:170:108` | `path/missing` | `../../docs/development/premium-animations-analysis.md` | **true** | — | calibration, round 31 |
+| 34 | `BetterSEQTA/DesQTA` | `AGENTS.md:163:25` | `path/missing` | `src/lib/utils/netUtil.ts` | **true** | — | calibration, round 31 |
+| 35 | `BuilderIO/agent-native` | `.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 36 | `BuilderIO/agent-native` | `.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 37 | `BuilderIO/agent-native` | `.agents/skills/automations/SKILL.md:234:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 38 | `BuilderIO/agent-native` | `.agents/skills/capture-learnings/SKILL.md:21:28` | `path/missing` | `memory/MEMORY.md` | **pending** | — | calibration, round 31 |
+| 39 | `BuilderIO/agent-native` | `.agents/skills/configuration/SKILL.md:188:2` | `path/missing` | `plans/core-configuration-attack-plan.md` | **pending** | — | calibration, round 31 |
+| 40 | `BuilderIO/agent-native` | `.agents/skills/create-skill/SKILL.md:27:61` | `path/missing` | `memory/MEMORY.md` | **pending** | — | calibration, round 31 |
+| 41 | `BuilderIO/agent-native` | `.agents/skills/create-skill/SKILL.md:194:43` | `path/missing` | `memory/MEMORY.md` | **pending** | — | calibration, round 31 |
+| 42 | `BuilderIO/agent-native` | `.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 43 | `BuilderIO/agent-native` | `.agents/skills/new-branch/SKILL.md:26:110` | `path/missing` | `feat/` | **false** | placeholder | calibration, round 31 |
+| 44 | `BuilderIO/agent-native` | `.agents/skills/onboarding/SKILL.md:63:6` | `path/missing` | `packages/core/docs/content/onboarding.md` | **pending** | — | calibration, round 31 |
+| 45 | `BuilderIO/agent-native` | `.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 46 | `BuilderIO/agent-native` | `.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 47 | `BuilderIO/agent-native` | `.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 48 | `BuilderIO/agent-native` | `.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 49 | `BuilderIO/agent-native` | `.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 50 | `BuilderIO/agent-native` | `.agents/skills/writing-agent-instructions/SKILL.md:348:14` | `path/missing` | `memory/MEMORY.md` | **pending** | — | calibration, round 31 |
+| 51 | `BuilderIO/agent-native` | `.claude/commands/sidecar.md:3:1` | `frontmatter/invalid` | `argument-hint: [investigation task, e.g. "check PR #1660 for` | **pending** | — | calibration, round 31 |
+| 52 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 53 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 54 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 55 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 56 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 57 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 58 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 59 | `BuilderIO/agent-native` | `community-templates/account-expert/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 60 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 61 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 62 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 63 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 64 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 65 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 66 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 67 | `BuilderIO/agent-native` | `community-templates/account-tiering/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 68 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 69 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 70 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 71 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 72 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 73 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 74 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 75 | `BuilderIO/agent-native` | `community-templates/call-follow-up-drafter/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 76 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 77 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 78 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 79 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 80 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 81 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 82 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 83 | `BuilderIO/agent-native` | `community-templates/churn-early-warning/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 84 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 85 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 86 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 87 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 88 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 89 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 90 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 91 | `BuilderIO/agent-native` | `community-templates/demo-clip-library/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 92 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 93 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 94 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 95 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 96 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 97 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 98 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 99 | `BuilderIO/agent-native` | `community-templates/linkedin-icp-prospect-tracker/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 100 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 101 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 102 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 103 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 104 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 105 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 106 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 107 | `BuilderIO/agent-native` | `community-templates/linkedin-signal-watch/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 108 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 109 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 110 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 111 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 112 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 113 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 114 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 115 | `BuilderIO/agent-native` | `community-templates/outbound-in-your-voice/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 116 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 117 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 118 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 119 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 120 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 121 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 122 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 123 | `BuilderIO/agent-native` | `community-templates/win-loss-memo/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 124 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 125 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 126 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/app-permissions/SKILL.md:19:2` | `path/missing` | `server/plugins/permission-policy.ts` | **pending** | — | calibration, round 31 |
+| 127 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/app-permissions/SKILL.md:75:28` | `path/missing` | `server/plugins/permission-policy.ts` | **pending** | — | calibration, round 31 |
+| 128 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 129 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 130 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **true** | — | calibration, round 31 |
+| 131 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 132 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 133 | `BuilderIO/agent-native` | `packages/core/src/templates/default/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 134 | `BuilderIO/agent-native` | `packages/core/src/templates/headless/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 135 | `BuilderIO/agent-native` | `packages/core/src/templates/headless/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 136 | `BuilderIO/agent-native` | `packages/core/src/templates/headless/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **true** | — | calibration, round 31 |
+| 137 | `BuilderIO/agent-native` | `packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 138 | `BuilderIO/agent-native` | `packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 139 | `BuilderIO/agent-native` | `packages/core/src/templates/headless/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 140 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 141 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 142 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 143 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 144 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **true** | — | calibration, round 31 |
+| 145 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 146 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 147 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-core/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 148 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:5:2` | `path/missing` | `packages/shared/AGENTS.md` | **pending** | — | calibration, round 31 |
+| 149 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:5:33` | `path/missing` | `packages/shared/.agents/skills/` | **pending** | — | calibration, round 31 |
+| 150 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:35:25` | `path/missing` | `packages/shared/AGENTS.md` | **pending** | — | calibration, round 31 |
+| 151 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:36:2` | `path/missing` | `packages/shared/.agents/skills/` | **pending** | — | calibration, round 31 |
+| 152 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:88:9` | `path/missing` | `packages/shared/.agents/skills/delegate-to-agent/SKILL.md` | **pending** | — | calibration, round 31 |
+| 153 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:163:4` | `path/missing` | `packages/shared/.agents/skills/composable-mini-apps/SKILL.md` | **pending** | — | calibration, round 31 |
+| 154 | `BuilderIO/agent-native` | `packages/core/src/templates/workspace-root/AGENTS.md:221:9` | `path/missing` | `packages/shared/.agents/skills/shadcn-ui/SKILL.md` | **pending** | — | calibration, round 31 |
+| 155 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 156 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 157 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 158 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 159 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 160 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 161 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 162 | `BuilderIO/agent-native` | `templates/analytics/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 163 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 164 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 165 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 166 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 167 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 168 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 169 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 170 | `BuilderIO/agent-native` | `templates/assets/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 171 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 172 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 173 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/brain/SKILL.md:187:72` | `path/missing` | `context/company-brain/` | **pending** | — | calibration, round 31 |
+| 174 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 175 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 176 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 177 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 178 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 179 | `BuilderIO/agent-native` | `templates/brain/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 180 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 181 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 182 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 183 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 184 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 185 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 186 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 187 | `BuilderIO/agent-native` | `templates/calendar/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 188 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 189 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 190 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 191 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 192 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 193 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 194 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 195 | `BuilderIO/agent-native` | `templates/chat/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 196 | `BuilderIO/agent-native` | `templates/clips/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 197 | `BuilderIO/agent-native` | `templates/clips/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 198 | `BuilderIO/agent-native` | `templates/clips/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 199 | `BuilderIO/agent-native` | `templates/clips/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 200 | `BuilderIO/agent-native` | `templates/content/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 201 | `BuilderIO/agent-native` | `templates/content/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 202 | `BuilderIO/agent-native` | `templates/content/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 203 | `BuilderIO/agent-native` | `templates/content/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 204 | `BuilderIO/agent-native` | `templates/content/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 205 | `BuilderIO/agent-native` | `templates/content/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 206 | `BuilderIO/agent-native` | `templates/content/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 207 | `BuilderIO/agent-native` | `templates/content/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 208 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 209 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 210 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 211 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 212 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 213 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 214 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 215 | `BuilderIO/agent-native` | `templates/crm/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 216 | `BuilderIO/agent-native` | `templates/design/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 217 | `BuilderIO/agent-native` | `templates/design/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 218 | `BuilderIO/agent-native` | `templates/design/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 219 | `BuilderIO/agent-native` | `templates/design/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 220 | `BuilderIO/agent-native` | `templates/design/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 221 | `BuilderIO/agent-native` | `templates/design/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 222 | `BuilderIO/agent-native` | `templates/design/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 223 | `BuilderIO/agent-native` | `templates/design/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 224 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 225 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 226 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 227 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 228 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 229 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 230 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 231 | `BuilderIO/agent-native` | `templates/dispatch/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 232 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 233 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 234 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 235 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 236 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 237 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 238 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 239 | `BuilderIO/agent-native` | `templates/factory/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 240 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 241 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 242 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 243 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 244 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 245 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 246 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 247 | `BuilderIO/agent-native` | `templates/forms/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 248 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 249 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 250 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 251 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 252 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 253 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 254 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 255 | `BuilderIO/agent-native` | `templates/mail/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 256 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 257 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 258 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 259 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/plan-local-codebase-chat/SKILL.md:19:40` | `path/missing` | `instructions/local-codebases/` | **pending** | — | calibration, round 31 |
+| 260 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 261 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 262 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 263 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 264 | `BuilderIO/agent-native` | `templates/plan/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 265 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 266 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 267 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 268 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 269 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 270 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 271 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 272 | `BuilderIO/agent-native` | `templates/slides/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 273 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/actions/SKILL.md:29:91` | `path/missing` | `actions/list-meals.ts` | **pending** | — | calibration, round 31 |
+| 274 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/actions/SKILL.md:149:100` | `path/missing` | `actions/foo-bar.ts` | **pending** | — | calibration, round 31 |
+| 275 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/efficient-frontier/SKILL.md:3:1` | `frontmatter/invalid` | `description: Apply the same orchestration as `/efficient-fab` | **pending** | — | calibration, round 31 |
+| 276 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/external-agents/SKILL.md:457:51` | `path/missing` | `.vscode/mcp.json` | **pending** | — | calibration, round 31 |
+| 277 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/portability/SKILL.md:92:65` | `path/missing` | `netlify/functions/` | **pending** | — | calibration, round 31 |
+| 278 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/secrets/SKILL.md:426:4` | `path/missing` | `packages/core/src/tools/fetch-tool.ts` | **pending** | — | calibration, round 31 |
+| 279 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/storing-data/SKILL.md:32:52` | `path/missing` | `drizzle/START_HERE.md` | **pending** | — | calibration, round 31 |
+| 280 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/storing-data/SKILL.md:32:160` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 281 | `BuilderIO/agent-native` | `templates/tasks/.agents/skills/storing-data/SKILL.md:53:65` | `path/missing` | `drizzle/schema.ts` | **pending** | — | calibration, round 31 |
+| 282 | `CamilleScholtz/swmpc` | `.agents/skills/asc-aso-audit/SKILL.md:21:53` | `path/missing` | `metadata/version/` | **false** | placeholder | calibration, round 31 |
+| 283 | `CamilleScholtz/swmpc` | `.agents/skills/asc-shots-pipeline/SKILL.md:19:18` | `path/missing` | `.asc/screenshots.json` | **pending** | — | calibration, round 31 |
+| 284 | `CamilleScholtz/swmpc` | `.agents/skills/asc-shots-pipeline/SKILL.md:96:10` | `path/missing` | `.asc/screenshots.json` | **pending** | — | calibration, round 31 |
+| 285 | `CamilleScholtz/swmpc` | `.agents/skills/asc-whats-new-writer/SKILL.md:19:53` | `path/missing` | `metadata/version/` | **pending** | — | calibration, round 31 |
+| 286 | `CamilleScholtz/swmpc` | `.agents/skills/asc-whats-new-writer/SKILL.md:172:55` | `path/missing` | `metadata/version/` | **pending** | — | calibration, round 31 |
+| 287 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:3:122` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
+| 288 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:29:12` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
+| 289 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:65:18` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
+| 290 | `CamilleScholtz/swmpc` | `.agents/skills/asc-workflow/SKILL.md:204:10` | `path/missing` | `.asc/workflow.json` | **pending** | — | calibration, round 31 |
+| 291 | `MuLTiAcidi/claudeos` | `agents/deserialization-hunter/CLAUDE.md:64:68` | `path/missing` | `AAEAAAD/////` | **false** | binary-signature | calibration, round 32 |
+| 292 | `MuLTiAcidi/claudeos` | `agents/discord-bot-manager/CLAUDE.md:613:10` | `path/missing` | `plugins/DiscordSRV/config.yml` | **pending** | — | calibration, round 31 |
+| 293 | `MuLTiAcidi/claudeos` | `agents/doc-generator/CLAUDE.md:854:16` | `path/missing` | `docs/api.md` | **pending** | — | calibration, round 31 |
+| 294 | `MuLTiAcidi/claudeos` | `agents/docker-inspector/CLAUDE.md:12:42` | `path/missing` | `redteam/loot/docker-inspector/` | **pending** | — | calibration, round 31 |
+| 295 | `MuLTiAcidi/claudeos` | `agents/drupal-hunter/CLAUDE.md:530:68` | `path/missing` | `core/drupal.js` | **pending** | — | calibration, round 31 |
+| 296 | `MuLTiAcidi/claudeos` | `agents/drupal-hunter/CLAUDE.md:533:42` | `path/missing` | `sites/all/modules/custom/` | **pending** | — | calibration, round 31 |
+| 297 | `MuLTiAcidi/claudeos` | `agents/electron-unpacker/CLAUDE.md:412:60` | `path/missing` | `resources/app/` | **pending** | — | calibration, round 31 |
+| 298 | `MuLTiAcidi/claudeos` | `agents/exploit-validator/CLAUDE.md:821:47` | `path/missing` | `reports/exploit-validation/` | **pending** | — | calibration, round 31 |
+| 299 | `MuLTiAcidi/claudeos` | `agents/git-deploy/CLAUDE.md:114:36` | `path/missing` | `config/deploy/` | **pending** | — | calibration, round 31 |
+| 300 | `MuLTiAcidi/claudeos` | `agents/github-recon/CLAUDE.md:12:79` | `path/missing` | `redteam/loot/github-recon/` | **pending** | — | calibration, round 31 |
+| 301 | `MuLTiAcidi/claudeos` | `agents/lfi-hunter/CLAUDE.md:98:36` | `path/missing` | `././././etc/passwd` | **pending** | — | calibration, round 31 |
+| 302 | `MuLTiAcidi/claudeos` | `agents/lfi-hunter/CLAUDE.md:430:51` | `path/missing` | `....//` | **pending** | — | calibration, round 31 |
+| 303 | `MuLTiAcidi/claudeos` | `agents/magento-hunter/CLAUDE.md:594:66` | `path/missing` | `app/etc/env.php` | **pending** | — | calibration, round 31 |
+| 304 | `MuLTiAcidi/claudeos` | `agents/notifications/CLAUDE.md:687:24` | `path/missing` | `scripts/daily-digest.sh` | **pending** | — | calibration, round 31 |
+| 305 | `MuLTiAcidi/claudeos` | `agents/pentest-scanner/CLAUDE.md:774:47` | `path/missing` | `reports/pentest-report-DATE.txt` | **pending** | — | calibration, round 31 |
+| 306 | `MuLTiAcidi/claudeos` | `agents/program-monitor/CLAUDE.md:121:22` | `path/missing` | `scrapers/bugcrowd.py` | **pending** | — | calibration, round 31 |
+| 307 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:695:17` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
+| 308 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:696:18` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
+| 309 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:697:20` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
+| 310 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:698:22` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
+| 311 | `MuLTiAcidi/claudeos` | `agents/proof-collector/CLAUDE.md:699:19` | `path/missing` | `evidence/` | **pending** | — | calibration, round 31 |
+| 312 | `MuLTiAcidi/claudeos` | `agents/sqli-hunter/CLAUDE.md:247:42` | `path/missing` | `sqlmap/tamper/` | **pending** | — | calibration, round 31 |
+| 314 | `MuLTiAcidi/claudeos` | `agents/test-runner/CLAUDE.md:1209:21` | `path/missing` | `scripts/seed.sh` | **pending** | — | calibration, round 31 |
+| 315 | `MuLTiAcidi/claudeos` | `agents/test-runner/CLAUDE.md:1210:23` | `path/missing` | `scripts/regression-check.sh` | **pending** | — | calibration, round 31 |
+| 316 | `MuLTiAcidi/claudeos` | `agents/waf-fingerprinter/CLAUDE.md:334:2` | `path/missing` | `bypass-notes/target.example.com.md` | **pending** | — | calibration, round 31 |
+| 317 | `MuLTiAcidi/claudeos` | `agents/wordpress-hunter/CLAUDE.md:577:65` | `path/missing` | `wp-includes/version.php` | **pending** | — | calibration, round 31 |
+| 318 | `TommyLike/KnowledgeBase` | `.claude/commands/kg-refresh.md:100:6` | `path/missing` | `repo/README.md` | **pending** | — | calibration, round 31 |
+| 319 | `TommyLike/KnowledgeBase` | `.claude/commands/kg-refresh.md:101:6` | `path/missing` | `repo/docs/` | **pending** | — | calibration, round 31 |
+| 320 | `TommyLike/KnowledgeBase` | `.claude/commands/kg-refresh.md:102:6` | `path/missing` | `repo/CHANGELOG.md` | **false** | readers-project | calibration, round 31 |
+| 321 | `bmad-labs/skills` | `CLAUDE.md:24:4` | `path/missing` | `.claude/commands/` | **true** | — | calibration, round 31 |
+| 322 | `eggjs/egg` | `.github/copilot-instructions.md:46:6` | `path/missing` | `packages/mock/` | **pending** | — | calibration, round 31 |
+| 323 | `eggjs/egg` | `AGENTS.md:95:76` | `path/missing` | `src/global.d.ts` | **false** | readers-project | calibration, round 31 |
+| 324 | `eggjs/egg` | `AGENTS.md:154:4` | `path/missing` | `wiki/decisions/` | **pending** | — | calibration, round 31 |
+| 325 | `eggjs/egg` | `AGENTS.md:155:4` | `path/missing` | `wiki/sources/` | **pending** | — | calibration, round 31 |
+| 326 | `eggjs/egg` | `tegg/CLAUDE.md:58:73` | `path/missing` | `../egg` | **pending** | — | calibration, round 31 |
+| 327 | `eggjs/egg` | `tegg/CLAUDE.md:96:55` | `path/missing` | `../egg` | **pending** | — | calibration, round 31 |
+| 328 | `factory-level/no-one-left-behind` | `.claude/agents/accessible-ai-course-writer.md:3:1` | `frontmatter/invalid` | `description: Use this agent when you need to create educatio` | **true** | — | calibration, round 31 |
+| 329 | `factory-level/no-one-left-behind` | `.claude/agents/course-module-scaffolder.md:3:1` | `frontmatter/invalid` | `description: Use this agent when you need to create or updat` | **true** | — | calibration, round 31 |
+| 330 | `factory-level/no-one-left-behind` | `.claude/agents/mkdocs-optimizer.md:3:1` | `frontmatter/invalid` | `description: Use this agent when working with MkDocs documen` | **true** | — | calibration, round 31 |
+| 331 | `hecateq/hecateq-openagent` | `AGENTS.md:290:360` | `path/missing` | `.github/instructions/` | **false** | another-tools-layout | calibration, round 31 |
+| 332 | `hecateq/hecateq-openagent` | `AGENTS.md:290:390` | `path/missing` | `.github/copilot-instructions.md` | **pending** | — | calibration, round 31 |
+| 333 | `hecateq/hecateq-openagent` | `src/mcp/AGENTS.md:16:135` | `path/missing` | `LSP_TOOLS_MCP_PROJECT_CONFIG=.opencode/lsp.json` | **pending** | — | calibration, round 31 |
+| 334 | `hecateq/hecateq-openagent` | `src/tools/look-at/AGENTS.md:47:87` | `path/missing` | `src/agents/builtin-agents/multimodal-looker.ts` | **true** | — | calibration, round 31 |
+| 335 | `imarshallwidjaja/data-etl-dagster` | `services/dagster/etl_pipelines/AGENTS.md:13:87` | `path/missing` | `data-lake/blobs/` | **false** | foreign-project | calibration, round 31 |
+| 336 | `imarshallwidjaja/data-etl-dagster` | `services/minio/AGENTS.md:8:25` | `path/missing` | `landing-zone/manifests/` | **pending** | — | calibration, round 31 |
+| 337 | `imarshallwidjaja/data-etl-dagster` | `services/minio/AGENTS.md:9:43` | `path/missing` | `landing-zone/archive/` | **pending** | — | calibration, round 31 |
+| 338 | `imarshallwidjaja/data-etl-dagster` | `services/minio/AGENTS.md:10:61` | `path/missing` | `data-lake/blobs/` | **pending** | — | calibration, round 31 |
 
 ---
 
@@ -1939,3 +2239,399 @@ round twenty-five recorded it.
 
 The justified change did not move the bar and the change that would move the bar is not
 justified. Ticket `20` is unchanged and stays recorded.
+
+## Twenty-seventh round, 2026-09-21: `skill/frontmatter` is withdrawn
+
+Angel's decision, and it is the third time he has asked the same question. Round twenty-five
+quoted him — *"¿por qué hacemos lint de skills?"* — took three lint rules out and kept the
+fourth on the grounds that it was drift. This round takes the fourth.
+
+> no debemos cambiar el nombre a ninguna skill, no somos un validador de skills
+>
+> yo lo único que quiero es validar que las rutas que mencionan sean las correctas
+
+That is a **scope** decision, not a precision one, and it costs true positives rather than
+false ones. What follows is what it cost, so that nobody reads the drop from 37 to 32 as an
+improvement.
+
+### The five findings, and they were ruled true
+
+| repository | `name` | directory | round 24's ruling |
+|---|---|---|---|
+| `securego/gosec` | `Fix Gosec Bug From Issue` | `gosec-fix-issue` | **true** |
+| `securego/gosec` | `Create New Gosec Rule` | `gosec-new-rule` | **true** |
+| `securego/gosec` | `Update Gosec Action Version` | `gosec-update-action-version` | **true** |
+| `securego/gosec` | `Update Supported Go Versions` | `gosec-update-go-versions` | **true** |
+| `openai/codex` | a `name` that had lost a word | `code-review-breaking-changes` | **true**, round 22 |
+
+They are removed from the per-finding table because that table is held to the snapshots by
+`corpus-bookkeeping.test.ts` and the snapshots no longer carry them. They are recorded here
+instead, with their rulings intact. **Nothing about round 24's reading was wrong**; what
+changed is that the question it answered is no longer one this tool asks.
+
+Round 24's own justification is the tell, and it is worth quoting against itself:
+
+> `skills-ref validate` rejects every one of them three times over — not lowercase, invalid
+> characters, directory does not match name — and accepts the rewritten form.
+
+That is a validation argument. It is the same argument round twenty-five rejected for the
+other three rules, one round later, and it was left standing here because this rule's right
+hand side happens to live on disk. Being repo-dependent made it look like drift. It is not:
+a `SKILL.md` that says `name: "AgentDB Advanced Features"` in a directory called
+`agentdb-advanced` asserts nothing false about the repository.
+
+### What the discovery corpus said, and it is not a measurement
+
+Recorded because it is why the question was asked again rather than as evidence: over 2533
+discovery repositories the check produced **1884 findings, 670 of them fixable rewrites in 58
+repositories**. Ticket `32` has the classes. Four per cent of them are "the directory was
+renamed and the frontmatter did not follow", which is the sentence the check's own docstring
+gave as its reason to exist. No number there is a precision and none of it moves a condition.
+
+### The counts
+
+| | round 26 | round 27 |
+|---|---|---|
+| findings | 37 | **32** |
+| true | 27 | **22** |
+| false | 10 | **10** |
+| fixable | 6 | **1** |
+| false fixable | 0 | **0** |
+| validation findings | 16 | **12** |
+
+**No condition moves.** Every withdrawn finding was true, so no repository's false-positive
+count changes: condition 6 stays at 58 of 66 and validation at 29 of 32, and condition 2 stays
+met on a smaller base — one fixable finding rather than six, and it is true. `securego/gosec` is a
+validation repository that now produces nothing, which is a loss of evidence and not of
+precision.
+
+### What went with it
+
+`src/verify/checks/skill-frontmatter.ts`, `src/extract/skill.ts` and the `SkillFact` it
+carried; the `frontmatter` branch of `fix/range.ts`, which had no other caller; and
+`suggestKey`, which had had none since round twenty-five. `CONTRACT.md` loses one check id —
+free, because `1.0.0` is not tagged.
+
+A `SKILL.md` is still a source. Every path it names is still `path/missing`'s business, and
+that is the whole of what the tool now claims about a skill.
+
+## Twenty-eighth round, 2026-09-21: `frontmatter/invalid` keeps the half that is a fact
+
+The other half of round twenty-seven's decision, and it moved **nothing at all**.
+
+`frontmatter/invalid` shipped as two checks under one id, and its own header said so: the
+block either parses or it does not, which a parser we did not write decides; and a table of
+keys whose *type* the format fixes, which is a schema somebody maintains by hand. The second
+is format validation by the definition round twenty-five used, so it went.
+
+### The type table had never fired
+
+Measured before it was removed and again after, over **2533 discovery repositories**:
+
+| | before | after |
+|---|---|---|
+| `frontmatter/invalid` | 315 | **315** |
+| everything else | unchanged | unchanged |
+
+**All 315 are parse failures.** The schema half produced zero findings in the wild and one in
+the corpus — and that one, `colinhacks/zod`'s `description:`, is a parse failure too, so it
+survives. Certification is unchanged at 66 · 341 · 32.
+
+That is the cheapest removal this project has made: a table of four source kinds and eleven
+keys, plus `BOOLEAN_WORDS` and the YAML 1.1 argument around it, all carried since M2 and never
+once used. It was not wrong, it was unexercised, and nothing had ever asked.
+
+### Why the parse half stays
+
+Angel's line is that driftwatch checks whether the paths a document names are still there, and
+a YAML parse error is not a path. What keeps it is the second half of the same sentence —
+*"que no esté roto donde se menciona"*. A frontmatter block that does not parse **is** broken,
+and unlike `name` against a directory there is no reading in which it is fine: whatever the
+block declares is not what a reader gets. The case it earns its keep on is a duplicate key,
+where YAML drops one of the two values and nothing tells the author.
+
+### What was considered and rejected
+
+Turning the parse failure into a **skipped source** instead of a finding. It does not fit: a
+skip means the file could not be read, and here the file reads fine — only its frontmatter
+does not parse, and the body is still audited for every path it names. Skipping the source
+would throw away real `path/missing` findings to avoid reporting one YAML error.
+
+### The counts
+
+None move. 66 · 341 · 32, calibration 20 · validation 12, one fixable and it is true.
+
+## Twenty-ninth round, 2026-09-21: a rule the certification corpus never saw
+
+The first rule this project has derived **entirely** from the discovery corpus, which is what
+the two-corpus split in [`spec.md`](../../.scratch/corpus-adjudication-at-scale/spec.md)
+§ "Two corpora, not one" was built to make possible. Nothing here was tuned against a
+certification repository, no repository is burnt, condition 9 does not fire, and the
+certification corpus is **unchanged: 66 · 341 · 32, calibration 20 · validation 12**.
+
+### What was found
+
+A frequency scan over the 32 209 `path/missing` findings of 2533 repositories, asking which
+first segments appear constantly and resolve nowhere. `@` is the largest class by both
+measures that matter: **128 distinct texts in 69 repositories**, and one repository in 2599
+has a top-level entry beginning with one.
+
+Two shapes, and they are the same thing:
+
+| shape | example | what it is |
+|---|---|---|
+| npm scope | `@n8n/typeorm/`, `@rails/request.js` | a package, resolved by a package manager |
+| path alias | `@/engine/`, `@/components/ui/`, `@/api/` | a `tsconfig` `paths` or Vite `resolve.alias` entry onto `src/` |
+
+Both are names a resolver turns into a location, which is exactly what `isSpecifier` already
+covered for `#lib/…` and `npm:`. It gains a third clause rather than a new rule.
+
+### What it moved
+
+| | |
+|---|---|
+| certification | **unchanged** |
+| discovery | 33 248 → 32 988, **−260 findings, 0 added** |
+
+All 129 distinct removed texts begin with `@`; nothing collateral. 132 were scoped packages,
+123 were aliases.
+
+### The cost, measured and written into the rule
+
+Three candidates in 17 607 beginning with `@` resolve to anything.
+
+And the one worth knowing: **Claude Code's `@./file` import is a path claim wearing a sigil.**
+`@../AGENTS.md` means read that file and a missing one is drift, and this rule cannot see it.
+The honest count is **5 candidates in 1 352 382 discards**, none of which resolves even with
+the `@` stripped — and all five sit in `willhama/md-file-study` and `modem-dev/ossrules`,
+which serve other projects' files, or say `@../other-project/file.js` in as many words.
+Narrowing the rule to strip the sigil is a code path for five strings, so the cost is written
+into `discard.ts` and pinned by a test instead. If that syntax becomes common, that comment
+is where to start.
+
+
+## Thirtieth round, 2026-09-21: three conditions withdrawn, and none of them was measuring
+
+No finding moved and no snapshot changed. What changed is the table above.
+
+[ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)
+withdraws conditions 3, 4 and 5. Two of them had stopped being conditions the day
+[ADR-0009](../../docs/adr/0009-precision-is-counted-in-quiet-repos.md) rewrote condition 6,
+and nobody checked:
+
+- **3, median false positives per repo = 0.** If 90% of repositories have zero, more than half
+  do, so the median is zero. It cannot fail while 6 holds.
+- **4, 90th percentile ≤ 1.** The 90th percentile of a distribution with 90% zeroes is zero.
+  Same.
+
+Both have been reported **met** at every round since, which is the tell: a condition that has
+never failed deserves the question *could it have?*
+
+- **5, no repo above 2.** The only one of the three that added anything, and the one ticket
+  `35` broke against. `BuilderIO/agent-native` produces 244 findings; showing it is not above
+  two means ruling on all 244, because a ceiling is only provable by exhaustion. It held here
+  because `scripts/corpus/repos.ts` keeps the list short and picks new repositories small, for
+  disk. That is a property of the corpus, not of the tool.
+
+Three replacement denominators were measured before withdrawing it, and all three are worse —
+per 100 sources gives `edgecrab` **200**, per finding reintroduces the defect ADR-0009 killed,
+and "the first finding is true" scores 63% while duplicating condition 6. The numbers are in
+the ADR.
+
+**What is lost:** nothing now bounds how bad a single repository may get. That is accepted
+because condition 2 — zero false positives among the fixable, with no rate modulating it — is
+untouched, and it is the one that guards against damage rather than annoyance.
+
+**What is unblocked:** a repository can now join the corpus by answering condition 6 alone —
+*does it produce a false positive at all* — which is one ruling when it does. Ticket `35`'s
+thirty repositories go from 306 readings to roughly sixteen.
+
+**What has not changed:** condition 6 is still not met, at 58 of 66 = 87.9%. Withdrawing three
+conditions moves it by nothing, which is the point of withdrawing them.
+
+## Thirty-first round, 2026-09-21: the corpus stops being a sample of small repositories
+
+Thirty repositories added, chosen **blind**. The selection was pre-registered in ticket `35`
+before anything was looked at: even stride through `test/discovery/repos.txt`, whose order
+cycles the twelve acquisition facets; no exclusion on findings, cleanliness or size; each
+pinned to the sha its discovery clone sits on. All thirty are **calibration**, because round
+twenty-nine's `@` rule was derived from a frequency over the discovery corpus they came from,
+and condition 9 is about not having looked.
+
+| | round 30 | round 31 |
+|---|---|---|
+| repositories | 66 | **96** |
+| sources | 341 | **1901** |
+| findings | 32 | **338** |
+| ruled true | 22 | **32** |
+| ruled false | 10 | **17** |
+| unread | 0 | **289** |
+| fixable | 1 | **6**, all true |
+| condition 6, whole corpus | 58 of 66 = 87.9% | **81 of 96 = 84.4%** |
+| condition 6, validation | 29 of 32 = 90.6% | **29 of 32 = 90.6%** — unchanged |
+
+**Condition 6 moved further from its bar, and that is the honest direction.** The corpus was
+built out of small repositories on purpose — `scripts/corpus/repos.ts` said so — and the rate
+it produced was partly a statement about that choice. Nothing regressed in the code: the
+thirty new repositories were audited by the same rules that audited the sixty-six.
+
+### Why 289 findings are unread, and why the figure is still a measurement
+
+[ADR-0015](../../docs/adr/0015-the-tail-conditions-are-two-tautologies-and-one-impossibility.md)
+withdrew conditions 3, 4 and 5, so nothing now needs a count of false positives per
+repository — only whether there is one. A repository is settled by its **first** false
+positive, and `corpus-bookkeeping.test.ts` was taught to enforce exactly that, and only that:
+
+- every finding still has a row;
+- **no `fixable` finding may be `pending`**, because condition 2 admits none unread;
+- **every repository is settled** — a `false`, or every one of its findings ruled.
+
+That last guard is what keeps 81 of 96 a measurement rather than an upper bound. Checked
+after the fact: the **7** repositories carrying a pending ruling all carry a false one too, so
+they are known-dirty; and the **14** with findings and no false have every finding read. No
+repository is counted clean on unread evidence.
+
+### The eleven rulings
+
+Nine settled a repository each, read in the order `pnpm discovery queue` proposed:
+
+| repository | finding | ruling |
+|---|---|---|
+| `hecateq/hecateq-openagent` | `.github/instructions/` | false — another tool's layout |
+| `eggjs/egg` | `src/global.d.ts` | false — no `src/` at the root of a `packages/` monorepo |
+| `CamilleScholtz/swmpc` | `metadata/version/` | false — the real tree is `Store/ios/version/` |
+| `MuLTiAcidi/claudeos` | `herokucdn.com/error-pages/no-such-app.html` | false — a host in a takeover table |
+| `BuilderIO/agent-native` | `feat/` | false — a branch prefix |
+| `TommyLike/KnowledgeBase` | `repo/CHANGELOG.md` | false — line 81: "if the repo is not cloned, `git clone --depth 1` first" |
+| `imarshallwidjaja/data-etl-dagster` | `data-lake/blobs/` | false — a MinIO bucket |
+| `bmad-labs/skills` | `.claude/commands/` | **true** — `.claude/` is there, `commands/` is not |
+| `factory-level/no-one-left-behind` ×3 | frontmatter | **true** — eleven parse errors from unquoted `: ` inside a `description` |
+
+And two more because a `fixable` finding may never be left unread. All three are the same
+shape — a file that changed directory — and all three fixes point at a file that exists:
+
+| repository | claim | `--fix` writes | ruling |
+|---|---|---|---|
+| `hecateq/hecateq-openagent` | `src/agents/builtin-agents/multimodal-looker.ts` | `src/agents/multimodal-looker.ts` | **true** |
+| `BetterSEQTA/DesQTA` | `src/lib/utils/netUtil.ts` | `src/utils/netUtil.ts` | **true** |
+| `BuilderIO/agent-native` ×3 | `packages/core/src/tools/fetch-tool.ts` | `packages/core/src/extensions/fetch-tool.ts` | **true** |
+
+`BetterSEQTA/DesQTA` is the one repository whose two findings are both true: an off-by-one
+relative link in a `.cursor` skill, and the `netUtil.ts` move.
+
+### What Jev did and did not do
+
+`pnpm discovery queue` ordered 301 `path/missing` findings into a reading order and proposed a
+class for each. It was **wrong on two of nine**, and in the same way both times:
+`repo/CHANGELOG.md` and `data-lake/blobs/` read as genuine because the evidence against them
+is 58 lines above in one file and in a sibling document in the other — outside the two-line
+window the question is asked over. The limit is not the model, it is how much document it is
+given.
+
+No answer of its is recorded above. Every ruling in this round is Angel's.
+
+### Two bookkeeping defects this round exposed
+
+Both were caught by the guards rather than by reading, which is the point of having them.
+
+**`site-data.ts` keyed a finding by `file:line`** and dropped the column, with a comment saying
+the one repository holding two findings on a line gave them the same ruling. Round thirty-one
+made that false: `hecateq/hecateq-openagent` has a **false** and a **pending** on line 290,
+the later one won the key, and the page reported the repository clean — 82 of 96 where the
+rows say 81. It now keys by the full location.
+
+**`rowsIn` did not know `pending`** and silently dropped 289 rows, which is how the first
+regeneration claimed 91.7%.
+
+## Thirty-second round, 2026-09-24: a host without a scheme
+
+The first rule this project has derived from a **model's tabulation**, and the derivation is
+worth stating because the model never decided anything.
+
+Ticket `37` put `classify.ts`'s Choice — the question that scores 94% against these rulings —
+to 1262 wild findings, two per repository, and counted where the named classes sit. The same
+shape came back under three different names: `nextjs.org/docs/messages/` as `foreign-project`,
+`teams.microsoft.com/l/message/` as `placeholder`, `claude.ai/code/` as `third-party-convention`.
+A person read that, and from there the rule was derived and measured the ordinary way, with no
+model in the loop.
+
+`discard.ts` rule 1 has always discarded a text with a protocol. Prose drops the protocol half
+the time, and `linkedin.com/in/` reached `path/missing` as a file this repository was missing.
+
+Measured, all of it deterministic:
+
+| | |
+|---|---|
+| in the wild | 33 findings, 21 repositories, 23 distinct texts, every one a host |
+| directories really named like a host | **1** in 12 439 distinct first segments across 2599 repos |
+| discarded candidates of this shape | 284, of which **0** resolve to anything |
+| discovery | 32 988 to 32 955, **33 removed, none added** |
+| certification | 338 to 337, one snapshot moved, `MuLTiAcidi/claudeos` |
+
+The TLD list holds no file extension — `md`, `sh`, `py`, `rs`, `go` are out so that the rule is
+never the thing deciding whether `docs.md/` is a directory — and `io`, `dev`, `app`, `ai` and
+`co` are out too: real TLDs that are also ordinary directory names, and nothing measured
+justified the risk.
+
+**The match is case-sensitive, and the measurement is why.** Case-insensitively it matches two
+of those 12 439 first segments and one is `GameOfLife3D.NET`, a .NET project. Lowercase-only
+matches one: `my.sheerid.com/`, a scrape whose filenames still carry `%3Flocale=en-US`.
+
+### The treadmill, on schedule
+
+Removing the finding cost the repository that revealed it. `MuLTiAcidi/claudeos`'s
+`herokucdn.com/error-pages/no-such-app.html` was its only ruled false positive, so with the
+rule in place the repository had 26 unread findings and nothing settling it — which
+`corpus-bookkeeping.test.ts` caught, as it is there to.
+
+Angel settled it in one reading: `AAEAAAD/////`, at `agents/deserialization-hunter/CLAUDE.md:64`,
+in a table of deserialization signatures beside `0x00 0x01 0x00 0x00 0x00 FF FF FF FF`. **A
+binary signature, not a path.** New class, `binary-signature`, and it is the first class named
+since round twenty-nine.
+
+  findings 338 -> 337, true 32, false 17 -> 17, pending 289 -> 288
+
+**Condition 6 does not move: 81 of 96 = 84.4%.** claudeos was dirty before the rule and is dirty
+after it, for a different finding. Ticket `38` pre-registered that the condition could not be
+used as an argument for the rule, and the rule turns out not to touch it — which is the
+cleanest possible version of that separation.
+
+Validation is untouched at 29 of 32 = 90.6%, and condition 9 is silent: nothing here looked at
+a validation repository's discards.
+
+## Thirty-third round, 2026-09-24: the class gets its definition, and nothing moves
+
+No repository was re-read and no ruling changed. What changed is the document finding #23 rests
+on.
+
+`remix-run/react-router` `.agents/skills/react-router/SKILL.md:22` — `app/entry.server.tsx` —
+has been `false`, class `readers-project`, since round eighteen. The reasoning cited
+[ADR-0008](../../docs/adr/0008-a-specification-is-not-an-agent-context-file.md), and ADR-0008
+did not quite say it: its line was **instructs versus argues**, and a skill react-router
+publishes for its consumers does not argue. It instructs, about somebody else's repository —
+a third case the ADR had not met.
+
+ADR-0008 is amended rather than the ruling moved. Its premise was always the right one and is
+one sentence above the dichotomy: *an agent context file makes assertions about the repo it
+sits in.* A document instructing about another project breaks that premise while passing every
+test the old wording proposed.
+
+**Every number is unchanged**: 337 findings, 32 true, 17 false, 288 pending, condition 6 at 81
+of 96 = 84.4%, validation at 29 of 32 = 90.6%.
+
+That direction is what makes the amendment safe to accept. One that *improved* the percentage
+would deserve the suspicion § "When a condition fails" step 4 reserves for it.
+
+### What produced the amendment
+
+Ticket `36` asked whether the distinction could be drawn mechanically, pre-registered its
+threshold before looking, and came back negative twice — a model at **-31 points** against a
+person, and eleven comparable pairs in which every deterministic axis appears on both sides.
+The react-router document was that ticket's pre-registered control: Jev read it
+`another-project` at 0.29, agreeing with the ADR, and Angel read it `this-repo`. The
+disagreement is what this round settles, and it is settled by widening the ADR to what it
+always meant.
+
+The remedy for a user carrying somebody else's skill is `ignore`, which landed the same day.
+It is not a discard rule and it could not be one: ticket `36` is the measurement that says
+inference is unavailable here.

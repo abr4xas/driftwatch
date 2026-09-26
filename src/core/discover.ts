@@ -13,6 +13,11 @@ export type DiscoverOptions = {
    * index. They are added to what discovery found, never replacing it.
    */
   sources?: readonly string[]
+  /**
+   * The config's `ignore`: globs for documents not to audit, subtracted after
+   * `sources` has been added.
+   */
+  ignore?: readonly string[]
   /** The config's `skillRoots`: containers of skill directories. */
   skillRoots?: readonly string[]
 }
@@ -382,6 +387,40 @@ async function readSource(entry: Candidate): Promise<ReadResult> {
   }
 }
 
+/**
+ * Drops the sources the config's `ignore` names.
+ *
+ * Three decisions, and each is a rule the spec fixed before the code existed.
+ *
+ * **It runs last**, after discovery and after `sources`. Subtraction after
+ * addition is what lets `ignore` do the one thing it exists for; the other
+ * order would leave a configured source unremovable.
+ *
+ * **It reaches what discovery found on its own**, not only what `sources`
+ * named. The motivating case is a skill installed under `.claude/skills/`,
+ * which discovery finds by itself — an `ignore` that could not touch it would
+ * miss the reason it was written.
+ *
+ * **A pattern matching nothing is not an error**, which is the deliberate
+ * asymmetry with `matchConfiguredSources`. A source you asked for and did not
+ * get is a hole in the audit and has to be loud. An `ignore` for a directory
+ * this repository does not have is a config that still works, and failing on
+ * it would punish sharing one config across repositories.
+ *
+ * The matcher is the one `sources` uses, so both keys read the same syntax:
+ * gitignore patterns, from the repo root.
+ */
+async function withoutIgnored<T extends { path: string }>(
+  entries: readonly T[],
+  patterns: readonly string[],
+): Promise<T[]> {
+  const cleaned = patterns.map((raw) => raw.replace(/^\.\//u, '')).filter((p) => p !== '')
+  if (cleaned.length === 0) return [...entries]
+  const { default: ignore } = await import('ignore')
+  const matcher = ignore().add(cleaned)
+  return entries.filter((entry) => !matcher.ignores(entry.path))
+}
+
 export async function discoverSources(
   index: RepoIndex,
   options: DiscoverOptions,
@@ -406,12 +445,15 @@ export async function discoverSources(
     }
   }
 
+  const kept =
+    options.ignore === undefined ? matched : await withoutIgnored(matched, options.ignore)
+
   // Stable order by path: the tool's output has to be the same run after run
   // for a corpus snapshot to mean anything.
-  matched.sort((a, b) => a.path.localeCompare(b.path))
+  kept.sort((a, b) => a.path.localeCompare(b.path))
 
   const unique = collapseSymlinks(
-    matched.map((entry) => ({ ...entry, absPath: join(index.root, entry.path) })),
+    kept.map((entry) => ({ ...entry, absPath: join(index.root, entry.path) })),
   )
 
   const sources: Source[] = []

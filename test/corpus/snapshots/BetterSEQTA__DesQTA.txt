@@ -1,0 +1,26 @@
+# BetterSEQTA/DesQTA
+
+sources: 14
+errors: 2
+warnings: 0
+fixable: 1
+
+## sources
+skill  .cursor/skills/android-widgets/SKILL.md
+skill  .cursor/skills/create-dashboard-widgets/SKILL.md
+skill  .cursor/skills/desqta-analytics-dropdown-pattern/SKILL.md
+skill  .cursor/skills/desqta-flex-scroll-fix/SKILL.md
+skill  .cursor/skills/desqta-mobile-ui-soft-rounded/SKILL.md
+skill  .cursor/skills/desqta-page-redesign-consistency/SKILL.md
+skill  .cursor/skills/desqta-settings-rust-backend/SKILL.md
+skill  .cursor/skills/desqta-sidebar-customization/SKILL.md
+skill  .cursor/skills/document-features/SKILL.md
+skill  .cursor/skills/i18n-component-review/SKILL.md
+skill  .cursor/skills/mobile-first-optimizations/SKILL.md
+skill  .cursor/skills/premium-ui-refinement/SKILL.md
+skill  .cursor/skills/soft-rich-ui-patterns/SKILL.md
+agents-md  AGENTS.md
+
+## findings
+.cursor/skills/premium-ui-refinement/SKILL.md:170:108  [path/missing] link  ../../docs/development/premium-animations-analysis.md  -> docs/development/premium-animations-analysis.md (0.6)
+AGENTS.md:163:25  [path/missing] inline-code  src/lib/utils/netUtil.ts  -> src/utils/netUtil.ts (1, fixable)

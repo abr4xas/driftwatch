@@ -27,6 +27,16 @@ export type SiteFinding = {
   f: string
   /** 1-indexed line. */
   l: number
+  /**
+   * The column, which is only here so a finding can be keyed exactly.
+   *
+   * It used to be dropped, and `CLASSIFICATION.md` was keyed by `file:line`
+   * with a note that the one repository holding two findings on a line gave
+   * them the same ruling. Round thirty-one made that false:
+   * `hecateq/hecateq-openagent` has a **false** and a **pending** on line 290,
+   * the later one won the key, and the page reported the repository clean.
+   */
+  col: number
   /** The check id. */
   c: string
   /** The claim as written. */
@@ -43,6 +53,15 @@ export type SiteRepo = {
   v: boolean
   /** How many context files were audited. */
   s: number
+  /**
+   * False positives a person ruled, which is what condition 6 counts.
+   *
+   * The page needs it per repository rather than only in the summary: the
+   * diagram is one mark per repository and its three states are "produced
+   * nothing", "produced findings and none false", and "carries a false
+   * positive". Deriving that in the browser would mean shipping the rulings.
+   */
+  fp: number
   f: SiteFinding[]
 }
 
@@ -68,7 +87,8 @@ export type SiteSummary = {
   fixable: number
 }
 
-const FINDING = /^(?<file>[^\s:]+):(?<line>\d+):\d+\s+\[(?<check>[^\]]+)\]\s+\S+\s+(?<rest>.*)$/u
+const FINDING =
+  /^(?<file>[^\s:]+):(?<line>\d+):(?<column>\d+)\s+\[(?<check>[^\]]+)\]\s+\S+\s+(?<rest>.*)$/u
 
 /**
  * A snapshot's findings, in the order it lists them.
@@ -92,13 +112,14 @@ export function findingsIn(snapshot: string): SiteFinding[] {
     if (!inside || line.trim() === '') continue
     const found = FINDING.exec(line)
     if (found?.groups === undefined) continue
-    const { file, line: at, check, rest } = found.groups
+    const { file, line: at, column, check, rest } = found.groups
     const arrow = (rest ?? '').lastIndexOf(' -> ')
     const text = arrow === -1 ? (rest ?? '') : (rest ?? '').slice(0, arrow)
     const tail = arrow === -1 ? '' : (rest ?? '').slice(arrow + 4)
     out.push({
       f: file ?? '',
       l: Number(at),
+      col: Number(column),
       c: check ?? '',
       t: text.trim(),
       s: tail === '' ? null : tail.replace(/\s*\([^)]*\)\s*$/u, '').trim(),
@@ -127,13 +148,15 @@ function snapshotOf(repo: string): string {
 }
 
 export function siteData(): { repos: SiteRepo[]; summary: SiteSummary } {
-  const rulings = new Map<string, 'true' | 'false'>()
+  // `pending` is carried rather than dropped: a finding nobody has read is
+  // not a false positive and is not a true one, and the page must not round it
+  // into either. Round thirty-one, and ADR-0015 is why there are any.
+  const rulings = new Map<string, 'true' | 'false' | 'pending'>()
   for (const row of rowsIn(readFileSync(join(CORPUS_DIR, 'CLASSIFICATION.md'), 'utf8'))) {
-    // The document keys a finding by repository and `file:line:column`; the
-    // snapshot has no column here, so the line is the key and a repository
-    // with two findings on one line is counted once. There is one such pair
-    // and both carry the same ruling.
-    rulings.set(`${row.repo} ${row.location.split(':').slice(0, 2).join(':')}`, row.ruling)
+    // Keyed by the full `file:line:column`, the way the document writes it.
+    // Keying by `file:line` was enough while no repository had two findings on
+    // one line with different rulings, and round thirty-one produced one.
+    rulings.set(`${row.repo} ${row.location}`, row.ruling)
   }
 
   const repos: SiteRepo[] = []
@@ -145,12 +168,14 @@ export function siteData(): { repos: SiteRepo[]; summary: SiteSummary } {
       n: entry.repo,
       v: entry.holdout === true,
       s: sourcesIn(snapshot),
+      fp: 0,
       f: findingsIn(snapshot),
     })
   }
 
   const falseIn = (repo: SiteRepo): number =>
-    repo.f.filter((f) => rulings.get(`${repo.n} ${f.f}:${f.l}`) === 'false').length
+    repo.f.filter((f) => rulings.get(`${repo.n} ${f.f}:${f.l}:${f.col}`) === 'false').length
+  for (const repo of repos) repo.fp = falseIn(repo)
   const clean = repos.filter((repo) => falseIn(repo) === 0)
   const validation = repos.filter((repo) => repo.v)
 
@@ -161,7 +186,8 @@ export function siteData(): { repos: SiteRepo[]; summary: SiteSummary } {
     sources: repos.reduce((sum, repo) => sum + repo.s, 0),
     findings: findings.length,
     litFiles: new Set(findings.map((f) => `${f.repo} ${f.f}`)).size,
-    trueFindings: findings.filter((f) => rulings.get(`${f.repo} ${f.f}:${f.l}`) === 'true').length,
+    trueFindings: findings.filter((f) => rulings.get(`${f.repo} ${f.f}:${f.l}:${f.col}`) === 'true')
+      .length,
     cleanRepos: clean.length,
     cleanValidation: validation.filter((repo) => falseIn(repo) === 0).length,
     cleanPct: pct(clean.length, repos.length),

@@ -85,18 +85,11 @@ Nor is a command claimed at all when:
 
 If the script does not exist but there is one with a similar name (edit distance ≤ 2), it is suggested and autofixable.
 
-#### `skill/frontmatter`
-A `SKILL.md` whose `name` is not the directory it lives in — the directory was renamed and the frontmatter did not follow.
-
-Reported with the two shapes that make the question unanswerable: frontmatter missing outright, and frontmatter with no `name` or `description` (or an empty one). Those say "could not look", not "is malformed".
-
-**The format itself is not checked**, and that is § Non-goals in `BRIEF.md` rather than an omission: a `name` in snake_case, a short `description` and a key the format does not list are all wrong the day they are written, and this tool reports what a repository has since made false. `skills-ref validate` is what answers the other question.
-
 #### `link/broken`
 A relative Markdown link to a file that does not exist, or to an anchor (`#section`) that does not exist in the target file.
 
 #### `frontmatter/invalid`
-Frontmatter YAML that does not parse, or fields with the wrong type.
+A frontmatter block that is not valid YAML. What a field *holds* is not checked: a type is the author's business, not a claim about the repository.
 
 ### Tier 2 — Medium confidence (emit `warning`)
 
@@ -143,9 +136,7 @@ Options
   --config <path>        Explicit path to the config
   --no-config            Ignore any config found
   --quiet                Show problems only, no summary
-  --watch                Re-run whenever a source changes
   --init                 Write a commented driftwatch.config.yaml
-  --migrate-config       Convert a .ts or .js config to YAML
   --version, -v
   --help, -h
 ```
@@ -177,7 +168,7 @@ CLAUDE.md
 
 Formatting rules:
 - Grouped by file, ordered by line.
-- `file:line` must be clickable in modern terminals (`file:line:column` format on the header path when `--no-group`).
+- `file:line` must be clickable in modern terminals.
 - Colors: red for errors, yellow for warnings, dim for suggestions. Turned off if `NO_COLOR` is set or if stdout is not a TTY.
 - The quoted fragment is truncated to 40 characters with `…`.
 - With no problems: `✓ 14 files · no drift · 210ms`.
@@ -235,16 +226,18 @@ Stable contract. Breaking changes only on a major.
       "file": "CLAUDE.md",
       "line": 12,
       "column": 4,
+      "endLine": 12,
       "endColumn": 19,
       "text": "src/lib/auth.ts",
       "message": "path does not exist",
       "suggestion": { "value": "src/auth/index.ts", "confidence": 0.86, "fixable": true }
     }
-  ]
+  ],
+  "skipped": []
 }
 ```
 
-`file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line.
+`file` is always relative to `root`. `line` and `column` are 1-indexed, and `endLine` accompanies `endColumn` so the span is unambiguous when a claim crosses a line. The example above is key for key what the reporter emits, and `CONTRACT.md` — which is generated from a real run — is what holds it to that.
 
 ### Sources that were found and not read
 
@@ -284,7 +277,7 @@ Adding an optional field is not a breaking change. `version` stays `1`.
 
 Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in `package.json` is looked up, in that lookup order: `.json`, `.yaml`, `.yml`, then the manifest. The first one found wins and the search stops.
 
-**A config is data, not a program.** `.ts`, `.js` and `.mjs` were accepted until 2026-09-18 and are not loaded any more: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch executes code it finds in a repository. They keep their place in the lookup order and **fail** with the conversion command in the message, because a withdrawn format that is silently skipped would let the next candidate load while the author believes the module is in effect. `driftwatch --migrate-config` converts one to YAML.
+**A config is data, not a program.** `.ts`, `.js` and `.mjs` were accepted until 2026-09-18 and are not loaded any more: [ADR-0013](../adr/0013-a-config-is-data-not-a-program.md) withdrew them rather than keep a path by which driftwatch executes code it finds in a repository. They keep their place in the lookup order and **fail** with the route off them in the message, because a withdrawn format that is silently skipped would let the next candidate load while the author believes the module is in effect. `--migrate-config` did that conversion until `1.0.0` withdrew it too; the route it leaves behind is `npx @abr4xas/driftwatch@0.5.0 --migrate-config`, the last release that carries it.
 
 **`--init` writes the YAML one**, because driftwatch audits repositories in any language, and unlike JSON it holds the comments the generated file is mostly made of.
 
@@ -292,29 +285,33 @@ Optional. `driftwatch.config.json`, `.yaml`, `.yml`, or the `driftwatch` key in 
 
 A list that *replaced* the built-ins would let one misspelling silence the check across a repository, and silence is what this key exists to fix — an install root nobody has heard of is a repository audited to a green run that means nothing. A typo costs the entry and nothing else.
 
+**`ignore` subtracts, which is what `sources` cannot do.** Same syntax, same root: globs matched against the files git lists. A matching document is not audited — not discovered, no findings, not counted as skipped, because it was never a source. Three rules make it useful rather than merely present: it is applied **after** `sources`, so a path in both is ignored; it reaches what **discovery found on its own**, which is the whole motivating case; and a pattern matching nothing is **not** an error, the deliberate opposite of `sources`, so that one config can be shared across repositories that do not all have a `vendor/`.
+
+What it is for is the case [ADR-0008](../adr/0008-a-specification-is-not-an-agent-context-file.md) settled: a document that does not assert about the repository it sits in — an installed skill, a vendored upstream's `AGENTS.md` — is the check being asked the wrong question, and the answer is configuration. `<!-- driftwatch-ignore-file -->` covers a document you own; this covers one you do not, where editing the file loses the edit on its next update.
+
+It never silences a claim by its **target**: `ignore` takes the path of the document, not the path a document claims. A glob over targets would silence drift in documents the user does own, and it is not this key.
+
+**Two keys were withdrawn in `1.0.0` and stay withdrawn.** `knownPaths` and `staleThreshold` were listed here, accepted by the loader, validated, carried into the run, and read by nobody. The argument for keeping them was that a config written against this document should not fail against an incomplete implementation; the freeze reversed it, because a key the loader accepts is a key a user reasonably believes does something, and three of six did not. They are now refused like any other unknown key. `staleThreshold` returns with `stale/churn`, which is a minor under the version policy — see [`CONTRACT.md`](../../CONTRACT.md). `ignore` was the third, and it came back the other way: implemented, which is the answer for a key withdrawn for being unimplemented rather than for being wrong.
+
 ```yaml
 # What --init writes, minus the commentary.
 sources:
   - 'docs/agent-notes.md'
 
+# Documents not to audit. Subtracted after sources; an entry matching nothing
+# is fine.
+ignore:
+  - '**/fixtures/**'
+
 # Directories whose children are skill directories, on top of the built-in ones
 skillRoots:
   - 'skills'
-
-ignore:
-  - '**/fixtures/**'
 
 # 'error' | 'warning' | 'off' — quoted, because `off` is a YAML 1.1 boolean
 checks:
   'dep/missing': 'off'
   'stale/churn': 'warning'
   'symbol/missing': 'error'
-
-knownPaths:
-  - 'dist/**'
-  - '.next/**'
-
-staleThreshold: 15
 ```
 
 The same config as JSON, for a repository that would rather not add a YAML file:
@@ -322,14 +319,12 @@ The same config as JSON, for a repository that would rather not add a YAML file:
 ```json
 {
   "sources": ["docs/agent-notes.md"],
-  "ignore": ["**/fixtures/**"],
+  "skillRoots": ["skills"],
   "checks": {
     "dep/missing": "off",
     "stale/churn": "warning",
     "symbol/missing": "error"
-  },
-  "knownPaths": ["dist/**", ".next/**"],
-  "staleThreshold": 15
+  }
 }
 ```
 
@@ -356,7 +351,6 @@ It only applies when the correction is **unambiguous**: there is exactly one can
 Autofixable:
 - `path/missing` with a single candidate by basename.
 - `script/missing` with a single script at edit distance ≤ 2.
-- `skill/frontmatter`: a `name` that does not match the directory (corrected to the directory's). Withheld when the directory name is not itself kebab-case: applying it would trade the finding for the kebab-case one, and a fix whose output is a finding is not a fix.
 
   Withheld, equally, when the directory is longer than 64 characters, which is the [specification](https://agentskills.io/specification.md)'s limit and what `skills-ref validate` enforces. That limit is a **gate and not a rule**: an over-long `name` is reported nowhere, because it is as wrong the day it is written as a year later and this tool is about documents that no longer match their repository. It still has to be known here, or the fix hands somebody an edit that makes their skill invalid.
 

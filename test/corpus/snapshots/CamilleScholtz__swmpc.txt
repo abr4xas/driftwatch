@@ -1,0 +1,48 @@
+# CamilleScholtz/swmpc
+
+sources: 29
+errors: 9
+warnings: 0
+fixable: 0
+
+## sources
+skill  .agents/skills/app-intents-specialist/SKILL.md
+skill  .agents/skills/app-intents-whats-new-27/SKILL.md
+skill  .agents/skills/apple-hig/SKILL.md
+skill  .agents/skills/asc-aso-audit/SKILL.md
+skill  .agents/skills/asc-build-lifecycle/SKILL.md
+skill  .agents/skills/asc-cli-usage/SKILL.md
+skill  .agents/skills/asc-crash-triage/SKILL.md
+skill  .agents/skills/asc-id-resolver/SKILL.md
+skill  .agents/skills/asc-localize-metadata/SKILL.md
+skill  .agents/skills/asc-metadata-sync/SKILL.md
+skill  .agents/skills/asc-notarization/SKILL.md
+skill  .agents/skills/asc-release-flow/SKILL.md
+skill  .agents/skills/asc-screenshot-resize/SKILL.md
+skill  .agents/skills/asc-shots-pipeline/SKILL.md
+skill  .agents/skills/asc-signing-setup/SKILL.md
+skill  .agents/skills/asc-submission-health/SKILL.md
+skill  .agents/skills/asc-testflight-orchestration/SKILL.md
+skill  .agents/skills/asc-whats-new-writer/SKILL.md
+skill  .agents/skills/asc-workflow/SKILL.md
+skill  .agents/skills/asc-xcode-build/SKILL.md
+skill  .agents/skills/audit-xcode-security-settings/SKILL.md
+skill  .agents/skills/device-interaction/SKILL.md
+skill  .agents/skills/localization/SKILL.md
+skill  .agents/skills/modernize-tests/SKILL.md
+skill  .agents/skills/sosumi/SKILL.md
+skill  .agents/skills/swiftui-specialist/SKILL.md
+skill  .agents/skills/swiftui-whats-new-27/SKILL.md
+skill  .agents/skills/xcode-control/SKILL.md
+agents-md  AGENTS.md
+
+## findings
+.agents/skills/asc-aso-audit/SKILL.md:21:53  [path/missing] inline-code  metadata/version/
+.agents/skills/asc-shots-pipeline/SKILL.md:19:18  [path/missing] inline-code  .asc/screenshots.json
+.agents/skills/asc-shots-pipeline/SKILL.md:96:10  [path/missing] inline-code  .asc/screenshots.json
+.agents/skills/asc-whats-new-writer/SKILL.md:19:53  [path/missing] inline-code  metadata/version/
+.agents/skills/asc-whats-new-writer/SKILL.md:172:55  [path/missing] inline-code  metadata/version/
+.agents/skills/asc-workflow/SKILL.md:3:122  [path/missing] inline-code  .asc/workflow.json
+.agents/skills/asc-workflow/SKILL.md:29:12  [path/missing] inline-code  .asc/workflow.json
+.agents/skills/asc-workflow/SKILL.md:65:18  [path/missing] inline-code  .asc/workflow.json
+.agents/skills/asc-workflow/SKILL.md:204:10  [path/missing] inline-code  .asc/workflow.json

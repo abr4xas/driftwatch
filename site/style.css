@@ -557,23 +557,27 @@ h3 {
 
 /* The survey field.
 
-   236 marks, one per context file, clustered into 66 runs — one run per
-   repository. The runs keep their real length, so a repo carrying twenty-two
-   documents reads as twenty-two and not as the equal of a repo carrying one.
-   Nineteen marks are lit: those files say something the repository contradicts. */
+   One mark per repository, which is what the figure beside it counts. It was
+   one mark per context file while the corpus ran from one document to
+   twenty-two; at 96 repositories the range is 1 to 768, three repositories
+   hold 72% of the files, and a run of 768 marks is 11 520px wide and left the
+   page. Condition 6 counts repositories, so the field does too.
+
+   Three states, and a reader has to be able to tell them apart at this size:
+   empty is a repository that produced nothing, outlined is one that produced
+   findings and none of them false, filled is one carrying a false positive.
+   The first two are the 81. */
 
 .cells {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 18px;
+  gap: 6px;
   align-items: flex-start;
 }
 
 .run {
   display: flex;
-  gap: 3px;
   padding: 3px;
-  margin: -3px;
   border: 0;
   background: none;
   cursor: default;
@@ -582,12 +586,16 @@ h3 {
 .run:focus-visible { outline-color: var(--ink); outline-width: 2px; }
 
 .mk {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   flex: none;
   border: 1px solid var(--hair);
   background: transparent;
 }
+/* Findings, none of them false: the repository was read and it survived.
+   Carried by the border alone, so it reads as "looked at" beside the empty
+   ones without competing with the lit ones for attention. */
+.mk[data-seen] { border-color: var(--ink-3); }
 .mk[data-lit] { border-color: var(--mark); background: var(--mark); }
 
 .run:hover .mk, .run:focus-visible .mk { border-color: var(--ink-3); }
@@ -646,6 +654,7 @@ h3 {
 }
 .cell-key i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: -1px; }
 .k-clean { border: 1px solid var(--hair); }
+.k-seen { border: 1px solid var(--ink-3); }
 .ro-idle .lit { color: var(--mark); }
 .k-hit { background: var(--mark); }
 .cell-key .fine { font-size: var(--t-xs); text-transform: none; letter-spacing: 0; font-family: var(--sans); }
@@ -868,8 +877,8 @@ a { transition: color .18s var(--ease), text-decoration-color .18s var(--ease); 
 /* ---------------------------------------------------------------------------
    First run.
 
-   A tool built to stay quiet when it is unsure is quiet most of the time: 50
-   of the 66 corpus repositories report nothing. So the empty result is not an
+   A tool built to stay quiet when it is unsure is quiet most of the time: 67
+   of the 96 corpus repositories report nothing. So the empty result is not an
    edge case here, it is the likeliest first experience, and it gets the same
    weight as the one everybody designs for. Three outcomes, each with its real
    output beside what it means.
