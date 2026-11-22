@@ -20,6 +20,7 @@ import { join } from 'node:path'
 import { rowsIn } from '../jev/classify.ts'
 import { CORPUS_DIR, REPO_ROOT } from '../lib/paths.ts'
 import { CORPUS, slugOf } from './repos.ts'
+import { readSnapshot, type Snapshot } from './snapshot.ts'
 
 /** One finding, under the short keys the page's renderer reads. */
 export type SiteFinding = {
@@ -87,64 +88,13 @@ export type SiteSummary = {
   fixable: number
 }
 
-const FINDING =
-  /^(?<file>[^\s:]+):(?<line>\d+):(?<column>\d+)\s+\[(?<check>[^\]]+)\]\s+\S+\s+(?<rest>.*)$/u
-
-/**
- * A snapshot's findings, in the order it lists them.
- *
- * The `-> suggestion (confidence, fixable)` tail is optional and is split off
- * rather than matched inside the claim: a claim can itself contain ` -> `, and
- * the tail is always last.
- */
-export function findingsIn(snapshot: string): SiteFinding[] {
-  const out: SiteFinding[] = []
-  let inside = false
-  for (const line of snapshot.split('\n')) {
-    if (line.startsWith('## findings')) {
-      inside = true
-      continue
-    }
-    if (line.startsWith('## ')) {
-      inside = false
-      continue
-    }
-    if (!inside || line.trim() === '') continue
-    const found = FINDING.exec(line)
-    if (found?.groups === undefined) continue
-    const { file, line: at, column, check, rest } = found.groups
-    const arrow = (rest ?? '').lastIndexOf(' -> ')
-    const text = arrow === -1 ? (rest ?? '') : (rest ?? '').slice(0, arrow)
-    const tail = arrow === -1 ? '' : (rest ?? '').slice(arrow + 4)
-    out.push({
-      f: file ?? '',
-      l: Number(at),
-      col: Number(column),
-      c: check ?? '',
-      t: text.trim(),
-      s: tail === '' ? null : tail.replace(/\s*\([^)]*\)\s*$/u, '').trim(),
-    })
-  }
-  return out
-}
-
-/** How many context files a snapshot audited. */
-export function sourcesIn(snapshot: string): number {
-  return Number(/^sources:\s*(\d+)$/mu.exec(snapshot)?.[1] ?? 0)
-}
-
-/** How many of its findings `--fix` would rewrite. */
-export function fixableIn(snapshot: string): number {
-  return Number(/^fixable:\s*(\d+)$/mu.exec(snapshot)?.[1] ?? 0)
-}
-
 /** The way the page prints a share: one decimal, with the sign. */
 function pct(part: number, whole: number): string {
   return `${((part * 100) / whole).toFixed(1)}%`
 }
 
-function snapshotOf(repo: string): string {
-  return readFileSync(join(CORPUS_DIR, 'snapshots', `${slugOf(repo)}.txt`), 'utf8')
+function snapshotOf(repo: string): Snapshot {
+  return readSnapshot(readFileSync(join(CORPUS_DIR, 'snapshots', `${slugOf(repo)}.txt`), 'utf8'))
 }
 
 export function siteData(): { repos: SiteRepo[]; summary: SiteSummary } {
@@ -163,13 +113,20 @@ export function siteData(): { repos: SiteRepo[]; summary: SiteSummary } {
   let fixable = 0
   for (const entry of CORPUS) {
     const snapshot = snapshotOf(entry.repo)
-    fixable += fixableIn(snapshot)
+    fixable += snapshot.fixable
     repos.push({
       n: entry.repo,
       v: entry.holdout === true,
-      s: sourcesIn(snapshot),
+      s: snapshot.sources.length,
       fp: 0,
-      f: findingsIn(snapshot),
+      f: snapshot.findings.map((finding) => ({
+        f: finding.path,
+        l: finding.line,
+        col: finding.column,
+        c: finding.check,
+        t: finding.text,
+        s: finding.suggestion?.value ?? null,
+      })),
     })
   }
 

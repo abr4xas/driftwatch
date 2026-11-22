@@ -32,6 +32,7 @@ import { run } from '../../src/run.ts'
 import type { RunResult } from '../../src/index.ts'
 import { stringFlag } from '../lib/argv.ts'
 import { CORPUS, slugOf, type CorpusRepo } from './repos.ts'
+import { renderSnapshot, snapshotFromRun } from './snapshot.ts'
 
 const REPOS_DIR = join(CORPUS_DIR, 'repos')
 const SNAPSHOTS_DIR = join(CORPUS_DIR, 'snapshots')
@@ -107,40 +108,7 @@ function outcomeOf(repo: string, result: RunResult): unknown {
 /** Stable, diffable rendering of a run. */
 async function snapshotOf(repo: string, dir: string): Promise<{ text: string; result: RunResult }> {
   const result = await run({ cwd: dir, paths: [] })
-  const lines: string[] = [
-    `# ${repo}`,
-    '',
-    `sources: ${result.sources.length}`,
-    `errors: ${result.counts.errors}`,
-    `warnings: ${result.counts.warnings}`,
-    `fixable: ${result.fixable}`,
-    '',
-    '## sources',
-    ...result.sources.map((source) => `${source.kind}  ${source.path}`),
-    '',
-    '## findings',
-  ]
-
-  if (result.findings.length === 0) {
-    lines.push('(none)')
-  } else {
-    for (const finding of result.findings) {
-      const { source, range, text, context } = finding.claim
-      const suggestion =
-        finding.suggestion === undefined
-          ? ''
-          : `  -> ${finding.suggestion.value} (${finding.suggestion.confidence}${
-              finding.suggestion.fixable ? ', fixable' : ''
-            })`
-      lines.push(
-        `${source.path}:${range.line}:${range.column}  [${finding.check}] ${context}  ${text}${suggestion}`,
-      )
-    }
-  }
-
-  // Time does not enter the snapshot: it changes on every run and says nothing
-  // about precision.
-  return { text: `${lines.join('\n')}\n`, result }
+  return { text: renderSnapshot(snapshotFromRun(repo, result)), result }
 }
 
 /** The line an offset sits on, with the offset's position inside it. */
@@ -274,11 +242,10 @@ async function main(): Promise<number> {
     if (json) outcomes.push(JSON.stringify(outcomeOf(entry.repo, result)))
     const path = join(SNAPSHOTS_DIR, `${slugOf(entry.repo)}.txt`)
 
-    const findings = snapshot.split('\n## findings\n')[1] ?? ''
-    const n = findings.trim() === '(none)' ? 0 : findings.trim().split('\n').length
+    const n = result.findings.length
     totalFindings += n
     if (entry.holdout === true) holdoutFindings += n
-    totalSources += Number(/sources: (\d+)/u.exec(snapshot)?.[1] ?? 0)
+    totalSources += result.sources.length
 
     if (check) {
       const previous = existsSync(path) ? readFileSync(path, 'utf8') : ''

@@ -14,6 +14,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { CORPUS, slugOf } from '../scripts/corpus/repos.ts'
+import { readSnapshot, renderSnapshot, type Snapshot } from '../scripts/corpus/snapshot.ts'
 
 const SNAPSHOTS = new URL('./corpus/snapshots/', import.meta.url)
 
@@ -23,22 +24,12 @@ function snapshotNames(): string[] {
     .toSorted()
 }
 
-function snapshot(name: string): string {
+function snapshotText(name: string): string {
   return readFileSync(new URL(name, SNAPSHOTS), 'utf8')
 }
 
-function field(text: string, key: string): number {
-  const match = new RegExp(`^${key}: (\\d+)$`, 'mu').exec(text)
-  if (match === null) throw new Error(`snapshot has no "${key}:" line`)
-  return Number(match[1])
-}
-
-/** Findings are one per line under the last heading, or the literal `(none)`. */
-function findingCount(text: string): number {
-  const section = text.split('\n## findings\n')[1]
-  if (section === undefined) throw new Error('snapshot has no "## findings" section')
-  const body = section.trim()
-  return body === '(none)' ? 0 : body.split('\n').length
+function snapshot(name: string): Snapshot {
+  return readSnapshot(snapshotText(name))
 }
 
 type Totals = { repos: number; sources: number; findings: number; fixable: number }
@@ -48,12 +39,23 @@ function totalsOver(repos: readonly { repo: string }[]): Totals {
   let findings = 0
   let fixable = 0
   for (const { repo } of repos) {
-    const text = snapshot(`${slugOf(repo)}.txt`)
-    sources += field(text, 'sources')
-    fixable += field(text, 'fixable')
-    findings += findingCount(text)
+    const read = snapshot(`${slugOf(repo)}.txt`)
+    sources += read.sources.length
+    fixable += read.fixable
+    findings += read.findings.length
   }
   return { repos: repos.length, sources, findings, fixable }
+}
+
+/** Every finding the snapshots carry, under the `repo location` key `CLASSIFICATION.md` rows use. */
+function snapshotFindings(): { key: string; fixable: boolean }[] {
+  return snapshotNames().flatMap((name) => {
+    const { repo, findings } = snapshot(name)
+    return findings.map((finding) => ({
+      key: `${repo} ${finding.path}:${finding.line}:${finding.column}`,
+      fixable: finding.suggestion?.fixable === true,
+    }))
+  })
 }
 
 const VALIDATION = CORPUS.filter((entry) => entry.holdout === true)
@@ -78,8 +80,16 @@ describe('corpus bookkeeping', () => {
 
   it('every snapshot is headed by its own repo', () => {
     for (const entry of CORPUS) {
-      const first = snapshot(`${slugOf(entry.repo)}.txt`).split('\n')[0]
-      expect(first).toBe(`# ${entry.repo}`)
+      expect(snapshot(`${slugOf(entry.repo)}.txt`).repo).toBe(entry.repo)
+    }
+  })
+
+  it('reads every snapshot without losing a byte of it', () => {
+    // Every count below is built on `readSnapshot`. If it could drop or
+    // misread a line, they would all agree with each other and be wrong.
+    for (const name of snapshotNames()) {
+      const text = snapshotText(name)
+      expect(renderSnapshot(readSnapshot(text)), name).toBe(text)
     }
   })
 
@@ -196,21 +206,6 @@ describe('CLASSIFICATION.md agrees with the snapshots', () => {
 describe('every finding has a row and a ruling', () => {
   const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
 
-  /** `repo location` for every finding the snapshots carry. */
-  function snapshotFindings(): string[] {
-    const found: string[] = []
-    for (const name of snapshotNames()) {
-      const text = snapshot(name)
-      const [, findings = ''] = text.split('## findings\n')
-      const repo = /^# (.+)$/mu.exec(text)?.[1] ?? name
-      for (const line of findings.split('\n')) {
-        const location = /^(\S+:\d+:\d+)\s/u.exec(line.trim())?.[1]
-        if (location !== undefined) found.push(`${repo} ${location}`)
-      }
-    }
-    return found
-  }
-
   /** The rows of the per-finding table, as `repo location` plus its ruling. */
   function recordedFindings(): Map<string, string> {
     const rows = new Map<string, string>()
@@ -226,7 +221,7 @@ describe('every finding has a row and a ruling', () => {
 
   it('records every finding the snapshots carry, and invents none', () => {
     const recorded = recordedFindings()
-    const snapshots = snapshotFindings()
+    const snapshots = snapshotFindings().map((finding) => finding.key)
     expect(snapshots.filter((finding) => !recorded.has(finding))).toEqual([])
     expect([...recorded.keys()].filter((row) => !snapshots.includes(row))).toEqual([])
   })
@@ -248,24 +243,11 @@ describe('every finding has a row and a ruling', () => {
     }).toEqual({ true: trueCount, false: falseCount, pending, total })
   })
 
-  /** `repo location` for every finding a snapshot marks `fixable`. */
-  function fixableFindings(): string[] {
-    const found: string[] = []
-    for (const name of snapshotNames()) {
-      const text = snapshot(name)
-      const [, findings = ''] = text.split('## findings\n')
-      const repo = /^# (.+)$/mu.exec(text)?.[1] ?? name
-      for (const line of findings.split('\n')) {
-        const location = /^(\S+:\d+:\d+)\s/u.exec(line.trim())?.[1]
-        if (location !== undefined && line.includes('fixable')) found.push(`${repo} ${location}`)
-      }
-    }
-    return found
-  }
-
   it('leaves no fixable finding unread, whatever else is pending', () => {
     const recorded = recordedFindings()
-    const unread = fixableFindings().filter((finding) => recorded.get(finding) === 'pending')
+    const unread = snapshotFindings()
+      .filter((finding) => finding.fixable && recorded.get(finding.key) === 'pending')
+      .map((finding) => finding.key)
     expect(unread).toEqual([])
   })
 
@@ -374,7 +356,7 @@ describe('results.jsonl is the same run the snapshots are', () => {
 
   it('counts the same findings the snapshots count', () => {
     const inSnapshots = snapshotNames().reduce(
-      (total, name) => total + findingCount(snapshot(name)),
+      (total, name) => total + snapshot(name).findings.length,
       0,
     )
     expect(outcomes.reduce((total, o) => total + o.findings.length, 0)).toBe(inSnapshots)
@@ -382,7 +364,7 @@ describe('results.jsonl is the same run the snapshots are', () => {
 
   it('counts the same sources', () => {
     const inSnapshots = snapshotNames().reduce(
-      (total, name) => total + field(snapshot(name), 'sources'),
+      (total, name) => total + snapshot(name).sources.length,
       0,
     )
     expect(outcomes.reduce((total, o) => total + o.sources, 0)).toBe(inSnapshots)
@@ -406,10 +388,7 @@ describe('the conditions that cite a number are held to it', () => {
   const doc = readFileSync(new URL('./corpus/CLASSIFICATION.md', import.meta.url), 'utf8')
 
   it('condition 2 cites the number of fixable findings the snapshots carry', () => {
-    const inSnapshots = snapshotNames().reduce(
-      (total, name) => total + field(snapshot(name), 'fixable'),
-      0,
-    )
+    const inSnapshots = snapshotNames().reduce((total, name) => total + snapshot(name).fixable, 0)
     const cited = /\| 2 \|[^|]*\|\s*\*\*(\d+) fixable\*\*/u.exec(doc)
     if (cited === null) throw new Error('condition 2 does not cite a fixable count')
     expect(Number(cited[1])).toBe(inSnapshots)
