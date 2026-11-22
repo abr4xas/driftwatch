@@ -86,12 +86,10 @@ describe('the discard table', () => {
   })
 })
 
-describe('the sample a person reads', () => {
-  const many = (n: number): ReturnType<typeof discardsIn> =>
-    discardsIn(
-      Array.from({ length: n }, (_, i) => record('bare-word', `r/${i}`, `t${i}`)).join('\n'),
-    )
+const many = (n: number): ReturnType<typeof discardsIn> =>
+  discardsIn(Array.from({ length: n }, (_, i) => record('bare-word', `r/${i}`, `t${i}`)).join('\n'))
 
+describe('the sample a person reads', () => {
   it('spreads through the file rather than taking its head', () => {
     // The file is written repository by repository, so the first twenty
     // discards of a rule are one or two documents. Reading them would be

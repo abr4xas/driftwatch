@@ -135,6 +135,16 @@ function formats(): string[] {
   return FORMATS.map((format) => `- \`${format}\`${format === fallback ? ' (the default)' : ''}`)
 }
 
+/** Whether the validator takes `raw`. It only reports by throwing. */
+function accepts(raw: unknown): boolean {
+  try {
+    validateConfig(raw, ARTIFACT)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * The config's accepted keys, the severities a check can be set to, and the
  * one behaviour that matters as much as the list: an unknown key is an error
@@ -145,15 +155,6 @@ function formats(): string[] {
  * is visible in a type at runtime.
  */
 function configFormat(): string[] {
-  const accepts = (raw: unknown): boolean => {
-    try {
-      validateConfig(raw, ARTIFACT)
-      return true
-    } catch {
-      return false
-    }
-  }
-
   const severities = ['error', 'warning', 'off'].filter((severity) =>
     accepts({ checks: { 'path/missing': severity } }),
   )

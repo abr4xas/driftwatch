@@ -136,22 +136,22 @@ describe('what a gate did not throw away', () => {
   })
 })
 
-describe('the gates are shared, so the count is too', () => {
-  /**
-   * `conditional` refuses a path, an anchor link and a script name with the
-   * same list. Counting only the first reports the rule's cost as smaller than
-   * it is, and measurably so: a large share of its discards come from the other
-   * two extractors. The count is in ticket `07`.
-   */
-  function causesFrom(
-    extract: (context: ExtractContext) => unknown,
-    content: string,
-  ): Array<[string, string]> {
-    const collected: Discard[] = []
-    extract(contextOf(content, (discard) => collected.push(discard)))
-    return collected.map((discard) => [discard.kind, discard.cause])
-  }
+/**
+ * `conditional` refuses a path, an anchor link and a script name with the
+ * same list. Counting only the first reports the rule's cost as smaller than
+ * it is, and measurably so: a large share of its discards come from the other
+ * two extractors. The count is in ticket `07`.
+ */
+function causesFrom(
+  extract: (context: ExtractContext) => unknown,
+  content: string,
+): Array<[string, string]> {
+  const collected: Discard[] = []
+  extract(contextOf(content, (discard) => collected.push(discard)))
+  return collected.map((discard) => [discard.kind, discard.cause])
+}
 
+describe('the gates are shared, so the count is too', () => {
   it('reports an anchor link the prose disclaims', () => {
     const content = 'The output would be in [the report](./docs/out.md#totals).\n'
     expect(causesFrom(extractLinkClaims, content)).toEqual([['link', 'conditional']])

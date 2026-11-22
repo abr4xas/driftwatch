@@ -162,14 +162,14 @@ describe('the families the gates are split into', () => {
   })
 })
 
-describe('the table', () => {
-  const answered = (claimsAPath: number, qualifies: number, marker = 'if exists') => ({
-    ...record('o/r', 'x.md', '`x.md` (if exists)'),
-    marker,
-    claimsAPath,
-    qualifies,
-  })
+const answered = (claimsAPath: number, qualifies: number, marker = 'if exists') => ({
+  ...record('o/r', 'x.md', '`x.md` (if exists)'),
+  marker,
+  claimsAPath,
+  qualifies,
+})
 
+describe('the table', () => {
   it('counts over-reach only among the rows that read as a claim', () => {
     // Low claims and low qualifies is a discard nobody wanted anyway, and
     // counting it as over-reach would make the riskiest column the noisiest.
