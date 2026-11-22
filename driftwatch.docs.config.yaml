@@ -26,7 +26,7 @@ sources:
   - 'docs/**/*.md'
   - 'README.md'
   - 'AGENTS.md'
-  - 'CONTEXT.md'
+  - 'GLOSSARY.md'
   - 'test/corpus/*.md'
 
 checks:

@@ -22,8 +22,9 @@ describe('the questions', () => {
     // A context file instructs; a specification argues, and arguing means
     // quoting paths that belong elsewhere. Forty-three findings and every one
     // a false positive is what that distinction costs when nobody asks it.
-    expect(QUESTIONS['aboutThisRepo']?.type).toBe('boolean')
-    const criteria = QUESTIONS['aboutThisRepo']?.criteria
+    const about = QUESTIONS['aboutThisRepo']
+    expect(about?.type).toBe('boolean')
+    const criteria = about?.type === 'boolean' ? about.criteria : undefined
     expect(JSON.stringify(criteria)).toMatch(/argues|specif/u)
     expect(JSON.stringify(criteria)).toMatch(/reader/u)
   })
@@ -31,7 +32,8 @@ describe('the questions', () => {
   it('offers the four kinds the spec names, and dotfiles', () => {
     const kind = QUESTIONS['repoKind']
     expect(kind?.type).toBe('choice')
-    expect(Object.keys(kind?.criteria ?? {})).toEqual([
+    const criteria = kind?.type === 'choice' ? kind.criteria : {}
+    expect(Object.keys(criteria)).toEqual([
       'skills-repo',
       'product-with-skills',
       'template-clone',

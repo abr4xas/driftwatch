@@ -10,7 +10,7 @@
  *   pnpm discovery queue [--repos a,b,c] [--limit N] [--concurrency 12]
  *
  * **This orders; it does not adjudicate.** The spec is explicit that confidence
- * may be used to sequence work and never to decide it, and `CONTEXT.md` is
+ * may be used to sequence work and never to decide it, and `GLOSSARY.md` is
  * explicit that a ruling is a person's and nothing else produces one. Every row
  * this prints still has to be read against the real repository before it counts
  * as anything.

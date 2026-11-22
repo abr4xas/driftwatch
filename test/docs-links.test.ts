@@ -45,7 +45,7 @@ function documented(): string[] {
   return [
     join(ROOT, 'README.md'),
     join(ROOT, 'AGENTS.md'),
-    join(ROOT, 'CONTEXT.md'),
+    join(ROOT, 'GLOSSARY.md'),
     ...markdownFiles(join(ROOT, 'docs')),
   ]
 }

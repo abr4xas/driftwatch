@@ -18,7 +18,7 @@
  *
  * **What a person decides here is not a ruling.** A ruling is a person's
  * decision that a *finding* is a true or a false positive
- * ([`CONTEXT.md`](../../CONTEXT.md)), and this is about a document. It enters
+ * ([`GLOSSARY.md`](../../GLOSSARY.md)), and this is about a document. It enters
  * no round, it is not written into `CLASSIFICATION.md`, and it moves no
  * condition of ADR-0006. It is computed over the discovery corpus, so
  * `AGENTS.md` § "The discovery corpus is not a corpus in the same sense"
