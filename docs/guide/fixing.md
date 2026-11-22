@@ -38,7 +38,7 @@ If a file it is about to edit has uncommitted changes, it says so **before** edi
 
 ```console
 $ driftwatch --fix
-driftwatch: uncommitted changes in AGENTS.md
+Warning: Uncommitted changes in AGENTS.md. git checkout can't undo the fixes without losing them.
 ```
 
 `git checkout -- .` is the one real way back from a fix you did not want, and it only exists if the file was clean. This is not a git tool: it does not stage, commit, refuse, or offer to stash. The warning goes to stderr, so it never lands in the middle of `--format json` output.

@@ -6,7 +6,7 @@
  */
 import { matchesCheckId } from '../core/check-id.ts'
 import type { CheckSeverity } from '../core/config.ts'
-import { UserError } from '../core/errors.ts'
+import { SEE_HELP, UserError } from '../core/errors.ts'
 import type { Severity } from '../core/types.ts'
 import type { Check } from './check.ts'
 
@@ -35,8 +35,9 @@ function assertKnown(
   for (const selector of selectors) {
     if (checks.some((check) => matchesCheckId(selector, check.id))) continue
     throw new UserError(
-      `${flag}: unknown check '${selector}'`,
-      `the known checks are ${checks.map((check) => check.id).join(', ')}`,
+      `Unknown check '${selector}' in ${flag}.`,
+      `Known checks: ${checks.map((check) => check.id).join(', ')}.`,
+      { next: SEE_HELP },
     )
   }
 }
@@ -69,8 +70,9 @@ export function selectChecks(
 
   if (enabled.length === 0) {
     throw new UserError(
-      'the selection leaves no checks enabled',
-      'reporting no drift after running nothing would be a lie; widen --only, --skip, --no-tier2 or the config checks key',
+      'The selection leaves no checks enabled.',
+      'Reporting no drift after running nothing would be a lie.\n' +
+        'Widen --only, --skip, --no-tier2 or the checks key in the config.',
     )
   }
   return enabled

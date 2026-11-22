@@ -1,12 +1,18 @@
 import { statSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { isUserError, messageOf, notYetImplemented, UserError } from '../core/errors.ts'
+import { notYetImplemented, UserError } from '../core/errors.ts'
 import { EXIT, exitCodeFor, type ExitCode } from '../core/exit-codes.ts'
 import { readVersion } from '../core/version.ts'
 import type { RunOptions, RunResult } from '../run.ts'
+import {
+  errorReportOf,
+  renderErrorJson,
+  renderErrorText,
+  renderWarningText,
+} from '../report/error.ts'
 import type { PrettyOptions } from '../report/pretty.ts'
 import type { FixOutcome } from '../report/types.ts'
-import { parseCliArgs, type BooleanFlag, type CliArgs } from './args.ts'
+import { parseCliArgs, wantsMachineError, type BooleanFlag, type CliArgs } from './args.ts'
 import { HELP } from './help.ts'
 
 export type Io = {
@@ -64,17 +70,64 @@ function prettyOptions(
   color: boolean,
   fixes: FixOutcome | undefined,
 ): PrettyOptions {
-  return { color, quiet: args.quiet, ...(fixes === undefined ? {} : { fixes }) }
+  return {
+    color,
+    quiet: args.quiet,
+    fixCommand: fixCommandFor(args),
+    ...(fixes === undefined ? {} : { fixes }),
+  }
 }
 
+/** Characters a POSIX shell reads as themselves, so the value needs no quotes. */
+const SHELL_SAFE = /^[\w@%+=:,./-]+$/u
+
+function shellQuote(value: string): string {
+  return SHELL_SAFE.test(value) ? value : `'${value.replaceAll("'", `'\\''`)}'`
+}
+
+/**
+ * The `--fix` the summary suggests, carrying everything that decided which
+ * findings this run reported: the paths, the check selection and the config.
+ * Dropping any of them would apply fixes the reader never saw — the whole repo
+ * instead of one file, or a check they had just skipped.
+ */
+function fixCommandFor(args: CliArgs): string {
+  const parts = ['driftwatch', '--fix', ...args.paths.map(shellQuote)]
+  if (args.only !== undefined) parts.push('--only', shellQuote(args.only.join(',')))
+  if (args.skip !== undefined) parts.push('--skip', shellQuote(args.skip.join(',')))
+  if (!args.tier2) parts.push('--no-tier2')
+  if (args.config === false) parts.push('--no-config')
+  else if (args.config !== undefined) parts.push('--config', shellQuote(args.config))
+  return parts.join(' ')
+}
+
+/** How many missing paths the error names before it counts the rest. */
+const MAX_LISTED = 5
+
+/**
+ * Every missing path at once, not the first: somebody who mistyped two paths
+ * should not have to run the tool twice to find out about the second.
+ */
 function assertPathsExist(paths: readonly string[], cwd: string): void {
-  for (const path of paths) {
+  const missing = paths.filter((path) => {
     try {
       statSync(resolve(cwd, path))
+      return false
     } catch {
-      throw new UserError(`path does not exist: ${path}`)
+      return true
     }
+  })
+  const [first] = missing
+  if (first === undefined) return
+  if (missing.length === 1) {
+    throw new UserError(`Couldn't find ${first}.`, undefined, { reason: 'path_not_found' })
   }
+  const listed = missing.slice(0, MAX_LISTED)
+  const rest = missing.length - listed.length
+  const lines = rest > 0 ? [...listed, `and ${rest} more`] : listed
+  throw new UserError(`Couldn't find ${missing.length} paths.`, lines.join('\n'), {
+    reason: 'path_not_found',
+  })
 }
 
 /** What a format does with a result. The four of them share nothing else. */
@@ -139,7 +192,7 @@ async function audit(args: CliArgs, io: Io, cwd: string): Promise<ExitCode> {
     // A warning, in the English sense: it is not a finding, it does not touch
     // the counts, and it belongs on stderr with the other things that are not
     // the report.
-    warn: (message) => io.err(`driftwatch: ${message}\n`),
+    warn: (message) => io.err(renderWarningText(message)),
   })
   render(after, outcome)
   return exitCodeFor(after.counts, args.strict)
@@ -183,15 +236,8 @@ export async function main(argv: readonly string[], io: Io, cwd: string): Promis
 
     return await audit(args, io, cwd)
   } catch (error) {
-    if (isUserError(error)) {
-      io.err(`driftwatch: ${error.message}\n`)
-      if (error.hint !== undefined) io.err(`  ${error.hint}\n`)
-      return EXIT.toolFailure
-    }
-    // A bug of ours. We say so, with the message but without dumping the stack
-    // on someone who only wanted to run a linter.
-    io.err(`driftwatch: internal failure: ${messageOf(error)}\n`)
-    io.err('  this is a driftwatch bug; report it with the command that produced it\n')
+    const report = errorReportOf(error)
+    io.err(wantsMachineError(argv) ? renderErrorJson(report) : renderErrorText(report))
     return EXIT.toolFailure
   }
 }

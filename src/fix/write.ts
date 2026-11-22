@@ -1,5 +1,5 @@
 /**
- * The only module in `src/fix/` that touches the disk.
+ * The only module in `src/fix/` that writes to the disk, through `atomic.ts`.
  *
  * Everything upstream of it is pure — `range.ts` decides what may be replaced,
  * `apply.ts` decides what the file becomes — so the writing is the one step
@@ -7,9 +7,9 @@
  * obvious.
  */
 import { realpathSync } from 'node:fs'
-import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { applyPlan, type FixPlan } from './apply.ts'
+import { replaceFile } from './atomic.ts'
 
 /** One source written, with every path that now holds the new content. */
 export type FixWrite = {
@@ -66,7 +66,7 @@ export async function writePlans(
   for (const plan of plans) {
     const content = applyPlan(plan)
     const paths = [plan.source.path, ...separateFiles(root, plan)]
-    await Promise.all(paths.map((path) => writeFile(join(root, path), content, 'utf8')))
+    await Promise.all(paths.map((path) => replaceFile(join(root, path), content)))
     writes.push({ plan, paths })
   }
 

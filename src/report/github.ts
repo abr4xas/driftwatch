@@ -9,6 +9,7 @@
  */
 import type { Finding } from '../core/types.ts'
 import type { RunResult } from '../run.ts'
+import { sanitize } from './sanitize.ts'
 
 /**
  * The runner reads these lines out of a stream, which is the whole reason
@@ -30,7 +31,8 @@ function escapeProperty(value: string): string {
  */
 function messageOf(finding: Finding): string {
   const { suggestion } = finding
-  return suggestion === undefined ? finding.message : `${finding.message} → ${suggestion.value}?`
+  const message = sanitize(finding.message)
+  return suggestion === undefined ? message : `${message} → ${sanitize(suggestion.value)}?`
 }
 
 function annotationOf(finding: Finding): string {

@@ -128,20 +128,40 @@ Options
   --fix                  Apply the unambiguous fixes
   --dry-run              With --fix, show what it would change without writing
   --json                 JSON output on stdout (see §6)
-  --format <fmt>         pretty | json | github | sarif   (default: pretty)
-  --only <ids>           Only these checks (comma-separated, accepts a prefix: --only path)
+  --format <fmt>         pretty | json | github | sarif (default: pretty)
+  --only <ids>           Only these checks, comma-separated (a prefix works:
+                         --only path)
   --skip <ids>           Exclude these checks
   --strict               Warnings count as errors for the exit code
   --no-tier2             Turn off every tier 2 check
   --config <path>        Explicit path to the config
   --no-config            Ignore any config found
-  --quiet                Show problems only, no summary
+  --quiet                Show findings only, no summary
   --init                 Write a commented driftwatch.config.yaml
   --version, -v
   --help, -h
 ```
 
 With no arguments: audit the whole repo with the default configuration.
+
+`--help` also carries an Arguments section, the check ids with their titles, the exit codes, a few examples and a link to the guide. Every line fits in 80 columns and reads without colour.
+
+### Errors
+
+A run that cannot produce a report exits `2` and prints nothing on stdout. On stderr it prints a headline sentence prefixed `Error:`, the detail under it indented two spaces, and, when there is one, the command that gets the caller out, whole and on its own line:
+
+```
+Error: Unknown option --stirct. Did you mean --strict?
+
+See all options:
+    driftwatch --help
+```
+
+`Error:` and never `✗`: on stdout `✗` marks a finding of severity error, and exit `1` and exit `2` must not read alike. An unknown flag gets at most one suggestion, and none when two flags are equally close. Every missing positional path is named at once, five at most, then `and N more`.
+
+With `--json`, `--format json` or `--format sarif`, the same error is one line of JSON on stderr instead (see §6). `--format github` keeps the text: the job log is read by a person.
+
+A nonfatal condition, like `--fix` editing a file with uncommitted changes, prints on stderr prefixed `Warning:` and does not move the exit code.
 
 ### Exit codes
 
@@ -159,19 +179,23 @@ With `--fix`, the exit code reflects what **remains** after fixing.
 
 ```
 CLAUDE.md
-  ✗ 12  src/lib/auth.ts                  path does not exist  → src/auth/index.ts?
-  ✗ 34  pnpm run test:e2e                script not in package.json
-  ⚠ 51  "we use Prisma as the ORM"       not in dependencies
+  ✗ CLAUDE.md:12:4  src/lib/auth.ts             path does not exist  → src/auth/index.ts?
+  ✗ CLAUDE.md:34:3  pnpm run test:e2e           script not in package.json
+  ⚠ CLAUDE.md:51:1  we use Prisma as the ORM    not in dependencies
 
-2 files · 5 problems (4 errors, 1 warning) · 340ms
+2 files · 5 findings (4 errors, 1 warning) · 340ms
+
+Apply 3 fixes:
+    driftwatch --fix
 ```
 
 Formatting rules:
-- Grouped by file, ordered by line.
-- `file:line` must be clickable in modern terminals.
-- Colors: red for errors, yellow for warnings, dim for suggestions. Turned off if `NO_COLOR` is set or if stdout is not a TTY.
-- The quoted fragment is truncated to 40 characters with `…`.
-- With no problems: `✓ 14 files · no drift · 210ms`.
+- Grouped by file under a header naming it, ordered by line.
+- Every row starts with `file:line:col`, the shape a modern terminal or editor opens.
+- Colors: red for errors, yellow for warnings, dim for suggestions, cyan for a suggested command. Precedence, first match wins: a non-empty `NO_COLOR` turns them off; `FORCE_COLOR` turns them on unless it is `0` or `false`; `TERM=dumb` turns them off; otherwise they follow whether stdout is a TTY.
+- A path, a script or a link is printed whole: it is the only copy the reader has. Prose is truncated to 40 characters with `…`. A text longer than that overflows its own row rather than moving the column for the others.
+- Text read out of the repository (claims, messages quoting them, file names) is printed without escape sequences, other control characters, bidi controls or zero-width characters. The same holds for `github`. JSON and SARIF carry the data unchanged.
+- With no findings: `✓ 14 files · no drift · 210ms`.
 - A document git lists and the working tree does not have gets a dim line **above** the summary, because it qualifies everything the summary says:
 
   ```
@@ -180,9 +204,9 @@ Formatting rules:
 
   Dim, and with no symbol: `✗ ⚠ ✓` are the three this format allows, and none of them fits something that is not a finding.
 - No emojis. Only the `✗ ⚠ ✓` symbols.
-- When autofixes are available, close with: `3 fixable with --fix`.
+- When autofixes are available, close with the next step: `Apply 3 fixes:` and the command on its own line. The command carries the positional paths, `--only`, `--skip`, `--no-tier2` and `--config`/`--no-config` the run used, so it fixes what was reported and nothing else. After `--fix` it is replaced by what was applied.
 
-`--quiet` drops the summary and keeps the skipped-source lines: a document that was found and not opened is nearer a problem than it is to the summary, and it is the one line that changes how the list above should be read.
+`--quiet` drops the summary, the next step with it, and keeps the skipped-source lines: a document that was found and not opened is nearer a problem than it is to the summary, and it is the one line that changes how the list above should be read.
 
 `--quiet` and colour are `pretty` concepts. The other three formats ignore both: a JSON document without its summary is not quieter, it is invalid against its own contract.
 
@@ -270,6 +294,16 @@ Two additions, and they are not symmetric:
 The asymmetry is the honest part. `start` and `end` are absolute byte offsets into the file as it is on disk, and after a real `--fix` what gets reported comes from a second full run over files that have already been rewritten (§ 4). Those findings have no relationship to the plan that was applied, so offering them a range would be offering an index into a file that no longer exists in that form. What was applied is still described, in the top-level block, as the past rather than as an offer.
 
 Adding an optional field is not a breaking change. `version` stays `1`.
+
+### When the run fails
+
+A run in a machine format that exits `2` writes nothing to stdout and exactly one line of JSON to stderr:
+
+```jsonc
+{ "error": { "reason": "unknown_option", "message": "Unknown option --stirct. Did you mean --strict?", "command": "driftwatch --help" } }
+```
+
+`reason` is the field to branch on, and it is one of `unknown_option`, `invalid_arguments`, `path_not_found`, `invalid_config`, `config_exists`, `not_implemented` and `internal_error`. `message` is for a person and is never parsed. `hint` (detail, possibly several lines) and `command` (the recovery) appear only when there is one. The exit code stays the source of truth.
 
 ---
 

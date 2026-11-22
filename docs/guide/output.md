@@ -16,14 +16,18 @@ Four rules hold across all of them: **stdout is the report and stderr is everyth
 ```console
 $ driftwatch
 CLAUDE.md
-  ✗ 12  src/lib/auth.ts                  path does not exist  → src/auth/index.ts?
-  ✗ 34  pnpm run test:e2e                script not in package.json
+  ✗ CLAUDE.md:12:4  src/lib/auth.ts    path does not exist  → src/auth/index.ts?
+  ✗ CLAUDE.md:34:3  pnpm run test:e2e  script not in package.json
 
-2 files · 5 problems (4 errors, 1 warning) · 340ms
-3 fixable with --fix
+2 files · 5 findings (4 errors, 1 warning) · 340ms
+
+Apply 3 fixes:
+    driftwatch --fix
 ```
 
-Grouped by file and ordered by line, with `file:line` clickable in a modern terminal. The quoted fragment is truncated to 40 characters. Colour is off when `NO_COLOR` is set or stdout is not a TTY. No emojis — only `✗ ⚠ ✓`. A clean run closes with `✓ 14 files · no drift · 210ms`.
+Grouped by file and ordered by line, and every row starts with `file:line:col`, which a modern terminal or editor opens. A path, a script or a link is printed whole; only prose is truncated to 40 characters. The suggested `--fix` keeps the paths and the check selection you ran with. Colour follows `NO_COLOR`, then `FORCE_COLOR`, then `TERM=dumb`, then whether stdout is a TTY. Escape sequences and bidi controls in text read from the repo are stripped. No emojis — only `✗ ⚠ ✓`. A clean run closes with `✓ 14 files · no drift · 210ms`.
+
+When the tool itself fails (exit `2`) it says so on stderr with `Error:` and the command that gets you out. Under `--json`, `--format json` or `--format sarif` that error is one line of JSON instead, with a stable `reason` to branch on; see `SPEC.md` § 6.
 
 `pretty` is the only format with a human as its consumer, and the only one that may change freely between versions.
 
@@ -93,7 +97,7 @@ One native annotation per finding, and **nothing else** — the job log is the t
 `::warning` for a warning-severity finding. `title` carries the check id, which is the only stable thing to group and search by. A run with no findings emits nothing at all — not a blank line. No fix diff reaches the log, because there is no workflow command for "I changed this file".
 
 ```yaml
-- uses: abr4xas/driftwatch@v1.1.0
+- uses: abr4xas/driftwatch@v1.2.0
 ```
 
 See [ci.md](./ci.md) for the action's inputs.
@@ -103,7 +107,7 @@ See [ci.md](./ci.md) for the action's inputs.
 SARIF 2.1.0, for upload to Code Scanning.
 
 ```yaml
-- uses: abr4xas/driftwatch@v1.1.0
+- uses: abr4xas/driftwatch@v1.2.0
   id: drift
   with:
     sarif: true

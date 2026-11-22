@@ -116,7 +116,7 @@
 				<p class="marg">
 					<span>Sheet 1 of 1</span>
 					<span aria-hidden="true">·</span>
-					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">1.1.0</a></span>
+					<span>Revision <a href="https://www.npmjs.com/package/@abr4xas/driftwatch">1.2.0</a></span>
 					<span aria-hidden="true">·</span>
 					<span>Node 24+</span>
 					<span aria-hidden="true">·</span>
@@ -154,7 +154,7 @@
 						<section class="fieldbook" id="demo" aria-label="Live terminal demonstration">
 							<div class="fb-bar">
 								<span class="fb-path">~/your-repo</span>
-								<span class="fb-ver">driftwatch 1.1.0</span>
+								<span class="fb-ver">driftwatch 1.2.0</span>
 							</div>
 							<pre class="fb-screen" id="screen" aria-live="polite" aria-atomic="false"></pre>
 							<div class="fb-keys" role="group" aria-label="Run a command">
@@ -261,15 +261,6 @@
 								holds is the author's business; only the block failing to parse is
 								reported.</span></span>
 						<span class="lg-fix">never fixable</span>
-					</li>
-					<li>
-						<span class="sym err" aria-hidden="true">✗</span>
-						<span class="lg-id">skill/frontmatter</span>
-						<span class="lg-what">A <code>SKILL.md</code> names itself something other than its directory —
-							the folder was renamed and the frontmatter did not follow. <span class="fine">Not a format
-								validator: a <code>name</code> in snake_case or a four-word description are real
-								problems and none of them are drift, so this does not report them.</span></span>
-						<span class="lg-fix yes">fixable</span>
 					</li>
 				</ul>
 
@@ -494,20 +485,24 @@
 					<li>
 						<div class="oc-out">
 							<pre><code><span class="c-file">AGENTS.md</span>
-  <span class="c-err">✗ 3</span>  src/util/date.ts  path does not exist  <span class="c-dim">→ src/helpers/date.ts?</span>
-  <span class="c-err">✗ 5</span>  src/cli.ts        path does not exist
+  <span class="c-err">✗</span> AGENTS.md:3:16  src/util/date.ts  path does not exist  <span class="c-dim">→ src/helpers/date.ts?</span>
+  <span class="c-err">✗</span> AGENTS.md:5:16  src/cli.ts        path does not exist
 
-1 file · 2 problems (2 errors) · 59ms
-<span class="c-dim">1 fixable with --fix</span></code></pre>
+1 file · 2 findings (2 errors) · 59ms
+
+Apply 1 fix:
+    driftwatch --fix</code></pre>
 						</div>
 						<div class="oc-say">
 							<h3>It found drift</h3>
 							<p>A claim in your own repository that an agent would have believed, on the line that makes
 								it. Exit code <code>1</code>.</p>
-							<p class="fine"><code>file:line</code> is clickable in a modern terminal, so the fastest
-								next move is to open the line and read what it claims. The arrow is a suggestion, and
-								<code>--fix --dry-run</code> prints the exact rewrite before anything is written to
-								disk.</p>
+							<p class="fine">Every row starts with <code>file:line:col</code>, which a modern terminal
+								or editor opens at the claim, and a path is never cut short, so the fastest next move
+								is to open the line and read what it claims. The arrow is a suggestion; the last line
+								is the command that applies the safe ones, carrying the paths and checks you ran with,
+								and <code>--fix --dry-run</code> prints the exact rewrite before anything is written
+								to disk.</p>
 						</div>
 					</li>
 				</ol>
@@ -535,7 +530,8 @@
 						<p class="fine">With <code>--fix</code> the exit code describes what is <em>left</em>, so a
 							repository whose only error was autofixable exits <code>0</code>. Code <code>2</code> is
 							reserved for driftwatch itself failing (bad config, a path that does not exist, a crash) and
-							never means drift.</p>
+							never means drift: it prints <code>Error:</code> rather than <code>✗</code>, and ends with
+							the command that gets you out.</p>
 						<p><a class="more" href="#ci">Put it on the diff instead →</a></p>
 					</div>
 				</div>
@@ -575,7 +571,7 @@
 					<div class="codeblock">
 						<p class="marg"><span>.github/workflows/ci.yml</span></p>
 						<pre><code><span class="c-dim">- uses:</span> actions/checkout@v7
-<span class="c-dim">- uses:</span> abr4xas/driftwatch@v1.1.0</code></pre>
+<span class="c-dim">- uses:</span> abr4xas/driftwatch@v1.2.0</code></pre>
 						<p class="fine"><code>fail-on-drift: false</code> makes it advisory. <code>sarif: true</code>
 							writes a file for Code Scanning.</p>
 
@@ -606,7 +602,8 @@
 							<div>
 								<dt><code>--json</code></dt>
 								<dd>a stable contract. Breaking changes only on a major; <code>version</code> is what
-									you branch on, and it is <code>1</code>.</dd>
+									you branch on, and it is <code>1</code>. When the tool itself fails, stderr gets
+									one line of JSON with a stable <code>reason</code> instead of prose.</dd>
 							</div>
 							<div>
 								<dt><code>--github</code></dt>
@@ -619,7 +616,9 @@
 							</div>
 						</dl>
 						<p class="fine">stdout is the report, stderr is everything else, and the exit code does not
-							depend on the format.</p>
+							depend on the format. Colour follows <code>NO_COLOR</code>, then <code>FORCE_COLOR</code>,
+							then <code>TERM=dumb</code>, then whether stdout is a terminal, and text read from a
+							repository never reaches your terminal with escape sequences in it.</p>
 					</div>
 				</div>
 			</section>
@@ -639,10 +638,11 @@ driftwatch --skip link/broken    <span class="c-dim"># everything but this one</
 driftwatch --strict              <span class="c-dim"># warnings fail the build too</span>
 driftwatch --fix --dry-run       <span class="c-dim"># what it would rewrite</span>
 driftwatch --json                <span class="c-dim"># the machine-readable contract</span>
-driftwatch --init                <span class="c-dim"># write a commented config</span></code></pre>
+driftwatch --init                <span class="c-dim"># write a commented config</span>
+driftwatch --help                <span class="c-dim"># every flag and every check id</span></code></pre>
 						<p class="fine">Exit <code>0</code> clean, <code>1</code> drift, <code>2</code> the tool
 							could not run — a bad config, a path that does not exist. A crash never looks like a
-							clean run.</p>
+							clean run, and a mistyped flag gets the one it was probably meant to be.</p>
 					</div>
 					<div class="codeblock">
 						<p class="marg"><span>driftwatch.config.yaml</span></p>
@@ -684,12 +684,14 @@ checks:
 					<p><code>1.0.0</code> froze eight surfaces and holds them with a test.
 						<code>1.1.0</code> adds the <code>ignore</code> config key and five discard rules derived from
 						a second corpus of 2533 unread repositories — nothing removed, so the contract grew by one
-						line. <code>--watch</code> is not in the tool at all until the milestone that owns it: it
+						line. <code>1.2.0</code> reworks how the command line talks: <code>file:line:col</code> on
+						every row, paths never cut short, errors that end in the command to run, and a one-line JSON
+						error under <code>--json</code>. <code>--watch</code> is not in the tool at all until the milestone that owns it: it
 						fails as any unknown flag does, rather than being advertised and refused.</p>
 					<p class="fine">The package is <code>@abr4xas/driftwatch</code> because npm refuses
 						<code>driftwatch</code> for being too similar to an unrelated tool. Neither reaches you:
 						<code>bin</code> fixes the command at <code>driftwatch</code>, and the action is used as
-						<code>abr4xas/driftwatch@v1.1.0</code>.</p>
+						<code>abr4xas/driftwatch@v1.2.0</code>.</p>
 				</div>
 
 				<nav class="foot-links" aria-label="Project links">

@@ -68,13 +68,13 @@ describe('a YAML config', () => {
  */
 const ROUTE_OFF = 'npx @abr4xas/driftwatch@0.5.0 --migrate-config'
 
-/** Message and hint together: the two lines a user actually sees. */
+/** Message, hint and recovery command together: what a user actually sees. */
 async function refusal(root: string): Promise<string> {
   try {
     await audit(root)
   } catch (error) {
-    const user = error as { message: string; hint?: string }
-    return `${user.message} ${user.hint ?? ''}`
+    const user = error as { message: string; hint?: string; next?: { command: string } }
+    return `${user.message} ${user.hint ?? ''} ${user.next?.command ?? ''}`
   }
   throw new Error('expected the audit to fail')
 }
@@ -204,7 +204,7 @@ describe('--config and --no-config', () => {
   it('a --config that does not exist is a user error', async () => {
     const root = repo({})
     await expect(audit(root, { config: 'nope.json' })).rejects.toThrow(
-      'config file does not exist: nope.json',
+      "Couldn't find config file nope.json.",
     )
   })
 
@@ -216,7 +216,7 @@ describe('--config and --no-config', () => {
   it('an unsupported extension is a user error', async () => {
     const root = repo({ 'dw.toml': 'sources = []\n' })
     await expect(audit(root, { config: 'dw.toml' })).rejects.toThrow(
-      'unsupported config extension: .toml',
+      'Unsupported config extension .toml.',
     )
   })
 })
@@ -291,7 +291,7 @@ describe('validateConfig', () => {
 
   it('names where the problem is, so the message points at a file', () => {
     expect(() => validateConfig({ nope: 1 }, 'package.json#driftwatch')).toThrow(
-      /invalid config in package\.json#driftwatch/u,
+      /Invalid config in package\.json#driftwatch/u,
     )
   })
 })
@@ -338,14 +338,14 @@ describe('the sources key', () => {
   it('a source that does not exist is a user error, not a silent skip', async () => {
     const root = repo({ 'driftwatch.config.json': JSON.stringify({ sources: ['docs/gone.md'] }) })
     await expect(audit(root)).rejects.toThrow(
-      'the config declares a source that does not exist: docs/gone.md',
+      "The config declares a source that doesn't exist: docs/gone.md.",
     )
   })
 
   it('a pattern that matches nothing is a user error too', async () => {
     const root = repo({ 'driftwatch.config.json': JSON.stringify({ sources: ['docs/**/*.md'] }) })
     await expect(audit(root)).rejects.toThrow(
-      'the config declares a source pattern that matches nothing: docs/**/*.md',
+      'The config declares a source pattern that matches nothing: docs/**/*.md.',
     )
   })
 

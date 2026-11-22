@@ -64,7 +64,8 @@ async function warnAboutDirty(
   const paths = plans.flatMap((plan) => [plan.source.path, ...plan.source.aliases])
   const dirty = await gitDirtyPaths(root, paths)
   if (dirty.size === 0) return
-  warn(`uncommitted changes in ${[...dirty].toSorted((a, b) => a.localeCompare(b)).join(', ')}`)
+  const files = [...dirty].toSorted((a, b) => a.localeCompare(b)).join(', ')
+  warn(`Uncommitted changes in ${files}. git checkout can't undo the fixes without losing them.`)
 }
 
 export type FixSession = {

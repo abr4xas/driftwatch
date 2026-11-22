@@ -21,25 +21,27 @@
       cmd: 'driftwatch',
       out: [
         [['file', 'AGENTS.md']],
-        [['err', '  ✗ 3'], [E, '  src/util/date.ts  path does not exist'], ['dim', '  → src/helpers/date.ts?']],
-        [['err', '  ✗ 5'], [E, '  src/cli.ts        path does not exist']],
+        [['err', '  ✗'], [E, ' AGENTS.md:3:16  src/util/date.ts  path does not exist'], ['dim', '  → src/helpers/date.ts?']],
+        [['err', '  ✗'], [E, ' AGENTS.md:5:16  src/cli.ts        path does not exist']],
         [],
-        [[E, '1 file · 2 problems (2 errors) · 59ms']],
-        [['dim', '1 fixable with --fix']]
+        [[E, '1 file · 2 findings (2 errors) · 59ms']],
+        [],
+        [[E, 'Apply 1 fix:']],
+        [[E, '    driftwatch --fix']]
       ]
     },
     dry: {
       cmd: 'driftwatch --fix --dry-run',
       out: [
         [['file', 'AGENTS.md']],
-        [['err', '  ✗ 3'], [E, '  src/util/date.ts  path does not exist'], ['dim', '  → src/helpers/date.ts?']],
-        [['err', '  ✗ 5'], [E, '  src/cli.ts        path does not exist']],
+        [['err', '  ✗'], [E, ' AGENTS.md:3:16  src/util/date.ts  path does not exist'], ['dim', '  → src/helpers/date.ts?']],
+        [['err', '  ✗'], [E, ' AGENTS.md:5:16  src/cli.ts        path does not exist']],
         [],
         [['dim', 'would fix']],
         [['file', 'AGENTS.md']],
-        [[E, '    3  src/util/date.ts'], ['dim', '  →  '], [E, 'src/helpers/date.ts']],
+        [[E, '    AGENTS.md:3  src/util/date.ts'], ['dim', '  →  '], [E, 'src/helpers/date.ts']],
         [],
-        [[E, '1 file · 2 problems (2 errors) · 61ms']],
+        [[E, '1 file · 2 findings (2 errors) · 61ms']],
         [['dim', '1 fix would apply in 1 file']]
       ]
     },
@@ -47,13 +49,13 @@
       cmd: 'driftwatch --fix',
       out: [
         [['file', 'AGENTS.md']],
-        [['err', '  ✗ 5'], [E, '  src/cli.ts  path does not exist']],
+        [['err', '  ✗'], [E, ' AGENTS.md:5:16  src/cli.ts  path does not exist']],
         [],
         [['dim', 'fixed']],
         [['file', 'AGENTS.md']],
-        [['ok', '  ✓ 3'], [E, '  src/util/date.ts'], ['dim', '  →  '], [E, 'src/helpers/date.ts']],
+        [['ok', '  ✓'], [E, ' AGENTS.md:3  src/util/date.ts'], ['dim', '  →  '], [E, 'src/helpers/date.ts']],
         [],
-        [[E, '1 file · 1 problem (1 error) · 64ms']],
+        [[E, '1 file · 1 finding (1 error) · 64ms']],
         [['dim', '1 fix applied in 1 file']]
       ]
     },

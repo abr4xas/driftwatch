@@ -107,7 +107,7 @@ describe('main', () => {
   it('--watch is an unknown flag, not a bespoke refusal', async () => {
     const c = capture()
     await expect(main(['--watch'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain('unknown option: --watch')
+    expect(c.stderr()).toContain('Unknown option --watch.')
     expect(c.stderr()).not.toContain('is not implemented yet')
   })
 
@@ -162,7 +162,7 @@ describe('main', () => {
   it('--only with an unknown id says so instead of auditing nothing', async () => {
     const c = capture()
     await expect(main(['--only', 'nope'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain("unknown check 'nope'")
+    expect(c.stderr()).toContain("Unknown check 'nope'")
     expect(c.stderr()).toContain('path/missing')
   })
 
@@ -183,7 +183,7 @@ describe('main', () => {
   it('an unknown format is refused by name', async () => {
     const c = capture()
     await expect(main(['--format', 'xml'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain('unknown format: xml')
+    expect(c.stderr()).toContain('Unknown format xml.')
   })
 
   it('--fix writes the correction and exits on what remains', async () => {
@@ -267,7 +267,7 @@ describe('main', () => {
   it('--dry-run without --fix is a user error, not a silent no-op', async () => {
     const c = capture()
     await expect(main(['--dry-run'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
-    expect(c.stderr()).toContain('--dry-run only means something with --fix')
+    expect(c.stderr()).toContain("Can't use --dry-run without --fix.")
   })
 
   it('warns about a dirty file before editing it, and edits it anyway', async () => {
@@ -284,7 +284,7 @@ describe('main', () => {
 
     const c = capture()
     await main(['--fix'], c.io, root)
-    expect(c.stderr()).toContain('uncommitted changes in AGENTS.md')
+    expect(c.stderr()).toContain('Warning: Uncommitted changes in AGENTS.md')
     // It warns and proceeds. This is not a git tool.
     expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toContain('src/helpers/date.ts')
   })
@@ -314,7 +314,7 @@ describe('main', () => {
     writeFileSync(join(root, 'AGENTS.md'), 'Entry `./src/util/date.ts`, edited.\n')
     const c = capture()
     await main(['--fix', '--dry-run'], c.io, root)
-    expect(c.stderr()).toContain('uncommitted changes in AGENTS.md')
+    expect(c.stderr()).toContain('Warning: Uncommitted changes in AGENTS.md')
   })
 
   it('a repo with no git neither warns nor crashes', async () => {
@@ -336,5 +336,119 @@ describe('main', () => {
     await main(['--help'], c.io, CWD)
     await main([], c.io, CWD)
     expect(c.stdout()).not.toMatch(EMOJI)
+  })
+})
+
+describe('errors', () => {
+  it('a tool error leads with Error:, never with the finding glyph', async () => {
+    const c = capture()
+    await main(['--turbo'], c.io, CWD)
+    expect(c.stderr()).toMatch(/^Error: Unknown option --turbo\./u)
+    expect(c.stderr()).not.toContain('✗')
+  })
+
+  it('ends with the recovery command, whole and on its own line', async () => {
+    const c = capture()
+    await main(['--turbo'], c.io, CWD)
+    expect(c.stderr()).toContain('\nSee all options:\n    driftwatch --help\n')
+  })
+
+  it('a near-miss flag gets one suggestion', async () => {
+    const c = capture()
+    await main(['--stirct'], c.io, CWD)
+    expect(c.stderr()).toContain('Unknown option --stirct. Did you mean --strict?')
+  })
+
+  it('a flag close to nothing gets no suggestion rather than a guess', async () => {
+    const c = capture()
+    await main(['--turbo'], c.io, CWD)
+    expect(c.stderr()).not.toContain('Did you mean')
+  })
+
+  it('names every missing path at once, not only the first', async () => {
+    const c = capture()
+    await expect(main(['gone-a.md', 'gone-b.md'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+    expect(c.stderr()).toContain("Couldn't find 2 paths.")
+    expect(c.stderr()).toContain('  gone-a.md\n')
+    expect(c.stderr()).toContain('  gone-b.md\n')
+  })
+
+  it('past five missing paths it counts the rest', async () => {
+    const c = capture()
+    const paths = Array.from({ length: 7 }, (_, i) => `gone-${i}.md`)
+    await main(paths, c.io, CWD)
+    expect(c.stderr()).toContain('  and 2 more\n')
+    expect(c.stderr()).not.toContain('gone-6.md')
+  })
+
+  for (const argv of [['--json'], ['--format', 'json'], ['--format=sarif']]) {
+    it(`with ${argv.join(' ')}, the error is one line of JSON on stderr`, async () => {
+      const c = capture()
+      await expect(main([...argv, '--stirct'], c.io, CWD)).resolves.toBe(EXIT.toolFailure)
+      expect(c.stdout()).toBe('')
+      const lines = c.stderr().trimEnd().split('\n')
+      expect(lines).toHaveLength(1)
+      expect(JSON.parse(lines[0] ?? '')).toEqual({
+        error: {
+          reason: 'unknown_option',
+          message: 'Unknown option --stirct. Did you mean --strict?',
+          command: 'driftwatch --help',
+        },
+      })
+    })
+  }
+
+  it('the JSON error carries the reason a consumer branches on', async () => {
+    const c = capture()
+    await main(['--json', 'gone.md'], c.io, CWD)
+    expect(JSON.parse(c.stderr())).toMatchObject({ error: { reason: 'path_not_found' } })
+  })
+
+  it('--format github keeps the error in text: the job log is read by a person', async () => {
+    const c = capture()
+    await main(['--format', 'github', '--stirct'], c.io, CWD)
+    expect(c.stderr()).toMatch(/^Error: /u)
+  })
+})
+
+describe('--help', () => {
+  it('fits in 80 columns', async () => {
+    const c = capture()
+    await main(['--help'], c.io, CWD)
+    for (const line of c.stdout().split('\n')) {
+      expect(line.length, line).toBeLessThanOrEqual(80)
+    }
+  })
+
+  it('lists every registered check with its title', async () => {
+    const { CHECKS } = await import('../src/verify/checks/index.ts')
+    const c = capture()
+    await main(['--help'], c.io, CWD)
+    for (const check of CHECKS) {
+      expect(c.stdout()).toMatch(new RegExp(`^ {2}${check.id} +${check.title}$`, 'mu'))
+    }
+  })
+})
+
+function fixableRepo(): string {
+  return makeTempRepo({
+    files: {
+      'AGENTS.md': 'The entry point is `./src/util/date.ts`.\n',
+      'src/helpers/date.ts': '',
+    },
+  })
+}
+
+describe('the suggested --fix', () => {
+  it('is a complete command on its own line', async () => {
+    const c = capture()
+    await main([], c.io, fixableRepo())
+    expect(c.stdout()).toContain('Apply 1 fix:\n    driftwatch --fix\n')
+  })
+
+  it('keeps the paths and the selection the run was narrowed to', async () => {
+    const c = capture()
+    await main(['AGENTS.md', '--only', 'path', '--no-config'], c.io, fixableRepo())
+    expect(c.stdout()).toContain('    driftwatch --fix AGENTS.md --only path --no-config\n')
   })
 })

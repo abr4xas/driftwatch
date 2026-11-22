@@ -26,7 +26,7 @@ _Avoid_: rule, lint rule, validator.
 
 **Finding**:
 A claim a check reports as no longer true. The thing a user reads.
-_Avoid_: error, issue, warning, violation.
+_Avoid_: error, issue, problem, warning, violation.
 
 **Drift**:
 The condition the tool exists to find: a source says something about the repository that has

@@ -197,8 +197,9 @@ async function matchConfiguredSources(
   for (const literal of literals) {
     if (!hasFile(index, literal)) {
       throw new UserError(
-        `the config declares a source that does not exist: ${literal}`,
-        'remove it from `sources`, or check the path is relative to the repo root',
+        `The config declares a source that doesn't exist: ${literal}.`,
+        'Remove it from `sources`, or check the path is relative to the repo root.',
+        { reason: 'invalid_config' },
       )
     }
     matched.add(literal)
@@ -219,8 +220,9 @@ async function matchConfiguredSources(
       }
       if (hits === 0) {
         throw new UserError(
-          `the config declares a source pattern that matches nothing: ${glob}`,
-          'patterns are matched against the files git lists, from the repo root',
+          `The config declares a source pattern that matches nothing: ${glob}.`,
+          'Patterns are matched against the files git lists, from the repo root.',
+          { reason: 'invalid_config' },
         )
       }
     }
