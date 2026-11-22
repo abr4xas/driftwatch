@@ -45,11 +45,13 @@ The config file is the worked example. It was specified expecting `jiti`, and it
 
 ## Verification
 
-Do not call a milestone closed without running:
+The package manager is pnpm. This is the one verification sequence (there is no combined script; `prepublishOnly` runs the first four in a different order, do not add another). Do not call a milestone or a change closed without running:
 
 ```
-pnpm typecheck && pnpm test && pnpm build && node ./dist/cli.js --help
+pnpm typecheck && pnpm test && pnpm lint && pnpm build && node ./dist/cli.js --help
 ```
+
+`pnpm lint` is `oxlint src test scripts && prettier --check .`; `pnpm format` fixes the Prettier half.
 
 Also, **run the tool against itself and against real repos**. This repo has its own `AGENTS.md` and `docs/`, so it is the first test subject. A green fixture proves nothing about false positives; the corpus in `scripts/corpus/run.ts` does.
 
@@ -84,6 +86,19 @@ One rule governs it, and it is the reason the two are kept apart:
 
 A rule you find there is still written by hand, in `src/`, and still measured the only way this project measures anything: against the 66 repositories that have been read by a person.
 
+### Both corpora live in the main checkout
+
+`test/corpus/repos/` and `test/discovery/` are gitignored, so a fresh worktree looks empty. Do not re-clone: symlink both paths from the main checkout (`/Users/angelcruz/Developer/driftwatch`) and exclude the symlinks in `$(git rev-parse --git-common-dir)/info/exclude` (the `.gitignore` entries end in `/` and do not match symlinks). A worktree sharing the symlink must not run `discovery clone` or `discovery discards`: `discards.jsonl` is rewritten whole and would overwrite the main checkout's. Read-only passes are safe.
+
+## Jev (research only)
+
+All LLM classification uses model `typesafe-ai/jev` (`MODEL` in `scripts/jev/ask.ts`; `DISCOVERY_MODEL` overrides it for a comparison run). Two rules:
+
+- **Jev never adjudicates.** Its output is an answer a person reads; it never becomes a verdict or a ruling, never enters `test/corpus/CLASSIFICATION.md`, never moves a condition of ADR-0006.
+- **Nothing model-shaped under `src/`.** Model code lives in `scripts/`, `ai` stays a devDependency. Before adding a model call, check the file's path; if it is under `src/`, stop and ask.
+
+Scripts: `pnpm jev:review <path-to-a-full-checkout>` (not a `test/discovery/repos/*` sparse clone), `pnpm jev:classify`, `pnpm jev:classes`. They read `.env` / `.env.local`.
+
 ## Decisions you can make on your own
 
 File and function names, the internal structure of modules, choosing between `tinyglobby` and `fast-glob`, the exact wording of error messages, how to organize the fixtures.
@@ -112,9 +127,9 @@ The five canonical labels, unrenamed, recorded as a `Status:` line in each issue
 
 ### Domain docs
 
-Single-context: [`CONTEXT.md`](CONTEXT.md) at the root and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: [`GLOSSARY.md`](GLOSSARY.md) at the root and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
 
-`CONTEXT.md` is the glossary, and it is audited: it is listed in `driftwatch.config.yaml`, so a
+`GLOSSARY.md` is the glossary, and it is audited: it is listed in `driftwatch.config.yaml`, so a
 path it names that stops existing is a finding like any other. Use its words. `finding`,
 `discard`, `ruling`, `answer`, `class`, `pass`, `family` and the two corpora all mean one thing
 each, and the file says which.
