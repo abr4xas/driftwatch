@@ -1,18 +1,50 @@
-import type { Finding, SkipReason } from '../core/types.ts'
+import type { ClaimKind, Finding, SkipReason } from '../core/types.ts'
 import type { RunResult } from '../run.ts'
 import { colorsFor, type Colors } from './colors.ts'
+import { sanitize } from './sanitize.ts'
 import type { FixEntry, FixOutcome } from './types.ts'
 
 export type PrettyOptions = {
   color: boolean
-  /** SPEC.md § 5: show problems only, no summary. */
+  /** SPEC.md § 5: show findings only, no summary. */
   quiet: boolean
   /** What `--fix` did, when it ran. Absent on an ordinary run. */
   fixes?: FixOutcome
+  /**
+   * The `--fix` command the summary suggests, carrying the paths, the check
+   * selection and the config the run used. Built by the CLI, which is the one
+   * that knows the invocation; `driftwatch --fix` when absent.
+   */
+  fixCommand?: string
 }
 
-/** SPEC.md § 5: the quoted fragment is truncated to 40 characters with '…'. */
+/** SPEC.md § 5: prose is truncated to 40 characters with '…'. */
 const MAX_TEXT = 40
+
+/**
+ * The claims whose text is the thing to act on: a path to create or fix, a
+ * script to look up, a link to follow. Truncating one leaves the reader with
+ * the only copy of it cut short, so these are printed whole and the column
+ * makes room.
+ */
+const VERBATIM: ReadonlySet<ClaimKind> = new Set(['path', 'script', 'link'])
+
+/** A claim's text as the row shows it: one line, sanitised, cut only if it is prose. */
+function claimText(finding: Finding): string {
+  const flat = sanitize(finding.claim.text).replaceAll(/\s+/gu, ' ').trim()
+  return VERBATIM.has(finding.claim.kind) ? flat : truncate(flat)
+}
+
+/** `file:line` for an applied edit, which carries no column. */
+function fixLocation(entry: FixEntry): string {
+  return `${sanitize(entry.file)}:${entry.line}`
+}
+
+/** `file:line:col`, the shape a terminal or an editor recognises and opens. */
+function locationOf(finding: Finding): string {
+  const { claim } = finding
+  return `${sanitize(claim.source.path)}:${claim.range.line}:${claim.range.column}`
+}
 
 /** Pluralizes a counter for the summary line. */
 function count(n: number, singular: string, plural: string): string {
@@ -49,23 +81,34 @@ function groupByFile(findings: readonly Finding[]): Map<string, Finding[]> {
 /** The group header, naming the identical copies if there are any. */
 function headerFor(findings: readonly Finding[], c: Colors): string {
   const source = findings[0]?.claim.source
-  const file = source?.path ?? ''
-  const aliases = source?.aliases ?? []
+  const file = sanitize(source?.path ?? '')
+  const aliases = (source?.aliases ?? []).map(sanitize)
   if (aliases.length === 0) return c.bold(file)
   return `${c.bold(file)} ${c.dim(`(and ${aliases.join(', ')}, identical)`)}`
 }
 
+/**
+ * The column the messages line up on. Measured over the texts that fit in
+ * `MAX_TEXT`: a long path printed whole overflows its own row rather than
+ * pushing every message in the group off to the right.
+ */
+function textColumn(texts: readonly string[]): number {
+  const fitting = texts.filter((text) => text.length <= MAX_TEXT).map((text) => text.length)
+  return fitting.length === 0 ? 0 : Math.max(...fitting)
+}
+
 function renderGroup(findings: readonly Finding[], c: Colors): string {
-  const lineWidth = Math.max(...findings.map((f) => String(f.claim.range.line).length))
-  const textWidth = Math.max(...findings.map((f) => truncate(f.claim.text).length))
+  const locationWidth = Math.max(...findings.map((f) => locationOf(f).length))
+  const textWidth = textColumn(findings.map(claimText))
 
   const rows = findings
     .map((finding) => {
-      const line = String(finding.claim.range.line).padStart(lineWidth)
-      const text = truncate(finding.claim.text).padEnd(textWidth)
+      const location = locationOf(finding).padEnd(locationWidth)
+      const text = claimText(finding).padEnd(textWidth)
       const suggestion = finding.suggestion
-      const tail = suggestion === undefined ? '' : c.dim(`  → ${suggestion.value}?`)
-      return `  ${symbolFor(finding, c)} ${line}  ${text}  ${finding.message}${tail}\n`
+      const tail = suggestion === undefined ? '' : c.dim(`  → ${sanitize(suggestion.value)}?`)
+      const message = sanitize(finding.message)
+      return `  ${symbolFor(finding, c)} ${location}  ${text}  ${message}${tail}\n`
     })
     .join('')
 
@@ -115,18 +158,20 @@ function renderFixes(outcome: FixOutcome, c: Colors): string {
   const mark = outcome.dryRun ? ' ' : c.green('✓')
   const body = [...groups]
     .map(([file, entries]) => {
-      const lineWidth = Math.max(...entries.map((entry) => String(entry.line).length))
+      // Every fix rewrites a path, a script or a link, so neither side is ever
+      // truncated: the same rule as the findings, and the same reason.
+      const locationWidth = Math.max(...entries.map((entry) => fixLocation(entry).length))
       // The same column discipline the findings use: the arrows line up, so
       // the eye reads down the replacements rather than hunting for them.
-      const textWidth = Math.max(...entries.map((entry) => truncate(entry.before).length))
+      const textWidth = textColumn(entries.map((entry) => sanitize(entry.before)))
       const rows = entries
         .map((entry) => {
-          const line = String(entry.line).padStart(lineWidth)
-          const before = truncate(entry.before).padEnd(textWidth)
-          return `  ${mark} ${line}  ${before}  ${c.dim('→')}  ${truncate(entry.after)}\n`
+          const where = fixLocation(entry).padEnd(locationWidth)
+          const before = sanitize(entry.before).padEnd(textWidth)
+          return `  ${mark} ${where}  ${before}  ${c.dim('→')}  ${sanitize(entry.after)}\n`
         })
         .join('')
-      return `${c.bold(file)}\n${rows}`
+      return `${c.bold(sanitize(file))}\n${rows}`
     })
     .join('')
 
@@ -150,27 +195,40 @@ const SKIP_MESSAGE: Record<SkipReason, string> = {
 function skippedLines(result: RunResult, c: Colors): string {
   if (result.skipped.length === 0) return ''
   const rows = result.skipped
-    .map((source) => c.dim(`skipped ${source.path}: ${SKIP_MESSAGE[source.reason]}\n`))
+    .map((source) => c.dim(`skipped ${sanitize(source.path)}: ${SKIP_MESSAGE[source.reason]}\n`))
     .join('')
   return `${rows}\n`
 }
 
-function summary(result: RunResult, c: Colors, fixes: FixOutcome | undefined): string {
+/**
+ * The next step, when there is one: what it does, then the command, whole and
+ * on its own line so it can be copied as printed.
+ */
+function nextStep(fixable: number, command: string, c: Colors): string {
+  return `\nApply ${count(fixable, 'fix', 'fixes')}:\n    ${c.cyan(command)}\n`
+}
+
+function summary(
+  result: RunResult,
+  c: Colors,
+  fixes: FixOutcome | undefined,
+  fixCommand: string,
+): string {
   const files = count(result.sources.length, 'file', 'files')
   const ms = `${Math.round(result.durationMs)}ms`
   const { errors, warnings } = result.counts
-  const problems = errors + warnings
+  const found = errors + warnings
 
-  if (problems === 0) {
+  if (found === 0) {
     const clean = `${c.green('✓')} ${files} · no drift · ${ms}\n`
     return fixes === undefined ? clean : `${clean}${fixLine(fixes, c)}`
   }
 
-  const total = count(problems, 'problem', 'problems')
+  const total = count(found, 'finding', 'findings')
   const head = `${files} · ${total}${breakdown(errors, warnings)} · ${ms}\n`
   if (fixes !== undefined) return `${head}${fixLine(fixes, c)}`
   if (result.fixable === 0) return head
-  return `${head}${c.dim(`${count(result.fixable, 'fixable', 'fixable')} with --fix\n`)}`
+  return `${head}${nextStep(result.fixable, fixCommand, c)}`
 }
 
 export function renderPretty(result: RunResult, options: PrettyOptions): string {
@@ -184,5 +242,6 @@ export function renderPretty(result: RunResult, options: PrettyOptions): string 
   // above should be read, and a reader who asked for less still has to have it.
   if (options.quiet) return `${body}${skippedLines(result, c)}`
   const fixes = options.fixes === undefined ? '' : renderFixes(options.fixes, c)
-  return `${body}${fixes}${skippedLines(result, c)}${summary(result, c, options.fixes)}`
+  const tail = summary(result, c, options.fixes, options.fixCommand ?? 'driftwatch --fix')
+  return `${body}${fixes}${skippedLines(result, c)}${tail}`
 }

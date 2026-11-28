@@ -8,7 +8,7 @@
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { findConfig } from '../core/config.ts'
-import { UserError } from '../core/errors.ts'
+import { codeOf, UserError } from '../core/errors.ts'
 
 const CONFIG_FILENAME = 'driftwatch.config.yaml'
 
@@ -81,14 +81,25 @@ checks: {}
  */
 export async function writeInitConfig(root: string): Promise<string> {
   const existing = await findConfig(root)
-  if (existing !== undefined) {
-    throw new UserError(
-      `a config already exists: ${existing.where}`,
-      'remove it first, or edit it — --init never overwrites',
-    )
-  }
+  if (existing !== undefined) throw configExists(existing.where)
 
   const path = join(root, CONFIG_FILENAME)
-  await writeFile(path, INIT_TEMPLATE, 'utf8')
+  try {
+    // `wx`: created here or not at all. The check above reads the shapes the
+    // loader looks for; this closes the gap between that read and the write,
+    // where anything else could have put the file there first.
+    await writeFile(path, INIT_TEMPLATE, { encoding: 'utf8', flag: 'wx' })
+  } catch (error) {
+    if (codeOf(error) === 'EEXIST') throw configExists(CONFIG_FILENAME)
+    throw error
+  }
   return CONFIG_FILENAME
+}
+
+function configExists(where: string): UserError {
+  return new UserError(
+    `A config already exists: ${where}.`,
+    'Edit it, or remove it first. --init never overwrites.',
+    { reason: 'config_exists' },
+  )
 }

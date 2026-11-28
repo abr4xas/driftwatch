@@ -313,7 +313,7 @@ describe('--format json with the fix plan', () => {
     writeFileSync(join(root, 'AGENTS.md'), 'Entry `./src/util/date.ts` again.\n')
 
     const { stdout, stderr } = await render(['--fix', '--dry-run', '--json'], root)
-    expect(stderr).toContain('uncommitted changes')
+    expect(stderr).toContain('Uncommitted changes')
     expect(() => JSON.parse(stdout)).not.toThrow()
   })
 })

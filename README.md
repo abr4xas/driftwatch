@@ -16,11 +16,13 @@ Find the parts of your `CLAUDE.md`, `AGENTS.md` and skills that are no longer tr
 ```console
 $ driftwatch
 AGENTS.md
-  ✗ 3  src/util/date.ts  path does not exist  → src/helpers/date.ts?
-  ✗ 5  src/cli.ts        path does not exist
+  ✗ AGENTS.md:3:8  src/util/date.ts  path does not exist  → src/helpers/date.ts?
+  ✗ AGENTS.md:5:7  src/cli.ts        path does not exist
 
-1 file · 2 problems (2 errors) · 59ms
-1 fixable with --fix
+1 file · 2 findings (2 errors) · 59ms
+
+Apply 1 fix:
+    driftwatch --fix
 ```
 
 ```bash
@@ -98,7 +100,7 @@ It applies a correction only when there is exactly one candidate above 0.8 confi
 
 ```yaml
 - uses: actions/checkout@v7
-- uses: abr4xas/driftwatch@v1.1.0
+- uses: abr4xas/driftwatch@v1.2.0
 ```
 
 Every stale claim becomes an annotation on the diff, on the line that makes it. `fail-on-drift: false` makes it advisory, `sarif: true` writes a file for Code Scanning. See [docs/guide/ci.md](./docs/guide/ci.md), or [docs/guide/output.md](./docs/guide/output.md) for the formats themselves.
@@ -121,11 +123,13 @@ The specification is primary source: when the code and those documents disagree,
 
 `1.1.0` adds the `ignore` config key and five discard rules derived from a second corpus of 2533 unread repositories. Nothing was removed, so the contract grew by one line.
 
+`1.2.0` reworks how the command line talks: `file:line:col` on every row, paths never cut short, errors that end in the command to run, and a one-line JSON error document under `--json` with a stable `reason`. The contract grew by that document and two exported types; nothing was removed.
+
 Early means the checks and the fixes are what is finished. `--watch` is not in the tool at all until M6 owns it, and the four tier 2 checks land in M5.
 
 **The package is scoped, the Marketplace listing is suffixed, and the command is neither.** npm refuses `driftwatch` for being too similar to `drift-watch`, an unrelated tool that analyses agent *conversations* rather than the documents they read; the GitHub Marketplace refuses it too, because a user account called Driftwatch already exists and a listing name has to be unique across every action, user and organisation. So the package is `@abr4xas/driftwatch` and the listing is `driftwatch-action`.
 
-Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v1.1.0`, which comes from the repository rather than from the listing.
+Neither reaches you. `bin` fixes the command at `driftwatch` whatever the package is called, and the action is used as `abr4xas/driftwatch@v1.2.0`, which comes from the repository rather than from the listing.
 
 ## License
 

@@ -21,7 +21,7 @@ Needs Node 24 or newer ([ADR-0002](../adr/0002-node-24-floor.md)). No configurat
 | `--no-tier2` | turn off every tier 2 check |
 | `--config <path>` | use this config file |
 | `--no-config` | ignore any config found |
-| `--quiet` | problems only, no summary (`pretty` only) |
+| `--quiet` | findings only, no summary (`pretty` only) |
 | `--init` | write a commented `driftwatch.config.yaml` and exit |
 | `--version`, `-v` | print the version |
 | `--help`, `-h` | print the options |

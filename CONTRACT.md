@@ -4,9 +4,10 @@
 when this file and the code disagree.
 
 This is what the released tool promises not to remove or reshape without a major version: the
-exit codes, the check ids, the CLI flags, the `--json` contract, the shapes `--format github`
-and `--format sarif` emit, the config's accepted keys, the names the package exports, and the
-Node floor. Anything not listed here is free to change.
+exit codes, the check ids, the CLI flags, the `--json` contract and the error document a
+machine format gets, the shapes `--format github` and `--format sarif` emit, the config's
+accepted keys, the names the package exports, and the Node floor. Anything not listed here is
+free to change.
 
 It records the surface **as it stands, defects included** — a flag that is advertised and
 refuses to run is listed with the refusal on it. Closing one of those is a change to this file,
@@ -110,6 +111,27 @@ Only under `--fix --dry-run`:
 - `$.fixes.edits[].start`
 - `$.fixes.files`
 
+## Errors in a machine format
+
+With `--json`, `--format json` or `--format sarif`, a run that exits `2` writes nothing to
+stdout and one line of JSON to stderr.
+
+- `$.error`
+- `$.error.command` (optional)
+- `$.error.hint` (optional)
+- `$.error.message`
+- `$.error.reason`
+
+`reason` is one of:
+
+- `unknown_option`
+- `invalid_arguments`
+- `path_not_found`
+- `invalid_config`
+- `config_exists`
+- `not_implemented`
+- `internal_error`
+
 ## `--format github`
 
 ```
@@ -187,6 +209,8 @@ An unknown key is refused: the run fails rather than silently doing nothing.
 - `Config` (type)
 - `Counts` (type)
 - `DiscardSink` (type)
+- `ErrorNext` (type)
+- `ErrorReason` (type)
 - `EXIT` (value)
 - `ExitCode` (type)
 - `exitCodeFor` (value)

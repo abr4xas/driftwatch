@@ -83,7 +83,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function invalid(where: string, problem: string): UserError {
-  return new UserError(`invalid config in ${where}: ${problem}`)
+  return new UserError(`Invalid config in ${where}: ${problem}.`, undefined, {
+    reason: 'invalid_config',
+  })
 }
 
 function stringArray(value: unknown, key: string, where: string): readonly string[] {
@@ -108,11 +110,12 @@ function severityMap(value: unknown, where: string): Readonly<Record<string, Che
       // takes a second and an afternoon spent doubting the check ids.
       const hint =
         typeof severity === 'boolean'
-          ? "quote it: in YAML, an unquoted off, no or false is a boolean, and 'off' is the severity"
+          ? "Quote it: in YAML, an unquoted off, no or false is a boolean, and 'off' is the severity."
           : undefined
       throw new UserError(
-        `invalid config in ${where}: checks['${id}'] has to be 'error', 'warning' or 'off'`,
+        `Invalid config in ${where}: checks['${id}'] has to be 'error', 'warning' or 'off'.`,
         hint,
+        { reason: 'invalid_config' },
       )
     }
     out[id] = severity
@@ -155,7 +158,9 @@ async function readJson(path: string, where: string): Promise<unknown> {
   try {
     return JSON.parse(text)
   } catch (error) {
-    throw new UserError(`${where} is not valid JSON`, messageOf(error))
+    throw new UserError(`Couldn't parse ${where} as JSON.`, messageOf(error), {
+      reason: 'invalid_config',
+    })
   }
 }
 
@@ -191,9 +196,15 @@ const WITHDRAWN_EXTENSIONS: readonly string[] = ['.ts', '.js', '.mjs', '.cjs']
  */
 function refuseModuleConfig(path: string, where: string): never {
   throw new UserError(
-    `${where} is a ${extname(path)} config, which driftwatch no longer loads`,
-    'a config is data, not a program (ADR-0013). To convert it: ' +
-      '`npx @abr4xas/driftwatch@0.5.0 --migrate-config`, then delete the original',
+    `Can't load ${where}. driftwatch no longer loads ${extname(path)} configs.`,
+    'A config is data, not a program (ADR-0013). Delete the original after converting it.',
+    {
+      reason: 'invalid_config',
+      next: {
+        label: 'Convert it',
+        command: 'npx @abr4xas/driftwatch@0.5.0 --migrate-config',
+      },
+    },
   )
 }
 
@@ -215,7 +226,9 @@ async function readYaml(path: string, where: string): Promise<unknown> {
   try {
     return parse(text)
   } catch (error) {
-    throw new UserError(`${where} is not valid YAML`, messageOf(error))
+    throw new UserError(`Couldn't parse ${where} as YAML.`, messageOf(error), {
+      reason: 'invalid_config',
+    })
   }
 }
 
@@ -227,8 +240,9 @@ async function loadFrom(path: string, where: string): Promise<Config> {
   }
   if (WITHDRAWN_EXTENSIONS.includes(extension)) refuseModuleConfig(path, where)
   throw new UserError(
-    `unsupported config extension: ${extension}`,
-    'use a .yaml, .yml or .json file, or the driftwatch key in package.json',
+    `Unsupported config extension ${extension}.`,
+    'Use a .yaml, .yml or .json file, or the driftwatch key in package.json.',
+    { reason: 'invalid_config' },
   )
 }
 
@@ -287,7 +301,9 @@ export async function loadConfig(options: LoadConfigOptions): Promise<LoadedConf
   if (options.explicit !== undefined) {
     const path = resolve(options.cwd, options.explicit)
     if (!existsSync(path)) {
-      throw new UserError(`config file does not exist: ${options.explicit}`)
+      throw new UserError(`Couldn't find config file ${options.explicit}.`, undefined, {
+        reason: 'path_not_found',
+      })
     }
     return { config: await loadFrom(path, options.explicit), path }
   }

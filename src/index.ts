@@ -11,7 +11,7 @@
  */
 export { type CheckSeverity, type Config } from './core/config.ts'
 export { EXIT, exitCodeFor, type Counts, type ExitCode } from './core/exit-codes.ts'
-export { UserError } from './core/errors.ts'
+export { UserError, type ErrorNext, type ErrorReason } from './core/errors.ts'
 export type { DiscardSink } from './extract/context.ts'
 export { run, type RunOptions, type RunResult } from './run.ts'
 export type { Finding, SkippedSource, Source, SourceKind } from './core/types.ts'

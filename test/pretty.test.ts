@@ -77,7 +77,7 @@ describe('renderPretty', () => {
     expect(renderPretty(result(), plain)).toContain('✓ 1 file · no drift · 210ms')
   })
 
-  it('breaks down errors and warnings when there are problems', () => {
+  it('breaks down errors and warnings when there are findings', () => {
     const out = renderPretty(
       result({
         counts: { errors: 4, warnings: 1 },
@@ -86,24 +86,25 @@ describe('renderPretty', () => {
       }),
       plain,
     )
-    expect(out).toContain('2 files · 5 problems (4 errors, 1 warning) · 340ms')
+    expect(out).toContain('2 files · 5 findings (4 errors, 1 warning) · 340ms')
   })
 
   it('omits the part of the breakdown that is zero', () => {
     const out = renderPretty(result({ counts: { errors: 1, warnings: 0 } }), plain)
-    expect(out).toContain('1 problem (1 error) ·')
+    expect(out).toContain('1 finding (1 error) ·')
     expect(out).not.toContain('warning')
   })
 
-  it('a fix run replaces the "fixable with --fix" line with what happened', () => {
-    const out = renderPretty(result({ counts: { errors: 0, warnings: 0 }, fixable: 1 }), {
+  it('a fix run replaces the "Apply N fixes" step with what happened', () => {
+    const out = renderPretty(result({ counts: { errors: 1, warnings: 0 }, fixable: 1 }), {
       ...plain,
       fixes: { applied: 1, files: 1, dryRun: false, entries: [] },
     })
     expect(out).toContain('1 fix applied in 1 file')
-    // Telling somebody who has just run --fix that something is fixable with
-    // --fix is the output saying it did not do what it was asked.
-    expect(out).not.toContain('with --fix')
+    // Telling somebody who has just run --fix to run --fix is the output
+    // saying it did not do what it was asked.
+    expect(out).not.toContain('Apply')
+    expect(out).not.toContain('driftwatch --fix')
   })
 
   it('a fix run that applied nothing says so', () => {
@@ -145,8 +146,8 @@ describe('renderPretty', () => {
       },
     })
     expect(out).toContain('fixed\nAGENTS.md\n')
-    expect(out).toContain('✓  3  src/old.ts      →  src/new.ts')
-    expect(out).toContain('✓ 12  pnpm run biuld  →  pnpm run build')
+    expect(out).toContain('✓ AGENTS.md:3   src/old.ts      →  src/new.ts')
+    expect(out).toContain('✓ AGENTS.md:12  pnpm run biuld  →  pnpm run build')
   })
 
   it('--quiet suppresses the diff with the summary', () => {
@@ -192,12 +193,12 @@ describe('renderPretty', () => {
     )
     const lines = out.split('\n')
     expect(lines[0]).toBe('CLAUDE.md')
-    expect(lines[1]).toContain('12  src/lib/auth.ts')
-    expect(lines[2]).toContain('34  src/other.ts')
+    expect(lines[1]).toContain('CLAUDE.md:12:1  src/lib/auth.ts')
+    expect(lines[2]).toContain('CLAUDE.md:34:1  src/other.ts')
     expect(lines.find((l) => l === 'AGENTS.md')).toBeDefined()
   })
 
-  it('aligns the line number and the fragment within the group', () => {
+  it('aligns the location and the fragment within the group', () => {
     const out = renderPretty(
       result({
         findings: [finding('CLAUDE.md', 5, 'a/b.ts'), finding('CLAUDE.md', 120, 'c/d/e.ts')],
@@ -205,19 +206,67 @@ describe('renderPretty', () => {
       }),
       plain,
     )
-    expect(out).toContain('  ✗   5  a/b.ts    path does not exist')
-    expect(out).toContain('  ✗ 120  c/d/e.ts  path does not exist')
+    expect(out).toContain('  ✗ CLAUDE.md:5:1    a/b.ts    path does not exist')
+    expect(out).toContain('  ✗ CLAUDE.md:120:1  c/d/e.ts  path does not exist')
   })
 
-  it('truncates the fragment to 40 characters with an ellipsis', () => {
+  it('prints file:line:col on every row, the shape a terminal opens', () => {
+    const out = renderPretty(
+      result({
+        findings: [finding('docs/CLAUDE.md', 7, 'a/b.ts')],
+        counts: { errors: 1, warnings: 0 },
+      }),
+      plain,
+    )
+    expect(out).toMatch(/^ {2}✗ docs\/CLAUDE\.md:7:1 {2}/mu)
+  })
+
+  it('never truncates a path: it is the only copy the reader has', () => {
     const long = `src/${'x'.repeat(60)}.ts`
     const out = renderPretty(
       result({ findings: [finding('CLAUDE.md', 1, long)], counts: { errors: 1, warnings: 0 } }),
       plain,
     )
+    expect(out).toContain(long)
+    expect(out).not.toContain('…')
+  })
+
+  it('a long path overflows its own row instead of pushing the others', () => {
+    const long = `src/${'x'.repeat(60)}.ts`
+    const out = renderPretty(
+      result({
+        findings: [finding('CLAUDE.md', 1, long), finding('CLAUDE.md', 2, 'a/b.ts')],
+        counts: { errors: 2, warnings: 0 },
+      }),
+      plain,
+    )
+    expect(out).toContain('CLAUDE.md:2:1  a/b.ts  path does not exist')
+  })
+
+  it('truncates prose to 40 characters with an ellipsis', () => {
+    const prose = `we use ${'a very long sentence '.repeat(4)}`
+    const base = finding('CLAUDE.md', 1, prose)
+    const out = renderPretty(
+      result({
+        findings: [{ ...base, claim: { ...base.claim, kind: 'dep', context: 'prose' } }],
+        counts: { errors: 1, warnings: 0 },
+      }),
+      plain,
+    )
     expect(out).toContain('…')
     const cited = out.split('\n')[1]?.split('  ')[2] ?? ''
     expect(cited.length).toBe(40)
+  })
+
+  it('strips escape sequences and bidi controls from text read out of a repo', () => {
+    const hostile = 'src/\u001B[31mred\u001B[0m‮.ts'
+    const out = renderPretty(
+      result({ findings: [finding('CLAUDE.md', 1, hostile)], counts: { errors: 1, warnings: 0 } }),
+      plain,
+    )
+    expect(out).toContain('src/red.ts')
+    expect(out).not.toContain('\u001B')
+    expect(out).not.toContain('‮')
   })
 
   it('renders the suggestion when the finding carries one', () => {
@@ -233,7 +282,23 @@ describe('renderPretty', () => {
       plain,
     )
     expect(out).toContain('→ src/auth/index.ts?')
-    expect(out).toContain('1 fixable with --fix')
+    expect(out).toContain('Apply 1 fix:\n    driftwatch --fix\n')
+  })
+
+  it('the suggested --fix is the command the CLI built, whole on its own line', () => {
+    const out = renderPretty(result({ counts: { errors: 1, warnings: 0 }, fixable: 3 }), {
+      ...plain,
+      fixCommand: 'driftwatch --fix CLAUDE.md --only path',
+    })
+    expect(out).toContain('Apply 3 fixes:\n    driftwatch --fix CLAUDE.md --only path\n')
+  })
+
+  it('--quiet drops the next step with the rest of the summary', () => {
+    const out = renderPretty(result({ counts: { errors: 1, warnings: 0 }, fixable: 1 }), {
+      color: false,
+      quiet: true,
+    })
+    expect(out).not.toContain('Apply')
   })
 
   it('a warning uses the warning symbol and not the error one', () => {
@@ -277,5 +342,22 @@ describe('colorEnabled', () => {
 
   it('turns it on for a tty with no NO_COLOR', () => {
     expect(colorEnabled({} as NodeJS.ProcessEnv, true)).toBe(true)
+  })
+
+  it('FORCE_COLOR turns it on without a tty', () => {
+    expect(colorEnabled({ FORCE_COLOR: '1' } as NodeJS.ProcessEnv, false)).toBe(true)
+  })
+
+  it('FORCE_COLOR=0 turns it off on a tty', () => {
+    expect(colorEnabled({ FORCE_COLOR: '0' } as NodeJS.ProcessEnv, true)).toBe(false)
+  })
+
+  it('NO_COLOR beats FORCE_COLOR', () => {
+    const env = { NO_COLOR: '1', FORCE_COLOR: '1' } as NodeJS.ProcessEnv
+    expect(colorEnabled(env, true)).toBe(false)
+  })
+
+  it('TERM=dumb turns it off on a tty', () => {
+    expect(colorEnabled({ TERM: 'dumb' } as NodeJS.ProcessEnv, true)).toBe(false)
   })
 })

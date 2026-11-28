@@ -64,13 +64,13 @@ describe('check selection', () => {
     // `pat` would match `path/missing` under startsWith. It must not: a
     // selector that silently matches a check the user did not name is the
     // same class of mistake as one that silently matches nothing.
-    expect(refusal({ tier2: true, only: ['pat'] })).toContain("unknown check 'pat'")
+    expect(refusal({ tier2: true, only: ['pat'] })).toContain("Unknown check 'pat'")
   })
 
   it('a selector matching nothing is refused, and the known ids are listed', () => {
     const message = refusal({ tier2: true, skip: ['dep/missing'] })
     expect(message).toContain('--skip')
-    expect(message).toContain("unknown check 'dep/missing'")
+    expect(message).toContain("Unknown check 'dep/missing'")
     expect(message).toContain('path/missing')
   })
 

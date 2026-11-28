@@ -35,8 +35,9 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { FORMATS, OPTIONS, parseCliArgs } from '../../src/cli/args.ts'
 import { HELP } from '../../src/cli/help.ts'
-import { UNIMPLEMENTED_BOOLEANS } from '../../src/cli/main.ts'
+import { main as cliMain, UNIMPLEMENTED_BOOLEANS } from '../../src/cli/main.ts'
 import { KNOWN_KEYS, validateConfig } from '../../src/core/config.ts'
+import { ERROR_REASONS } from '../../src/core/errors.ts'
 import { EXIT } from '../../src/core/exit-codes.ts'
 import { applyFixes } from '../../src/fix/session.ts'
 import { renderGithub } from '../../src/report/github.ts'
@@ -433,6 +434,43 @@ function githubShape(observed: Observed): string[] {
   ]
 }
 
+/**
+ * What a machine-format run prints on stderr when it exits 2, observed from
+ * the CLI itself: one invocation with a recovery command and no detail, one
+ * with detail and no command, so the optional keys are counted rather than
+ * assumed. The reasons are read from the registry, because a consumer branches
+ * on every one of them and the observation would only see two.
+ */
+async function errorContract(): Promise<string[]> {
+  const root = mkdtempSync(join(tmpdir(), 'driftwatch-surface-error-'))
+  try {
+    const documents = await Promise.all(
+      [
+        ['--json', '--stirct'],
+        ['--format', 'sarif', 'gone-a.md', 'gone-b.md'],
+      ].map(async (argv) => {
+        const err: string[] = []
+        const io = { out: () => {}, err: (text: string) => err.push(text), isTty: false, env: {} }
+        const code = await cliMain(argv, io, root)
+        if (code !== EXIT.toolFailure) throw new Error(`${argv.join(' ')} exited ${code}`)
+        return JSON.parse(err.join('')) as unknown
+      }),
+    )
+    return [
+      'With `--json`, `--format json` or `--format sarif`, a run that exits `2` writes nothing to',
+      'stdout and one line of JSON to stderr.',
+      '',
+      ...keyPaths(documents),
+      '',
+      '`reason` is one of:',
+      '',
+      ...ERROR_REASONS.map((reason) => `- \`${reason}\``),
+    ]
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}
+
 // ---------------------------------------------------------------------------
 // The artifact
 // ---------------------------------------------------------------------------
@@ -443,9 +481,10 @@ const PREAMBLE = `# The frozen surface
 when this file and the code disagree.
 
 This is what the released tool promises not to remove or reshape without a major version: the
-exit codes, the check ids, the CLI flags, the \`--json\` contract, the shapes \`--format github\`
-and \`--format sarif\` emit, the config's accepted keys, the names the package exports, and the
-Node floor. Anything not listed here is free to change.
+exit codes, the check ids, the CLI flags, the \`--json\` contract and the error document a
+machine format gets, the shapes \`--format github\` and \`--format sarif\` emit, the config's
+accepted keys, the names the package exports, and the Node floor. Anything not listed here is
+free to change.
 
 It records the surface **as it stands, defects included** — a flag that is advertised and
 refuses to run is listed with the refusal on it. Closing one of those is a change to this file,
@@ -469,6 +508,7 @@ export async function frozenSurface(): Promise<string> {
     section('CLI flags', cliFlags()),
     section('Output formats', formats()),
     section('`--json`', jsonContract(observed)),
+    section('Errors in a machine format', await errorContract()),
     section('`--format github`', githubShape(observed)),
     section('`--format sarif`', keyPaths(observed.sarif)),
     section('Config keys', configFormat()),
